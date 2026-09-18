@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="MainMenu_LogIn" xml:space="preserve"><value>Log in</value></data>
+  <data name="MainMenu_Rooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="MainMenu_Ranking" xml:space="preserve"><value>Ranking</value></data>
+  <data name="MainMenu_Exit" xml:space="preserve"><value>Exit</value></data>
+  <data name="MainMenu_Language" xml:space="preserve"><value>Language · {0}</value></data>
+  <data name="ChangeLanguage_Title" xml:space="preserve"><value>Interface language</value></data>
+  <data name="ChangeLanguage_Hint" xml:space="preserve"><value>Applies immediately to every screen.</value></data>
+  <data name="ChangeLanguage_Note" xml:space="preserve"><value>This preference is saved on this computer, not in your account.</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+</root>

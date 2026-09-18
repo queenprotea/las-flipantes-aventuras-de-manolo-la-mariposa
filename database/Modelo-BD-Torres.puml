@@ -1,0 +1,238 @@
+@startuml Modelo-BD-Torres
+' =============================================================================
+' Juego de Torres - modelo relacional de la base de datos
+' Consistente con Analisis-Base-de-Datos-Torres.md y con schema.sql
+' Diez entidades, cinco catalogos de parametros y una vista derivada.
+' =============================================================================
+
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5B52
+  ArrowColor #4A5B52
+  FontName Helvetica
+}
+skinparam note {
+  BackgroundColor #F4F1E8
+  BorderColor #B9AE95
+}
+
+package "Identidad y convivencia" #FBFAF6 {
+
+  entity player <<table>> {
+    **player_id** : integer <<PK>> <<identity>>
+    --
+    username : varchar(20) <<UQ lower>>
+    email : varchar(254) <<UQ lower>>
+    password_hash : varchar(255)
+    avatar_reference : varchar(255) <<null>>
+    created_at : timestamptz
+  }
+
+  entity friendship <<table>> {
+    **requester_id** : integer <<PK>> <<FK player>>
+    **addressee_id** : integer <<PK>> <<FK player>>
+    --
+    status : varchar(8) -- pending | accepted
+    requested_at : timestamptz
+    responded_at : timestamptz <<null>>
+  }
+
+  entity password_recovery <<table>> {
+    **player_id** : integer <<PK>> <<FK player>>
+    --
+    code : varchar(16)
+    created_at : timestamptz
+  }
+
+  entity report <<table>> {
+    **report_id** : integer <<PK>> <<identity>>
+    --
+    reporter_player_id : integer <<FK player>>
+    reported_player_id : integer <<FK player>>
+    room_id : integer <<FK room>>
+    match_id : integer <<FK match>> <<null>>
+    reported_text : varchar(200)
+    created_at : timestamptz
+  }
+
+  entity sanction <<table>> {
+    **sanction_id** : integer <<PK>> <<identity>>
+    --
+    player_id : integer <<FK player>>
+    level : smallint <<FK sanction_level>> <<null>>
+    is_permanent : boolean
+    threshold_at : timestamptz
+    effective_from : timestamptz
+    effective_until : timestamptz <<null>>
+  }
+}
+
+package "Salas" #FBFAF6 {
+
+  entity room <<table>> {
+    **room_id** : integer <<PK>> <<identity>>
+    --
+    code : varchar(4) <<UQ si abierta>>
+    visibility : varchar(7) -- public | private
+    created_at : timestamptz
+    closed_at : timestamptz <<null>>
+  }
+
+  entity room_invitation <<table>> {
+    **room_id** : integer <<PK>> <<FK room>>
+    **invited_player_id** : integer <<PK>> <<FK player>>
+    --
+    inviter_player_id : integer <<FK player>>
+    channel : varchar(8) -- in_game | email
+    created_at : timestamptz
+  }
+}
+
+package "Partidas" #FBFAF6 {
+
+  entity match <<table>> {
+    **match_id** : integer <<PK>> <<identity>>
+    --
+    room_id : integer <<FK room>>
+    status : varchar(12) -- in_progress | finished
+    player_count : smallint -- 2..4
+    started_at : timestamptz
+    finished_at : timestamptz <<null>>
+    end_reason : varchar(12) <<null>>
+  }
+
+  entity match_participant <<table>> {
+    **match_id** : integer <<PK>> <<FK match>>
+    **seat_number** : smallint <<PK>> -- 1..4
+    --
+    player_id : integer <<FK player>>
+    final_score : integer <<null>>
+    final_position : smallint <<null>>
+    was_withdrawn : boolean
+    --
+    <<UQ (match_id, player_id)>>
+    <<UQ (match_id, final_position)>>
+  }
+
+  entity match_state <<table>> {
+    **match_id** : integer <<PK>> <<FK match>>
+    --
+    round_number : smallint -- 1..3
+    turn_number : smallint
+    active_seat_number : smallint -- 1..4
+    state_document : jsonb
+    saved_at : timestamptz
+  }
+}
+
+package "Catalogos de parametros (solo lectura)" #F4F1E8 {
+
+  entity turn_layout <<catalog>> {
+    **player_count** : smallint <<PK>>
+    **round_number** : smallint <<PK>>
+    --
+    turn_count : smallint
+  }
+
+  entity build_allowance <<catalog>> {
+    **player_count** : smallint <<PK>> <<FK turn_layout>>
+    **round_number** : smallint <<PK>> <<FK turn_layout>>
+    **turn_number** : smallint <<PK>>
+    --
+    building_count : smallint
+  }
+
+  entity action_cost <<catalog>> {
+    **action_code** : varchar(32) <<PK>>
+    --
+    action_point_cost : smallint
+  }
+
+  entity sanction_level <<catalog>> {
+    **level** : smallint <<PK>> -- 1..3
+    --
+    ban_duration : interval
+  }
+
+  entity system_parameter <<catalog>> {
+    **parameter_code** : varchar(48) <<PK>>
+    --
+    parameter_value : varchar(32)
+  }
+}
+
+package "Derivado" #F4F1E8 {
+  entity player_ranking <<view>> {
+    player_id : integer
+    username : varchar(20)
+    matches_played : bigint
+    wins : bigint
+    total_score : bigint
+    best_score : integer
+    last_match_at : timestamptz
+  }
+}
+
+' =============================================================================
+' Relaciones y cardinalidades
+' =============================================================================
+
+player        "1" -- "0..N" friendship        : solicita >
+player        "1" -- "0..N" friendship        : recibe >
+player        "1" -- "0..1" password_recovery : pide recuperar >
+player        "1" -- "0..N" report            : reporta >
+player        "1" -- "0..N" report            : es reportado >
+player        "1" -- "0..N" sanction          : acumula >
+
+player        "1" -- "0..N" room_invitation   : invita >
+player        "1" -- "0..N" room_invitation   : es invitado >
+room          "1" -- "0..N" room_invitation   : se comparte mediante >
+
+room          "1" -- "0..N" match             : alberga >
+match         "1" -- "0..4" match_participant : se compone de >
+player        "1" -- "0..N" match_participant : juega en >
+match         "1" -- "0..1" match_state       : mientras esta en curso >
+
+room          "1" -- "0..N" report            : donde se dijo >
+match         "1" -- "0..N" report            : durante >
+sanction_level "1" -- "0..N" sanction         : fija la duracion de >
+
+turn_layout   "1" -- "1..N" build_allowance   : reparte por turno >
+
+player        "1" .. "0..1" player_ranking    : se calcula sobre >
+match_participant "0..N" .. "1" player_ranking : alimenta <
+
+note bottom of match_state
+  Extension opcional de la partida: comparte su clave
+  y desaparece cuando la partida termina.
+
+  state_document guarda el tablero y, de cada invitado,
+  su alias y su pase de asiento: un invitado no tiene
+  fila en ninguna tabla.
+
+  No guarda el reloj ni los puntos restantes: el estado
+  guardado es siempre una frontera de turno.
+end note
+
+note bottom of report
+  (room_id, match_id) identifica la OCASION, que es lo
+  que se acumula hacia una sancion. match_id vacio = el
+  mensaje se dijo en la sala fuera de toda partida.
+
+  reported_text es una copia: el chat no se guarda.
+end note
+
+note right of room
+  No guarda miembros, ni anfitrion, ni colores, ni chat,
+  ni ranking de sala: todo eso puede contener invitados,
+  de los que no se guarda ninguna fila, y vive en la
+  memoria del servidor.
+
+  La sala vacia se cierra, no se borra: sus partidas la
+  referencian.
+end note
+
+@enduml

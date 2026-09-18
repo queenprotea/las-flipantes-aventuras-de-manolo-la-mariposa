@@ -1,0 +1,17 @@
+# Compilacion
+bin/
+obj/
+*.user
+
+# Contenido compilado de MonoGame
+Content/bin/
+Content/obj/
+
+# Entorno de desarrollo
+.idea/
+.vs/
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

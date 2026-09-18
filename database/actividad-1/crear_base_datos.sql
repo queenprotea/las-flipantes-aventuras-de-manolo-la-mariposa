@@ -1,0 +1,3 @@
+CREATE DATABASE torres
+    WITH ENCODING 'UTF8'
+         TEMPLATE template0;
