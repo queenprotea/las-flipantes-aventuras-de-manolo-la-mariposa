@@ -1,0 +1,1059 @@
+<title>Pantallas de Torres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F4F7EE; --surface:#FFFFFF; --surface-2:#EDF3E6; --surface-3:#F9FBF5;
+  --line:#E2EADA; --line-2:#CFDCC4;
+  --ink:#37473C; --ink-2:#5F7165; --ink-3:#8DA093;
+  --mint:#A8D5BA; --mint-2:#DCEFE2; --mint-3:#F0F8F2; --mint-ink:#22402F; --mint-line:#84C1A0;
+  --lav:#C9C2EC; --lav-2:#EBE8F8; --lav-ink:#3B3568; --lav-line:#A79DDD;
+  --butter:#F7E9B0; --butter-2:#FCF6DF; --butter-ink:#6B5A20;
+  --blush:#F5C9C6; --blush-2:#FBEAE8; --blush-ink:#8E4B47;
+  --sky:#BFE0EC; --sky-2:#E7F4F8;
+  --shadow:0 1px 2px rgba(55,71,60,.05), 0 14px 30px -22px rgba(55,71,60,.45);
+  --shadow-sm:0 1px 2px rgba(55,71,60,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Nunito Sans",system-ui,-apple-system,Segoe UI,sans-serif;font-size:14px;line-height:1.55}
+h1,h2,h3,h4{font-family:"Baloo 2","Nunito Sans",system-ui,sans-serif;margin:0;font-weight:600;text-wrap:balance;line-height:1.25}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--lav-line);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.ic{width:20px;height:20px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ic.sm{width:16px;height:16px}
+.ic.lg{width:26px;height:26px}
+
+/* ===== workbench (fuera del prototipo) ===== */
+.shell{display:grid;grid-template-columns:226px minmax(0,1fr);min-height:100vh;align-items:start}
+.rail,.notes{position:sticky;top:0;max-height:100vh;overflow-y:auto}
+.rail{background:var(--surface-3);border-right:1px solid var(--line);padding:20px 15px 40px}
+.notes{background:var(--surface-3);border-left:1px solid var(--line);padding:20px 17px 40px}
+.stage{padding:22px 26px 54px;min-width:0}
+.brand{display:flex;align-items:center;gap:8px}
+.brand h1{font-size:19px;letter-spacing:.01em}
+.brand svg{width:22px;height:22px}
+.rail .sub{font-size:11px;color:var(--ink-3);margin:3px 0 18px;line-height:1.4}
+.group{margin-bottom:15px}
+.group>h4{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);font-weight:700;margin-bottom:6px;font-family:"Nunito Sans",sans-serif}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav button{display:flex;gap:8px;align-items:baseline;text-align:left;background:none;border:0;padding:5px 8px;border-radius:7px;cursor:pointer;color:var(--ink-2);width:100%}
+.nav button:hover{background:var(--surface-2);color:var(--ink)}
+.nav button[aria-current="true"]{background:var(--mint);color:var(--mint-ink);font-weight:600}
+.nav .id{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3);flex:0 0 22px}
+.nav button[aria-current="true"] .id{color:var(--mint-ink);opacity:.7}
+.nav .lb{font-size:12.5px}
+.swlab{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin:13px 0 5px;font-weight:700}
+.sw{display:flex;flex-wrap:wrap;gap:4px}
+.sw button{border:1px solid var(--line-2);background:var(--surface);padding:3px 9px;border-radius:999px;font-size:11.5px;cursor:pointer;color:var(--ink-2)}
+.sw button[aria-pressed="true"]{background:var(--lav);border-color:var(--lav-line);color:var(--lav-ink);font-weight:600}
+.stagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:13px;flex-wrap:wrap}
+.stagehead h2{font-size:21px}
+.stagehead .meta{font-size:12px;color:var(--ink-3);margin:1px 0 0}
+.reqtag{font-size:11px;color:var(--ink-2);background:var(--surface-2);border-radius:6px;padding:3px 9px}
+.notes h3{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:var(--ink-3);font-weight:700;margin-bottom:10px;font-family:"Nunito Sans",sans-serif}
+.note{border-left:2px solid var(--mint-line);padding-left:10px;margin-bottom:12px}
+.note.pen{border-left-color:var(--butter);}
+.note.pro{border-left-color:var(--lav-line);}
+.note .k{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--ink-3);display:block;margin-bottom:2px}
+.note p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.note .src{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3);display:block;margin-top:3px}
+.railfoot{font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:11px;margin-top:14px;line-height:1.5}
+
+/* ===== ventana simulada ===== */
+.win{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.titlebar{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.dots{display:flex;gap:5px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--line-2);display:block}
+.titlebar .t{font-size:11.5px;color:var(--ink-3)}
+.titlebar .conn{margin-left:auto;font-size:11px;display:flex;align-items:center;gap:6px;color:var(--ink-3)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint-line);display:inline-block}
+.dot.off{background:var(--blush)}
+.dot.wait{background:var(--butter)}
+.screen{padding:20px 22px;min-height:560px;display:flex;flex-direction:column;background:
+  radial-gradient(680px 240px at 108% -12%, var(--mint-3), transparent 70%),
+  radial-gradient(520px 220px at -8% 108%, var(--lav-2), transparent 72%), var(--surface)}
+
+/* ===== interfaz del juego ===== */
+.appbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:34px;height:34px}
+.gamename{font-family:"Baloo 2",sans-serif;font-weight:700;font-size:25px;letter-spacing:.08em;line-height:1}
+.gamename small{display:block;font-family:"Nunito Sans",sans-serif;font-size:9.5px;letter-spacing:.2em;font-weight:700;color:var(--ink-3);text-transform:uppercase;margin-top:2px}
+.who{display:flex;align-items:center;gap:9px}
+.who .nm{font-size:13px;font-weight:700;line-height:1.2;text-align:right}
+.who .rl{font-size:11px;color:var(--ink-3);text-align:right}
+.who button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:5px 13px;font-size:12.5px;cursor:pointer;font-weight:600}
+.who{position:relative}
+.who .avbtn{border:0;background:none;padding:0;border-radius:12px;display:flex;align-items:center;gap:4px;color:var(--ink-3)}
+.avmenu{position:absolute;top:calc(100% + 6px);right:0;min-width:160px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.08);z-index:5}
+.who .avmenu button{border:0;border-radius:8px;width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;text-align:left;font-weight:600}
+.av{width:38px;height:38px;border-radius:12px;background:var(--mint-2);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+.av svg{width:26px;height:26px}
+.av.sm{width:30px;height:30px;border-radius:9px}.av.sm svg{width:20px;height:20px}
+.av.lg{width:92px;height:92px;border-radius:26px}.av.lg svg{width:62px;height:62px}
+.av.lav{background:var(--lav-2)} .av.but{background:var(--butter-2)} .av.sky{background:var(--sky-2)}
+
+/* menú principal: lista + ambientación */
+.mainrow{display:flex;gap:26px;flex:1;align-items:stretch}
+.mlist{display:flex;flex-direction:column;gap:2px;flex:0 0 268px;padding-top:2px}
+.mlist button{display:flex;align-items:center;gap:12px;background:none;border:0;border-radius:10px;padding:11px 12px;cursor:pointer;text-align:left;color:var(--ink);width:100%}
+.mlist button:hover{background:var(--mint-3)}
+.mlist button .lb{font-family:"Baloo 2",sans-serif;font-size:17px;font-weight:500;letter-spacing:.01em}
+.mlist button .chev{margin-left:auto;color:var(--ink-3)}
+.mlist button.dis{color:var(--ink-3);cursor:not-allowed}
+.mlist button.dis:hover{background:none}
+.mlist .cnt{margin-left:auto;background:var(--lav);color:var(--lav-ink);font-size:11.5px;font-weight:700;border-radius:999px;min-width:22px;text-align:center;padding:0 7px}
+.mlist hr{border:0;border-top:1px solid var(--line);margin:8px 4px}
+.langbtn{display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2);align-self:flex-start;margin-top:6px}
+.langbtn:hover{border-color:var(--line-2)}
+.ambience{flex:1;min-width:0;border-radius:16px;background:linear-gradient(160deg,var(--mint-3),var(--lav-2) 130%);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.ambience svg{width:100%;height:auto;max-height:340px;display:block}
+@keyframes drift{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-10px,-14px) rotate(-4deg)}}
+@keyframes sway{0%,100%{transform:rotate(0)}50%{transform:rotate(2.2deg)}}
+.fly{animation:drift 9s ease-in-out infinite;transform-origin:center}
+.swaying{animation:sway 7s ease-in-out infinite;transform-origin:bottom center}
+
+/* piezas comunes */
+.row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.col{flex:1 1 250px;min-width:0}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px;box-shadow:var(--shadow-sm)}
+.card>h3{font-size:17px;margin-bottom:2px}
+.card .hint{font-size:12px;color:var(--ink-3);margin:0 0 14px}
+label.f{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700;margin:0 0 5px}
+.inp{width:100%;border:1px solid var(--line-2);background:var(--surface-3);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--ink);font-family:inherit}
+.inp:focus{background:var(--surface);outline:2px solid var(--lav-line);outline-offset:0}
+.inp.ro{color:var(--ink-3)}
+.field{margin-bottom:13px}
+.msg{font-size:12px;margin-top:5px;display:flex;gap:5px;align-items:flex-start}
+.msg.bad{color:var(--blush-ink)} .msg.good{color:var(--mint-ink)}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{background:var(--surface-3)}
+.btn.pri{background:var(--mint);border-color:var(--mint-line);color:var(--mint-ink)}
+.btn.pri:hover{background:var(--mint-2)}
+.btn.lav{background:var(--lav);border-color:var(--lav-line);color:var(--lav-ink)}
+.btn.dgr{background:var(--blush-2);border-color:var(--blush);color:var(--blush-ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:8px}
+.btns{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;gap:3px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:7px 13px;font-size:13.5px;color:var(--ink-3);cursor:pointer;font-weight:600}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--mint-line)}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.item .nm{font-weight:700;font-size:13.5px}
+.item .sb{font-size:12px;color:var(--ink-3)}
+.item .sp{margin-left:auto;display:flex;gap:7px;align-items:center}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+.chip.host{background:var(--butter-2);color:var(--butter-ink);border-color:var(--butter)}
+.chip.guest{background:var(--lav-2);color:var(--lav-ink);border-color:var(--lav)}
+.chip.pub{background:var(--mint-3);color:var(--mint-ink);border-color:var(--mint)}
+.chip.priv{background:var(--sky-2);color:#2E5866;border-color:var(--sky)}
+.chip.bad{background:var(--blush-2);color:var(--blush-ink);border-color:var(--blush)}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700;padding:0 12px 8px 0;border-bottom:1px solid var(--line)}
+table.data td{padding:10px 12px 10px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+table.data tr.you td{background:var(--mint-3)}
+table.data td.num{font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
+.tablewrap{overflow-x:auto}
+.empty{border:1px dashed var(--line-2);border-radius:14px;padding:30px 20px;text-align:center;color:var(--ink-3);font-size:12.5px;background:var(--surface-3)}
+.empty b{display:block;color:var(--ink-2);font-size:14px;margin-bottom:4px;font-family:"Baloo 2",sans-serif;font-weight:600}
+.empty svg{width:44px;height:44px;margin-bottom:10px;opacity:.55}
+.code{font-family:"IBM Plex Mono",monospace;font-size:23px;font-weight:600;letter-spacing:.2em;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:7px 16px;display:inline-block;color:var(--ink)}
+.searchbar{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;box-shadow:var(--shadow-sm)}
+.searchbar .wrap{position:relative;flex:1;display:flex;align-items:center;gap:9px}
+.searchbar input{border:0;background:none;font-size:15px;font-family:"IBM Plex Mono",monospace;letter-spacing:.18em;text-transform:uppercase;width:100%;color:var(--ink)}
+.searchbar input:focus{outline:none}
+.dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);padding:18px;max-width:330px}
+.dialog h4{font-size:16px;margin-bottom:6px}
+.dialog p{font-size:12.5px;color:var(--ink-2);margin:0 0 14px}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line-2);border-radius:12px;padding:13px;cursor:pointer;background:var(--surface);flex:1}
+.opt[aria-checked="true"]{border-color:var(--mint-line);background:var(--mint-3);box-shadow:0 0 0 2px var(--mint-2)}
+.opt .t{font-weight:700;font-size:13.5px}
+.opt .m{width:18px;height:18px;border-radius:50%;border:1.6px solid var(--line-2);margin-left:auto;flex:0 0 auto;display:grid;place-items:center}
+.opt[aria-checked="true"] .m{border-color:var(--mint-line);background:var(--mint)}
+.opt[aria-checked="true"] .m span{width:7px;height:7px;border-radius:50%;background:var(--mint-ink);display:block}
+.notice{border:1px solid var(--blush);background:var(--blush-2);color:var(--blush-ink);border-radius:12px;padding:15px 17px;font-size:13px;display:flex;gap:11px;align-items:flex-start}
+.langlist{display:flex;flex-direction:column;gap:6px}
+.langlist button{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:11px 14px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left}
+.langlist button[aria-selected="true"]{border-color:var(--mint-line);background:var(--mint-3)}
+.langlist button .ck{margin-left:auto;color:var(--mint-ink)}
+/* ===== partida ===== */
+.game{display:grid;grid-template-columns:152px minmax(0,1fr) 194px;gap:16px;align-items:start;flex:1;min-height:0}
+.bsvg{width:100%;height:auto;display:block}
+.gcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.gmid{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.glab{font-size:9.5px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);font-weight:700;margin-bottom:8px}
+.gsep{border:0;border-top:1px solid var(--line);margin:0}
+
+.pl{display:flex;align-items:center;gap:8px;padding:4px 0}
+.pl .nm2{font-size:13px;font-weight:700;line-height:1.15;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl.act .nm2{color:var(--mint-ink)}
+.pl.act{background:linear-gradient(90deg,var(--mint-3),transparent);border-radius:8px;padding-left:6px;margin-left:-6px}
+.pl.out{opacity:.45}
+.pl .pts{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.tag{font-size:9.5px;font-weight:700;letter-spacing:.03em;color:var(--ink-3);white-space:nowrap}
+.tag.g{color:var(--lav-ink)} .tag.b{color:var(--blush-ink)} .tag.y{color:var(--butter-ink)}
+
+.pips{display:flex;gap:5px;align-items:center}
+.pa{display:flex;align-items:baseline;gap:7px}
+.pa b{font-family:"Baloo 2",sans-serif;font-size:34px;font-weight:700;line-height:.9;color:var(--ink)}
+.pa span{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);font-weight:700}
+
+.clock{display:flex;align-items:center;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:34px;font-weight:600;color:var(--mint-ink);line-height:1}
+.clock.low{color:var(--blush-ink)}
+.clock svg{width:24px;height:24px;stroke-width:1.7}
+.gwhen{font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.gwho{font-family:"Baloo 2",sans-serif;font-size:17px;font-weight:600}
+
+.acts{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.act{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--surface);border-radius:999px;
+  padding:5px 12px 5px 9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.act:hover{background:var(--mint-3);border-color:var(--mint-line);color:var(--mint-ink)}
+.act[disabled]{opacity:.4;cursor:not-allowed}
+.act em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);font-weight:600}
+
+.hand{display:flex;gap:6px;flex-wrap:wrap}
+.crd{width:48px;height:66px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface-3);position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+.crd svg{position:absolute;inset:0;width:100%;height:100%}
+.crd i{position:absolute;left:6px;top:3px;font-style:normal;font-family:"Baloo 2",sans-serif;font-weight:700;font-size:14px;color:var(--ink-2)}
+.crd.back{background:linear-gradient(160deg,var(--lav-2),var(--lav));border-color:var(--lav-line)}
+.crd.sm{width:34px;height:47px}
+
+.chat{display:flex;flex-direction:column;gap:7px;background:var(--surface-3);border-radius:12px;padding:11px 12px;flex:1;min-height:150px}
+.cmsg{font-size:12px;line-height:1.4;color:var(--ink-2);position:relative;padding-right:18px}
+.cmsg b{color:var(--ink);font-size:11.5px}
+.cmsg .rep{position:absolute;right:-2px;top:0;border:0;background:none;cursor:pointer;color:var(--line-2);padding:0;line-height:1}
+.cmsg .rep:hover{color:var(--blush-ink)}
+.cbox{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-3);margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+.endturn{width:100%;justify-content:center;padding:12px 16px;font-size:15px}
+
+.hud{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.hud .pa b{font-size:40px}
+.hud .hand{justify-content:center}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-3);font-weight:700;padding:0 14px 9px 0}
+.tbl td{padding:9px 14px 9px 0;border-top:1px solid var(--line);vertical-align:middle}
+.tbl td.num{font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
+.tbl tr.you td{background:linear-gradient(90deg,var(--mint-3),transparent)}
+
+@media (max-width:1180px){
+  .shell{grid-template-columns:1fr}
+  .rail,.notes{position:static;max-height:none;border:0;border-bottom:1px solid var(--line)}
+  .notes{border-top:1px solid var(--line)}
+}
+@media (max-width:720px){.mainrow{flex-direction:column}.mlist{flex:1 1 auto}.screen{padding:18px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <defs>
+  <symbol id="i-rooms" viewBox="0 0 24 24"><path d="M5 20V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14"/><path d="M3 20h18"/><circle cx="12.5" cy="12.5" r="1"/><path d="M16 20V9l3 2v9"/></symbol>
+  <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15 15.6a4.6 4.6 0 0 1 5.8 3.4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 1.8"/></symbol>
+  <symbol id="i-ranking" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 5.5H5.5v1A3.5 3.5 0 0 0 9 10"/><path d="M16 5.5h2.5v1A3.5 3.5 0 0 1 15 10"/><path d="M12 13v3.5"/><path d="M8.5 20h7"/><path d="M10 20a2 2 0 0 1 4 0"/></symbol>
+  <symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7"/><path d="M17 15l3-3-3-3"/><path d="M20 12h-8"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="m4 8 7.1 5a1.6 1.6 0 0 0 1.8 0L20 8"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8"/><path d="M12 3.6c2.2 2.4 3.3 5.3 3.3 8.4S14.2 18 12 20.4C9.8 18 8.7 15.1 8.7 12S9.8 6 12 3.6Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M15 6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.8" y="10.5" width="14.4" height="9.2" rx="2.4"/><path d="M8.4 10.5V8a3.6 3.6 0 0 1 7.2 0v2.5"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 17.5 5.5 7l4 4L12 5.5 14.5 11l4-4L20 17.5z"/><path d="M4.8 20h14.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.6" r="3.6"/><path d="M5 19.4a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.4"/><circle cx="9" cy="10" r="1.7"/><path d="m5 17 4.4-4.2a1.6 1.6 0 0 1 2.2 0L19 19"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4.5V9h-4.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5.5"/><path d="m10.5 6.5-5 5.5 5 5.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.6 21 19.4H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5 18.5 12 8 18.5z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15"/><path d="M9.5 7V5.4A1.4 1.4 0 0 1 10.9 4h2.2a1.4 1.4 0 0 1 1.4 1.4V7"/><path d="M6.5 7l.9 11.2A1.9 1.9 0 0 0 9.3 20h5.4a1.9 1.9 0 0 0 1.9-1.8L17.5 7"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 7v5.2l3.4 2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12.5c0 3.9-3.6 7-8 7-1 0-2-.2-2.9-.5L4.5 20.5l1.3-3.6A6.7 6.7 0 0 1 4 12.5c0-3.9 3.6-7 8-7s8 3.1 8 7Z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M20 4 4 10.6l6.4 2.4L13 19.4z"/><path d="m10.4 13 3.2-3.2"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 20V4.6"/><path d="M6 5.2c3.4-1.6 6.6 1.6 10 0v7.6c-3.4 1.6-6.6-1.6-10 0Z"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="8.5" y="5" width="10" height="14" rx="2"/><path d="M6 7.4A2 2 0 0 0 5 9.1V17a2 2 0 0 0 2 2h6.5"/></symbol>
+  <symbol id="i-brick" viewBox="0 0 24 24"><rect x="4.5" y="13.5" width="15" height="6" rx="1.4"/><rect x="7" y="7.5" width="10" height="6" rx="1.4"/><path d="M12 7.5v-3"/></symbol>
+  <symbol id="i-knight" viewBox="0 0 24 24"><circle cx="12" cy="6.6" r="2.6"/><path d="M12 9.2v6.4"/><path d="M8.6 12.2h6.8"/><path d="m9 19.6 3-4 3 4"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="m6.4 6.4 11.2 11.2"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V6"/><path d="m6.5 11.5 5.5-5.5 5.5 5.5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.4 3 5.5 13.6h5.4L10.6 21l7.9-10.6h-5.4z"/></symbol>
+
+  <symbol id="m-leaf" viewBox="0 0 40 40"><path d="M20 5c11 5 12.5 19 0 30C7.5 24 9 10 20 5Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width="1.4"/><path d="M20 8.5v22" stroke="#6FAF8B" stroke-width="1.2" fill="none"/><path d="M20 15.5 14 19M20 21l6 3.4" stroke="#6FAF8B" stroke-width="1.1" fill="none"/></symbol>
+  <symbol id="m-cat" viewBox="0 0 40 40"><path d="M28 15.5c1-2.5 2.4-4 3.6-4.8M31.6 10.7c-.6-1.2-.4-2.4.4-3" stroke="#8DA093" stroke-width="1.3" fill="none" stroke-linecap="round"/><circle cx="10" cy="26" r="5" fill="#C9C2EC"/><circle cx="17" cy="24" r="5.6" fill="#B9AEE8"/><circle cx="24" cy="22" r="5.2" fill="#C9C2EC"/><circle cx="30" cy="19.5" r="4.6" fill="#D8D2F2"/><circle cx="31.4" cy="18.6" r=".9" fill="#3B3568"/></symbol>
+  <symbol id="m-butterfly" viewBox="0 0 40 40"><path d="M19.4 20c-2-6-7.2-9.4-11-7.6-3.4 1.6-2.6 7.4 1 10.4 2.6 2.2 6.6 3 10 2.4Z" fill="#F5C9C6" stroke="#D89A96" stroke-width="1.1"/><path d="M20.6 20c2-6 7.2-9.4 11-7.6 3.4 1.6 2.6 7.4-1 10.4-2.6 2.2-6.6 3-10 2.4Z" fill="#BFE0EC" stroke="#8FBFD1" stroke-width="1.1"/><path d="M19.6 20c-1.6 3.6-5 6-8 6-2.6 0-3.4-2.6-1.6-4.6" fill="#F7E9B0" stroke="#D9C271" stroke-width="1.1"/><path d="M20.4 20c1.6 3.6 5 6 8 6 2.6 0 3.4-2.6 1.6-4.6" fill="#F7E9B0" stroke="#D9C271" stroke-width="1.1"/><path d="M20 12.5c1 2.4 1 12 0 16.5-1-4.5-1-14.1 0-16.5Z" fill="#5F7165"/><path d="M20 12.5 17 8.4M20 12.5 23 8.4" stroke="#5F7165" stroke-width="1.2" stroke-linecap="round"/></symbol>
+  <symbol id="m-sprout" viewBox="0 0 40 40"><path d="M20 33V17" stroke="#6FAF8B" stroke-width="1.8" stroke-linecap="round"/><path d="M20 21c-6.5 0-9-3.5-9-8 5 0 9 2.5 9 8Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width="1.2"/><path d="M20 18c5.5 0 8-3 8-7-4.5 0-8 2-8 7Z" fill="#DCEFE2" stroke="#6FAF8B" stroke-width="1.2"/></symbol>
+ </defs>
+</svg>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="brand"><svg viewBox="0 0 40 40"><use href="#m-sprout"/></svg><h1>Torres</h1></div>
+    <p class="sub">Prototipo de pantallas · flujo completo, de la conexión al resultado de la partida</p>
+    <div class="group"><h4>Identidad y acceso</h4><nav class="nav" id="nav1"></nav></div>
+    <div class="group"><h4>Menú y cuenta</h4><nav class="nav" id="nav2"></nav></div>
+    <div class="group"><h4>Social</h4><nav class="nav" id="nav3"></nav></div>
+    <div class="group"><h4>Resultados</h4><nav class="nav" id="nav4"></nav></div>
+    <div class="group"><h4>Salas</h4><nav class="nav" id="nav5"></nav></div>
+    <div class="group"><h4>Partida</h4><nav class="nav" id="nav6"></nav></div>
+    <div class="swlab">Identidad</div><div class="sw" id="sw-ident"></div>
+    <div class="swlab">Conexión</div><div class="sw" id="sw-conn"></div>
+    <div class="swlab">Rol en la sala</div><div class="sw" id="sw-rol"></div>
+    <div class="swlab">Jugadores en la sala</div><div class="sw" id="sw-ocup"></div>
+    <div class="swlab">Tipo de sala</div><div class="sw" id="sw-tipo"></div>
+    <div class="swlab">Turno</div><div class="sw" id="sw-turno"></div>
+    <div class="swlab">Menú del avatar</div><div class="sw" id="sw-avmenu"></div>
+    <div class="swlab">Datos</div><div class="sw" id="sw-datos"></div>
+    <div class="swlab">Amigos</div><div class="sw" id="sw-amigos"></div>
+  </aside>
+
+  <main class="stage">
+    <div class="stagehead"><h2 id="scr-title">—</h2></div>
+    <div class="win">
+      <div class="titlebar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="t">Torres — cliente de escritorio</span>
+        <span class="conn" id="conn-ind"></span>
+      </div>
+      <div class="screen" id="screen"></div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+const ic  = (n,c="") => `<svg class="ic ${c}"><use href="#i-${n}"/></svg>`;
+const mot = (n) => `<svg viewBox="0 0 40 40"><use href="#m-${n}"/></svg>`;
+
+const state = {scr:"PT-02", ident:"cuenta", conn:"conectado", rol:"anfitrion", ocup:2, tipo:"publica", datos:"con", turno:"tuyo", avmenu:"cerrado"};
+const IDENT={sin:"Sin identidad",cuenta:"Con cuenta",invitado:"Invitado"};
+const CONN={conectado:"Conectado",conectando:"Conectando",caido:"Sin conexión"};
+const ROL={anfitrion:"Anfitrión",miembro:"Miembro"};
+const TIPO={publica:"Pública",privada:"Privada"};
+const DATOS={con:"Con contenido",vacio:"Vacío"};
+const AMIGOS={lista:"Amigos",recibidas:"Recibidas",enviadas:"Enviadas",buscar:"Buscar"};
+const TURNO={tuyo:"Tuyo",ajeno:"De otro"};
+const AVMENU={cerrado:"Cerrado",abierto:"Abierto"};
+
+const me = () => state.ident==="invitado" ? {nm:"Oruga_23", rl:"Invitado", m:"cat", cls:"lav"}
+                                          : {nm:"ana_torres", rl:"Con cuenta", m:"butterfly", cls:""};
+
+function appbar(sub){
+  const m=me();
+  const right = state.ident==="sin"
+    ? `<div class="who"><button>${ic("user","sm")} Iniciar sesión</button></div>`
+    : state.ident==="cuenta"
+      ? `<div class="who"><div><div class="nm">${m.nm}</div><div class="rl">${m.rl}</div></div>
+          <button class="avbtn"><div class="av ${m.cls}">${mot(m.m)}</div>${ic("chev","sm")}</button>
+          ${state.avmenu==="abierto"?`<div class="avmenu"><button>${ic("user","sm")} Perfil</button></div>`:""}</div>`
+      : `<div class="who"><div><div class="nm">${m.nm}</div><div class="rl">${m.rl}</div></div><div class="av ${m.cls}">${mot(m.m)}</div></div>`;
+  return `<div class="appbar"><div class="logo"><svg viewBox="0 0 40 40">${"<use href='#m-sprout'/>"}</svg>
+    <div class="gamename">TORRES<small>${sub||"menú principal"}</small></div></div>${right}</div>`;
+}
+const offline = () => `<div style="margin:auto;max-width:420px;width:100%">
+  <div class="notice">${ic("alert")}<div><b>No se pudo establecer una conexión con el servidor.</b><br>Revisa tu conexión e inténtalo de nuevo.</div></div>
+  <div class="btns" style="margin-top:14px;justify-content:center"><button class="btn pri">${ic("refresh","sm")} Reintentar</button><button class="btn">Salir</button></div></div>`;
+
+/* Botón de regreso de pantalla: va al pie y su rótulo dice a dónde se vuelve.
+   En los formularios, "Volver" sigue siendo el botón secundario de la tarjeta. */
+const backbar = (label) => `<div class="btns" style="margin-top:16px"><button class="btn">${ic("back","sm")} ${label}</button></div>`;
+
+/* ilustración de ambientación del menú */
+const scene = () => `<svg viewBox="0 0 420 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Ilustración de ambientación: plantas, una oruga y mariposas">
+  <circle cx="336" cy="66" r="36" fill="#FCF6DF"/>
+  <ellipse cx="118" cy="152" rx="126" ry="106" fill="#DCEFE2" opacity=".5"/>
+  <ellipse cx="308" cy="196" rx="118" ry="96" fill="#EBE8F8" opacity=".5"/>
+  <path d="M0 286c72-26 152-26 216-8 62 18 138 20 204-6v48H0z" fill="#DCEFE2"/>
+  <path d="M0 286c72-26 152-26 216-8 62 18 138 20 204-6" stroke="#A8D5BA" stroke-width="2.5" fill="none"/>
+  <g class="swaying">
+    <path d="M96 288c-6-46 0-88 14-118" stroke="#6FAF8B" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M104 196c-32 8-50-4-54-28 30-8 51 4 54 28Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width="2"/>
+    <path d="M112 172c26-10 34-28 26-48-22 10-30 28-26 48Z" fill="#DCEFE2" stroke="#6FAF8B" stroke-width="2"/>
+    <path d="M99 238c-24 2-37-8-39-25 22-4 38 7 39 25Z" fill="#DCEFE2" stroke="#6FAF8B" stroke-width="1.8"/>
+  </g>
+  <g class="swaying" style="animation-delay:-3.2s">
+    <path d="M312 288c8-50 2-92-14-122" stroke="#6FAF8B" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M302 198c32 6 50-6 52-30-30-6-50 6-52 30Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width="2"/>
+    <path d="M294 172c-24-12-30-30-20-49 21 12 27 30 20 49Z" fill="#DCEFE2" stroke="#6FAF8B" stroke-width="2"/>
+  </g>
+  <g class="swaying" style="animation-delay:-5s">
+    <path d="M212 288c-2-24-6-38-14-50" stroke="#6FAF8B" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <path d="M200 244c-18 2-27-6-28-19 16-3 27 5 28 19Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width="1.6"/>
+    <path d="M204 238c14-6 18-16 14-27-12 6-16 16-14 27Z" fill="#DCEFE2" stroke="#6FAF8B" stroke-width="1.6"/>
+  </g>
+  <path d="M118 252c52-16 116-20 172-6" stroke="#A8D5BA" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <g transform="translate(160 214) scale(1.15)">
+    <circle cx="10" cy="26" r="5" fill="#C9C2EC"/><circle cx="17" cy="24" r="5.6" fill="#B9AEE8"/>
+    <circle cx="24" cy="22.4" r="5.2" fill="#C9C2EC"/><circle cx="30" cy="20.4" r="4.6" fill="#D8D2F2"/>
+    <circle cx="31.6" cy="19.4" r=".9" fill="#3B3568"/>
+    <path d="M28 16c1-2.4 2.4-3.8 3.6-4.6M31.6 11.4c-.6-1.2-.4-2.4.4-3" stroke="#8DA093" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(250 40) scale(1.9)"><g class="fly"><use href="#m-butterfly" width="40" height="40"/></g></g>
+  <g transform="translate(72 82) scale(1.2)" opacity=".7"><g class="fly" style="animation-delay:-4.5s"><use href="#m-butterfly" width="40" height="40"/></g></g>
+</svg>`;
+
+/* ===== piezas de la partida ===== */
+const BC=["........",".AA..BB.",".AA..B..","........",".C..DD..",".CC..D..","..C...EE",".......E"];
+const BL=["........",".21..13.",".13..2..","........",".2..31..",".12..2..","..3...21",".......3"];
+const PLC=["mint","lav","but","sky"];
+const PCOL={mint:["#A8D5BA","#5E9A78"],lav:["#C9C2EC","#8F82CE"],but:["#F7E9B0","#C7A94A"],sky:["#BFE0EC","#7BAEC4"]};
+const PLS=[{nm:"ana_torres",yo:true},{nm:"sofia99"},{nm:"Oruga_23",guest:true},{nm:"dgomez"}];
+const KN0={"1,2":0,"2,1":1,"4,4":2,"6,7":3};
+const KING0="4,5";
+
+const players = () => PLS.slice(0, state.ocup===2?2:state.ocup===3?3:4);
+const knights = () => {const n=players().length,o={};for(const k in KN0) if(KN0[k]<n) o[k]=KN0[k];return o;};
+
+function flower(x,y,r,pal){
+  pal=pal||["#F5C9C6","#D89A96"];
+  let p="";
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2-Math.PI/2, px=x+Math.cos(a)*r*.6, py=y+Math.sin(a)*r*.45;
+    p+=`<ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" rx="${(r*.56).toFixed(1)}" ry="${(r*.4).toFixed(1)}" fill="${pal[0]}" stroke="${pal[1]}" stroke-width=".9" transform="rotate(${(a*180/Math.PI+90).toFixed(0)} ${px.toFixed(1)} ${py.toFixed(1)})"/>`;
+  }
+  return p+`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r*.34).toFixed(1)}" fill="#F7E9B0" stroke="#D9C271" stroke-width=".9"/>`;
+}
+
+function cater(x,y,s,c,flip){
+  const p=PCOL[c]||PCOL.mint, d=flip?-1:1;
+  let g="";
+  for(let i=3;i>=0;i--)
+    g+=`<circle cx="${(x-d*i*s*.5).toFixed(1)}" cy="${(y-(i%2?s*.09:0)).toFixed(1)}" r="${(s*(.4-i*.035)).toFixed(1)}" fill="${p[0]}" stroke="${p[1]}" stroke-width=".9"/>`;
+  g+=`<path d="M${(x+d*s*.12).toFixed(1)} ${(y-s*.34).toFixed(1)} l ${(d*s*.14).toFixed(1)} ${(-s*.26).toFixed(1)} M${(x+d*s*.3).toFixed(1)} ${(y-s*.3).toFixed(1)} l ${(d*s*.05).toFixed(1)} ${(-s*.3).toFixed(1)}" stroke="${p[1]}" stroke-width="${(s*.09).toFixed(2)}" fill="none" stroke-linecap="round"/>`;
+  g+=`<circle cx="${(x+d*s*.22).toFixed(1)} " cy="${(y-s*.06).toFixed(1)}" r="${(s*.07).toFixed(1)}" fill="#3B3568"/>`;
+  return `<g>${g}</g>`;
+}
+
+function plant(x,y,lv,u){
+  let g=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(u*.66).toFixed(1)}" ry="${(u*.24).toFixed(1)}" fill="rgba(70,86,66,.15)"/>`;
+  const top=y-lv*u;
+  g+=`<path d="M${x.toFixed(1)} ${y.toFixed(1)} C ${(x-u*.14).toFixed(1)} ${(y-lv*u*.45).toFixed(1)} ${(x+u*.14).toFixed(1)} ${(y-lv*u*.72).toFixed(1)} ${x.toFixed(1)} ${top.toFixed(1)}" stroke="#6FAF8B" stroke-width="${Math.max(1.8,u*.14).toFixed(1)}" fill="none" stroke-linecap="round"/>`;
+  for(let i=1;i<=lv;i++){
+    const ly=y-i*u+u*.1, r=u*(.5-.05*(i-1)), s=i%2?1:-1;
+    g+=`<path d="M${x.toFixed(1)} ${ly.toFixed(1)} C ${(x+s*r*.5).toFixed(1)} ${(ly-r*.5).toFixed(1)} ${(x+s*r*1.25).toFixed(1)} ${(ly-r*.28).toFixed(1)} ${(x+s*r*1.35).toFixed(1)} ${(ly+r*.12).toFixed(1)} C ${(x+s*r*1.05).toFixed(1)} ${(ly+r*.5).toFixed(1)} ${(x+s*r*.35).toFixed(1)} ${(ly+r*.44).toFixed(1)} ${x.toFixed(1)} ${ly.toFixed(1)} Z" fill="#A8D5BA" stroke="#6FAF8B" stroke-width=".9"/>`;
+    g+=`<path d="M${x.toFixed(1)} ${ly.toFixed(1)} C ${(x-s*r*.45).toFixed(1)} ${(ly-r*.34).toFixed(1)} ${(x-s*r*.95).toFixed(1)} ${(ly-r*.1).toFixed(1)} ${(x-s*r*1.02).toFixed(1)} ${(ly+r*.2).toFixed(1)} C ${(x-s*r*.7).toFixed(1)} ${(ly+r*.42).toFixed(1)} ${(x-s*r*.25).toFixed(1)} ${(ly+r*.36).toFixed(1)} ${x.toFixed(1)} ${ly.toFixed(1)} Z" fill="#C7E3D1" stroke="#6FAF8B" stroke-width=".8"/>`;
+  }
+  g+=flower(x,top,u*.5);
+  return g;
+}
+
+function board(o){
+  o=o||{};
+  const kn=o.kn||{}, king=("king" in o)?o.king:KING0, sel=o.sel||null, hi=o.hi||[];
+  const yF=92,yN=412,wF=404,wN=656,cx=350,k=.45;
+  const f=v=>v*(1+k)/(1+k*v);
+  const yAt=v=>yF+(yN-yF)*f(v);
+  const wAt=v=>wF+(wN-wF)*f(v);
+  const P=(u,v)=>[cx+(u-.5)*wAt(v), yAt(v)];
+  const U=v=>15+12*f(v);
+  const nb=(r,c)=>(r<0||c<0||r>7||c>7)?".":BC[r][c];
+  const pt=a=>a[0].toFixed(1)+" "+a[1].toFixed(1);
+
+  let ground="", beds="", edges="", pieces=[];
+  const outer=[P(0,0),P(1,0),P(1,1),P(0,1)].map(pt).join(" L ");
+  ground+=`<path d="M ${outer} Z" fill="#DDEAD1"/>`;
+
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const u0=c/8,u1=(c+1)/8,v0=r/8,v1=(r+1)/8, ch=BC[r][c];
+    const q=[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)].map(pt).join(" L ");
+    if(ch===".") ground+=`<path d="M ${q} Z" fill="${(r+c)%2?"#D5E5C8":"#E3EFD8"}"/>`;
+    else{
+      beds+=`<path d="M ${q} Z" fill="${(r+c)%2?"#EFE4CC":"#F5EDD9"}"/>`;
+      const A=P(u0,v0),B=P(u1,v0),C=P(u1,v1),D=P(u0,v1),e=[];
+      if(nb(r-1,c)!==ch) e.push(`M ${pt(A)} L ${pt(B)}`);
+      if(nb(r+1,c)!==ch) e.push(`M ${pt(D)} L ${pt(C)}`);
+      if(nb(r,c-1)!==ch) e.push(`M ${pt(A)} L ${pt(D)}`);
+      if(nb(r,c+1)!==ch) e.push(`M ${pt(B)} L ${pt(C)}`);
+      if(e.length) edges+=`<path d="${e.join(" ")}" stroke="#C2AC7E" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    }
+  }
+
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const key=r+","+c, lv=+BL[r][c]||0;
+    const cv=(r+.5)/8, cu=(c+.5)/8, b=P(cu,cv), u=U(cv);
+    let g="";
+    if(hi.indexOf(key)>=0)
+      g+=`<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${(u*.8).toFixed(1)}" ry="${(u*.3).toFixed(1)}" fill="none" stroke="#84C1A0" stroke-width="2" stroke-dasharray="4 3"/>`;
+    if(sel===key)
+      g+=`<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${(u*.85).toFixed(1)}" ry="${(u*.32).toFixed(1)}" fill="none" stroke="#A79DDD" stroke-width="2.4"/>`;
+    if(lv) g+=plant(b[0],b[1],lv,u);
+    const top=b[1]-lv*u;
+    if(kn[key]!=null) g+=cater(b[0]+u*.34, top-u*.70, u*.9, PLC[kn[key]], c>3);
+    if(king===key){
+      const w=u*3;
+      g+=`<use href="#m-butterfly" x="${(b[0]-w/2).toFixed(1)}" y="${(top-u*2.2).toFixed(1)}" width="${w.toFixed(1)}" height="${w.toFixed(1)}"/>`;
+    }
+    if(g) pieces.push(g);
+  }
+  return `<svg class="bsvg" viewBox="0 0 700 452" role="img" aria-label="Tablero de la partida">
+    <defs><radialGradient id="gsun" cx=".5" cy=".16" r=".8"><stop offset="0" stop-color="#FCF6DF"/><stop offset="1" stop-color="#FCF6DF" stop-opacity="0"/></radialGradient></defs>
+    <rect x="0" y="0" width="700" height="452" fill="url(#gsun)"/>
+    ${ground}${beds}${edges}${pieces.join("")}</svg>`;
+}
+
+const catIcon = (c,s) => `<svg viewBox="0 0 24 24" style="width:${s||18}px;height:${s||18}px;overflow:visible">${cater(15,15,7,c)}</svg>`;
+const flowIcon = (s,dim) => `<svg viewBox="0 0 24 24" style="width:${s||18}px;height:${s||18}px;opacity:${dim?.3:1}">${flower(12,12,8)}</svg>`;
+
+function plrow(p,i,o){
+  o=o||{};
+  const t=[];
+  if(p.yo) t.push('<span class="tag">tú</span>');
+  if(p.guest) t.push('<span class="tag g">invitado</span>');
+  if(p.st==="des") t.push('<span class="tag y">sin conexión</span>');
+  if(p.st==="ret") t.push('<span class="tag b">retirado</span>');
+  return `<div class="pl ${o.act===i?"act":""} ${p.st==="ret"?"out":""}">
+    ${catIcon(PLC[i],20)}
+    <div style="min-width:0"><div class="nm2">${p.nm}</div>${t.length?`<div style="display:flex;gap:6px">${t.join("")}</div>`:""}</div>
+    ${o.pts?`<span class="pts">${o.pts[i]}</span>`:""}</div>`;
+}
+
+function chatpan(){
+  const m=(a,tx,rep)=>`<div class="cmsg"><b>${a}:</b> ${tx}${rep?`<button class="rep" title="Reportar">${ic("flag","sm")}</button>`:""}</div>`;
+  const body = state.datos==="vacio"
+    ? `<div class="cmsg" style="color:var(--ink-3)">Todavía nadie ha escrito.</div>`
+    : m("sofia99","suerte a todas",true)+m("Oruga_23","voy a por la jardinera grande")+m("ana_torres","cuidado con la mariposa")+m("sofia99","me quedan 2 PA",true);
+  return `<div class="chat">${body}<div class="cbox">${ic("send","sm")} Pulsa Enter para escribir</div></div>`;
+}
+
+const card = (n) => `<span class="crd"><svg viewBox="0 0 48 66">${flower(24,40,14)}</svg><i>${n}</i></span>`;
+
+const S={};
+
+S["PT-01"]={t:"Arranque y conexión",req:"Estado inicial del cliente",meta:"Conectando · sin conexión",
+ r(){ if(state.conn==="caido") return offline();
+  return `<div style="margin:auto;text-align:center">
+   <svg viewBox="0 0 40 40" style="width:76px;height:76px"><use href="#m-sprout"/></svg>
+   <div class="gamename" style="font-size:44px;margin-top:6px">TORRES</div>
+   <p style="color:var(--ink-3);margin-top:14px">${state.conn==="conectando"?"Conectando…":"Listo"}</p></div>`;}};
+
+S["PT-02"]={t:"Menú principal",req:"Punto de entrada del cliente",meta:"Opciones en lista · ambientación · idioma",
+ r(){ if(state.conn==="caido") return appbar()+offline();
+  const inv = state.ident==="cuenta", dis = state.ident!=="cuenta";
+  const opt=(i,l,extra,off)=>`<button class="${off?"dis":""}">${ic(i,"lg")}<span class="lb">${l}</span>${extra||'<span class="chev">'+ic("chev","sm")+'</span>'}</button>`;
+  return appbar()+`<div class="mainrow">
+   <div class="mlist">
+     ${opt("rooms","Salas")}
+     ${inv?opt("mail","Invitaciones",'<span class="cnt">2</span>'):""}
+     ${opt("friends","Amigos",null,dis)}
+     ${opt("history","Historial",null,dis)}
+     ${opt("ranking","Ranking",null,state.ident==="sin")}
+     <hr>
+     ${opt("exit","Salir")}
+     <button class="langbtn">${ic("globe","sm")} Idioma · Español</button>
+   </div>
+   <div class="ambience">${scene()}</div></div>`;}};
+
+S["PT-20"]={t:"Idioma",req:"Cambio de idioma de la interfaz",meta:"Accesible solo desde el menú principal",
+ r(){ return appbar("idioma")+`<div class="row"><div class="col" style="max-width:340px"><div class="card">
+   <h3>Idioma de la interfaz</h3><p class="hint">Se aplica de inmediato a todas las pantallas.</p>
+   <div class="langlist">
+     <button aria-selected="true">${ic("globe","sm")} Español <span class="ck">${ic("check","sm")}</span></button>
+     <button>${ic("globe","sm")} English</button>
+   </div>
+   <p style="font-size:11.5px;color:var(--ink-3);margin:10px 0 0">La preferencia se guarda en este equipo, no en tu cuenta.</p>
+   <div class="btns" style="margin-top:16px"><button class="btn">${ic("back","sm")} Volver</button></div>
+ </div></div></div>`;}};
+
+S["PT-03"]={t:"Iniciar sesión",req:"Cuentas",meta:"Acceso con cuenta o como invitado · rechazo del baneo permanente",
+ r(){ const ban = state.datos==="vacio";
+  return appbar("iniciar sesión")+`<div class="row" style="flex:1;align-items:center">
+   <div class="col" style="max-width:348px"><div class="card">
+     <h3>Iniciar sesión</h3><p class="hint">Entra con tu cuenta para jugar y guardar tus resultados.</p>
+     <div class="field"><label class="f">Username</label><input class="inp" value="ana_torres"></div>
+     <div class="field"><label class="f">Contraseña</label><input class="inp" type="password" value="············">
+       ${ban?"":`<div class="msg bad">${ic("alert","sm")} Username o contraseña incorrectos.</div>`}</div>
+     ${ban?`<div class="notice" style="margin-bottom:13px">${ic("ban")}<div><b>Esta cuenta no puede iniciar sesión.</b><br>Su acceso quedó bloqueado de forma permanente tras acumular tres prohibiciones temporales.</div></div>`:""}
+     <div class="btns"><button class="btn pri">Entrar</button><button class="btn">Crear cuenta</button></div>
+     <div class="btns" style="margin-top:12px">
+       <button class="btn sm" style="border:0;background:none;padding-left:0;color:var(--lav-ink)">¿Olvidaste tu acceso?</button>
+       <button class="btn sm" style="border:0;background:none;color:var(--lav-ink)">Jugar como invitado</button></div>
+   </div></div>
+   <div class="col" style="min-width:220px"><div class="ambience" style="min-height:300px">${scene()}</div></div></div>${backbar("Volver al menú")}`;}};
+
+S["PT-04"]={t:"Crear cuenta",req:"Cuentas",meta:"Username · correo · contraseña",
+ r(){ return appbar("crear cuenta")+`<div class="row" style="flex:1;align-items:center">
+  <div class="col" style="max-width:360px"><div class="card">
+   <h3>Crear cuenta</h3><p class="hint">Con esto podrás jugar, tener amigos y aparecer en el ranking.</p>
+   <div class="field"><label class="f">Username</label><input class="inp" value="ana_torres">
+     ${state.datos==="vacio"
+       ? `<div class="msg bad">${ic("alert","sm")} No disponible, ya existe una cuenta con ese nombre.</div>`
+       : `<div class="msg good">${ic("check","sm")} Disponible. De 3 a 20 caracteres: letras, números y guion bajo.</div>`}</div>
+   <div class="field"><label class="f">Correo</label><input class="inp" value="ana@correo.mx">
+     <div class="msg bad">${ic("alert","sm")} Ya hay una cuenta con este correo.</div></div>
+   <div class="field"><label class="f">Contraseña</label><input class="inp" type="password" value="············"></div>
+   <div class="btns"><button class="btn pri">Crear cuenta</button><button class="btn">${ic("back","sm")} Volver</button></div>
+  </div></div>
+  <div class="col" style="min-width:220px"><div class="ambience" style="min-height:320px">${scene()}</div></div></div>`;}};
+
+S["PT-05"]={t:"Recuperar acceso",req:"El correo es la vía de recuperación",meta:"Tres pasos: correo · código · contraseña nueva",
+ r(){ return appbar("recuperar acceso")+`<div class="row" style="flex:1;align-items:flex-start">
+  <div class="col" style="max-width:290px"><div class="card">
+   <h3 style="font-size:16px">1 · Tu correo</h3><p class="hint">Te enviaremos un código.</p>
+   <div class="field"><label class="f">Correo</label><input class="inp" value="ana@correo.mx">
+     <div class="msg bad">${ic("alert","sm")} Ingresa un correo electrónico válido.</div></div>
+   <div class="btns"><button class="btn pri">${ic("mail","sm")} Enviar código</button><button class="btn">${ic("back","sm")} Volver a iniciar sesión</button></div>
+  </div></div>
+  <div class="col" style="max-width:290px"><div class="card">
+   <h3 style="font-size:16px">2 · El código</h3><p class="hint">Escribe el que has recibido.</p>
+   <div class="field"><label class="f">Código</label><input class="inp mono" style="letter-spacing:.3em;text-align:center" value="7 4 2 9"></div>
+   <div class="msg bad">${ic("alert","sm")} Ese código no es el de tu cuenta.</div>
+   <div class="btns" style="margin-top:10px"><button class="btn pri">Comprobar</button></div>
+  </div></div>
+  <div class="col" style="max-width:290px"><div class="card">
+   <h3 style="font-size:16px">3 · Contraseña nueva</h3><p class="hint">Con esto vuelves a entrar.</p>
+   <div class="field"><label class="f">Nueva contraseña</label><input class="inp" type="password" value="············"></div>
+   <div class="field"><label class="f">Repítela</label><input class="inp" type="password" value="············"></div>
+   <div class="btns"><button class="btn pri">${ic("check","sm")} Guardar</button><button class="btn">${ic("back","sm")} Volver a iniciar sesión</button></div>
+  </div></div></div>`;}};
+
+S["PT-06"]={t:"Entrar como invitado",req:"Jugar con cuenta o como invitado",meta:"Alias para la sesión",
+ r(){ return appbar("jugar como invitado")+`<div class="row" style="flex:1;align-items:center">
+  <div class="col" style="max-width:340px"><div class="card">
+   <h3>Jugar como invitado</h3><p class="hint">Sin cuenta, solo para esta sesión.</p>
+   <div class="field"><label class="f">Tu nombre en la partida</label><input class="inp" value="Oruga_23">
+     <div class="msg good">${ic("check","sm")} Puede repetirse: en la sala se te distinguirá por tu color.</div></div>
+   <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px">Como invitado no se guarda tu progreso: no tendrás historial ni ranking, no podrás tener amigos ni enviar invitaciones, y no podrás reportar ni ser reportado.</p>
+   <div class="btns"><button class="btn pri">Entrar</button><button class="btn">${ic("back","sm")} Volver</button></div>
+  </div></div>
+  <div class="col" style="min-width:220px"><div class="ambience" style="min-height:300px">${scene()}</div></div></div>`;}};
+
+S["PT-07"]={t:"Perfil",req:"Perfil con avatar",meta:"Username y avatar",
+ r(){ const m=me(); const falta = state.datos==="vacio";
+  return appbar("perfil")+`<div class="row">
+  <div class="col" style="max-width:230px"><div class="card" style="text-align:center">
+    <div class="av lg ${falta?"":m.cls}" style="margin:0 auto 14px">${falta?ic("user","lg"):mot(m.m)}</div>
+    <div class="btns" style="justify-content:center"><button class="btn sm">${ic("image","sm")} Cambiar avatar</button></div>
+    <p class="hint" style="margin:10px 0 0">PNG o JPG · hasta 5 MB</p>
+    ${falta
+      ? `<div class="msg" style="justify-content:center;color:var(--ink-3)">${ic("alert","sm")} Tu imagen ya no está en el servidor: se muestra el avatar por defecto.</div>`
+      : `<div class="msg bad" style="justify-content:center">${ic("alert","sm")} El archivo pesa 7.4 MB.</div>`}
+  </div></div>
+  <div class="col" style="max-width:360px"><div class="card">
+    <h3>Tu cuenta</h3><p class="hint">Así te ven los demás jugadores.</p>
+    <div class="field"><label class="f">Username</label><input class="inp" value="ana_torres">
+      <div class="msg bad">${ic("alert","sm")} No disponible: ya existe una cuenta con ese nombre.</div></div>
+    <div class="field"><label class="f">Correo</label><input class="inp ro" value="ana@correo.mx" readonly></div>
+    <div class="btns"><button class="btn pri">Guardar</button><button class="btn">Configurar cuenta</button></div>
+  </div></div></div>${backbar("Volver al menú")}`;}};
+
+S["PT-08"]={t:"Configurar cuenta",req:"Ajustes de la cuenta",meta:"Solo lo que es dato de la cuenta",
+ r(){ return appbar("configurar cuenta")+`<div class="row">
+  <div class="col" style="max-width:400px"><div class="card">
+      <div style="font-weight:700;margin-bottom:4px">Eliminar la cuenta</div>
+      <p class="hint" style="margin-bottom:12px">Se borran tu perfil, tus amistades y tus partidas. No se puede deshacer.</p>
+      <button class="btn dgr">${ic("trash","sm")} Eliminar cuenta</button>
+  </div></div></div>${backbar("Volver al perfil")}`;}};
+
+S["PT-09"]={t:"Amigos",req:"Amigos y solicitudes",meta:"Una pestaña cada vez · usa el conmutador Amigos",
+ r(){
+  const tab = state.amigos || "lista";
+  const vacio = state.datos==="vacio";
+  const tabs = Object.entries(AMIGOS).map(([k,l])=>
+    `<button aria-selected="${k===tab}">${l}</button>`).join("");
+  const head = appbar("amigos")+`<div class="tabs">${tabs}</div>`;
+
+  // Pestaña Amigos: la lista, sin ninguna opción de invitar.
+  // Invitar a una sala exige estar dentro de una sala y se hace en PT-16.
+  if(tab==="lista"){
+    if(vacio) return head+`<div class="empty">${mot("leaf")}<b>Todavía no tienes amigos</b>Busca a alguien por su username para enviarle una solicitud.</div>`;
+    const f=(n,m,cls)=>`<div class="item"><div class="av sm ${cls||""}">${mot(m)}</div><div><div class="nm">${n}</div></div>
+      <div class="sp"><button class="btn sm dgr" title="Eliminar de mis amigos">${ic("trash","sm")} Eliminar</button></div></div>`;
+    return head+`<div class="list" style="max-width:560px">${f("luis_m","butterfly")}${f("sofia99","leaf","but")}${f("dgomez","cat","lav")}</div>`;
+  }
+
+  if(tab==="recibidas"){
+    if(vacio) return head+`<h4 style="font-size:14px;margin:14px 0 9px">Solicitudes recibidas</h4>
+      <div class="empty">${mot("butterfly")}<b>No tienes solicitudes</b>Aquí verás las solicitudes de amistad que te envíen.</div>`;
+    const r=(n,m,cls)=>`<div class="item"><div class="av sm ${cls||""}">${mot(m)}</div><div><div class="nm">${n}</div><div class="sb">quiere ser tu amigo</div></div>
+      <div class="sp"><button class="btn sm pri">${ic("check","sm")} Aceptar</button><button class="btn sm">${ic("x","sm")} Rechazar</button></div></div>`;
+    return head+`<h4 style="font-size:14px;margin:14px 0 9px">Solicitudes recibidas</h4>
+      <div class="list" style="max-width:560px">${r("marco_r","butterfly","sky")}${r("pau_v","leaf")}</div>`;
+  }
+
+  if(tab==="enviadas"){
+    if(vacio) return head+`<div class="empty">${mot("sprout")}<b>No has enviado solicitudes</b>Las que envíes aparecerán aquí hasta que las respondan.</div>`;
+    const e=(n,m,cls)=>`<div class="item"><div class="av sm ${cls||""}">${mot(m)}</div><div><div class="nm">${n}</div><div class="sb">esperando respuesta</div></div>
+      <div class="sp"><span class="chip">${ic("clock","sm")} Pendiente</span></div></div>`;
+    return head+`<div class="list" style="max-width:560px">${e("ines_b","cat","lav")}${e("tomas","butterfly")}</div>`;
+  }
+
+  // Pestaña Buscar: coincidencia exacta del username, con sus cuatro desenlaces.
+  const res=(n,m,cls,estado)=>`<div class="item"><div class="av sm ${cls||""}">${mot(m)}</div><div><div class="nm">${n}</div></div>
+    <div class="sp">${estado}</div></div>`;
+  if(vacio) return head+`<div class="searchbar" style="max-width:560px">
+      <span style="color:var(--ink-3)">${ic("search")}</span>
+      <div class="wrap"><input value="anaa_torres" placeholder="USERNAME"></div>
+      <button class="btn">Buscar</button></div>
+    <div class="empty">${mot("sprout")}<b>No encontramos a nadie con ese username</b>La búsqueda es exacta: revisa cómo se escribe.</div>`;
+  return head+`<div class="searchbar" style="max-width:560px">
+      <span style="color:var(--ink-3)">${ic("search")}</span>
+      <div class="wrap"><input value="luis_m" placeholder="USERNAME"></div>
+      <button class="btn">Buscar</button></div>
+    <div class="list" style="max-width:560px">
+      ${res("nuevo_jugador","butterfly","sky",'<button class="btn sm pri">'+ic("plus","sm")+' Enviar solicitud</button>')}
+      ${res("luis_m","butterfly","",'<span class="chip pub">'+ic("check","sm")+' Ya es tu amigo</span>')}
+      ${res("ines_b","cat","lav",'<span class="chip">'+ic("clock","sm")+' Solicitud enviada</span>')}
+      ${res("marco_r","butterfly","sky",'<span class="chip">'+ic("clock","sm")+' Te envió una solicitud</span>')}
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-3);margin-top:10px">Tu propio username no aparece en los resultados: no puedes agregarte a ti mismo.</p>`;}};
+
+{ const tabs=S["PT-09"].r; S["PT-09"].r=()=>tabs()+backbar("Volver al menú"); }
+
+S["PT-10"]={t:"Invitaciones recibidas",req:"Invitación a una sala",meta:"Incluye las recibidas estando desconectado",
+ r(){
+  if(state.datos==="vacio") return appbar("invitaciones")+`<div class="empty">${mot("butterfly")}<b>No tienes invitaciones</b>Aquí verás las invitaciones a sala que te envíen tus amigos.</div>${backbar("Volver al menú")}`;
+  return appbar("invitaciones")+`<div class="list" style="max-width:560px">
+   <div class="item"><div class="av sm">${mot("butterfly")}</div>
+     <div><div class="nm">luis_m te invitó a su sala</div><div class="sb">Sala <span class="mono">K7QM</span></div></div>
+     <div class="sp"><button class="btn sm pri">Entrar</button><button class="btn sm" title="Rechazar">${ic("x","sm")}</button></div></div>
+   <div class="item"><div class="av sm but">${mot("leaf")}</div>
+     <div><div class="nm">sofia99 te invitó a su sala</div><div class="sb">Sala <span class="mono">B2XT</span></div></div>
+     <div class="sp"><button class="btn sm pri">Entrar</button><button class="btn sm" title="Rechazar">${ic("x","sm")}</button></div></div>
+  </div>${backbar("Volver al menú")}`;}};
+
+S["PT-11"]={t:"Historial",req:"Historial por jugador",meta:"Puesto, puntos y resultado de cada partida",
+ r(){
+  if(state.datos==="vacio") return appbar("historial")+`<div class="empty">${mot("cat")}<b>Todavía no has terminado ninguna partida</b>Aquí aparecerán tus resultados.</div>${backbar("Volver al menú")}`;
+  return appbar("historial")+`<div class="tablewrap"><table class="data">
+   <tr><th>Fecha</th><th>Jugaron</th><th>Rivales</th><th>Puesto</th><th>Puntos</th><th>Resultado</th></tr>
+   <tr><td class="num">05 sep 2026</td><td class="num">4</td><td>luis_m, sofia99 y 1 invitado</td><td class="num">1.º</td><td class="num">148</td><td><span class="chip pub">${ic("check","sm")} Terminada</span></td></tr>
+   <tr><td class="num">04 sep 2026</td><td class="num">3</td><td>dgomez, marco_r</td><td class="num">3.º</td><td class="num">61</td><td><span class="chip">Terminada</span></td></tr>
+   <tr><td class="num">03 sep 2026</td><td class="num">2</td><td>luis_m</td><td class="num">2.º</td><td class="num">44</td><td><span class="chip">Abandonada</span></td></tr>
+   <tr><td class="num">02 sep 2026</td><td class="num">4</td><td>sofia99, marco_r, dgomez</td><td class="num">4.º</td><td class="num">27</td><td><span class="chip">Terminada</span></td></tr>
+   <tr><td class="num">01 sep 2026</td><td class="num">3</td><td>luis_m, dgomez</td><td>—</td><td>—</td><td><span class="chip bad">Interrumpida</span></td></tr>
+  </table></div>${backbar("Volver al menú")}`;}};
+
+S["PT-12"]={t:"Detalle de una partida",req:"Resultado de una partida",meta:"Participantes y su resultado",
+ r(){ return appbar("detalle de partida")+`<div class="row"><div class="col" style="max-width:440px"><div class="card">
+   <h3>05 de septiembre de 2026</h3><p class="hint">4 jugadores · 38 minutos</p>
+   <div class="tablewrap"><table class="data">
+     <tr><th>Puesto</th><th>Jugador</th><th>Puntos</th></tr>
+     <tr class="you"><td class="num">1.º</td><td><b>ana_torres</b></td><td class="num">148</td></tr>
+     <tr><td class="num">2.º</td><td>luis_m</td><td class="num">131</td></tr>
+     <tr><td class="num">3.º</td><td>sofia99</td><td class="num">96</td></tr>
+     <tr><td class="num">4.º</td><td>Oruga_23</td><td class="num">72</td></tr>
+   </table></div>
+   <div class="btns" style="margin-top:14px"><button class="btn">${ic("back","sm")} Volver al historial</button></div>
+ </div></div></div>`;}};
+
+S["PT-13"]={t:"Ranking global",req:"Ranking global",meta:"Ordenado por partidas ganadas",
+ r(){
+  if(state.datos==="vacio") return appbar("ranking")+`<div class="empty">${mot("sprout")}<b>Aún no hay partidas terminadas</b>El ranking se calcula con los resultados de las partidas jugadas.</div>${backbar("Volver al menú")}`;
+  const row=(p,n,v,pt,pa,me)=>`<tr class="${me?"you":""}"><td class="num">${p}</td><td>${me?"<b>"+n+"</b>":n}</td><td class="num">${v}</td><td class="num">${pt}</td><td class="num">${pa}</td></tr>`;
+  return appbar("ranking")+`<div class="tablewrap"><table class="data">
+   <tr><th>#</th><th>Jugador</th><th>Victorias</th><th>Puntos</th><th>Partidas</th></tr>
+   ${row(1,"luis_m",12,"1,480",21)}${row(2,"ana_torres",9,"1,402",19,true)}${row(3,"sofia99",9,"1,210",24)}
+   ${row(4,"dgomez",4,"890",17)}${row(5,"marco_r",1,"402",11)}
+  </table></div>${backbar("Volver al menú")}`;}};
+
+S["PT-14"]={t:"Salas",req:"Buscar por código y unirse",meta:"Búsqueda arriba · salas disponibles debajo",
+ r(){
+  const sala=(cod,host,n,hm,cls)=>`<div class="item">
+    <div class="av sm ${cls||""}">${mot(hm)}</div>
+    <div><div class="nm mono" style="letter-spacing:.12em">${cod}</div><div class="sb">${host}</div></div>
+    <div class="sp"><span class="chip">${n}/4</span>${n<4?'<button class="btn sm pri">Unirse</button>':'<button class="btn sm" disabled>Llena</button>'}</div></div>`;
+  const lista = state.datos==="vacio"
+   ? `<div class="empty">${mot("sprout")}<b>No hay salas disponibles ahora</b>Crea una sala e invita a tus amigos.</div>`
+   : `<div class="list">${sala("K7QM","luis_m",2,"butterfly")}${sala("B2XT","sofia99",3,"leaf","but")}${sala("M9TD","Oruga_23",1,"cat","lav")}${sala("R4KP","dgomez",4,"butterfly","sky")}</div>`;
+  return appbar("salas")+`
+   <div class="searchbar">
+     <span style="color:var(--ink-3)">${ic("search")}</span>
+     <div class="wrap"><input value="" placeholder="CÓDIGO DE SALA"></div>
+     <button class="btn">Buscar</button>
+     <button class="btn pri">${ic("plus","sm")} Crear sala</button>
+   </div>
+   <div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px">
+     <h3 style="font-size:16px">Salas disponibles</h3>
+     <span class="chip pub">${ic("globe","sm")} Solo públicas</span>
+     <button class="btn sm" style="margin-left:auto">${ic("refresh","sm")} Actualizar</button>
+   </div>
+   ${lista}
+   <p style="font-size:11.5px;color:var(--ink-3);margin-top:10px">Las salas privadas no aparecen aquí: se entra a ellas con su código o aceptando una invitación.</p>${backbar("Volver al menú")}`;}};
+
+S["PT-19"]={t:"Crear sala",req:"Sala pública o privada",meta:"El anfitrión elige el tipo al crearla",
+ r(){ const pub=state.tipo==="publica";
+  return appbar("crear sala")+`<div class="row" style="flex:1;align-items:center"><div class="col" style="max-width:430px"><div class="card">
+   <h3>Nueva sala</h3><p class="hint">Elige cómo quieres que sea tu sala.</p>
+   <div class="row" style="gap:10px;margin-bottom:16px">
+     <div class="opt" aria-checked="${pub}" role="radio">${ic("globe","lg")}<div><div class="t">Pública</div><div class="hint" style="margin:2px 0 0">Aparece en el listado de salas.</div></div><div class="m"><span></span></div></div>
+     <div class="opt" aria-checked="${!pub}" role="radio">${ic("lock","lg")}<div><div class="t">Privada</div><div class="hint" style="margin:2px 0 0">No aparece: se entra con el código.</div></div><div class="m"><span></span></div></div>
+   </div>
+   <p style="font-size:12px;color:var(--ink-3);margin:-6px 0 14px">En lo demás son iguales: mismo máximo de cuatro jugadores y mismo código de cuatro caracteres.</p>
+   <div class="btns"><button class="btn pri">Crear sala</button><button class="btn">${ic("back","sm")} Volver</button></div>
+  </div></div>
+  <div class="col" style="min-width:200px"><div class="ambience" style="min-height:280px">${scene()}</div></div></div>`;}};
+
+S["PT-15"]={t:"Dentro de una sala",req:"Sala, jugadores, chat e inicio de partida",meta:"Colores · chat · expulsar · iniciar",
+ r(){
+  const host = state.rol==="anfitrion";
+  const n = host ? state.ocup : Math.max(state.ocup,2);
+  const base=[{nm:"ana_torres",m:"butterfly",yo:true,c:0},{nm:"sofia99",m:"leaf",cls:"but",c:1},
+              {nm:"Oruga_23",m:"cat",cls:"lav",guest:true,c:2},{nm:"dgomez",m:"butterfly",cls:"sky",c:3,inact:true}];
+  const ps = host ? base.map((p,k)=>Object.assign({},p,{host:k===0}))
+                  : base.map((p,k)=>Object.assign({},p,{host:k===1,yo:k===0}));
+  const rows = ps.slice(0,n).map(p=>`<div class="item">
+     ${catIcon(PLC[p.c],20)}
+     <div class="av sm ${p.cls||""}">${mot(p.m)}</div>
+     <div><div class="nm">${p.nm}${p.yo?' <span class="sb">· tú</span>':""}</div></div>
+     <div class="sp">${p.inact?'<span class="chip bad">Sin conexión</span>':""}${p.guest?'<span class="chip guest">Invitado</span>':""}${p.host?`<span class="chip host">${ic("crown","sm")} Anfitrión</span>`:""}
+       ${host&&!p.host?`<button class="btn sm dgr" title="Expulsar de la sala">${ic("ban","sm")}</button>`:""}</div></div>`).join("");
+  const activos = ps.slice(0,n).filter(p=>!p.inact).length;
+  return appbar("sala")+`
+   <div class="row" style="align-items:center;margin-bottom:16px">
+     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+       <span class="code">K7QM</span>
+       <button class="btn sm">${ic("copy","sm")} Copiar</button>
+       <span class="chip ${state.tipo==="publica"?"pub":"priv"}">${ic(state.tipo==="publica"?"globe":"lock","sm")} ${TIPO[state.tipo]}</span>
+     </div>
+     <div style="margin-left:auto" class="btns">
+       <button class="btn lav">${ic("plus","sm")} Invitar jugadores</button>
+       <button class="btn">${ic("exit","sm")} Salir</button>
+       ${host?`<button class="btn pri" ${activos>=2?"":"disabled"}>${ic("play","sm")} Iniciar partida</button>`:""}
+     </div>
+   </div>
+   <div class="row" style="align-items:stretch">
+     <div class="col">
+       <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:9px"><h3 style="font-size:16px">Jugadores</h3>
+         <span class="sb" style="color:var(--ink-3);font-size:12.5px">${n} de 4${activos<n?` · ${activos} activos`:""}</span></div>
+       <div class="list">${rows}</div>
+       ${host?"":`<p style="font-size:11.5px;color:var(--ink-3);margin-top:9px">Solo el anfitrión puede iniciar la partida y expulsar jugadores.</p>`}
+     </div>
+     <div class="col" style="max-width:290px;display:flex;flex-direction:column;gap:12px">
+       <div>
+         <h3 style="font-size:16px;margin-bottom:9px">Ranking de la sala</h3>
+         <div class="empty" style="padding:20px 14px">${mot("sprout")}<b>Aún sin partidas</b>Cuando terminen partidas en esta sala, verás aquí los puntos de cada jugador.</div>
+       </div>
+       ${chatpan({warn:false})}
+     </div>
+   </div>`;}};
+
+S["PT-16"]={t:"Invitar jugadores",req:"Invitar desde la sala",meta:"Desde la lista de amigos o buscando por username",
+ r(){ const p=(n,m,cls,st)=>`<div class="item"><div class="av sm ${cls||""}">${mot(m)}</div><div><div class="nm">${n}</div></div>
+   <div class="sp">${st==="ok"?'<span class="chip pub">'+ic("check","sm")+' Invitado</span>':'<button class="btn sm pri">Invitar</button><button class="btn sm">'+ic("mail","sm")+' Invitar por correo</button>'}</div></div>`;
+  return appbar("invitar a la sala K7QM")+`<div class="tabs"><button aria-selected="true">Mis amigos</button><button>Buscar por username</button></div>
+   <div class="list" style="max-width:520px">${p("luis_m","butterfly")}${p("sofia99","leaf","but","ok")}${p("dgomez","cat","lav")}${p("marco_r","butterfly","sky")}</div>
+   <div class="btns" style="margin-top:16px"><button class="btn">${ic("back","sm")} Volver a la sala</button></div>`;}};
+
+S["PT-17"]={t:"Avisos y confirmaciones",req:"Acciones que no se pueden deshacer",meta:"Salas, cuenta, expulsión y sanciones",
+ r(){ return appbar("avisos")+`<div class="row">
+   <div class="col"><div class="dialog"><h4>Salir de la sala</h4><p>Eres la única persona dentro. Si sales, la sala se cerrará.</p>
+     <div class="btns"><button class="btn dgr">Salir</button><button class="btn">Quedarme</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>Eliminar la cuenta</h4><p>Se borrarán tu perfil, tus amistades y tus partidas. Esta acción no se puede deshacer.</p>
+     <div class="btns"><button class="btn dgr">Eliminar</button><button class="btn">Cancelar</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>No encontramos esa sala</h4><p>Revisa el código e inténtalo otra vez.</p>
+     <div class="btns"><button class="btn pri">Entendido</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>La sala está llena</h4><p>Ya hay cuatro jugadores dentro. Puedes unirte a otra sala o crear la tuya.</p>
+     <div class="btns"><button class="btn pri">Ver salas</button><button class="btn">Cancelar</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>Expulsar a dgomez</h4><p>Dejará de estar en la sala y se le avisará. Podrá volver a entrar con el código.</p>
+     <div class="btns"><button class="btn dgr">Expulsar</button><button class="btn">Cancelar</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>Te han sacado de la sala</h4><p>El anfitrión te ha expulsado de la sala K7QM.</p>
+     <div class="btns"><button class="btn pri">Entendido</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>No puedes entrar a salas</h4><p>Tienes una prohibición temporal por mensajes reportados. Podrás volver a jugar dentro de 4 h 12 min.</p>
+     <div class="btns"><button class="btn pri">Entendido</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>Eliminar amigo</h4><p>Dejará de estar en tu lista de amigos y tú en la suya. No se le avisará.</p>
+     <div class="btns"><button class="btn dgr">Eliminar</button><button class="btn">Cancelar</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>Rendirse</h4><p>Dejarás la partida y no podrás volver a ella.</p>
+     <div class="btns"><button class="btn dgr">Rendirse</button><button class="btn">Cancelar</button></div></div></div>
+   <div class="col"><div class="dialog"><h4>No pudimos enviar el correo</h4><p>No pudimos enviar el correo en este momento. Inténtalo más tarde.</p>
+     <div class="btns"><button class="btn pri">Entendido</button></div></div></div>
+ </div>`;}};
+
+S["PT-18"]={t:"Preparando la partida",
+ r(){ const n=Math.max(state.ocup,2);
+  return appbar("preparando la partida")+`<div style="margin:auto;text-align:center;max-width:460px">
+   <div style="width:170px;margin:0 auto"><div class="ambience" style="border:0;background:none">${scene()}</div></div>
+   <h3 style="font-size:22px;margin-top:6px">Preparando la partida</h3>
+   <p style="color:var(--ink-3);margin:2px 0 12px">${n} jugadores · 3 rondas</p>
+   <div style="text-align:left;max-width:290px;margin:0 auto;padding-top:14px;border-top:1px solid var(--line)">
+     <div class="glab">Puestos de mesa</div>
+     ${players().map((p,k)=>`<div class="pl">${catIcon(PLC[k],20)}<div class="nm2">${p.nm}</div></div>`).join("")}
+   </div></div>`;}};
+
+S["PT-21"]={t:"Colocación inicial",
+ r(){
+  const ps=players();
+  return appbar("colocación inicial")+`<div class="game">
+   <aside class="gcol">
+     <div><div class="glab">Jugadores</div>
+       ${ps.map((p,i)=>plrow(p,i,{act:1})).join("")}</div>
+     <hr class="gsep">
+     <div><div class="glab">Orden</div>
+       ${ps.map((p,i)=>`<div class="pl">${catIcon(PLC[i],18)}<div class="nm2">${p.nm}</div>
+         <span class="pts">${i===0?ic("check","sm"):i+1}</span></div>`).join("")}</div>
+   </aside>
+   <section class="gmid">
+     <div class="clock">${ic("clock")} 1:30</div>
+     <div class="gwho">Coloca tu oruga sobre una flor</div>
+     <div class="gwhen">Le toca a sofia99 · el último puesto colocará la mariposa</div>
+     ${board({kn:{"1,2":0},king:null,hi:["1,1","2,1","4,1","5,5","6,6"]})}
+   </section>
+   <aside class="gcol" style="align-self:stretch">${chatpan()}</aside>
+  </div>`;}};
+
+S["PT-22"]={t:"Partida",
+ r(){
+  const mio = state.turno!=="ajeno";
+  const pts=[34,41,28,19];
+  const act=(icn,lb,cost)=>`<button class="act" ${mio?"":"disabled"}>${icn}${lb} <em>· ${cost}</em></button>`;
+  return appbar("partida · sala K7QM")+`<div class="game">
+   <aside class="gcol">
+     <div><div class="glab">Jugadores</div>
+       ${players().map((p,i)=>plrow(p,i,{act:mio?0:1,pts:pts})).join("")}</div>
+     <hr class="gsep">
+     <div><div class="glab">Tus orugas</div>
+       <div class="pips">${[1,1,1,0,0].map(v=>v?catIcon("mint",23):`<span style="opacity:.28">${catIcon("mint",23)}</span>`).join("")}</div></div>
+     <div><div class="glab">Construcciones</div>
+       <div class="pips">${flowIcon(24)}${flowIcon(24)}${flowIcon(24)}</div></div>
+   </aside>
+   <section class="gmid">
+     <div class="clock ${mio?"":"low"}">${ic("clock")} ${mio?"1:12":"0:24"}</div>
+     <div class="gwhen">Ronda 2 de 3 · Turno 2 de 3 · <b style="color:var(--ink)">${mio?"juegas tú":"juega sofia99"}</b></div>
+     ${board({kn:knights(),sel:"4,4"})}
+     <div class="acts">
+       ${act(catIcon("mint",17),"Oruga",2)}
+       ${act(ic("chev","sm"),"Mover",1)}
+       ${act(ic("up","sm"),"Subir",1)}
+       ${act(flowIcon(17),"Construir",1)}
+     </div>
+   </section>
+   <aside class="gcol" style="align-self:stretch">
+     ${chatpan()}
+     <div><div class="glab">Mazo</div>
+       <div style="display:flex;align-items:center;gap:11px">
+         <span class="crd back"></span>
+         <button class="btn sm" ${mio?"":"disabled"}>${ic("cards","sm")} Robar · 1</button></div></div>
+     <button class="btn pri endturn" ${mio?"":"disabled"}>${ic("check","sm")} Terminar turno</button>
+     <div><div class="glab">Partida</div>
+       <button class="btn sm dgr" style="width:100%">${ic("ban","sm")} Rendirse</button></div>
+   </aside>
+  </div>
+  <div class="hud">
+   <div class="pa"><b>${mio?"5":"—"}</b><span>PA</span></div>
+   <div class="hand">${[1,2,4,5,6,7,8].map(n=>card(n)).join("")}</div>
+   <div></div>
+  </div>`;}};
+
+S["PT-23"]={t:"Cierre de ronda",
+ r(){
+  const ps=players(); const cas=[24,30,18,12], rey=[0,10,0,10], tot=[24,40,18,22];
+  return appbar("cierre de la ronda 2")+`<div style="max-width:600px;margin:auto;width:100%">
+   <div style="text-align:center;margin-bottom:20px">
+     <h3 style="font-size:24px">Ronda 2 terminada</h3>
+     <p style="color:var(--ink-3);margin:2px 0 0">El jardín se queda como está. La ronda 3 empieza cuando se coloque la mariposa.</p></div>
+   <table class="tbl"><thead><tr><th>Jugador</th><th>Jardineras</th><th>Mariposa</th><th>Ronda</th></tr></thead><tbody>
+   ${ps.map((p,i)=>`<tr class="${p.yo?"you":""}">
+     <td><span style="display:inline-flex;align-items:center;gap:8px">${catIcon(PLC[i],20)}<b>${p.nm}</b></span></td>
+     <td class="num">${cas[i]}</td><td class="num">${rey[i]?"+"+rey[i]:"—"}</td><td class="num"><b>${tot[i]}</b></td></tr>`).join("")}
+   </tbody></table>
+   <div style="display:flex;align-items:center;gap:12px;margin-top:24px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+     <svg viewBox="0 0 40 40" style="width:34px;height:34px"><use href="#m-butterfly"/></svg>
+     <div><div class="glab" style="margin:0">Coloca la mariposa</div>
+       <div style="display:flex;align-items:center;gap:8px;margin-top:3px">${catIcon(PLC[2],20)}<b style="font-size:15px">${ps[2]?ps[2].nm:"Oruga_23"}</b></div></div>
+   </div>
+   <p style="color:var(--ink-3);font-size:12.5px;margin-top:14px;text-align:center">Ronda 3 · 3 turnos por jugador · 1 construcción por turno · la mariposa vale 15</p>
+  </div>`;}};
+
+S["PT-24"]={t:"Resultado",
+ r(){
+  const ps=players(); const cas=[52,61,44,30], rey=[15,0,15,0], crt=[3,1,0,2], tot=[70,62,59,32];
+  const rank=ps.map((p,i)=>i).sort((a,b)=>tot[b]-tot[a]);
+  return appbar("resultado")+`<div style="max-width:600px;margin:auto;width:100%">
+   <div style="text-align:center;margin-bottom:18px">
+     <svg viewBox="0 0 40 40" style="width:72px;height:72px"><use href="#m-butterfly"/></svg>
+     <h3 style="font-size:26px;margin-top:2px">Ganó ${ps[rank[0]].nm}</h3>
+     <p style="color:var(--ink-3);margin:2px 0 0">3 rondas · ${ps.length} jugadores</p></div>
+   <table class="tbl"><thead><tr><th></th><th>Jugador</th><th>Jardineras</th><th>Mariposa</th><th>Cartas</th><th>Total</th></tr></thead><tbody>
+   ${rank.map((i,k)=>`<tr class="${ps[i].yo?"you":""}">
+     <td class="num" style="width:30px;color:var(--ink-3)">${k+1}.º</td>
+     <td><span style="display:inline-flex;align-items:center;gap:8px">${catIcon(PLC[i],20)}<b>${ps[i].nm}</b>${ps[i].guest?'<span class="tag g">invitado</span>':""}</span></td>
+     <td class="num">${cas[i]}</td><td class="num">${rey[i]?"+"+rey[i]:"—"}</td><td class="num">+${crt[i]}</td>
+     <td class="num"><b style="font-size:15px">${tot[i]}</b></td></tr>`).join("")}
+   </tbody></table>
+   <div class="btns" style="margin-top:26px;justify-content:center"><button class="btn pri">${ic("back","sm")} Volver a la sala</button></div>
+   <p style="font-size:11.5px;color:var(--ink-3);margin-top:10px;text-align:center">La sala sigue abierta: podéis jugar otra partida sin volver a invitar a nadie.</p>
+  </div>`;}};
+
+S["PT-25"]={t:"Desconexión",
+ r(){
+  return appbar("partida")+`<div class="game" style="grid-template-columns:minmax(0,1fr) 214px">
+   <section class="gmid" style="justify-content:center;gap:16px">
+     <svg viewBox="0 0 40 40" style="width:60px;height:60px;opacity:.5"><use href="#m-sprout"/></svg>
+     <h3 style="font-size:23px">Has perdido la conexión</h3>
+     <div class="clock low" style="font-size:40px">${ic("clock")} 0:41</div>
+     <p style="color:var(--ink-2);max-width:380px;text-align:center;margin:0">Si vuelves antes de que se agote, retomas tu turno tal como lo dejaste.</p>
+     <div class="btns"><button class="btn pri">${ic("refresh","sm")} Reintentar</button><button class="btn">Salir del juego</button></div>
+   </section>
+   <aside class="gcol">
+     <div><div class="glab">Jugadores</div>
+       ${plrow({nm:"ana_torres",yo:true},0,{})}
+       ${plrow({nm:"sofia99",st:"des"},1,{})}
+       ${plrow({nm:"Oruga_23",guest:true,st:"ret"},2,{})}
+       ${plrow({nm:"dgomez"},3,{})}</div>
+   </aside>
+  </div>`;}};
+
+S["PT-26"]={t:"Reanudación",
+ r(){
+  const ps=players(), st=["ok","ok","wait","wait"];
+  return appbar("reanudando")+`<div style="max-width:460px;margin:auto;width:100%;text-align:center">
+   <svg viewBox="0 0 40 40" style="width:62px;height:62px"><use href="#m-sprout"/></svg>
+   <h3 style="font-size:23px;margin-top:4px">Tu partida sigue en curso</h3>
+   <p style="color:var(--ink-3);margin:2px 0 14px">Esperando a que vuelvan los demás</p>
+   <div class="clock" style="justify-content:center">${ic("clock")} 2:14</div>
+   <div style="text-align:left;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+     ${ps.map((p,i)=>`<div class="pl">${catIcon(PLC[i],20)}
+       <div class="nm2">${p.nm}</div>
+       <span class="pts" style="color:${st[i]==="ok"?"var(--mint-ink)":"var(--ink-3)"}">${st[i]==="ok"?ic("check","sm"):ic("clock","sm")}</span></div>`).join("")}
+   </div>
+   <p style="font-size:11.5px;color:var(--ink-3);margin-top:16px">No tienes que hacer nada: en cuanto vuelvan dos, la partida sigue sola.</p>
+  </div>`;}};
+
+S["PT-27"]={t:"Partida en curso al volver",
+ r(){
+  return appbar("tu partida sigue en curso")+`<div style="max-width:430px;margin:auto;width:100%">
+   <div class="dialog" style="margin:0">
+     <h4>Tu partida sigue en curso</h4>
+     <p>Saliste mientras el servidor no respondía. La partida de la sala K7QM continúa y tu puesto te está esperando.</p>
+     <div class="btns"><button class="btn pri">${ic("play","sm")} Volver a la partida</button><button class="btn dgr">Abandonarla</button></div>
+   </div>
+   <p style="font-size:11.5px;color:var(--ink-3);margin-top:12px;text-align:center">Si la abandonas, tus orugas salen del jardín y tus flores se quedan.</p>
+  </div>`;}};
+
+const GROUPS={
+ nav1:[["PT-01","Arranque"],["PT-03","Iniciar sesión"],["PT-04","Crear cuenta"],["PT-05","Recuperar acceso"],["PT-06","Entrar como invitado"]],
+ nav2:[["PT-02","Menú principal"],["PT-20","Idioma"],["PT-07","Perfil"],["PT-08","Configurar cuenta"]],
+ nav3:[["PT-09","Amigos"],["PT-10","Invitaciones"],["PT-16","Invitar jugadores"]],
+ nav4:[["PT-11","Historial"],["PT-12","Detalle de partida"],["PT-13","Ranking global"]],
+ nav5:[["PT-14","Salas"],["PT-19","Crear sala"],["PT-15","Sala"],["PT-17","Avisos"],["PT-18","Preparando la partida"]],
+ nav6:[["PT-21","Colocación inicial"],["PT-22","Partida"],["PT-23","Cierre de ronda"],["PT-24","Resultado"],["PT-25","Desconexión"],["PT-26","Reanudación"],["PT-27","Partida en curso"]]
+};
+for(const [id,items] of Object.entries(GROUPS)){
+  document.getElementById(id).innerHTML = items.map(([k,l])=>
+   `<button data-scr="${k}"><span class="id">${k.replace("PT-","")}</span><span class="lb">${l}</span></button>`).join("");
+}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{state.scr=b.dataset.scr;render();window.scrollTo({top:0,behavior:"smooth"});}));
+function sw(el,key,map){document.getElementById(el).innerHTML=Object.entries(map).map(([k,l])=>`<button data-k="${key}" data-v="${k}">${l}</button>`).join("");}
+sw("sw-ident","ident",IDENT); sw("sw-conn","conn",CONN); sw("sw-rol","rol",ROL);
+sw("sw-ocup","ocup",{1:"1",2:"2",3:"3",4:"4"}); sw("sw-tipo","tipo",TIPO); sw("sw-datos","datos",DATOS);
+sw("sw-amigos","amigos",AMIGOS);
+sw("sw-turno","turno",TURNO);
+sw("sw-avmenu","avmenu",AVMENU);
+document.querySelectorAll(".sw button").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.dataset.v; state[b.dataset.k]=(b.dataset.k==="ocup")?+v:v; render();}));
+
+function render(){
+  const s=S[state.scr];
+  document.getElementById("scr-title").textContent = `${state.scr} · ${s.t}`;
+  document.getElementById("screen").innerHTML = s.r();
+  document.getElementById("conn-ind").innerHTML =
+    `<span class="dot ${state.conn==="caido"?"off":state.conn==="conectando"?"wait":""}"></span>${CONN[state.conn]}`;
+  document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-current", b.dataset.scr===state.scr));
+  document.querySelectorAll(".sw button").forEach(b=>b.setAttribute("aria-pressed", String(state[b.dataset.k])===b.dataset.v));
+}
+render();
+</script>

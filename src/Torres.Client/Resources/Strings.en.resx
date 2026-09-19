@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Generado por code/tools/generar-recursos.py a partir de Diccionario-i18n-Torres.xlsx.
+  Generado por tools/generar-recursos.py a partir de docs/i18n/Diccionario-i18n-Torres.xlsx.
   No editar a mano: los cambios se hacen en el diccionario y se regenera este archivo.
   Cultura en-US: columna Traduccion del diccionario.
 -->
