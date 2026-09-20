@@ -29,11 +29,15 @@
     <EmbeddedResource Include="Icon.bmp">
       <LogicalName>Icon.bmp</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\DejaVuSans.ttf">
+      <LogicalName>DejaVuSans.ttf</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
     <PackageReference Include="Myra" Version="1.6.6" />
+    <PackageReference Include="FontStashSharp.MonoGame" Version="1.6.0" />
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,9 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
+    /// <summary>
+    /// PT-04 del prototipo: la tarjeta de alta a la izquierda y la ambientación a la derecha.
+    /// </summary>
     internal sealed class RegisterScreen : Screen
     {
         private const int ShortestUsername = 3;
@@ -20,24 +23,31 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var panel = Card();
-            panel.Widgets.Add(Title(TextKeys.Register.Title));
-            panel.Widgets.Add(Hint(TextKeys.Register.Hint));
+            HorizontalStackPanel columns = Columns();
+            columns.Widgets.Add(BuildCard());
+            columns.Widgets.Add(Ambience());
+            StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
+            return columns;
+        }
 
+        private VerticalStackPanel BuildCard()
+        {
+            VerticalStackPanel card = Card(Theme.RegisterCardWidth);
+            card.VerticalAlignment = VerticalAlignment.Center;
+            card.Widgets.Add(CardHeader(TextKeys.Register.Title, TextKeys.Register.Hint));
+
+            var usernameField = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
             _usernameField = new LabeledTextBox(TextKeys.Register.UsernameLabel, false);
             _usernameField.Box.TextChangedByUser += OnUsernameChanged;
-            panel.Widgets.Add(_usernameField);
+            usernameField.Widgets.Add(_usernameField);
 
-            _usernameStateLabel = new LocalizedLabel(TextKeys.Register.UsernameAvailable)
-            {
-                TextColor = Theme.Accent,
-                Wrap = true,
-                Visible = false,
-            };
-            panel.Widgets.Add(_usernameStateLabel);
+            _usernameStateLabel = Success(TextKeys.Register.UsernameAvailable);
+            _usernameStateLabel.Visible = false;
+            usernameField.Widgets.Add(_usernameStateLabel);
+            card.Widgets.Add(usernameField);
 
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Register.EmailLabel, false));
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Register.PasswordLabel, true));
+            card.Widgets.Add(new LabeledTextBox(TextKeys.Register.EmailLabel, false));
+            card.Widgets.Add(new LabeledTextBox(TextKeys.Register.PasswordLabel, true));
 
             LocalizedButton createAccountButton = PrimaryButton(TextKeys.Register.CreateAccountButton);
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
@@ -45,8 +55,8 @@ namespace Torres.Client.Screens
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(createAccountButton);
             actions.Widgets.Add(backButton);
-            panel.Widgets.Add(actions);
-            return panel;
+            card.Widgets.Add(actions);
+            return card;
         }
 
         private void OnUsernameChanged(object sender, Myra.Events.MyraEventArgs arguments)
@@ -58,7 +68,7 @@ namespace Torres.Client.Screens
             _usernameStateLabel.TextKey = isWellFormed
                 ? TextKeys.Register.UsernameAvailable
                 : TextKeys.Register.UsernameUnavailable;
-            _usernameStateLabel.TextColor = isWellFormed ? Theme.Accent : Theme.Danger;
+            _usernameStateLabel.TextColor = isWellFormed ? Theme.MintInk : Theme.BlushInk;
         }
 
         private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)

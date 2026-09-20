@@ -1,9 +1,14 @@
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
+    /// <summary>
+    /// PT-03 del prototipo: la tarjeta de acceso a la izquierda, la ambientación a la derecha
+    /// y el retorno al menú al pie, fuera de la tarjeta.
+    /// </summary>
     internal sealed class LoginScreen : Screen
     {
         private LocalizedLabel? _errorLabel;
@@ -15,14 +20,33 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var panel = Card();
-            panel.Widgets.Add(Title(TextKeys.Login.Title));
-            panel.Widgets.Add(Hint(TextKeys.Login.Hint));
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Login.UsernameLabel, false));
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Login.PasswordLabel, true));
+            HorizontalStackPanel columns = Columns();
+            columns.Widgets.Add(BuildCard());
+            columns.Widgets.Add(Ambience());
+            StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
 
+            VerticalStackPanel page = Page();
+            page.Widgets.Add(columns);
+            StackPanel.SetProportionType(columns, ProportionType.Fill);
+
+            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += OnBackClick;
+            page.Widgets.Add(BackBar(backButton));
+            return page;
+        }
+
+        private VerticalStackPanel BuildCard()
+        {
+            VerticalStackPanel card = Card(Theme.LoginCardWidth);
+            card.VerticalAlignment = VerticalAlignment.Center;
+            card.Widgets.Add(CardHeader(TextKeys.Login.Title, TextKeys.Login.Hint));
+            card.Widgets.Add(new LabeledTextBox(TextKeys.Login.UsernameLabel, false));
+
+            var passwordField = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
+            passwordField.Widgets.Add(new LabeledTextBox(TextKeys.Login.PasswordLabel, true));
             _errorLabel = Error(TextKeys.Login.InvalidCredentials);
-            panel.Widgets.Add(_errorLabel);
+            passwordField.Widgets.Add(_errorLabel);
+            card.Widgets.Add(passwordField);
 
             LocalizedButton logInButton = PrimaryButton(TextKeys.Login.LogInButton);
             LocalizedButton createAccountButton = SecondaryButton(TextKeys.Login.CreateAccountButton);
@@ -31,21 +55,17 @@ namespace Torres.Client.Screens
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(logInButton);
             actions.Widgets.Add(createAccountButton);
-            panel.Widgets.Add(actions);
+            card.Widgets.Add(actions);
 
-            LocalizedButton forgotButton = SecondaryButton(TextKeys.Login.ForgotAccessLink);
-            LocalizedButton guestButton = SecondaryButton(TextKeys.Login.PlayAsGuestLink);
+            LocalizedButton forgotButton = LinkButton(TextKeys.Login.ForgotAccessLink);
+            LocalizedButton guestButton = LinkButton(TextKeys.Login.PlayAsGuestLink);
             forgotButton.Click += OnForgotClick;
             guestButton.Click += OnGuestClick;
             HorizontalStackPanel links = Row();
             links.Widgets.Add(forgotButton);
             links.Widgets.Add(guestButton);
-            panel.Widgets.Add(links);
-
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
-            panel.Widgets.Add(backButton);
-            return panel;
+            card.Widgets.Add(links);
+            return card;
         }
 
         private void OnLogInClick(object sender, Myra.Events.MyraEventArgs arguments)

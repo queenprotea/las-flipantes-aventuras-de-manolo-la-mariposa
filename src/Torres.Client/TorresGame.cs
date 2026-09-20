@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 using Myra;
+using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -52,10 +53,22 @@ namespace Torres.Client
             MyraEnvironment.Game = this;
 
             _topBar = new TopBarView();
-            _content = new Panel();
-            var root = new VerticalStackPanel();
+            _content = new Panel
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+
+            // .screen del prototipo: relleno de 20px arriba y abajo, 22px a los lados.
+            var root = new VerticalStackPanel
+            {
+                Padding = new Thickness(Theme.ScreenPaddingX, Theme.ScreenPaddingY),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
             root.Widgets.Add(_topBar.Panel);
             root.Widgets.Add(_content);
+            StackPanel.SetProportionType(_content, ProportionType.Fill);
 
             _desktop = new Desktop();
             _desktop.HasExternalTextInput = true;
@@ -78,7 +91,7 @@ namespace Torres.Client
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Theme.Background);
+            GraphicsDevice.Clear(Theme.Surface);
             _desktop!.Render();
             base.Draw(gameTime);
         }

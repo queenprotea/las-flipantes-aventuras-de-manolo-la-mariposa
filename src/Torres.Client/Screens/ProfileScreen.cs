@@ -1,11 +1,20 @@
+using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
+    /// <summary>
+    /// PT-07 del prototipo: la tarjeta del avatar a la izquierda, la de la cuenta a la derecha
+    /// y el retorno al menú al pie.
+    /// </summary>
     internal sealed class ProfileScreen : Screen
     {
+        private const int AvatarSpacing = 14;
+        private const int AvatarHintSpacing = 10;
+
         internal ProfileScreen()
             : base(TextKeys.Profile.HeaderLabel, true)
         {
@@ -13,17 +22,46 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var panel = Card();
+            HorizontalStackPanel columns = Columns();
+            columns.Widgets.Add(BuildAvatarCard());
+            columns.Widgets.Add(BuildAccountCard());
 
-            HorizontalStackPanel avatarRow = Row();
-            avatarRow.Widgets.Add(SecondaryButton(TextKeys.Profile.ChangeAvatarButton));
-            avatarRow.Widgets.Add(Hint(TextKeys.Profile.AvatarFormatHint));
-            panel.Widgets.Add(avatarRow);
+            VerticalStackPanel page = Page();
+            page.Widgets.Add(columns);
+            StackPanel.SetProportionType(columns, ProportionType.Fill);
 
-            panel.Widgets.Add(Title(TextKeys.Profile.AccountTitle));
-            panel.Widgets.Add(Hint(TextKeys.Profile.AccountHint));
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Profile.UsernameLabel, false));
-            panel.Widgets.Add(new LabeledTextBox(TextKeys.Profile.EmailLabel, false));
+            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += OnBackClick;
+            page.Widgets.Add(BackBar(backButton));
+            return page;
+        }
+
+        private static VerticalStackPanel BuildAvatarCard()
+        {
+            VerticalStackPanel card = Card(Theme.ProfileAvatarCardWidth);
+            card.Spacing = 0;
+
+            Panel avatar = Avatar();
+            avatar.Margin = new Thickness(0, 0, 0, AvatarSpacing);
+            card.Widgets.Add(avatar);
+
+            LocalizedButton changeAvatarButton = SmallSecondaryButton(TextKeys.Profile.ChangeAvatarButton);
+            changeAvatarButton.HorizontalAlignment = HorizontalAlignment.Center;
+            card.Widgets.Add(changeAvatarButton);
+
+            LocalizedLabel formatHint = Hint(TextKeys.Profile.AvatarFormatHint);
+            formatHint.HorizontalAlignment = HorizontalAlignment.Center;
+            formatHint.Margin = new Thickness(0, AvatarHintSpacing, 0, 0);
+            card.Widgets.Add(formatHint);
+            return card;
+        }
+
+        private VerticalStackPanel BuildAccountCard()
+        {
+            VerticalStackPanel card = Card(Theme.ProfileAccountCardWidth);
+            card.Widgets.Add(CardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
+            card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.UsernameLabel, false));
+            card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.EmailLabel, false));
 
             LocalizedButton saveButton = PrimaryButton(TextKeys.Profile.SaveButton);
             LocalizedButton settingsButton = SecondaryButton(TextKeys.Profile.AccountSettingsButton);
@@ -31,12 +69,8 @@ namespace Torres.Client.Screens
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(saveButton);
             actions.Widgets.Add(settingsButton);
-            panel.Widgets.Add(actions);
-
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
-            panel.Widgets.Add(backButton);
-            return panel;
+            card.Widgets.Add(actions);
+            return card;
         }
 
         private void OnSettingsClick(object sender, Myra.Events.MyraEventArgs arguments)
