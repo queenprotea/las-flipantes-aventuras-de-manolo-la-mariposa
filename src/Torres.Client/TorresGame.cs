@@ -44,6 +44,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
             _screensById.Add(ScreenId.Profile, new ProfileScreen());
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
+            _screensById.Add(ScreenId.Rooms, new RoomsScreen());
         }
 
         protected override void Initialize()
@@ -59,7 +60,6 @@ namespace Torres.Client
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
 
-            // .screen del prototipo: relleno de 20px arriba y abajo, 22px a los lados.
             var root = new VerticalStackPanel
             {
                 Padding = new Thickness(Theme.ScreenPaddingX, Theme.ScreenPaddingY),

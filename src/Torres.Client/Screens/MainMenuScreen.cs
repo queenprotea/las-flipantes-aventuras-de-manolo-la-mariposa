@@ -6,10 +6,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-02 del prototipo: la lista de opciones a la izquierda, con el idioma al pie,
-    /// y el recuadro de ambientación ocupando el resto.
-    /// </summary>
     internal sealed class MainMenuScreen : Screen
     {
         private const string Chevron = "›";
@@ -17,6 +13,7 @@ namespace Torres.Client.Screens
         private readonly LanguageService _languageService;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
+        private LocalizedButton? _roomsButton;
 
         internal MainMenuScreen(LanguageService languageService)
             : base(TextKeys.MainMenu.HeaderLabel, true)
@@ -47,10 +44,6 @@ namespace Torres.Client.Screens
             return columns;
         }
 
-        /// <summary>
-        /// .mlist button. Las opciones que todavía no tienen pantalla llevan la variante .dis:
-        /// tinta apagada y sin realce al pasar el ratón.
-        /// </summary>
         private static LocalizedButton MenuItem(string textKey, bool isAvailable)
         {
             var item = new LocalizedButton(textKey)
@@ -69,7 +62,6 @@ namespace Torres.Client.Screens
             return item;
         }
 
-        /// <summary>.mlist hr: la línea que separa Salir del resto, con 8px de aire y 4px de sangría.</summary>
         private static Panel BuildSeparator()
         {
             var box = new Panel
@@ -88,7 +80,7 @@ namespace Torres.Client.Screens
                 Width = Theme.MenuListWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.RoomsButton, false));
+
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.InvitationsButton, false));
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.FriendsButton, false));
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.HistoryButton, false));
@@ -100,13 +92,16 @@ namespace Torres.Client.Screens
             _exitButton.Click += OnExitClick;
             list.Widgets.Add(_exitButton);
 
+            _roomsButton = MenuItem(TextKeys.MainMenu.RoomsButton, true);
+            _roomsButton.Click += OnRoomsClick;
+            list.Widgets.Add(_roomsButton);
+
             list.Widgets.Add(BuildLanguageButton());
             return list;
         }
 
         private LocalizedButton BuildLanguageButton()
         {
-            // .langbtn: pastilla de fondo --surface-2, alineada a la izquierda y separada 6px.
             _languageButton = new LocalizedButton(TextKeys.MainMenu.LanguageButton)
             {
                 LabelColor = Theme.SoftInk,
@@ -129,6 +124,11 @@ namespace Torres.Client.Screens
         private void OnExitClick(object sender, Myra.Events.MyraEventArgs arguments)
         {
             WasExitRequested = true;
+        }
+
+        private void OnRoomsClick(object sender, Myra.Events.MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.Rooms;
         }
 
         private void OnLanguageClick(object sender, Myra.Events.MyraEventArgs arguments)
