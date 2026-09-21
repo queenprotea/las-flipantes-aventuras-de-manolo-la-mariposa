@@ -5,9 +5,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-06 del prototipo: la tarjeta del alias de invitado y la ambientación a la derecha.
-    /// </summary>
     internal sealed class GuestAccessScreen : Screen
     {
         internal GuestAccessScreen()

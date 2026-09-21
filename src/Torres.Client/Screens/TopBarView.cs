@@ -6,10 +6,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// La .appbar del prototipo: a la izquierda el nombre del juego con el rótulo de la pantalla
-    /// debajo, a la derecha el estado de la conexión y el acceso, y una línea que la separa.
-    /// </summary>
     internal sealed class TopBarView
     {
         private const string ConnectionDot = "●";

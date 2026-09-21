@@ -5,10 +5,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-08 del prototipo: una sola tarjeta de 400px con la baja de la cuenta,
-    /// y el retorno al perfil al pie.
-    /// </summary>
     internal sealed class AccountSettingsScreen : Screen
     {
         private const int BlockSpacing = 12;
@@ -36,7 +32,6 @@ namespace Torres.Client.Screens
 
         private static VerticalStackPanel BuildDeleteBlock()
         {
-            // El prototipo no usa un h3 aquí, sino un rótulo destacado sobre su ayuda.
             var block = new VerticalStackPanel { Spacing = BlockSpacing };
             var header = new VerticalStackPanel { Spacing = HeaderSpacing };
             header.Widgets.Add(new LocalizedLabel(TextKeys.AccountSettings.DeleteAccountTitle)

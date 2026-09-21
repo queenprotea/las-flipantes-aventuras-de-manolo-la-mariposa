@@ -38,11 +38,6 @@ namespace Torres.Client.Localization
             set => _label.HorizontalAlignment = value;
         }
 
-        /// <summary>
-        /// Coloca una marca al final del botón, como el chevron del menú principal o el
-        /// palomeo del idioma en uso. El rótulo pasa a alinearse a la izquierda.
-        /// </summary>
-        /// <returns>La marca, para poder mostrarla y ocultarla después.</returns>
         internal Label SetTrailingMark(string mark, Color color)
         {
             _label.HorizontalAlignment = HorizontalAlignment.Left;

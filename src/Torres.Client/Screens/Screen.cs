@@ -34,7 +34,6 @@ namespace Torres.Client.Screens
 
         protected abstract Widget Build();
 
-        /// <summary>Cuerpo de una pantalla: el contenido y, debajo, su retorno.</summary>
         protected static VerticalStackPanel Page()
         {
             return new VerticalStackPanel
@@ -44,7 +43,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.row: columnas separadas 16px.</summary>
         protected static HorizontalStackPanel Columns()
         {
             return new HorizontalStackPanel
@@ -55,7 +53,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.card: fondo blanco, borde de 1px y relleno de 18px.</summary>
         protected static VerticalStackPanel Card(int width)
         {
             return new VerticalStackPanel
@@ -70,7 +67,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>Encabezado de tarjeta: el h3 y su .hint, pegados como en el prototipo.</summary>
         protected static VerticalStackPanel CardHeader(string titleKey, string hintKey)
         {
             var header = new VerticalStackPanel { Spacing = Theme.CardHeaderSpacing };
@@ -79,7 +75,6 @@ namespace Torres.Client.Screens
             return header;
         }
 
-        /// <summary>.card &gt; h3.</summary>
         protected static LocalizedLabel Title(string textKey)
         {
             return new LocalizedLabel(textKey)
@@ -90,7 +85,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.hint.</summary>
         protected static LocalizedLabel Hint(string textKey)
         {
             return new LocalizedLabel(textKey)
@@ -101,7 +95,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>Párrafo explicativo dentro de una tarjeta.</summary>
         protected static LocalizedLabel Paragraph(string textKey)
         {
             return new LocalizedLabel(textKey)
@@ -112,7 +105,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.msg.bad.</summary>
         protected static LocalizedLabel Error(string textKey)
         {
             return new LocalizedLabel(textKey)
@@ -124,7 +116,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.msg.good.</summary>
         protected static LocalizedLabel Success(string textKey)
         {
             return new LocalizedLabel(textKey)
@@ -135,7 +126,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.btn.pri.</summary>
         protected static LocalizedButton PrimaryButton(string textKey)
         {
             LocalizedButton button = BaseButton(textKey, Theme.MintInk);
@@ -146,7 +136,6 @@ namespace Torres.Client.Screens
             return button;
         }
 
-        /// <summary>.btn.</summary>
         protected static LocalizedButton SecondaryButton(string textKey)
         {
             LocalizedButton button = BaseButton(textKey, Theme.Ink);
@@ -157,7 +146,6 @@ namespace Torres.Client.Screens
             return button;
         }
 
-        /// <summary>.btn.sm: la variante compacta del botón secundario.</summary>
         protected static LocalizedButton SmallSecondaryButton(string textKey)
         {
             LocalizedButton button = SecondaryButton(textKey);
@@ -166,7 +154,6 @@ namespace Torres.Client.Screens
             return button;
         }
 
-        /// <summary>.btn.dgr.</summary>
         protected static LocalizedButton DestructiveButton(string textKey)
         {
             LocalizedButton button = BaseButton(textKey, Theme.BlushInk);
@@ -177,7 +164,6 @@ namespace Torres.Client.Screens
             return button;
         }
 
-        /// <summary>Botón sin caja: el enlace en color lavanda del pie de PT-03.</summary>
         protected static LocalizedButton LinkButton(string textKey)
         {
             var button = new LocalizedButton(textKey)
@@ -194,16 +180,11 @@ namespace Torres.Client.Screens
             return button;
         }
 
-        /// <summary>.btns: botones separados 9px.</summary>
         protected static HorizontalStackPanel Row()
         {
             return new HorizontalStackPanel { Spacing = Theme.ButtonSpacing };
         }
 
-        /// <summary>
-        /// .btns cuando sus botones no caben en el ancho de la tarjeta: flex-wrap los baja
-        /// uno por fila, y eso es lo que se reproduce aquí.
-        /// </summary>
         protected static VerticalStackPanel WrappedRow()
         {
             return new VerticalStackPanel
@@ -213,7 +194,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>backbar(): el retorno de la pantalla, al pie y fuera de la tarjeta.</summary>
         protected static HorizontalStackPanel BackBar(LocalizedButton backButton)
         {
             HorizontalStackPanel bar = Row();
@@ -223,7 +203,6 @@ namespace Torres.Client.Screens
             return bar;
         }
 
-        /// <summary>.ambience: el recuadro de ambientación que acompaña a las tarjetas.</summary>
         protected static Panel Ambience()
         {
             return new Panel
@@ -236,7 +215,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>.av.lg: el recuadro del avatar, de 92px y fondo mentolado.</summary>
         protected static Panel Avatar()
         {
             return new Panel
@@ -250,7 +228,6 @@ namespace Torres.Client.Screens
             };
         }
 
-        /// <summary>Línea de 1px: el hr y los bordes inferiores del prototipo.</summary>
         internal static Panel Divider()
         {
             return new Panel

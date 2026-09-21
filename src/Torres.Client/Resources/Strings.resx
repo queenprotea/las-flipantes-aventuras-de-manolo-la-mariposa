@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Generado por tools/generar-recursos.py a partir de docs/i18n/Diccionario-i18n-Torres.xlsx.
-  No editar a mano: los cambios se hacen en el diccionario y se regenera este archivo.
-  Cultura base es-MX: columna Texto base del diccionario.
--->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -45,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <!-- Common -->
   <data name="Common.WindowTitle" xml:space="preserve">
     <value>Torres — cliente de escritorio</value>
   </data>
@@ -112,14 +106,12 @@
   <data name="Common.WithdrewTag" xml:space="preserve">
     <value>retirado</value>
   </data>
-  <!-- Startup -->
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Conectando…</value>
   </data>
   <data name="Startup.ReadyStatus" xml:space="preserve">
     <value>Listo</value>
   </data>
-  <!-- MainMenu -->
   <data name="MainMenu.HeaderLabel" xml:space="preserve">
     <value>menú principal</value>
   </data>
@@ -144,7 +136,6 @@
   <data name="MainMenu.LanguageButton" xml:space="preserve">
     <value>Idioma · {0}</value>
   </data>
-  <!-- Language -->
   <data name="Language.HeaderLabel" xml:space="preserve">
     <value>idioma</value>
   </data>
@@ -163,7 +154,6 @@
   <data name="Language.SavedHint" xml:space="preserve">
     <value>La preferencia se guarda en este equipo, no en tu cuenta.</value>
   </data>
-  <!-- Login -->
   <data name="Login.HeaderLabel" xml:space="preserve">
     <value>iniciar sesión</value>
   </data>
@@ -200,7 +190,6 @@
   <data name="Login.PlayAsGuestLink" xml:space="preserve">
     <value>Jugar como invitado</value>
   </data>
-  <!-- Register -->
   <data name="Register.HeaderLabel" xml:space="preserve">
     <value>crear cuenta</value>
   </data>
@@ -231,7 +220,6 @@
   <data name="Register.CreateAccountButton" xml:space="preserve">
     <value>Crear cuenta</value>
   </data>
-  <!-- PasswordRecovery -->
   <data name="PasswordRecovery.HeaderLabel" xml:space="preserve">
     <value>recuperar acceso</value>
   </data>
@@ -283,7 +271,6 @@
   <data name="PasswordRecovery.BackToLoginButton" xml:space="preserve">
     <value>Volver a iniciar sesión</value>
   </data>
-  <!-- GuestAccess -->
   <data name="GuestAccess.HeaderLabel" xml:space="preserve">
     <value>jugar como invitado</value>
   </data>
@@ -305,7 +292,6 @@
   <data name="GuestAccess.EnterButton" xml:space="preserve">
     <value>Entrar</value>
   </data>
-  <!-- Profile -->
   <data name="Profile.HeaderLabel" xml:space="preserve">
     <value>perfil</value>
   </data>
@@ -342,7 +328,6 @@
   <data name="Profile.AccountSettingsButton" xml:space="preserve">
     <value>Configurar cuenta</value>
   </data>
-  <!-- AccountSettings -->
   <data name="AccountSettings.HeaderLabel" xml:space="preserve">
     <value>configurar cuenta</value>
   </data>
@@ -358,7 +343,6 @@
   <data name="AccountSettings.BackToProfileButton" xml:space="preserve">
     <value>Volver al perfil</value>
   </data>
-  <!-- Friends -->
   <data name="Friends.HeaderLabel" xml:space="preserve">
     <value>amigos</value>
   </data>
@@ -443,7 +427,6 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>La búsqueda es exacta: revisa cómo se escribe.</value>
   </data>
-  <!-- Invitations -->
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitaciones</value>
   </data>
@@ -465,7 +448,6 @@
   <data name="Invitations.RejectToolTip" xml:space="preserve">
     <value>Rechazar</value>
   </data>
-  <!-- InvitePlayers -->
   <data name="InvitePlayers.HeaderLabel" xml:space="preserve">
     <value>invitar a la sala {0}</value>
   </data>
@@ -484,7 +466,6 @@
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invitar por correo</value>
   </data>
-  <!-- History -->
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>historial</value>
   </data>
@@ -527,7 +508,6 @@
   <data name="History.GuestOpponentsMessage" xml:space="preserve">
     <value>y {0} invitados</value>
   </data>
-  <!-- MatchDetail -->
   <data name="MatchDetail.HeaderLabel" xml:space="preserve">
     <value>detalle de partida</value>
   </data>
@@ -546,7 +526,6 @@
   <data name="MatchDetail.BackToHistoryButton" xml:space="preserve">
     <value>Volver al historial</value>
   </data>
-  <!-- GlobalRanking -->
   <data name="GlobalRanking.HeaderLabel" xml:space="preserve">
     <value>ranking</value>
   </data>
@@ -571,7 +550,6 @@
   <data name="GlobalRanking.MatchesColumn" xml:space="preserve">
     <value>Partidas</value>
   </data>
-  <!-- Rooms -->
   <data name="Rooms.HeaderLabel" xml:space="preserve">
     <value>salas</value>
   </data>
@@ -611,7 +589,6 @@
   <data name="Rooms.PrivateRoomsHint" xml:space="preserve">
     <value>Las salas privadas no aparecen aquí: se entra a ellas con su código o aceptando una invitación.</value>
   </data>
-  <!-- CreateRoom -->
   <data name="CreateRoom.HeaderLabel" xml:space="preserve">
     <value>crear sala</value>
   </data>
@@ -639,7 +616,6 @@
   <data name="CreateRoom.CreateRoomButton" xml:space="preserve">
     <value>Crear sala</value>
   </data>
-  <!-- Room -->
   <data name="Room.HeaderLabel" xml:space="preserve">
     <value>sala</value>
   </data>
@@ -694,7 +670,6 @@
   <data name="Room.EmptyRankingHint" xml:space="preserve">
     <value>Cuando terminen partidas en esta sala, verás aquí los puntos de cada jugador.</value>
   </data>
-  <!-- Chat -->
   <data name="Chat.NoMessages" xml:space="preserve">
     <value>Todavía nadie ha escrito.</value>
   </data>
@@ -704,7 +679,6 @@
   <data name="Chat.ReportToolTip" xml:space="preserve">
     <value>Reportar</value>
   </data>
-  <!-- Alerts -->
   <data name="Alerts.HeaderLabel" xml:space="preserve">
     <value>avisos</value>
   </data>
@@ -786,7 +760,6 @@
   <data name="Alerts.EmailFailedBody" xml:space="preserve">
     <value>No pudimos enviar el correo en este momento. Inténtalo más tarde.</value>
   </data>
-  <!-- MatchPreparation -->
   <data name="MatchPreparation.HeaderLabel" xml:space="preserve">
     <value>preparando la partida</value>
   </data>
@@ -799,7 +772,6 @@
   <data name="MatchPreparation.SeatingOrderLabel" xml:space="preserve">
     <value>Puestos de mesa</value>
   </data>
-  <!-- InitialPlacement -->
   <data name="InitialPlacement.HeaderLabel" xml:space="preserve">
     <value>colocación inicial</value>
   </data>
@@ -815,7 +787,6 @@
   <data name="InitialPlacement.CurrentTurnInstruction" xml:space="preserve">
     <value>Le toca a {0} · el último puesto colocará la mariposa</value>
   </data>
-  <!-- Match -->
   <data name="Match.HeaderLabel" xml:space="preserve">
     <value>partida · sala {0}</value>
   </data>
@@ -867,7 +838,6 @@
   <data name="Match.ActionPointsLabel" xml:space="preserve">
     <value>PA</value>
   </data>
-  <!-- RoundSummary -->
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>cierre de la ronda {0}</value>
   </data>
@@ -895,7 +865,6 @@
   <data name="RoundSummary.Round3RulesInstruction" xml:space="preserve">
     <value>Ronda 3 · 3 turnos por jugador · 1 construcción por turno · la mariposa vale 15</value>
   </data>
-  <!-- Result -->
   <data name="Result.HeaderLabel" xml:space="preserve">
     <value>resultado</value>
   </data>
@@ -923,7 +892,6 @@
   <data name="Result.RoomStillOpenHint" xml:space="preserve">
     <value>La sala sigue abierta: podéis jugar otra partida sin volver a invitar a nadie.</value>
   </data>
-  <!-- Disconnection -->
   <data name="Disconnection.HeaderLabel" xml:space="preserve">
     <value>partida</value>
   </data>
@@ -942,7 +910,6 @@
   <data name="Disconnection.PlayersLabel" xml:space="preserve">
     <value>Jugadores</value>
   </data>
-  <!-- Resume -->
   <data name="Resume.HeaderLabel" xml:space="preserve">
     <value>reanudando</value>
   </data>
@@ -955,7 +922,6 @@
   <data name="Resume.NoActionNeededMessage" xml:space="preserve">
     <value>No tienes que hacer nada: en cuanto vuelvan dos, la partida sigue sola.</value>
   </data>
-  <!-- MatchInProgress -->
   <data name="MatchInProgress.HeaderLabel" xml:space="preserve">
     <value>tu partida sigue en curso</value>
   </data>

@@ -5,9 +5,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-04 del prototipo: la tarjeta de alta a la izquierda y la ambientación a la derecha.
-    /// </summary>
     internal sealed class RegisterScreen : Screen
     {
         private const int ShortestUsername = 3;

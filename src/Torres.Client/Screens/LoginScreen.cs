@@ -5,10 +5,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-03 del prototipo: la tarjeta de acceso a la izquierda, la ambientación a la derecha
-    /// y el retorno al menú al pie, fuera de la tarjeta.
-    /// </summary>
     internal sealed class LoginScreen : Screen
     {
         private LocalizedLabel? _errorLabel;

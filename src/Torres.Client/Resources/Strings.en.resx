@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Generado por tools/generar-recursos.py a partir de docs/i18n/Diccionario-i18n-Torres.xlsx.
-  No editar a mano: los cambios se hacen en el diccionario y se regenera este archivo.
-  Cultura en-US: columna Traduccion del diccionario.
--->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -45,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <!-- Common -->
   <data name="Common.WindowTitle" xml:space="preserve">
     <value>Torres — desktop client</value>
   </data>
@@ -112,14 +106,12 @@
   <data name="Common.WithdrewTag" xml:space="preserve">
     <value>withdrawn</value>
   </data>
-  <!-- Startup -->
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Connecting…</value>
   </data>
   <data name="Startup.ReadyStatus" xml:space="preserve">
     <value>Ready</value>
   </data>
-  <!-- MainMenu -->
   <data name="MainMenu.HeaderLabel" xml:space="preserve">
     <value>main menu</value>
   </data>
@@ -144,7 +136,6 @@
   <data name="MainMenu.LanguageButton" xml:space="preserve">
     <value>Language · {0}</value>
   </data>
-  <!-- Language -->
   <data name="Language.HeaderLabel" xml:space="preserve">
     <value>language</value>
   </data>
@@ -163,7 +154,6 @@
   <data name="Language.SavedHint" xml:space="preserve">
     <value>The preference is saved on this device, not in your account.</value>
   </data>
-  <!-- Login -->
   <data name="Login.HeaderLabel" xml:space="preserve">
     <value>log in</value>
   </data>
@@ -200,7 +190,6 @@
   <data name="Login.PlayAsGuestLink" xml:space="preserve">
     <value>Play as guest</value>
   </data>
-  <!-- Register -->
   <data name="Register.HeaderLabel" xml:space="preserve">
     <value>create account</value>
   </data>
@@ -231,7 +220,6 @@
   <data name="Register.CreateAccountButton" xml:space="preserve">
     <value>Create account</value>
   </data>
-  <!-- PasswordRecovery -->
   <data name="PasswordRecovery.HeaderLabel" xml:space="preserve">
     <value>recover access</value>
   </data>
@@ -283,7 +271,6 @@
   <data name="PasswordRecovery.BackToLoginButton" xml:space="preserve">
     <value>Back to log in</value>
   </data>
-  <!-- GuestAccess -->
   <data name="GuestAccess.HeaderLabel" xml:space="preserve">
     <value>play as guest</value>
   </data>
@@ -305,7 +292,6 @@
   <data name="GuestAccess.EnterButton" xml:space="preserve">
     <value>Enter</value>
   </data>
-  <!-- Profile -->
   <data name="Profile.HeaderLabel" xml:space="preserve">
     <value>profile</value>
   </data>
@@ -342,7 +328,6 @@
   <data name="Profile.AccountSettingsButton" xml:space="preserve">
     <value>Account settings</value>
   </data>
-  <!-- AccountSettings -->
   <data name="AccountSettings.HeaderLabel" xml:space="preserve">
     <value>account settings</value>
   </data>
@@ -358,7 +343,6 @@
   <data name="AccountSettings.BackToProfileButton" xml:space="preserve">
     <value>Back to profile</value>
   </data>
-  <!-- Friends -->
   <data name="Friends.HeaderLabel" xml:space="preserve">
     <value>friends</value>
   </data>
@@ -443,7 +427,6 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>The search is exact: check the spelling.</value>
   </data>
-  <!-- Invitations -->
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitations</value>
   </data>
@@ -465,7 +448,6 @@
   <data name="Invitations.RejectToolTip" xml:space="preserve">
     <value>Decline</value>
   </data>
-  <!-- InvitePlayers -->
   <data name="InvitePlayers.HeaderLabel" xml:space="preserve">
     <value>invite to room {0}</value>
   </data>
@@ -484,7 +466,6 @@
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invite by email</value>
   </data>
-  <!-- History -->
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>history</value>
   </data>
@@ -527,7 +508,6 @@
   <data name="History.GuestOpponentsMessage" xml:space="preserve">
     <value>and {0} guests</value>
   </data>
-  <!-- MatchDetail -->
   <data name="MatchDetail.HeaderLabel" xml:space="preserve">
     <value>match details</value>
   </data>
@@ -546,7 +526,6 @@
   <data name="MatchDetail.BackToHistoryButton" xml:space="preserve">
     <value>Back to history</value>
   </data>
-  <!-- GlobalRanking -->
   <data name="GlobalRanking.HeaderLabel" xml:space="preserve">
     <value>ranking</value>
   </data>
@@ -571,7 +550,6 @@
   <data name="GlobalRanking.MatchesColumn" xml:space="preserve">
     <value>Games</value>
   </data>
-  <!-- Rooms -->
   <data name="Rooms.HeaderLabel" xml:space="preserve">
     <value>rooms</value>
   </data>
@@ -611,7 +589,6 @@
   <data name="Rooms.PrivateRoomsHint" xml:space="preserve">
     <value>Private rooms don't appear here: join them with their code or by accepting an invitation.</value>
   </data>
-  <!-- CreateRoom -->
   <data name="CreateRoom.HeaderLabel" xml:space="preserve">
     <value>create room</value>
   </data>
@@ -639,7 +616,6 @@
   <data name="CreateRoom.CreateRoomButton" xml:space="preserve">
     <value>Create room</value>
   </data>
-  <!-- Room -->
   <data name="Room.HeaderLabel" xml:space="preserve">
     <value>room</value>
   </data>
@@ -694,7 +670,6 @@
   <data name="Room.EmptyRankingHint" xml:space="preserve">
     <value>Once games finish in this room, you'll see each player's points here.</value>
   </data>
-  <!-- Chat -->
   <data name="Chat.NoMessages" xml:space="preserve">
     <value>No one has written yet.</value>
   </data>
@@ -704,7 +679,6 @@
   <data name="Chat.ReportToolTip" xml:space="preserve">
     <value>Report</value>
   </data>
-  <!-- Alerts -->
   <data name="Alerts.HeaderLabel" xml:space="preserve">
     <value>notices</value>
   </data>
@@ -786,7 +760,6 @@
   <data name="Alerts.EmailFailedBody" xml:space="preserve">
     <value>We couldn't send the email right now. Try again later.</value>
   </data>
-  <!-- MatchPreparation -->
   <data name="MatchPreparation.HeaderLabel" xml:space="preserve">
     <value>preparing the match</value>
   </data>
@@ -799,7 +772,6 @@
   <data name="MatchPreparation.SeatingOrderLabel" xml:space="preserve">
     <value>Seating order</value>
   </data>
-  <!-- InitialPlacement -->
   <data name="InitialPlacement.HeaderLabel" xml:space="preserve">
     <value>initial placement</value>
   </data>
@@ -815,7 +787,6 @@
   <data name="InitialPlacement.CurrentTurnInstruction" xml:space="preserve">
     <value>It's {0}'s turn · the last seat will place the butterfly</value>
   </data>
-  <!-- Match -->
   <data name="Match.HeaderLabel" xml:space="preserve">
     <value>match · room {0}</value>
   </data>
@@ -867,7 +838,6 @@
   <data name="Match.ActionPointsLabel" xml:space="preserve">
     <value>AP</value>
   </data>
-  <!-- RoundSummary -->
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>end of round {0}</value>
   </data>
@@ -895,7 +865,6 @@
   <data name="RoundSummary.Round3RulesInstruction" xml:space="preserve">
     <value>Round 3 · 3 turns per player · 1 building per turn · the butterfly is worth 15</value>
   </data>
-  <!-- Result -->
   <data name="Result.HeaderLabel" xml:space="preserve">
     <value>result</value>
   </data>
@@ -923,7 +892,6 @@
   <data name="Result.RoomStillOpenHint" xml:space="preserve">
     <value>The room is still open: you can play another game without inviting anyone again.</value>
   </data>
-  <!-- Disconnection -->
   <data name="Disconnection.HeaderLabel" xml:space="preserve">
     <value>match</value>
   </data>
@@ -942,7 +910,6 @@
   <data name="Disconnection.PlayersLabel" xml:space="preserve">
     <value>Players</value>
   </data>
-  <!-- Resume -->
   <data name="Resume.HeaderLabel" xml:space="preserve">
     <value>resuming</value>
   </data>
@@ -955,7 +922,6 @@
   <data name="Resume.NoActionNeededMessage" xml:space="preserve">
     <value>You don't need to do anything: once two players return, the game continues on its own.</value>
   </data>
-  <!-- MatchInProgress -->
   <data name="MatchInProgress.HeaderLabel" xml:space="preserve">
     <value>your match is still in progress</value>
   </data>

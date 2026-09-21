@@ -6,9 +6,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-20 del prototipo: la lista de idiomas, con el que está en uso marcado en mentolado.
-    /// </summary>
     internal sealed class LanguageScreen : Screen
     {
         private const string CurrentMark = "✓";
@@ -59,7 +56,6 @@ namespace Torres.Client.Screens
 
         private static LocalizedButton LanguageOptionButton(string textKey)
         {
-            // .langlist button: caja de 11px por 14px con borde --line, sobre fondo blanco.
             return new LocalizedButton(textKey)
             {
                 LabelColor = Theme.Ink,

@@ -5,10 +5,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-05 del prototipo: los tres pasos de la recuperación, cada uno en su tarjeta de 290px.
-    /// El prototipo los dibuja juntos para poder verlos; aquí se muestra el que toca.
-    /// </summary>
     internal sealed class PasswordRecoveryScreen : Screen
     {
         private VerticalStackPanel? _emailStep;
@@ -26,7 +22,6 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            // Las tres tarjetas ocupan el mismo sitio: solo una está visible cada vez.
             var steps = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,

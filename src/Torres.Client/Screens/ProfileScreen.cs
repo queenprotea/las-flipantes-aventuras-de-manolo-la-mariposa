@@ -6,10 +6,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-07 del prototipo: la tarjeta del avatar a la izquierda, la de la cuenta a la derecha
-    /// y el retorno al menú al pie.
-    /// </summary>
     internal sealed class ProfileScreen : Screen
     {
         private const int AvatarSpacing = 14;

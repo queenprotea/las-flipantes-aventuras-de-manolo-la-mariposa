@@ -6,9 +6,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Localization
 {
-    /// <summary>
-    /// El .field del prototipo: label.f en versalitas sobre un .inp de fondo hundido.
-    /// </summary>
     internal sealed class LabeledTextBox : VerticalStackPanel, ILocalizedWidget
     {
         private readonly string _labelKey;

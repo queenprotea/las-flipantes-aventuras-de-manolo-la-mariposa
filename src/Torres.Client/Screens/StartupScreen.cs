@@ -8,9 +8,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    /// <summary>
-    /// PT-01 del prototipo: el nombre del juego centrado y, debajo, el estado de la conexión.
-    /// </summary>
     internal sealed class StartupScreen : Screen
     {
         private const double ConnectingSeconds = 1.6;
