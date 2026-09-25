@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.ServiceModel;
+
+using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -13,12 +16,16 @@ using Torres.Client.Ui;
 
 namespace Torres.Client
 {
-    internal sealed class TorresGame : Game
+    internal sealed class TorresGame : Microsoft.Xna.Framework.Game
     {
+        private const string ServerStatusAddress = "net.tcp://localhost:8000/status";
+
         private readonly GraphicsDeviceManager _graphics;
         private readonly LanguageService _languageService = new LanguageService();
         private readonly Dictionary<ScreenId, Screen> _screensById = new Dictionary<ScreenId, Screen>();
         private readonly MainMenuScreen _mainMenu;
+        private readonly StartupScreen _startup;
+        private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
 
         private Panel? _content;
         private Desktop? _desktop;
@@ -34,8 +41,12 @@ namespace Torres.Client
             _graphics.PreferredBackBufferHeight = Theme.WindowHeight;
             IsMouseVisible = true;
 
+            _statusChannelFactory = new ChannelFactory<IServerStatusService>(
+                new NetTcpBinding(SecurityMode.None),
+                new EndpointAddress(ServerStatusAddress));
             _mainMenu = new MainMenuScreen(_languageService);
-            _screensById.Add(ScreenId.Startup, new StartupScreen());
+            _startup = new StartupScreen(_statusChannelFactory);
+            _screensById.Add(ScreenId.Startup, _startup);
             _screensById.Add(ScreenId.MainMenu, _mainMenu);
             _screensById.Add(ScreenId.Language, new LanguageScreen(_languageService));
             _screensById.Add(ScreenId.Login, new LoginScreen());
@@ -102,6 +113,16 @@ namespace Torres.Client
             base.UnloadContent();
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _statusChannelFactory.Abort();
+            }
+
+            base.Dispose(disposing);
+        }
+
         private void OnTextInput(object? sender, TextInputEventArgs eventArguments)
         {
             _desktop!.OnChar(eventArguments.Character);
@@ -139,7 +160,7 @@ namespace Torres.Client
             bool escapePressed = keyboard.IsKeyDown(Keys.Escape) && _previousKeyboard.IsKeyUp(Keys.Escape);
             _previousKeyboard = keyboard;
 
-            if (_mainMenu.WasExitRequested || escapePressed)
+            if (_mainMenu.WasExitRequested || _startup.WasExitRequested || escapePressed)
             {
                 Exit();
                 return;
