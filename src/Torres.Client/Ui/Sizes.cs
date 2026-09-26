@@ -21,6 +21,13 @@ namespace Torres.Client.Ui
         internal const int MenuListWidth = 268;
         internal const int LargeAvatarSize = 92;
 
+        internal const int RankingTableWidth = 1000;
+        internal const int RankingRankColumnWidth = 40;
+        internal const int RankingStatColumnWidth = 96;
+
+        internal const int EmptyStateWidth = 360;
+        internal const int EmptyStateMarkSize = 64;
+
         internal static Thickness Border { get; } = new Thickness(BorderSize);
     }
 }

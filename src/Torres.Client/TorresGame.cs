@@ -102,6 +102,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.Match, new MatchScreen());
+            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen());
         }
 
         protected override void Update(GameTime gameTime)

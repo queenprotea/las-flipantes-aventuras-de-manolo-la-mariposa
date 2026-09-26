@@ -23,5 +23,7 @@ namespace Torres.Client.Screens
         Rooms,
         
         Match,
+
+        GlobalRanking,
     }
 }

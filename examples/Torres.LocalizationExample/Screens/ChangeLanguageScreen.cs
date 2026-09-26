@@ -7,7 +7,6 @@ using Torres.LocalizationExample.Resources;
 
 namespace Torres.LocalizationExample.Screens
 {
-    /// <summary>GUIChangeLanguage (CU-05).</summary>
     public sealed class ChangeLanguageScreen : IScreen
     {
         private readonly TorresGame game;
@@ -30,7 +29,6 @@ namespace Torres.LocalizationExample.Screens
                 y += 50;
             }
 
-            // FA01: "Volver" regresa a la ventana de origen.
             backButton = new MenuButton(() => Strings.Common_Back, new Vector2(60, 400), () => game.Show(returnTo));
         }
 
@@ -41,7 +39,6 @@ namespace Torres.LocalizationExample.Screens
                 button.Update(game.Font, mouse.Position, clicked);
             }
 
-            // La marca se recalcula después de procesar el clic (paso 4 del flujo normal).
             foreach ((MenuButton button, LanguageOption language) in options)
             {
                 button.IsMarked = language.CultureCode == languages.Current.CultureCode;
