@@ -45,6 +45,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Profile, new ProfileScreen());
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
+            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen());
         }
 
         protected override void Initialize()

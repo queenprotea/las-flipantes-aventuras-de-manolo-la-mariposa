@@ -21,5 +21,7 @@ namespace Torres.Client.Screens
         Language,
         
         Rooms,
+        
+        GlobalRanking,
     }
 }

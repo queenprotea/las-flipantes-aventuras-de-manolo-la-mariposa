@@ -1,3 +1,5 @@
+using FontStashSharp.RichText;
+
 using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D;
@@ -247,6 +249,27 @@ namespace Torres.Client.Screens
                 Padding = Theme.ButtonPadding,
                 BorderThickness = Theme.Border,
             };
+        }
+        
+        protected static VerticalStackPanel EmptyState(string titleKey, string hintKey)
+        {
+            var emptyState = new VerticalStackPanel
+            {
+                Spacing = Theme.FieldSpacing,
+                Width = Theme.EmptyStateWidth,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            LocalizedLabel title = Title(titleKey);
+            title.TextAlign = TextHorizontalAlignment.Center;
+            emptyState.Widgets.Add(title);
+
+            LocalizedLabel hint = Hint(hintKey);
+            hint.TextAlign = TextHorizontalAlignment.Center;
+            emptyState.Widgets.Add(hint);
+
+            return emptyState;
         }
     }
 }

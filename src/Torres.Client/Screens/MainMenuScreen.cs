@@ -14,6 +14,7 @@ namespace Torres.Client.Screens
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
+        private LocalizedButton? _ranking;
 
         internal MainMenuScreen(LanguageService languageService)
             : base(TextKeys.MainMenu.HeaderLabel, true)
@@ -84,7 +85,10 @@ namespace Torres.Client.Screens
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.InvitationsButton, false));
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.FriendsButton, false));
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.HistoryButton, false));
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.RankingButton, false));
+            
+            _ranking = MenuItem(TextKeys.MainMenu.RankingButton, true);
+            _ranking.Click += OnRankingClick;
+            list.Widgets.Add(_ranking);
 
             list.Widgets.Add(BuildSeparator());
 
@@ -119,6 +123,11 @@ namespace Torres.Client.Screens
             _languageButton.RefreshText();
             _languageButton.Click += OnLanguageClick;
             return _languageButton;
+        }
+        
+        private void OnRankingClick(object sender, Myra.Events.MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.GlobalRanking;
         }
 
         private void OnExitClick(object sender, Myra.Events.MyraEventArgs arguments)
