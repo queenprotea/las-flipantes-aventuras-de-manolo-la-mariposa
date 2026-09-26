@@ -42,11 +42,13 @@ namespace Torres.Client.Screens
         {
             HorizontalStackPanel columns = Columns();
 
+            VerticalStackPanel center = BuildCenter();
+            columns.Widgets.Add(BuildSideBar());
+            columns.Widgets.Add(center);
+            StackPanel.SetProportionType(center, ProportionType.Fill);
+            
             VerticalStackPanel page = Page();
             page.Widgets.Add(columns);
-            page.Widgets.Add(BuildSideBar());
-            page.Widgets.Add(BuildTurnStatus());
-            
             StackPanel.SetProportionType(columns, ProportionType.Fill);
             
             return page;
@@ -84,8 +86,8 @@ namespace Torres.Client.Screens
 
         private static VerticalStackPanel BuildSideBar()
         {
-            var playes = new VerticalStackPanel();
-            playes.Widgets.Add(BuildPlayerRow(PreviewYourName, PreviewYourPoints, true));
+            var players = new VerticalStackPanel();
+            players.Widgets.Add(BuildPlayerRow(PreviewYourName, PreviewYourPoints, false));
 
             var sideBar = new VerticalStackPanel()
             {
@@ -94,7 +96,7 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            sideBar.Widgets.Add(BuildSection(TextKeys.Match.PlayersLabel, playes));
+            sideBar.Widgets.Add(BuildSection(TextKeys.Match.PlayersLabel, players));
             sideBar.Widgets.Add(Divider());
             sideBar.Widgets.Add(BuildSection(TextKeys.Match.YourCaterpillarsLabel, BuildPipRow(CaterpillarsPerPlayer, PreviewCaterpillarsLeft, MatchLayout.CaterpillarPipSize)));
             sideBar.Widgets.Add(BuildSection(TextKeys.Match.BuildingsLabel, BuildPipRow(PreviewBuildings, PreviewBuildings, MatchLayout.BuildingPipSize)));
@@ -192,7 +194,12 @@ namespace Torres.Client.Screens
             board.VerticalAlignment = VerticalAlignment.Stretch;
             
             center.Widgets.Add(clock);
-            center.Widgets
+            center.Widgets.Add(BuildTurnStatus());
+            center.Widgets.Add(board);
+            center.Widgets.Add(BuildAction());
+            
+            StackPanel.SetProportionType(board, ProportionType.Fill);
+            return center;
         }
 
         private static HorizontalStackPanel BuildTurnStatus()
@@ -228,8 +235,15 @@ namespace Torres.Client.Screens
             };
             
             actions.Widgets.Add(BuildActionButton(TextKeys.Match.CaterpillarActionButton,
-            NewCaterpillarCost));
-            
+                NewCaterpillarCost));
+            actions.Widgets.Add(BuildActionButton(TextKeys.Match.MoveActionButton,
+                MoveCost));
+            actions.Widgets.Add(BuildActionButton(TextKeys.Match.GrowActionButton,
+                GrowCost));
+            actions.Widgets.Add(BuildActionButton(TextKeys.Match.BuildActionButton,
+                BuildCost));
+
+            return actions;
         }
 
         private static Button BuildActionButton(string textKey, int cost)
@@ -270,7 +284,10 @@ namespace Torres.Client.Screens
                 Border = Theme.StrongLineBrush,
                 BorderThickness = Sizes.Border,
             };
+            
+            return button;
         }
+        
     }
 }
 
