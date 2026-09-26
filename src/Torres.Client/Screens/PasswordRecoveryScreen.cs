@@ -37,7 +37,7 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildEmailStep()
         {
-            var field = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
+            var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
             _emailField = new LabeledTextBox(TextKeys.PasswordRecovery.EmailLabel, false);
             _emailError = Error(TextKeys.PasswordRecovery.InvalidEmail);
             field.Widgets.Add(_emailField);
@@ -50,7 +50,7 @@ namespace Torres.Client.Screens
             actions.Widgets.Add(sendCodeButton);
             actions.Widgets.Add(BackToLoginButton());
 
-            _emailStep = Card(Theme.RecoveryCardWidth);
+            _emailStep = Card(Sizes.RecoveryCardWidth);
             _emailStep.HorizontalAlignment = HorizontalAlignment.Left;
             _emailStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step1Title, TextKeys.PasswordRecovery.Step1Hint));
             _emailStep.Widgets.Add(field);
@@ -60,7 +60,7 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildCodeStep()
         {
-            var field = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
+            var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
             _codeField = new LabeledTextBox(TextKeys.PasswordRecovery.CodeLabel, false);
             _codeError = Error(TextKeys.PasswordRecovery.InvalidCode);
             field.Widgets.Add(_codeField);
@@ -71,7 +71,7 @@ namespace Torres.Client.Screens
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(verifyButton);
 
-            _codeStep = Card(Theme.RecoveryCardWidth);
+            _codeStep = Card(Sizes.RecoveryCardWidth);
             _codeStep.HorizontalAlignment = HorizontalAlignment.Left;
             _codeStep.Visible = false;
             _codeStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step2Title, TextKeys.PasswordRecovery.Step2Hint));
@@ -88,7 +88,7 @@ namespace Torres.Client.Screens
             actions.Widgets.Add(saveButton);
             actions.Widgets.Add(BackToLoginButton());
 
-            _passwordStep = Card(Theme.RecoveryCardWidth);
+            _passwordStep = Card(Sizes.RecoveryCardWidth);
             _passwordStep.HorizontalAlignment = HorizontalAlignment.Left;
             _passwordStep.Visible = false;
             _passwordStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step3Title, TextKeys.PasswordRecovery.Step3Hint));

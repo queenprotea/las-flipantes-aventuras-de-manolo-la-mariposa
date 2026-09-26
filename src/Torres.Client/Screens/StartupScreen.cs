@@ -91,10 +91,10 @@ namespace Torres.Client.Screens
         {
             var message = new VerticalStackPanel
             {
-                Padding = Theme.CardPadding,
+                Padding = Metrics.CardPadding,
                 Background = Theme.BlushTintBrush,
                 Border = Theme.BlushBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
             };
             message.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
             {
@@ -116,7 +116,7 @@ namespace Torres.Client.Screens
             var notice = new VerticalStackPanel
             {
                 Width = NoticeWidth,
-                Spacing = Theme.FieldSpacing,
+                Spacing = Metrics.FieldSpacing,
                 Margin = new Thickness(0, StatusSpacing, 0, 0),
                 Visible = false,
             };

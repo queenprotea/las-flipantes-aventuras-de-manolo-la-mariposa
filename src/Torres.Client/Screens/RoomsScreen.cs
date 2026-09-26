@@ -19,7 +19,7 @@ namespace Torres.Client.Screens
         protected override Widget Build()
         {
             VerticalStackPanel page = Page();
-            page.Spacing = Theme.FieldSpacing;
+            page.Spacing = Metrics.FieldSpacing;
             page.Widgets.Add(BuildSearchRow());
             page.Widgets.Add(BuildAvailableRoomsHeader());
 
@@ -78,10 +78,10 @@ namespace Torres.Client.Screens
         {
             var chip = new Panel
             {
-                Padding = Theme.PillButtonPadding,
+                Padding = Metrics.PillButtonPadding,
                 Background = Theme.MintTintBrush,
                 Border = Theme.MintLineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             chip.Widgets.Add(new LocalizedLabel(textKey)
@@ -114,10 +114,10 @@ namespace Torres.Client.Screens
 
             var frame = new Panel
             {
-                Padding = Theme.CardPadding,
+                Padding = Metrics.CardPadding,
                 Background = Theme.SurfaceSunkenBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             frame.Widgets.Add(emptyState);

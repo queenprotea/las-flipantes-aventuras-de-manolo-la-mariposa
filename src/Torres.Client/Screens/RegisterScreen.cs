@@ -1,3 +1,12 @@
+using System;
+using System.ServiceModel;
+using System.Threading.Tasks;
+
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
+
+using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -7,15 +16,37 @@ namespace Torres.Client.Screens
 {
     internal sealed class RegisterScreen : Screen
     {
-        private const int ShortestUsername = 3;
-        private const int LongestUsername = 20;
+        private readonly ChannelFactory<IAccountService> _accountChannelFactory;
+        private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Register.UsernameLabel, false);
+        private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.Register.EmailLabel, false);
+        private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Register.PasswordLabel, true);
+        private readonly LocalizedLabel _usernameMessage = Error(TextKeys.Common.RequiredField);
+        private readonly LocalizedLabel _emailMessage = Error(TextKeys.Common.RequiredField);
+        private readonly LocalizedLabel _passwordMessage = Error(TextKeys.Common.RequiredField);
+        private readonly LocalizedLabel _serverMessage = Error(TextKeys.Common.ServerErrorTitle);
+        private readonly LocalizedButton _createAccountButton = PrimaryButton(TextKeys.Register.CreateAccountButton);
 
-        private LabeledTextBox? _usernameField;
-        private LocalizedLabel? _usernameStateLabel;
-
-        internal RegisterScreen()
+        private IAccountService? _accountChannel;
+        private Task<RegistrationResult>? _registration;
+        internal RegisterScreen(ChannelFactory<IAccountService> accountChannelFactory)
             : base(TextKeys.Register.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(accountChannelFactory);
+            
+            _accountChannelFactory = accountChannelFactory;
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            if ((_registration is null) || (!_registration.IsCompleted))
+            {
+                return;
+            }
+            
+            Task<RegistrationResult> registration = _registration;
+            _registration = null;
+            _createAccountButton.Enabled = true;
+            ShowOutcome(registration);
         }
 
         protected override Widget Build()
@@ -24,51 +55,127 @@ namespace Torres.Client.Screens
             columns.Widgets.Add(BuildCard());
             columns.Widgets.Add(Ambience());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
+            
             return columns;
         }
 
         private VerticalStackPanel BuildCard()
         {
-            VerticalStackPanel card = Card(Theme.RegisterCardWidth);
+            VerticalStackPanel card = Card(Sizes.RegisterCardWidth);
             card.VerticalAlignment = VerticalAlignment.Center;
             card.Widgets.Add(CardHeader(TextKeys.Register.Title, TextKeys.Register.Hint));
+            card.Widgets.Add(BuildField(_usernameField, _usernameMessage));
+            card.Widgets.Add(BuildField(_emailField, _emailMessage));
+            card.Widgets.Add(BuildField(_passwordField, _passwordMessage));
+            card.Widgets.Add(_serverMessage);
 
-            var usernameField = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
-            _usernameField = new LabeledTextBox(TextKeys.Register.UsernameLabel, false);
-            _usernameField.Box.TextChangedByUser += OnUsernameChanged;
-            usernameField.Widgets.Add(_usernameField);
-
-            _usernameStateLabel = Success(TextKeys.Register.UsernameAvailable);
-            _usernameStateLabel.Visible = false;
-            usernameField.Widgets.Add(_usernameStateLabel);
-            card.Widgets.Add(usernameField);
-
-            card.Widgets.Add(new LabeledTextBox(TextKeys.Register.EmailLabel, false));
-            card.Widgets.Add(new LabeledTextBox(TextKeys.Register.PasswordLabel, true));
-
-            LocalizedButton createAccountButton = PrimaryButton(TextKeys.Register.CreateAccountButton);
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
-            backButton.Click += OnBackClick;
+            _createAccountButton.Click += CreateAccountButtonOnClick;
+            backButton.Click += BackButtonOnClick;
             HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(createAccountButton);
+            actions.Widgets.Add(_createAccountButton);
             actions.Widgets.Add(backButton);
             card.Widgets.Add(actions);
+
             return card;
         }
 
-        private void OnUsernameChanged(object sender, Myra.Events.MyraEventArgs arguments)
+        private static VerticalStackPanel BuildField(LabeledTextBox field, LocalizedLabel message)
         {
-            string value = _usernameField!.Value;
-            _usernameStateLabel!.Visible = value.Length > 0;
+            var group = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
+            group.Widgets.Add(field);
+            group.Widgets.Add(message);
 
-            bool isWellFormed = (value.Length >= ShortestUsername) && (value.Length <= LongestUsername);
-            _usernameStateLabel.TextKey = isWellFormed
-                ? TextKeys.Register.UsernameAvailable
-                : TextKeys.Register.UsernameUnavailable;
-            _usernameStateLabel.TextColor = isWellFormed ? Theme.MintInk : Theme.BlushInk;
+            return group;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void CreateAccountButtonOnClick(object sender, MyraEventArgs eventArgs)
+        {
+            _serverMessage.Visible = false;
+            
+            bool isUsernameMissing = ReportIfEmpty(_usernameField, _usernameMessage);
+            bool isEmailMissing = ReportIfEmpty(_emailField, _emailMessage);
+            bool isPasswordMissing = ReportIfEmpty(_passwordField, _passwordMessage);
+            if (isUsernameMissing || isEmailMissing || isPasswordMissing)
+            {
+                return;
+            }
+            
+            _createAccountButton.Enabled = false;
+            _accountChannel = _accountChannelFactory.CreateChannel();
+            _registration = _accountChannel.RegisterAsync(_usernameField.Value, _emailField.Value, _passwordField.Value);
+        }
+
+        private static bool ReportIfEmpty(LabeledTextBox field, LocalizedLabel message)
+        {
+            bool isEmpty = string.IsNullOrWhiteSpace(field.Value);
+            message.TextKey = TextKeys.Common.RequiredField;
+            message.Visible = isEmpty;
+
+            return isEmpty;
+        }
+
+        private void ShowOutcome(Task<RegistrationResult> registration)
+        {
+            if (!registration.IsCompletedSuccessfully)
+            {
+                AbortChannel();
+                ShowMenssage(_serverMessage, TextKeys.Common.ServerErrorTitle);
+                
+                return;
+            }
+            ShowResult(registration.Result);
+        }
+
+        private void ShowResult(RegistrationResult result)
+        {
+            switch (result)
+            {
+                case RegistrationResult.Created:
+                    RequestedScreen = ScreenId.MainMenu;
+                    break;
+                case RegistrationResult.UsernameTaken:
+                    ShowMenssage(_usernameMessage, TextKeys.Register.UsernameUnavailable);
+                    break;
+                case RegistrationResult.EmailTaken:
+                    ShowMenssage(_emailMessage, TextKeys.Register.EmailAlreadyExists);
+                    break;
+                case RegistrationResult.InvalidUsername:
+                    ShowMenssage(_usernameMessage, TextKeys.Register.UsernameInvalidFormat);
+                    break;
+                case RegistrationResult.InvalidEmail:
+                    ShowMenssage(_emailMessage, TextKeys.Register.EmailInvalidFormat);
+                    break;
+                case RegistrationResult.InvalidPassword:
+                    ShowMenssage(_passwordMessage, TextKeys.Register.PasswordInvalidFormat);
+                    break;
+                case RegistrationResult.DatabaseUnavailable:
+                    ShowMenssage(_serverMessage, TextKeys.Common.ServerErrorTitle);
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(result), result, null);
+            }
+            
+        }
+
+        private static void ShowMenssage(LocalizedLabel menssage, string textKey)
+        {
+            menssage.TextKey = textKey;
+            menssage.Visible = true;
+        }
+
+        private void AbortChannel()
+        {
+            if(_accountChannel is ICommunicationObject failedChannel)
+            {
+                failedChannel.Abort();
+            }
+
+            _accountChannel = null;
+        }
+
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.Login;
         }

@@ -23,6 +23,8 @@ namespace Torres.Client.Screens
         internal bool ShowsTopBar { get; }
 
         internal ScreenId? RequestedScreen { get; set; }
+        
+        internal object[]? HeaderArguments { get; private protected set; }
 
         internal Widget Root => _root ??= Build();
 
@@ -47,7 +49,7 @@ namespace Torres.Client.Screens
         {
             return new HorizontalStackPanel
             {
-                Spacing = Theme.ColumnSpacing,
+                Spacing = Metrics.ColumnSpacing,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
@@ -57,19 +59,19 @@ namespace Torres.Client.Screens
         {
             return new VerticalStackPanel
             {
-                Spacing = Theme.FieldSpacing,
+                Spacing = Metrics.FieldSpacing,
                 Width = width,
-                Padding = Theme.CardPadding,
+                Padding = Metrics.CardPadding,
                 Background = Theme.SurfaceBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Top,
             };
         }
 
         protected static VerticalStackPanel CardHeader(string titleKey, string hintKey)
         {
-            var header = new VerticalStackPanel { Spacing = Theme.CardHeaderSpacing };
+            var header = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
             header.Widgets.Add(Title(titleKey));
             header.Widgets.Add(Hint(hintKey));
             return header;
@@ -150,7 +152,7 @@ namespace Torres.Client.Screens
         {
             LocalizedButton button = SecondaryButton(textKey);
             button.LabelFont = Fonts.Small;
-            button.Padding = Theme.SmallButtonPadding;
+            button.Padding = Metrics.SmallButtonPadding;
             return button;
         }
 
@@ -170,7 +172,7 @@ namespace Torres.Client.Screens
             {
                 LabelColor = Theme.LavenderInk,
                 LabelFont = Fonts.Small,
-                Padding = Theme.LinkButtonPadding,
+                Padding = Metrics.LinkButtonPadding,
                 Background = null,
                 OverBackground = null,
                 PressedBackground = null,
@@ -182,14 +184,14 @@ namespace Torres.Client.Screens
 
         protected static HorizontalStackPanel Row()
         {
-            return new HorizontalStackPanel { Spacing = Theme.ButtonSpacing };
+            return new HorizontalStackPanel { Spacing = Metrics.ButtonSpacing };
         }
 
         protected static VerticalStackPanel WrappedRow()
         {
             return new VerticalStackPanel
             {
-                Spacing = Theme.ButtonSpacing,
+                Spacing = Metrics.ButtonSpacing,
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
         }
@@ -197,7 +199,7 @@ namespace Torres.Client.Screens
         protected static HorizontalStackPanel BackBar(LocalizedButton backButton)
         {
             HorizontalStackPanel bar = Row();
-            bar.Margin = new Thickness(0, Theme.ColumnSpacing, 0, 0);
+            bar.Margin = new Thickness(0, Metrics.ColumnSpacing, 0, 0);
             bar.VerticalAlignment = VerticalAlignment.Bottom;
             bar.Widgets.Add(backButton);
             return bar;
@@ -209,7 +211,7 @@ namespace Torres.Client.Screens
             {
                 Background = Theme.MintTintBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
@@ -219,11 +221,11 @@ namespace Torres.Client.Screens
         {
             return new Panel
             {
-                Width = Theme.LargeAvatarSize,
-                Height = Theme.LargeAvatarSize,
+                Width = Sizes.LargeAvatarSize,
+                Height = Sizes.LargeAvatarSize,
                 Background = Theme.MintAltBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
         }
@@ -232,7 +234,7 @@ namespace Torres.Client.Screens
         {
             return new Panel
             {
-                Height = Theme.BorderSize,
+                Height = Sizes.BorderSize,
                 Background = Theme.LineBrush,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
@@ -244,8 +246,8 @@ namespace Torres.Client.Screens
             {
                 LabelColor = labelColor,
                 LabelFont = Fonts.Control,
-                Padding = Theme.ButtonPadding,
-                BorderThickness = Theme.Border,
+                Padding = Metrics.ButtonPadding,
+                BorderThickness = Sizes.Border,
             };
         }
     }

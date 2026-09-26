@@ -23,11 +23,11 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildCard()
         {
-            VerticalStackPanel card = Card(Theme.GuestCardWidth);
+            VerticalStackPanel card = Card(Sizes.GuestCardWidth);
             card.VerticalAlignment = VerticalAlignment.Center;
             card.Widgets.Add(CardHeader(TextKeys.GuestAccess.Title, TextKeys.GuestAccess.Hint));
 
-            var nameField = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
+            var nameField = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
             nameField.Widgets.Add(new LabeledTextBox(TextKeys.GuestAccess.MatchNameLabel, false));
             nameField.Widgets.Add(Success(TextKeys.GuestAccess.RepeatableName));
             card.Widgets.Add(nameField);

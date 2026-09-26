@@ -21,7 +21,7 @@ namespace Torres.Client.Screens
             var content = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Padding = new Thickness(0, 0, 0, Theme.AppBarSpacing),
+                Padding = new Thickness(0, 0, 0, Metrics.AppBarSpacing),
             };
             content.Widgets.Add(BuildLogo());
             content.Widgets.Add(BuildIdentity());
@@ -29,7 +29,7 @@ namespace Torres.Client.Screens
             _panel = new VerticalStackPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Margin = new Thickness(0, 0, 0, Theme.AppBarBottomSpacing),
+                Margin = new Thickness(0, 0, 0, Metrics.AppBarBottomSpacing),
             };
             _panel.Widgets.Add(content);
             _panel.Widgets.Add(Screen.Divider());
@@ -45,6 +45,7 @@ namespace Torres.Client.Screens
             if (screen.ShowsTopBar)
             {
                 _headerLabel.TextKey = screen.HeaderKey;
+                _headerLabel.TextArguments = screen.HeaderArguments;
             }
         }
 
@@ -76,19 +77,19 @@ namespace Torres.Client.Screens
             {
                 LabelColor = Theme.Ink,
                 LabelFont = Fonts.Small,
-                Padding = Theme.PillButtonPadding,
+                Padding = Metrics.PillButtonPadding,
                 Background = Theme.SurfaceBrush,
                 OverBackground = Theme.SurfaceSunkenBrush,
                 PressedBackground = Theme.SurfaceSunkenBrush,
                 Border = Theme.StrongLineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             logInButton.Click += OnLogInClick;
 
             var identity = new HorizontalStackPanel
             {
-                Spacing = Theme.ColumnSpacing,
+                Spacing = Metrics.ColumnSpacing,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -101,7 +102,7 @@ namespace Torres.Client.Screens
         {
             var status = new HorizontalStackPanel
             {
-                Spacing = Theme.FieldLabelSpacing,
+                Spacing = Metrics.FieldLabelSpacing,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             status.Widgets.Add(new Label

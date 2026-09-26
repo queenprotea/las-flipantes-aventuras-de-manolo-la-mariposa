@@ -18,6 +18,8 @@ namespace Torres.Client.Ui
         private const int ControlSize = 13;
         private const int SmallSize = 12;
         private const int LabelSize = 11;
+        private const int ClockSize = 34;
+        private const int ActionPointsSize = 40;
 
         private static readonly FontSystem System = LoadFontSystem();
 
@@ -37,6 +39,9 @@ namespace Torres.Client.Ui
 
         internal static SpriteFontBase Label { get; } = System.GetFont(LabelSize);
 
+        internal static SpriteFontBase Clock { get; } = System.GetFont(ClockSize);
+        
+        internal static SpriteFontBase ActionPoints { get; } = System.GetFont(ActionPointsSize);
         private static FontSystem LoadFontSystem()
         {
             var fontSystem = new FontSystem();

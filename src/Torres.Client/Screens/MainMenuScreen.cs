@@ -37,7 +37,7 @@ namespace Torres.Client.Screens
         protected override Widget Build()
         {
             HorizontalStackPanel columns = Columns();
-            columns.Spacing = Theme.MenuRowSpacing;
+            columns.Spacing = Metrics.MenuRowSpacing;
             columns.Widgets.Add(BuildMenuList());
             columns.Widgets.Add(Ambience());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
@@ -50,7 +50,7 @@ namespace Torres.Client.Screens
             {
                 LabelColor = isAvailable ? Theme.Ink : Theme.MutedInk,
                 LabelFont = Fonts.MenuItem,
-                Padding = Theme.MenuItemPadding,
+                Padding = Metrics.MenuItemPadding,
                 Background = null,
                 OverBackground = isAvailable ? Theme.MintTintBrush : null,
                 PressedBackground = isAvailable ? Theme.MintTintBrush : null,
@@ -66,7 +66,7 @@ namespace Torres.Client.Screens
         {
             var box = new Panel
             {
-                Padding = new Thickness(Theme.MenuSeparatorInset, Theme.MenuSeparatorSpacing),
+                Padding = new Thickness(Metrics.MenuSeparatorInset, Metrics.MenuSeparatorSpacing),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             box.Widgets.Add(Divider());
@@ -77,7 +77,7 @@ namespace Torres.Client.Screens
         {
             var list = new VerticalStackPanel
             {
-                Width = Theme.MenuListWidth,
+                Width = Sizes.MenuListWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
@@ -106,14 +106,14 @@ namespace Torres.Client.Screens
             {
                 LabelColor = Theme.SoftInk,
                 LabelFont = Fonts.Control,
-                Padding = Theme.ListItemPadding,
+                Padding = Metrics.ListItemPadding,
                 Background = Theme.SurfaceAltBrush,
                 OverBackground = Theme.SurfaceAltBrush,
                 PressedBackground = Theme.SurfaceAltBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, Theme.ListSpacing, 0, 0),
+                Margin = new Thickness(0, Metrics.ListSpacing, 0, 0),
             };
             _languageButton.TextArgumentKey = _languageService.Current.NameKey;
             _languageButton.RefreshText();

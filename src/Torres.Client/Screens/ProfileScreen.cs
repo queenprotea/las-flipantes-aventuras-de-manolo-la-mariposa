@@ -34,7 +34,7 @@ namespace Torres.Client.Screens
 
         private static VerticalStackPanel BuildAvatarCard()
         {
-            VerticalStackPanel card = Card(Theme.ProfileAvatarCardWidth);
+            VerticalStackPanel card = Card(Sizes.ProfileAvatarCardWidth);
             card.Spacing = 0;
 
             Panel avatar = Avatar();
@@ -54,7 +54,7 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildAccountCard()
         {
-            VerticalStackPanel card = Card(Theme.ProfileAccountCardWidth);
+            VerticalStackPanel card = Card(Sizes.ProfileAccountCardWidth);
             card.Widgets.Add(CardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
             card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.UsernameLabel, false));
             card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.EmailLabel, false));

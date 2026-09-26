@@ -7,47 +7,6 @@ namespace Torres.Client.Ui
 {
     internal static class Theme
     {
-        internal const int WindowWidth = 1024;
-        internal const int WindowHeight = 660;
-
-        internal const int ScreenPaddingX = 22;
-        internal const int ScreenPaddingY = 20;
-
-        internal const int CardPaddingSize = 18;
-
-        internal const int CardHeaderSpacing = 2;
-
-        internal const int FieldSpacing = 13;
-        internal const int FieldLabelSpacing = 5;
-
-        internal const int ButtonSpacing = 9;
-
-        internal const int ColumnSpacing = 16;
-
-        internal const int MenuRowSpacing = 26;
-
-        internal const int AppBarSpacing = 14;
-        internal const int AppBarBottomSpacing = 20;
-
-        internal const int ListSpacing = 6;
-
-        internal const int MenuSeparatorSpacing = 8;
-        internal const int MenuSeparatorInset = 4;
-
-        internal const int BorderSize = 1;
-
-        internal const int LoginCardWidth = 348;
-        internal const int RegisterCardWidth = 360;
-        internal const int GuestCardWidth = 340;
-        internal const int LanguageCardWidth = 340;
-        internal const int RecoveryCardWidth = 290;
-        internal const int ProfileAvatarCardWidth = 230;
-        internal const int ProfileAccountCardWidth = 360;
-        internal const int AccountSettingsCardWidth = 400;
-
-        internal const int MenuListWidth = 268;
-        internal const int LargeAvatarSize = 92;
-
         internal static Color Surface { get; } = new Color(0xFF, 0xFF, 0xFF);
         internal static Color SurfaceAlt { get; } = new Color(0xED, 0xF3, 0xE6);
         internal static Color SurfaceSunken { get; } = new Color(0xF9, 0xFB, 0xF5);
@@ -82,23 +41,5 @@ namespace Torres.Client.Ui
         internal static IBrush MintLineBrush { get; } = new SolidBrush(MintLine);
         internal static IBrush BlushBrush { get; } = new SolidBrush(Blush);
         internal static IBrush BlushTintBrush { get; } = new SolidBrush(BlushTint);
-
-        internal static Thickness CardPadding { get; } = new Thickness(CardPaddingSize);
-
-        internal static Thickness InputPadding { get; } = new Thickness(12, 9);
-
-        internal static Thickness ButtonPadding { get; } = new Thickness(16, 9);
-
-        internal static Thickness PillButtonPadding { get; } = new Thickness(13, 5);
-
-        internal static Thickness LinkButtonPadding { get; } = new Thickness(0, 5, 11, 5);
-
-        internal static Thickness SmallButtonPadding { get; } = new Thickness(11, 5);
-
-        internal static Thickness MenuItemPadding { get; } = new Thickness(12, 11);
-
-        internal static Thickness ListItemPadding { get; } = new Thickness(14, 11);
-
-        internal static Thickness Border { get; } = new Thickness(BorderSize);
     }
 }

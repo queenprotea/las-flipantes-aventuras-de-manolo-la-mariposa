@@ -17,7 +17,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel card = Card(Theme.AccountSettingsCardWidth);
+            VerticalStackPanel card = Card(Sizes.AccountSettingsCardWidth);
             card.Widgets.Add(BuildDeleteBlock());
 
             VerticalStackPanel page = Page();

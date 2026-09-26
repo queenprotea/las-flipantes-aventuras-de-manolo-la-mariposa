@@ -33,12 +33,12 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildCard()
         {
-            VerticalStackPanel card = Card(Theme.LoginCardWidth);
+            VerticalStackPanel card = Card(Sizes.LoginCardWidth);
             card.VerticalAlignment = VerticalAlignment.Center;
             card.Widgets.Add(CardHeader(TextKeys.Login.Title, TextKeys.Login.Hint));
             card.Widgets.Add(new LabeledTextBox(TextKeys.Login.UsernameLabel, false));
 
-            var passwordField = new VerticalStackPanel { Spacing = Theme.FieldLabelSpacing };
+            var passwordField = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
             passwordField.Widgets.Add(new LabeledTextBox(TextKeys.Login.PasswordLabel, true));
             _errorLabel = Error(TextKeys.Login.InvalidCredentials);
             passwordField.Widgets.Add(_errorLabel);

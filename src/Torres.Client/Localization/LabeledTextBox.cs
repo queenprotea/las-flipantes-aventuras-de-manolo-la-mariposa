@@ -15,7 +15,7 @@ namespace Torres.Client.Localization
         internal LabeledTextBox(string labelKey, bool isSecret)
         {
             _labelKey = labelKey;
-            Spacing = Theme.FieldLabelSpacing;
+            Spacing = Metrics.FieldLabelSpacing;
 
             _label.Font = Fonts.Label;
             _label.TextColor = Theme.MutedInk;
@@ -23,11 +23,11 @@ namespace Torres.Client.Localization
             _box.PasswordField = isSecret;
             _box.Font = Fonts.Control;
             _box.TextColor = Theme.Ink;
-            _box.Padding = Theme.InputPadding;
+            _box.Padding = Metrics.InputPadding;
             _box.Background = Theme.SurfaceSunkenBrush;
             _box.FocusedBackground = Theme.SurfaceBrush;
             _box.Border = Theme.StrongLineBrush;
-            _box.BorderThickness = Theme.Border;
+            _box.BorderThickness = Sizes.Border;
             _box.HorizontalAlignment = HorizontalAlignment.Stretch;
 
             Widgets.Add(_label);

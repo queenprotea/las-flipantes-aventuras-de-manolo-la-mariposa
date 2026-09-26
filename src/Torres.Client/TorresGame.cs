@@ -19,6 +19,7 @@ namespace Torres.Client
     internal sealed class TorresGame : Microsoft.Xna.Framework.Game
     {
         private const string ServerStatusAddress = "net.tcp://localhost:8000/status";
+        private const string AccountAddress = "net.tcp://localhost:8000/account";
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly LanguageService _languageService = new LanguageService();
@@ -26,6 +27,7 @@ namespace Torres.Client
         private readonly MainMenuScreen _mainMenu;
         private readonly StartupScreen _startup;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
+        private readonly ChannelFactory<IAccountService>  _accountChannelFactory;
 
         private Panel? _content;
         private Desktop? _desktop;
@@ -37,33 +39,31 @@ namespace Torres.Client
         internal TorresGame()
         {
             _graphics = new GraphicsDeviceManager(this);
-            _graphics.PreferredBackBufferWidth = Theme.WindowWidth;
-            _graphics.PreferredBackBufferHeight = Theme.WindowHeight;
+            _graphics.PreferredBackBufferWidth = Sizes.WindowWidth;
+            _graphics.PreferredBackBufferHeight = Sizes.WindowHeight;
             IsMouseVisible = true;
 
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
                 new EndpointAddress(ServerStatusAddress));
+
+            _accountChannelFactory = new ChannelFactory<IAccountService>(
+                new NetTcpBinding(SecurityMode.None),
+                new EndpointAddress(AccountAddress));
+
             _mainMenu = new MainMenuScreen(_languageService);
             _startup = new StartupScreen(_statusChannelFactory);
-            _screensById.Add(ScreenId.Startup, _startup);
-            _screensById.Add(ScreenId.MainMenu, _mainMenu);
-            _screensById.Add(ScreenId.Language, new LanguageScreen(_languageService));
-            _screensById.Add(ScreenId.Login, new LoginScreen());
-            _screensById.Add(ScreenId.Register, new RegisterScreen());
-            _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
-            _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
-            _screensById.Add(ScreenId.Profile, new ProfileScreen());
-            _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
-            _screensById.Add(ScreenId.Rooms, new RoomsScreen());
         }
+        
 
         protected override void Initialize()
         {
             _languageService.LoadSavedPreference();
             _appliedUiCulture = _languageService.Current.UiCultureName;
             MyraEnvironment.Game = this;
-
+            
+            RegistrerScrenns();
+            
             _topBar = new TopBarView();
             _content = new Panel
             {
@@ -73,7 +73,7 @@ namespace Torres.Client
 
             var root = new VerticalStackPanel
             {
-                Padding = new Thickness(Theme.ScreenPaddingX, Theme.ScreenPaddingY),
+                Padding = new Thickness(Metrics.ScreenPaddingX, Metrics.ScreenPaddingY),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
@@ -85,8 +85,23 @@ namespace Torres.Client
             _desktop.HasExternalTextInput = true;
             _desktop.Root = root;
             Window.TextInput += OnTextInput;
-            Show(ScreenId.Startup);
+            Show(ScreenId.Match);
             base.Initialize();
+        }
+
+        private void RegistrerScrenns()
+        {
+            _screensById.Add(ScreenId.Startup, _startup);
+            _screensById.Add(ScreenId.MainMenu, _mainMenu);
+            _screensById.Add(ScreenId.Language, new LanguageScreen(_languageService));
+            _screensById.Add(ScreenId.Login, new LoginScreen());
+            _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
+            _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
+            _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
+            _screensById.Add(ScreenId.Profile, new ProfileScreen());
+            _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
+            _screensById.Add(ScreenId.Rooms, new RoomsScreen());
+            _screensById.Add(ScreenId.Match, new MatchScreen());
         }
 
         protected override void Update(GameTime gameTime)
@@ -118,6 +133,7 @@ namespace Torres.Client
             if (disposing)
             {
                 _statusChannelFactory.Abort();
+                _accountChannelFactory.Abort();
             }
 
             base.Dispose(disposing);

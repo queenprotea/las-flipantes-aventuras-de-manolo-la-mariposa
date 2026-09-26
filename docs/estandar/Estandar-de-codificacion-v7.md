@@ -2088,6 +2088,30 @@ public void Attach(CombatSystem combatSystem)
 }
 ```
 
+### 6.34 Número de parámetros
+
+Un método recibe como máximo tres parámetros. Los constructores quedan fuera de esta regla, porque reciben las dependencias de la clase. Cuando una operación necesita más datos, estos se agrupan en un tipo que los representa como un solo concepto, o la operación se divide en métodos más pequeños con nombre propio.
+
+Una lista larga de parámetros obliga a recordar el orden de los argumentos en cada llamada y permite pasar dos valores del mismo tipo en posiciones intercambiadas sin que el compilador lo detecte. Regla propia del estándar.
+
+**Con estándar**
+
+```csharp
+public Wave SpawnWave(WaveSettings settings)
+{
+    return _waveFactory.Create(settings);
+}
+```
+
+**Sin estándar**
+
+```csharp
+public Wave SpawnWave(int enemyCount, EnemyKind enemyKind, float spawnInterval, Vector2 spawnPoint)
+{
+    return _waveFactory.Create(enemyCount, enemyKind, spawnInterval, spawnPoint);
+}
+```
+
 ## 7. Comentarios
 
 ### 7.1 Cuándo se comenta

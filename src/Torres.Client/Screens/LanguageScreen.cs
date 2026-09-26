@@ -25,7 +25,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel card = Card(Theme.LanguageCardWidth);
+            VerticalStackPanel card = Card(Sizes.LanguageCardWidth);
             card.Widgets.Add(CardHeader(TextKeys.Language.Title, TextKeys.Language.Hint));
 
             _spanishOption = LanguageOptionButton(LanguageService.Available[0].NameKey);
@@ -35,7 +35,7 @@ namespace Torres.Client.Screens
             _spanishOption.Click += OnSpanishClick;
             _englishOption.Click += OnEnglishClick;
 
-            var options = new VerticalStackPanel { Spacing = Theme.ListSpacing };
+            var options = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
             options.Widgets.Add(_spanishOption);
             options.Widgets.Add(_englishOption);
             card.Widgets.Add(options);
@@ -60,12 +60,12 @@ namespace Torres.Client.Screens
             {
                 LabelColor = Theme.Ink,
                 LabelFont = Fonts.Control,
-                Padding = Theme.ListItemPadding,
+                Padding = Metrics.ListItemPadding,
                 Background = Theme.SurfaceBrush,
                 OverBackground = Theme.MintTintBrush,
                 PressedBackground = Theme.MintTintBrush,
                 Border = Theme.LineBrush,
-                BorderThickness = Theme.Border,
+                BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
         }
