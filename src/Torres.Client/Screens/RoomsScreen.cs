@@ -1,4 +1,5 @@
 using Myra.Events;
+using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -8,115 +9,124 @@ namespace Torres.Client.Screens
 {
     internal sealed class RoomsScreen : Screen
     {
+        private const int EmptyStateSpacing = 4;
+
         internal RoomsScreen()
             : base(TextKeys.Rooms.HeaderLabel, true)
         {
-            
         }
 
         protected override Widget Build()
         {
-            VerticalStackPanel panel =  Page();
-            panel.Spacing = Theme.FieldSpacing;
-            panel.Widgets.Add(BuildSearchRoom());
-            panel.Widgets.Add(BuildAvaliableRoomsHeader());
-            
-            return panel;
+            VerticalStackPanel page = Page();
+            page.Spacing = Theme.FieldSpacing;
+            page.Widgets.Add(BuildSearchRow());
+            page.Widgets.Add(BuildAvailableRoomsHeader());
+
+            page.Widgets.Add(BuildEmptyState());
+            page.Widgets.Add(Hint(TextKeys.Rooms.PrivateRoomsHint));
+
+            var filler = new Panel();
+            page.Widgets.Add(filler);
+            StackPanel.SetProportionType(filler, ProportionType.Fill);
+
+            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += OnBackClick;
+            page.Widgets.Add(BackBar(backButton));
+            return page;
         }
 
-        private Widget BuildSearchRoom()
+        private static HorizontalStackPanel BuildSearchRow()
         {
             HorizontalStackPanel row = Row();
-            
-            var searchBox = new LabeledTextBox(TextKeys.Rooms.SearchPlaceholder, false);
-            searchBox.VerticalAlignment = VerticalAlignment.Center;
-            
+
+            var searchField = new LabeledTextBox(TextKeys.Rooms.SearchPlaceholder, false);
             LocalizedButton searchButton = SecondaryButton(TextKeys.Rooms.SearchButton);
-            searchButton.Click += OnSearchButtonClicked;
             searchButton.VerticalAlignment = VerticalAlignment.Bottom;
-            
             LocalizedButton createRoomButton = PrimaryButton(TextKeys.Rooms.CreateRoomButton);
-            createRoomButton.Click += OnCreateRoomButtonClicked;
             createRoomButton.VerticalAlignment = VerticalAlignment.Bottom;
-            
-            row.Widgets.Add(searchBox);
+
+            row.Widgets.Add(searchField);
             row.Widgets.Add(searchButton);
             row.Widgets.Add(createRoomButton);
-            
-            StackPanel.SetProportionType(searchBox, ProportionType.Fill);
-            
+            StackPanel.SetProportionType(searchField, ProportionType.Fill);
             return row;
         }
 
-        private HorizontalStackPanel BuildAvaliableRoomsHeader()
+        private static HorizontalStackPanel BuildAvailableRoomsHeader()
         {
-            var row = new HorizontalStackPanel();
-            
-            LocalizedButton refreshButton = SecondaryButton(TextKeys.Rooms.RefreshButton);
-            refreshButton.Click += OnRefreshButtonClicked;
-            refreshButton.VerticalAlignment = VerticalAlignment.Bottom;
-            refreshButton.HorizontalAlignment = HorizontalAlignment.Right;
+            HorizontalStackPanel row = Row();
 
-            var onlyPublic = Title(TextKeys.Rooms.PublicOnlyBadge);
-            onlyPublic.VerticalAlignment = VerticalAlignment.Bottom;
+            LocalizedLabel title = Title(TextKeys.Rooms.AvailableRoomsTitle);
+            title.VerticalAlignment = VerticalAlignment.Center;
 
-            var avaliableRooms = Title(TextKeys.Rooms.AvailableRoomsTitle);
-            avaliableRooms.VerticalAlignment = VerticalAlignment.Bottom;
-            
-            row.Widgets.Add(avaliableRooms);
-            row.Widgets.Add(onlyPublic);
+            Panel publicOnlyChip = BuildChip(TextKeys.Rooms.PublicOnlyBadge);
+
+            LocalizedButton refreshButton = SmallSecondaryButton(TextKeys.Rooms.RefreshButton);
+            refreshButton.VerticalAlignment = VerticalAlignment.Center;
+
+            var spacer = new Panel();
+            row.Widgets.Add(title);
+            row.Widgets.Add(publicOnlyChip);
+            row.Widgets.Add(spacer);
             row.Widgets.Add(refreshButton);
-       
-            StackPanel.SetProportionType(onlyPublic, ProportionType.Fill);
-            
+            StackPanel.SetProportionType(spacer, ProportionType.Fill);
             return row;
         }
 
-        private VerticalStackPanel BuildAvaliableRoomsFooter()
+        private static Panel BuildChip(string textKey)
         {
-            var row = new VerticalStackPanel();
-            
-            
-            
-        }
-        private void OnSearchButtonClicked(object sender, MyraEventArgs arguments)
-        {
-            //TODO: Implement search functionality
-        }
-        
-        private void OnCreateRoomButtonClicked(object sender, MyraEventArgs arguments)
-        {
-            //TODO: Implement create room functionality
-        }
-
-        private void OnRefreshButtonClicked(object sender, MyraEventArgs arguments)
-        {
-            //TODO: Implement refresh avaliable rooms functionality
-        }
-
-        private VerticalStackPanel FillRoomsList(Room[] rooms)
-        {
-            var avalaibleRooms = new VerticalStackPanel();
-            
-            if (rooms.Length == 0)
+            var chip = new Panel
             {
-                return avalaibleRooms;
-            }
-            
-            foreach (var Room in Rooms)
+                Padding = Theme.PillButtonPadding,
+                Background = Theme.MintTintBrush,
+                Border = Theme.MintLineBrush,
+                BorderThickness = Theme.Border,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            chip.Widgets.Add(new LocalizedLabel(textKey)
             {
-                var row = new HorizontalStackPanel();
-                row = buildRoomRow(Room);
-                avalaibleRooms.Widgets.Add(row);
-            }
-
-            return avalaibleRooms;
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
+            return chip;
         }
 
-        private HorizontalStackPanel buildRoomRow(Room Room)
+        private static Panel BuildEmptyState()
         {
-            var row = new 
+            var emptyState = new VerticalStackPanel
+            {
+                Spacing = EmptyStateSpacing,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var title = new LocalizedLabel(TextKeys.Rooms.EmptyStateTitle)
+            {
+                Font = Fonts.Body,
+                TextColor = Theme.Ink,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            LocalizedLabel hint = Hint(TextKeys.Rooms.EmptyStateHint);
+            hint.HorizontalAlignment = HorizontalAlignment.Center;
+            emptyState.Widgets.Add(title);
+            emptyState.Widgets.Add(hint);
+
+            var frame = new Panel
+            {
+                Padding = Theme.CardPadding,
+                Background = Theme.SurfaceSunkenBrush,
+                Border = Theme.LineBrush,
+                BorderThickness = Theme.Border,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            frame.Widgets.Add(emptyState);
+            return frame;
+        }
+
+        private void OnBackClick(object sender, MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.MainMenu;
         }
     }
 }
-

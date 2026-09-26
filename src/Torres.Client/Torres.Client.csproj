@@ -38,6 +38,12 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
     <PackageReference Include="Myra" Version="1.6.6" />
     <PackageReference Include="FontStashSharp.MonoGame" Version="1.6.0" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="10.0.652802" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

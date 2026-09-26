@@ -106,6 +106,9 @@
   <data name="Common.WithdrewTag" xml:space="preserve">
     <value>retirado</value>
   </data>
+  <data name="Common.RequiredField" xml:space="preserve">
+    <value>Completa este campo.</value>
+  </data>
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Conectando…</value>
   </data>
@@ -219,6 +222,15 @@
   </data>
   <data name="Register.CreateAccountButton" xml:space="preserve">
     <value>Crear cuenta</value>
+  </data>
+  <data name="Register.UsernameInvalidFormat" xml:space="preserve">
+    <value>Usa de 3 a 20 caracteres: solo letras, números y guion bajo.</value>
+  </data>
+  <data name="Register.EmailInvalidFormat" xml:space="preserve">
+    <value>Ingresa un correo electrónico válido.</value>
+  </data>
+  <data name="Register.PasswordInvalidFormat" xml:space="preserve">
+    <value>Usa de 8 a 20 caracteres, con mayúsculas, minúsculas, números y caracteres especiales.</value>
   </data>
   <data name="PasswordRecovery.HeaderLabel" xml:space="preserve">
     <value>recuperar acceso</value>

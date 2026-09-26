@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Game.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CoreWCF.NetTcp" Version="1.9.1" />
+    <PackageReference Include="CoreWCF.Primitives" Version="1.9.1" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
+    <PackageReference Include="log4net" Version="3.4.0" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="log4net.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

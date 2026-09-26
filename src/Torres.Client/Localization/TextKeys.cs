@@ -26,6 +26,7 @@ namespace Torres.Client.Localization
             internal const string GuestTag = "Common.GuestTag";
             internal const string DisconnectedTag = "Common.DisconnectedTag";
             internal const string WithdrewTag = "Common.WithdrewTag";
+            internal const string RequiredField = "Common.RequiredField";
         }
 
         internal static class Startup
@@ -84,6 +85,9 @@ namespace Torres.Client.Localization
             internal const string EmailAlreadyExists = "Register.EmailAlreadyExists";
             internal const string PasswordLabel = "Register.PasswordLabel";
             internal const string CreateAccountButton = "Register.CreateAccountButton";
+            internal const string UsernameInvalidFormat = "Register.UsernameInvalidFormat";
+            internal const string EmailInvalidFormat = "Register.EmailInvalidFormat";
+            internal const string PasswordInvalidFormat = "Register.PasswordInvalidFormat";
         }
 
         internal static class PasswordRecovery
