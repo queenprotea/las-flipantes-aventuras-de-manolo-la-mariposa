@@ -1,7 +1,12 @@
+using System;
+
+using Game.Contracts;
+
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -11,9 +16,27 @@ namespace Torres.Client.Screens
         private const int AvatarSpacing = 14;
         private const int AvatarHintSpacing = 10;
 
-        internal ProfileScreen()
+        private readonly PlayerSession _session;
+        private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Profile.UsernameLabel, false);
+        private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.Profile.EmailLabel, false);
+
+        internal ProfileScreen(PlayerSession session)
             : base(TextKeys.Profile.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(session);
+
+            _session = session;
+        }
+
+        internal override void Open()
+        {
+            if (_session.Player is not PlayerIdentity player)
+            {
+                return;
+            }
+
+            _usernameField.Box.Text = player.Username;
+            _emailField.Box.Text = player.Email;
         }
 
         protected override Widget Build()
@@ -56,8 +79,8 @@ namespace Torres.Client.Screens
         {
             VerticalStackPanel card = Card(Sizes.ProfileAccountCardWidth);
             card.Widgets.Add(CardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
-            card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.UsernameLabel, false));
-            card.Widgets.Add(new LabeledTextBox(TextKeys.Profile.EmailLabel, false));
+            card.Widgets.Add(_usernameField);
+            card.Widgets.Add(_emailField);
 
             LocalizedButton saveButton = PrimaryButton(TextKeys.Profile.SaveButton);
             LocalizedButton settingsButton = SecondaryButton(TextKeys.Profile.AccountSettingsButton);

@@ -20,6 +20,7 @@ namespace Torres.Client.Ui
 
         internal const int MenuListWidth = 268;
         internal const int LargeAvatarSize = 92;
+        internal const int AppBarAvatarSize = 38;
 
         internal const int RankingTableWidth = 1000;
         internal const int RankingRankColumnWidth = 40;

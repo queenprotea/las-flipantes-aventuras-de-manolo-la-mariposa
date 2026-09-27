@@ -14,6 +14,7 @@ using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
 using Torres.Client.Screens;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client
@@ -25,6 +26,7 @@ namespace Torres.Client
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly LanguageService _languageService = new LanguageService();
+        private readonly PlayerSession _session = new PlayerSession();
         private readonly Dictionary<ScreenId, Screen> _screensById = new Dictionary<ScreenId, Screen>();
         private readonly MainMenuScreen _mainMenu;
         private readonly StartupScreen _startup;
@@ -70,7 +72,7 @@ namespace Torres.Client
 
             RegistrerScrenns();
 
-            _topBar = new TopBarView();
+            _topBar = new TopBarView(_session);
             _content = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -100,11 +102,11 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Startup, _startup);
             _screensById.Add(ScreenId.MainMenu, _mainMenu);
             _screensById.Add(ScreenId.Language, new LanguageScreen(_languageService));
-            _screensById.Add(ScreenId.Login, new LoginScreen());
+            _screensById.Add(ScreenId.Login, new LoginScreen(_accountChannelFactory, _session));
             _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
             _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
-            _screensById.Add(ScreenId.Profile, new ProfileScreen());
+            _screensById.Add(ScreenId.Profile, new ProfileScreen(_session));
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.Match, new MatchScreen());
@@ -236,6 +238,12 @@ namespace Torres.Client
                 Show(ScreenId.Login);
             }
 
+            if (_topBar.WasProfileRequested)
+            {
+                _topBar.ClearRequest();
+                Show(ScreenId.Profile);
+            }
+
             if (screen.RequestedScreen is ScreenId requested)
             {
                 screen.RequestedScreen = null;
@@ -250,6 +258,7 @@ namespace Torres.Client
 
             _content!.Widgets.Clear();
             _content.Widgets.Add(screen.Root);
+            screen.Open();
             LanguageRefresher.Refresh(screen.Root);
             _topBar!.Follow(screen);
         }

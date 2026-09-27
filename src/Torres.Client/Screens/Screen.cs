@@ -36,6 +36,10 @@ namespace Torres.Client.Screens
         {
         }
 
+        internal virtual void Open()
+        {
+        }
+
         protected abstract Widget Build();
 
         protected static VerticalStackPanel Page()
