@@ -12,6 +12,9 @@ namespace Game.Persistence
         private const string CountSql = "SELECT count(*) FROM player";
         private const string InsertSql =
             "INSERT INTO player (username, email, password_hash) VALUES (@Username, @Email, @PasswordHash)";
+        private const string FindByUsernameSql =
+            "SELECT player_id AS PlayerId, username AS Username, email AS Email, password_hash AS PasswordHash " +
+            "FROM player WHERE lower(username) = lower(@Username)";
         private const string UsernameIndex = "ux_player_username_lower";
 
         private readonly NpgsqlDataSource _dataSource;
@@ -47,6 +50,15 @@ namespace Game.Persistence
             }
 
             return PlayerCreationOutcome.Created;
+        }
+
+        public async Task<PlayerAccount?> FindByUsernameAsync(string username)
+        {
+            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+
+            return await connection.QuerySingleOrDefaultAsync<PlayerAccount>(
+                FindByUsernameSql,
+                new { Username = username });
         }
     }
 }

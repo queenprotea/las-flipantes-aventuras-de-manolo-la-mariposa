@@ -71,6 +71,42 @@ namespace Game.Services
             }
         }
 
+        public async Task<LoginResult> LoginAsync(string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
+            {
+                return new LoginResult { Status = LoginStatus.InvalidCredentials };
+            }
+
+            PlayerAccount? account;
+            try
+            {
+                account = await _playerRepository.FindByUsernameAsync(username);
+            }
+            catch (NpgsqlException exception)
+            {
+                _log.Error("The database could not be read during a log in.", exception);
+                return new LoginResult { Status = LoginStatus.DatabaseUnavailable };
+            }
+
+            if ((account is null) || !BCrypt.Net.BCrypt.Verify(password, account.PasswordHash))
+            {
+                return new LoginResult { Status = LoginStatus.InvalidCredentials };
+            }
+
+            _log.Info("A player logged in.");
+            return new LoginResult
+            {
+                Status = LoginStatus.LoggedIn,
+                Player = new PlayerIdentity
+                {
+                    PlayerId = account.PlayerId,
+                    Username = account.Username,
+                    Email = account.Email,
+                },
+            };
+        }
+
         private static RegistrationResult? FindInvalidField(string username, string email, string password)
         {
             RegistrationResult? result = null;

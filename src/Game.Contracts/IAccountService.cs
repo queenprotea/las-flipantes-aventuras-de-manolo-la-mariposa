@@ -8,5 +8,8 @@ namespace Game.Contracts
     {
         [OperationContract(Name = "Register")]
         Task<RegistrationResult> RegisterAsync(string username, string email, string password);
+
+        [OperationContract(Name = "Login")]
+        Task<LoginResult> LoginAsync(string username, string password);
     }
 }
