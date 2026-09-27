@@ -9,7 +9,6 @@ using DotNetEnv;
 using Game.Contracts;
 using Game.Persistence;
 using Game.Services;
-using Game.Services.Persistence;
 
 using log4net;
 using log4net.Config;

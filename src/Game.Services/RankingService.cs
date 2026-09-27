@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using CoreWCF;
 
 using Game.Contracts;
-using Game.Services.Persistence;
+using Game.Persistence;
 
 using log4net;
 
@@ -17,7 +17,7 @@ namespace Game.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public sealed class RankingService : IRankingService
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(RankingService));
+        private static ILog _log = LogManager.GetLogger(typeof(RankingService));
 
         private readonly RankingRepository _rankingRepository;
 
@@ -27,12 +27,12 @@ namespace Game.Services
             _rankingRepository = rankingRepository;
         }
 
-        public async Task<GlobalRankingResponseContract> GetGlobalRankingAsync(int currentUserId)
+        public async Task<GlobalRankingResponseContract> GetGlobalRankingAsync()
         {
-            IReadOnlyList<RankingRow> rows;
+            List<RankingRow> rows;
             try
             {
-                rows = await _rankingRepository.GetGlobalRankingAsync(currentUserId);
+                rows = await _rankingRepository.GetGlobalRankingAsync();
             }
             catch (NpgsqlException exception)
             {
@@ -40,16 +40,15 @@ namespace Game.Services
                 throw;
             }
 
-            List<RankingEntryContract> entries = rows
+            var entries = rows
                 .Select(row => new RankingEntryContract
                 {
-                    Rank = (int)row.Rank,
                     PlayerName = row.Username,
                     Wins = (int)row.Wins,
-                    Points = (int)row.Points,
-                    Matches = (int)row.Matches,
-                    IsCurrentPlayer = row.Id == currentUserId,
-                }).ToList();
+                    Points = (int)row.TotalScore,
+                    Matches = (int)row.MatchesPlayed,
+                })
+                .ToList();
 
             return new GlobalRankingResponseContract { Entries = entries };
         }

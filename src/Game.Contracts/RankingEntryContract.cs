@@ -6,17 +6,15 @@ namespace Game.Contracts
     public sealed class RankingEntryContract
     {
         [DataMember]
-        public int Rank { get; set; }
-        [DataMember] 
         public string PlayerName { get; set; } = string.Empty;
-        [DataMember] 
+
+        [DataMember]
         public int Wins { get; set; }
+
         [DataMember]
         public int Points { get; set; }
+
         [DataMember]
         public int Matches { get; set; }
-        [DataMember]
-        public bool IsCurrentPlayer { get; set; }
     }
 }
-    

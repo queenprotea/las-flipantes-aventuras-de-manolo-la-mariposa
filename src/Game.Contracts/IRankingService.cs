@@ -7,6 +7,6 @@ namespace Game.Contracts
     public interface IRankingService
     {
         [OperationContract(Name = "GetGlobalRanking")]
-        Task<GlobalRankingResponseContract> GetGlobalRankingAsync(int currentUserId);
+        Task<GlobalRankingResponseContract> GetGlobalRankingAsync();
     }
 }

@@ -16,13 +16,6 @@ using Torres.Client.Ui;
 
 namespace Torres.Client
 {
-    
-    /// solo guarda el id del jugador logueado en memoria. TODO: reemplazar por el resultado real del login
-    internal static class PlayerSession
-    {
-        internal static int? CurrentUserId { get; set; }
-    }
-    
     internal sealed class TorresGame : Microsoft.Xna.Framework.Game
     {
         private const string ServerStatusAddress = "net.tcp://localhost:8000/status";

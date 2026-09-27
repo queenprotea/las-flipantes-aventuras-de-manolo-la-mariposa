@@ -21,7 +21,6 @@ namespace Torres.Client.Screens
 {
     internal sealed class GlobalRankingScreen : Screen
     {
-        private const int TopRankedCount = 10;
         private const int NoticeSpacing = 14;
 
         private const int HeaderRowIndex = 0;
@@ -42,7 +41,7 @@ namespace Torres.Client.Screens
         private VerticalStackPanel? _failureNotice;
         private IRankingService? _rankingChannel;
         private Task<GlobalRankingResponseContract>? _rankingRequest;
-        private List<RankingEntry>? _entries;
+        private List<RankingEntryContract>? _entries;
 
         internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory)
             : base(TextKeys.GlobalRanking.HeaderLabel, true)
@@ -82,7 +81,7 @@ namespace Torres.Client.Screens
                 completedChannel.Close();
             }
 
-            _entries = MapEntries(_rankingRequest.Result);
+            _entries = _rankingRequest.Result.Entries;
             RenderEntries(_entries);
         }
 
@@ -111,11 +110,10 @@ namespace Torres.Client.Screens
         private Task<GlobalRankingResponseContract> StartRankingRequest()
         {
             _rankingChannel = _rankingChannelFactory.CreateChannel();
-            int currentUserId = PlayerSession.CurrentUserId ?? 0;
-            return _rankingChannel.GetGlobalRankingAsync(currentUserId);
+            return _rankingChannel.GetGlobalRankingAsync();
         }
 
-        private void RenderEntries(List<RankingEntry> entries)
+        private void RenderEntries(List<RankingEntryContract> entries)
         {
             var placeholder = (VerticalStackPanel)_contentPlaceholder!;
             placeholder.Widgets.Clear();
@@ -134,20 +132,20 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildFailureNotice()
         {
-            var errorMessage = new VerticalStackPanel
+            var message = new VerticalStackPanel
             {
                 Padding = Theme.CardPadding,
                 Background = Theme.BlushTintBrush,
                 Border = Theme.BlushBrush,
                 BorderThickness = Theme.Border,
             };
-            errorMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
+            message.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.BlushInk,
                 Wrap = true,
             });
-            errorMessage.Widgets.Add(Paragraph(TextKeys.Common.ServerErrorDetail));
+            message.Widgets.Add(Paragraph(TextKeys.Common.ServerErrorDetail));
 
             LocalizedButton retryButton = PrimaryButton(TextKeys.Common.RetryButton);
             retryButton.Click += OnRetryClick;
@@ -158,12 +156,12 @@ namespace Torres.Client.Screens
                 Margin = new Thickness(0, NoticeSpacing, 0, 0),
                 Visible = false,
             };
-            notice.Widgets.Add(errorMessage);
+            notice.Widgets.Add(message);
             notice.Widgets.Add(retryButton);
             return notice;
         }
 
-        private static Grid BuildTable(IReadOnlyList<RankingEntry> entries)
+        private static Grid BuildTable(List<RankingEntryContract> entries)
         {
             var rankingGrid = new Grid
             {
@@ -181,22 +179,10 @@ namespace Torres.Client.Screens
             AddHeaderRow(rankingGrid);
             AddDivider(rankingGrid, DividerRowIndex);
 
-            int tableRowIndex = FirstEntryRowIndex;
             for (int entryIndex = 0; entryIndex < entries.Count; entryIndex++)
             {
-                RankingEntry entry = entries[entryIndex];
-
-                bool isOutsideTopTen = entryIndex == entries.Count - 1
-                    && entries.Count > TopRankedCount
-                    && entry.Rank > TopRankedCount;
-                if (isOutsideTopTen)
-                {
-                    AddDivider(rankingGrid, tableRowIndex);
-                    tableRowIndex++;
-                }
-
-                AddEntryRow(rankingGrid, tableRowIndex, entry);
-                tableRowIndex++;
+                int rank = entryIndex + 1;
+                AddEntryRow(rankingGrid, FirstEntryRowIndex + entryIndex, rank, entries[entryIndex]);
             }
 
             return rankingGrid;
@@ -219,44 +205,13 @@ namespace Torres.Client.Screens
             rankingGrid.Widgets.Add(dividerPanel);
         }
 
-        private static void AddEntryRow(Grid rankingGrid, int targetRowIndex, RankingEntry rankingEntry)
+        private static void AddEntryRow(Grid rankingGrid, int targetRowIndex, int rank, RankingEntryContract entry)
         {
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexRank, RowNumber(rankingEntry.Rank));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexPlayer, PlayerCell(rankingEntry));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexWins, RowNumber(rankingEntry.Wins));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexPoints, RowNumber(rankingEntry.Points));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexMatches, RowNumber(rankingEntry.Matches));
-        }
-
-        private static Widget PlayerCell(RankingEntry rankingEntry)
-        {
-            if (!rankingEntry.IsCurrentPlayer)
-            {
-                return RowLabel(rankingEntry.PlayerName, Theme.Ink);
-            }
-
-            HorizontalStackPanel cellPanel = Row();
-            cellPanel.Widgets.Add(RowLabel(rankingEntry.PlayerName, Theme.MintInk));
-            cellPanel.Widgets.Add(YouTag());
-            return cellPanel;
-        }
-
-        private static Panel YouTag()
-        {
-            var tagPanel = new Panel
-            {
-                Padding = Theme.SmallButtonPadding,
-                Background = Theme.MintTintBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Theme.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            tagPanel.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MintInk,
-            });
-            return tagPanel;
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexRank, RowNumber(rank));
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexPlayer, RowLabel(entry.PlayerName, Theme.Ink));
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexWins, RowNumber(entry.Wins));
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexPoints, RowNumber(entry.Points));
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexMatches, RowNumber(entry.Matches));
         }
 
         private static Label RowNumber(int numericValue)
@@ -289,22 +244,6 @@ namespace Torres.Client.Screens
             rankingGrid.Widgets.Add(cellWidget);
         }
 
-        private static List<RankingEntry> MapEntries(GlobalRankingResponseContract response)
-        {
-            var entries = new List<RankingEntry>(response.Entries.Count);
-            foreach (RankingEntryContract entryContract in response.Entries)
-            {
-                entries.Add(new RankingEntry(
-                    entryContract.Rank,
-                    entryContract.PlayerName,
-                    entryContract.Wins,
-                    entryContract.Points,
-                    entryContract.Matches,
-                    entryContract.IsCurrentPlayer));
-            }
-            return entries;
-        }
-
         private void OnBackClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.MainMenu;
@@ -321,26 +260,6 @@ namespace Torres.Client.Screens
             _entries = null;
             _failureNotice!.Visible = false;
             _loadingLabel!.Visible = true;
-        }
-
-        private sealed class RankingEntry
-        {
-            internal RankingEntry(int rank, string playerName, int wins, int points, int matches, bool isCurrentPlayer)
-            {
-                Rank = rank;
-                PlayerName = playerName;
-                Wins = wins;
-                Points = points;
-                Matches = matches;
-                IsCurrentPlayer = isCurrentPlayer;
-            }
-
-            internal int Rank { get; }
-            internal string PlayerName { get; }
-            internal int Wins { get; }
-            internal int Points { get; }
-            internal int Matches { get; }
-            internal bool IsCurrentPlayer { get; }
         }
     }
 }
