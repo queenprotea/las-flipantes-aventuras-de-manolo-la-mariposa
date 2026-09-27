@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.ServiceModel;
 
 using Game.Contracts;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using Myra;
@@ -35,13 +37,17 @@ namespace Torres.Client
         private ScreenId _openScreen = ScreenId.Startup;
         private string _appliedUiCulture = string.Empty;
         private KeyboardState _previousKeyboard;
+        private Point _windowedSize = new Point(Sizes.WindowWidth, Sizes.WindowHeight);
 
         internal TorresGame()
         {
             _graphics = new GraphicsDeviceManager(this);
             _graphics.PreferredBackBufferWidth = Sizes.WindowWidth;
             _graphics.PreferredBackBufferHeight = Sizes.WindowHeight;
+            _graphics.HardwareModeSwitch = false;
             IsMouseVisible = true;
+            Window.AllowUserResizing = true;
+            Window.ClientSizeChanged += OnClientSizeChanged;
 
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
@@ -54,16 +60,16 @@ namespace Torres.Client
             _mainMenu = new MainMenuScreen(_languageService);
             _startup = new StartupScreen(_statusChannelFactory);
         }
-        
 
         protected override void Initialize()
         {
             _languageService.LoadSavedPreference();
             _appliedUiCulture = _languageService.Current.UiCultureName;
             MyraEnvironment.Game = this;
-            
+            WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
+
             RegistrerScrenns();
-            
+
             _topBar = new TopBarView();
             _content = new Panel
             {
@@ -111,8 +117,11 @@ namespace Torres.Client
             screen.Update(gameTime);
             Window.Title = LocalizedText.Get(TextKeys.Common.WindowTitle);
 
+            KeyboardState keyboard = Keyboard.GetState();
             FollowLanguage();
-            FollowNavigation(screen);
+            FollowFullScreenKey(keyboard);
+            FollowNavigation(screen, keyboard);
+            _previousKeyboard = keyboard;
             base.Update(gameTime);
         }
 
@@ -126,6 +135,7 @@ namespace Torres.Client
         protected override void UnloadContent()
         {
             Window.TextInput -= OnTextInput;
+            Window.ClientSizeChanged -= OnClientSizeChanged;
             base.UnloadContent();
         }
 
@@ -143,6 +153,45 @@ namespace Torres.Client
         private void OnTextInput(object? sender, TextInputEventArgs eventArguments)
         {
             _desktop!.OnChar(eventArguments.Character);
+        }
+
+        private void OnClientSizeChanged(object? sender, EventArgs eventArguments)
+        {
+            if (_graphics.IsFullScreen)
+            {
+                return;
+            }
+
+            Rectangle client = Window.ClientBounds;
+            _graphics.PreferredBackBufferWidth = client.Width;
+            _graphics.PreferredBackBufferHeight = client.Height;
+        }
+
+        private void FollowFullScreenKey(KeyboardState keyboard)
+        {
+            if (keyboard.IsKeyDown(Keys.F11) && _previousKeyboard.IsKeyUp(Keys.F11))
+            {
+                ToggleFullScreen();
+            }
+        }
+
+        private void ToggleFullScreen()
+        {
+            if (_graphics.IsFullScreen)
+            {
+                _graphics.PreferredBackBufferWidth = _windowedSize.X;
+                _graphics.PreferredBackBufferHeight = _windowedSize.Y;
+            }
+            else
+            {
+                _windowedSize = new Point(Window.ClientBounds.Width, Window.ClientBounds.Height);
+                DisplayMode display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+                _graphics.PreferredBackBufferWidth = display.Width;
+                _graphics.PreferredBackBufferHeight = display.Height;
+            }
+
+            _graphics.IsFullScreen = !_graphics.IsFullScreen;
+            _graphics.ApplyChanges();
         }
 
         private void FollowLanguage()
@@ -171,11 +220,9 @@ namespace Torres.Client
             LanguageRefresher.Refresh(screen.Root);
         }
 
-        private void FollowNavigation(Screen screen)
+        private void FollowNavigation(Screen screen, KeyboardState keyboard)
         {
-            KeyboardState keyboard = Keyboard.GetState();
             bool escapePressed = keyboard.IsKeyDown(Keys.Escape) && _previousKeyboard.IsKeyUp(Keys.Escape);
-            _previousKeyboard = keyboard;
 
             if (_mainMenu.WasExitRequested || _startup.WasExitRequested || escapePressed)
             {
