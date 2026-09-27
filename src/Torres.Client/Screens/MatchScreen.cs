@@ -45,6 +45,8 @@ namespace Torres.Client.Screens
             VerticalStackPanel center = BuildCenter();
             columns.Widgets.Add(BuildSideBar());
             columns.Widgets.Add(center);
+            columns.Widgets.Add(BuildSideColumn());
+            
             StackPanel.SetProportionType(center, ProportionType.Fill);
             
             VerticalStackPanel page = Page();
@@ -58,7 +60,8 @@ namespace Torres.Client.Screens
         {
             var section = new VerticalStackPanel()
             {
-                Spacing = MatchLayout.SectionLabelSpacing
+                Spacing = MatchLayout.SectionLabelSpacing,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
             };
 
             section.Widgets.Add(new LocalizedLabel(labelKey)
@@ -87,8 +90,9 @@ namespace Torres.Client.Screens
         private static VerticalStackPanel BuildSideBar()
         {
             var players = new VerticalStackPanel();
-            players.Widgets.Add(BuildPlayerRow(PreviewYourName, PreviewYourPoints, false));
-
+            players.Widgets.Add(BuildPlayerRow(PreviewYourName, PreviewYourPoints, true));
+            players.Widgets.Add(BuildPlayerRow(PreviewRivalName, PreviewRivalPoints, false));
+            
             var sideBar = new VerticalStackPanel()
             {
                 Spacing = Metrics.ColumnSpacing,
@@ -158,7 +162,10 @@ namespace Torres.Client.Screens
 
         private static HorizontalStackPanel BuildPipRow(int total, int available, int size)
         {
-            var row = new HorizontalStackPanel();
+            var row = new HorizontalStackPanel
+            {
+                Spacing = MatchLayout.PipSpacing,
+            };
 
             for (var i = 0; i < total; i++)
             {
@@ -269,7 +276,6 @@ namespace Torres.Client.Screens
 
             var contentButton = BuildContentButton(content);
             return contentButton;
-            
         }
 
         private static Button BuildContentButton(Widget content)
@@ -287,7 +293,97 @@ namespace Torres.Client.Screens
             
             return button;
         }
-        
+
+        private static HorizontalStackPanel BuildDeck()
+        {
+            Panel cardBack = CreatePlaceholder();
+            cardBack.Width = MatchLayout.CardWidth;
+            cardBack.Height = MatchLayout.CardHeight;
+
+            var drawLabel = new LocalizedLabel(TextKeys.Match.DrawButton)
+            {
+                Font =  Fonts.Small,
+                TextColor = Theme.Ink,
+                TextArguments = new object[] {DrawCost},
+            };
+
+            Button draw = BuildContentButton(drawLabel);
+            draw.VerticalAlignment = VerticalAlignment.Center;
+
+            var deck = new HorizontalStackPanel
+            {
+                Spacing = MatchLayout.DeckSpacing,
+            };
+            
+            deck.Widgets.Add(cardBack);
+            deck.Widgets.Add(draw);
+
+            return deck;
+        }
+
+        private static VerticalStackPanel BuildSideColumn()
+        {
+            var sideColumn = new VerticalStackPanel
+            {
+                Spacing = Metrics.ColumnSpacing,
+                Width = MatchLayout.SideColumnWidth,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+
+            LocalizedButton endTurn = PrimaryButton(TextKeys.Match.EndTurnButton);
+            endTurn.Padding = MatchLayout.EndTurnPadding;
+            endTurn.HorizontalAlignment = HorizontalAlignment.Stretch;
+            endTurn.LabelAlignment = HorizontalAlignment.Center;
+
+            LocalizedButton forfeit = PrimaryButton(TextKeys.Match.ForfeitButton);
+            forfeit.LabelFont = Fonts.Small;
+            forfeit.Padding = Metrics.SmallButtonPadding;
+            forfeit.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+            VerticalStackPanel chat = BuildChat();
+            
+            sideColumn.Widgets.Add(chat);
+            sideColumn.Widgets.Add(BuildSection(TextKeys.Match.DeckLabel, BuildDeck()));
+            sideColumn.Widgets.Add(endTurn);
+            sideColumn.Widgets.Add(BuildSection(TextKeys.Match.MatchLabel, forfeit));
+           
+            
+            StackPanel.SetProportionType(chat, ProportionType.Fill);
+            return sideColumn;
+        }
+
+        private static VerticalStackPanel BuildChat()
+        {
+            var chat = new VerticalStackPanel
+            {
+                Spacing = MatchLayout.ChatSpacing,
+                Padding =  MatchLayout.ChatPadding,
+                MinHeight = MatchLayout.ChatMinHeight,
+                Background = Theme.SurfaceSunkenBrush,
+                
+            };
+
+            var spacer = new Panel();
+
+            chat.Widgets.Add(new LocalizedLabel(TextKeys.Chat.NoMessages)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
+            
+            chat.Widgets.Add(spacer);
+            chat.Widgets.Add(Divider());
+
+            chat.Widgets.Add(new LocalizedLabel(TextKeys.Chat.InputPlaceholder)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
+            
+            StackPanel.SetProportionType(spacer, ProportionType.Fill);
+            
+            return chat;
+        }
     }
 }
 

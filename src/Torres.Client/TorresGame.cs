@@ -85,7 +85,7 @@ namespace Torres.Client
             _desktop.HasExternalTextInput = true;
             _desktop.Root = root;
             Window.TextInput += OnTextInput;
-            Show(ScreenId.Match);
+            Show(ScreenId.Startup);
             base.Initialize();
         }
 
