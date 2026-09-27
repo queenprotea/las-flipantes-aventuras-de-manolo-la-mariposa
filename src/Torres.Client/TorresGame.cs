@@ -23,6 +23,7 @@ namespace Torres.Client
     {
         private const string ServerStatusAddress = "net.tcp://localhost:8000/status";
         private const string AccountAddress = "net.tcp://localhost:8000/account";
+        private const string RankingAddress = "net.tcp://localhost:8000/ranking";
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly LanguageService _languageService = new LanguageService();
@@ -32,6 +33,7 @@ namespace Torres.Client
         private readonly StartupScreen _startup;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
         private readonly ChannelFactory<IAccountService>  _accountChannelFactory;
+        private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
         private Panel? _content;
         private Desktop? _desktop;
@@ -58,6 +60,10 @@ namespace Torres.Client
             _accountChannelFactory = new ChannelFactory<IAccountService>(
                 new NetTcpBinding(SecurityMode.None),
                 new EndpointAddress(AccountAddress));
+
+            _rankingChannelFactory = new ChannelFactory<IRankingService>(
+                new NetTcpBinding(SecurityMode.None),
+                new EndpointAddress(RankingAddress));
 
             _mainMenu = new MainMenuScreen(_languageService);
             _startup = new StartupScreen(_statusChannelFactory);
@@ -110,7 +116,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.Match, new MatchScreen());
-            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen());
+            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _session));
         }
 
         protected override void Update(GameTime gameTime)
@@ -147,6 +153,7 @@ namespace Torres.Client
             {
                 _statusChannelFactory.Abort();
                 _accountChannelFactory.Abort();
+                _rankingChannelFactory.Abort();
             }
 
             base.Dispose(disposing);

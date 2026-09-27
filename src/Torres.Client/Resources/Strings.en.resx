@@ -952,4 +952,7 @@
   <data name="MatchInProgress.AbandonHint" xml:space="preserve">
     <value>If you abandon it, your caterpillars leave the garden and your flowers stay.</value>
   </data>
+  <data name="GlobalRanking.LoadingLabel" xml:space="preserve">
+    <value>Loading ranking...</value>
+  </data>
 </root>

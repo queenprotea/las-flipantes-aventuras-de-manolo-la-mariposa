@@ -21,6 +21,7 @@ using Npgsql;
 const int NetTcpPort = 8000;
 const string StatusPath = "/status";
 const string AccountPath = "/account";
+const string RankingPath = "/ranking";
 const string LogConfigurationFile = "log4net.config";
 
 Env.TraversePath().Load();
@@ -38,6 +39,8 @@ builder.Services.AddSingleton(dataSource);
 builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
 builder.Services.AddSingleton<AccountService>();
+builder.Services.AddSingleton<RankingRepository>();
+builder.Services.AddSingleton<RankingService>();
 
 WebApplication app = builder.Build();
 app.UseServiceModel(AddEndpoints);
@@ -55,4 +58,8 @@ static void AddEndpoints(IServiceBuilder serviceBuilder)
     serviceBuilder.AddServiceEndpoint<AccountService, IAccountService>(
         new NetTcpBinding(SecurityMode.None),
         AccountPath);
+    serviceBuilder.AddService<RankingService>();
+    serviceBuilder.AddServiceEndpoint<RankingService, IRankingService>(
+        new NetTcpBinding(SecurityMode.None),
+        RankingPath);
 }
