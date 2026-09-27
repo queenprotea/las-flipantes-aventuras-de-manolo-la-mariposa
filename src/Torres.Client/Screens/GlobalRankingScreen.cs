@@ -1,10 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.ServiceModel;
+using System.Threading.Tasks;
 
 using FontStashSharp.RichText;
 
+using Game.Contracts;
+
 using Microsoft.Xna.Framework;
 
+using Myra.Events;
+using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -14,10 +21,12 @@ namespace Torres.Client.Screens
 {
     internal sealed class GlobalRankingScreen : Screen
     {
+        private const int TopRankedCount = 10;
+        private const int NoticeSpacing = 14;
+
+        private const int HeaderRowIndex = 0;
         private const int DividerRowIndex = 1;
         private const int FirstEntryRowIndex = 2;
-        private const int RankOffset = 1;
-        private const int HeaderRowIndex = 0;
         private const int ColumnSpanFullTable = 5;
 
         private const int ColumnIndexRank = 0;
@@ -26,35 +35,135 @@ namespace Torres.Client.Screens
         private const int ColumnIndexPoints = 3;
         private const int ColumnIndexMatches = 4;
 
-        private readonly List<RankingEntry> _entries = SampleEntries();
+        private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
-        internal GlobalRankingScreen()
+        private Widget? _contentPlaceholder;
+        private LocalizedLabel? _loadingLabel;
+        private VerticalStackPanel? _failureNotice;
+        private IRankingService? _rankingChannel;
+        private Task<GlobalRankingResponseContract>? _rankingRequest;
+        private List<RankingEntry>? _entries;
+
+        internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory)
             : base(TextKeys.GlobalRanking.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(rankingChannelFactory);
+            _rankingChannelFactory = rankingChannelFactory;
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            _rankingRequest ??= StartRankingRequest();
+            if (_contentPlaceholder is null || _loadingLabel is null || _failureNotice is null)
+            {
+                return;
+            }
+
+            if (_entries is not null || !_rankingRequest.IsCompleted)
+            {
+                return;
+            }
+
+            _loadingLabel.Visible = false;
+
+            if (!_rankingRequest.IsCompletedSuccessfully)
+            {
+                if (_rankingChannel is ICommunicationObject failedChannel)
+                {
+                    failedChannel.Abort();
+                }
+
+                _failureNotice.Visible = true;
+                return;
+            }
+
+            if (_rankingChannel is ICommunicationObject completedChannel)
+            {
+                completedChannel.Close();
+            }
+
+            _entries = MapEntries(_rankingRequest.Result);
+            RenderEntries(_entries);
         }
 
         protected override Widget Build()
         {
-            var pagePanel = Page();
+            VerticalStackPanel pagePanel = Page();
 
-            if (_entries.Count == 0)
-            {
-                var emptyStateWidget = EmptyState(TextKeys.GlobalRanking.EmptyStateTitle, TextKeys.GlobalRanking.EmptyStateHint);
-                pagePanel.Widgets.Add(emptyStateWidget);
-                StackPanel.SetProportionType(emptyStateWidget, ProportionType.Fill);
-            }
-            else
-            {
-                pagePanel.Widgets.Add(BuildTable());
-            }
+            _loadingLabel = Hint(TextKeys.GlobalRanking.LoadingLabel);
+            pagePanel.Widgets.Add(_loadingLabel);
 
-            var backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            var placeholder = new VerticalStackPanel { Visible = false };
+            _contentPlaceholder = placeholder;
+            pagePanel.Widgets.Add(placeholder);
+            StackPanel.SetProportionType(placeholder, ProportionType.Fill);
+
+            _failureNotice = BuildFailureNotice();
+            pagePanel.Widgets.Add(_failureNotice);
+
+            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
             backButton.Click += OnBackClick;
             pagePanel.Widgets.Add(BackBar(backButton));
+
             return pagePanel;
         }
 
-        private Grid BuildTable()
+        private Task<GlobalRankingResponseContract> StartRankingRequest()
+        {
+            _rankingChannel = _rankingChannelFactory.CreateChannel();
+            int currentUserId = PlayerSession.CurrentUserId ?? 0;
+            return _rankingChannel.GetGlobalRankingAsync(currentUserId);
+        }
+
+        private void RenderEntries(List<RankingEntry> entries)
+        {
+            var placeholder = (VerticalStackPanel)_contentPlaceholder!;
+            placeholder.Widgets.Clear();
+
+            if (entries.Count == 0)
+            {
+                placeholder.Widgets.Add(EmptyState(TextKeys.GlobalRanking.EmptyStateTitle, TextKeys.GlobalRanking.EmptyStateHint));
+            }
+            else
+            {
+                placeholder.Widgets.Add(BuildTable(entries));
+            }
+
+            placeholder.Visible = true;
+        }
+
+        private VerticalStackPanel BuildFailureNotice()
+        {
+            var errorMessage = new VerticalStackPanel
+            {
+                Padding = Theme.CardPadding,
+                Background = Theme.BlushTintBrush,
+                Border = Theme.BlushBrush,
+                BorderThickness = Theme.Border,
+            };
+            errorMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
+            {
+                Font = Fonts.Body,
+                TextColor = Theme.BlushInk,
+                Wrap = true,
+            });
+            errorMessage.Widgets.Add(Paragraph(TextKeys.Common.ServerErrorDetail));
+
+            LocalizedButton retryButton = PrimaryButton(TextKeys.Common.RetryButton);
+            retryButton.Click += OnRetryClick;
+
+            var notice = new VerticalStackPanel
+            {
+                Spacing = Theme.FieldSpacing,
+                Margin = new Thickness(0, NoticeSpacing, 0, 0),
+                Visible = false,
+            };
+            notice.Widgets.Add(errorMessage);
+            notice.Widgets.Add(retryButton);
+            return notice;
+        }
+
+        private static Grid BuildTable(IReadOnlyList<RankingEntry> entries)
         {
             var rankingGrid = new Grid
             {
@@ -72,11 +181,22 @@ namespace Torres.Client.Screens
             AddHeaderRow(rankingGrid);
             AddDivider(rankingGrid, DividerRowIndex);
 
-            for (var entryIndex = 0; entryIndex < _entries.Count; entryIndex++)
+            int tableRowIndex = FirstEntryRowIndex;
+            for (int entryIndex = 0; entryIndex < entries.Count; entryIndex++)
             {
-                var tableRowIndex = entryIndex + FirstEntryRowIndex;
-                var displayRank = entryIndex + RankOffset;
-                AddEntryRow(rankingGrid, tableRowIndex, displayRank, _entries[entryIndex]);
+                RankingEntry entry = entries[entryIndex];
+
+                bool isOutsideTopTen = entryIndex == entries.Count - 1
+                    && entries.Count > TopRankedCount
+                    && entry.Rank > TopRankedCount;
+                if (isOutsideTopTen)
+                {
+                    AddDivider(rankingGrid, tableRowIndex);
+                    tableRowIndex++;
+                }
+
+                AddEntryRow(rankingGrid, tableRowIndex, entry);
+                tableRowIndex++;
             }
 
             return rankingGrid;
@@ -93,15 +213,15 @@ namespace Torres.Client.Screens
 
         private static void AddDivider(Grid rankingGrid, int targetRowIndex)
         {
-            var dividerPanel = Divider();
+            Panel dividerPanel = Divider();
             Grid.SetRow(dividerPanel, targetRowIndex);
             Grid.SetColumnSpan(dividerPanel, ColumnSpanFullTable);
             rankingGrid.Widgets.Add(dividerPanel);
         }
 
-        private static void AddEntryRow(Grid rankingGrid, int targetRowIndex, int displayRank, RankingEntry rankingEntry)
+        private static void AddEntryRow(Grid rankingGrid, int targetRowIndex, RankingEntry rankingEntry)
         {
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexRank, RowNumber(displayRank));
+            AddCell(rankingGrid, targetRowIndex, ColumnIndexRank, RowNumber(rankingEntry.Rank));
             AddCell(rankingGrid, targetRowIndex, ColumnIndexPlayer, PlayerCell(rankingEntry));
             AddCell(rankingGrid, targetRowIndex, ColumnIndexWins, RowNumber(rankingEntry.Wins));
             AddCell(rankingGrid, targetRowIndex, ColumnIndexPoints, RowNumber(rankingEntry.Points));
@@ -115,7 +235,7 @@ namespace Torres.Client.Screens
                 return RowLabel(rankingEntry.PlayerName, Theme.Ink);
             }
 
-            var cellPanel = Row();
+            HorizontalStackPanel cellPanel = Row();
             cellPanel.Widgets.Add(RowLabel(rankingEntry.PlayerName, Theme.MintInk));
             cellPanel.Widgets.Add(YouTag());
             return cellPanel;
@@ -169,20 +289,45 @@ namespace Torres.Client.Screens
             rankingGrid.Widgets.Add(cellWidget);
         }
 
-        private static List<RankingEntry> SampleEntries()
+        private static List<RankingEntry> MapEntries(GlobalRankingResponseContract response)
         {
-            return new List<RankingEntry>();
+            var entries = new List<RankingEntry>(response.Entries.Count);
+            foreach (RankingEntryContract entryContract in response.Entries)
+            {
+                entries.Add(new RankingEntry(
+                    entryContract.Rank,
+                    entryContract.PlayerName,
+                    entryContract.Wins,
+                    entryContract.Points,
+                    entryContract.Matches,
+                    entryContract.IsCurrentPlayer));
+            }
+            return entries;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void OnBackClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.MainMenu;
         }
 
+        private void OnRetryClick(object sender, MyraEventArgs arguments)
+        {
+            if (_rankingChannel is ICommunicationObject failedChannel)
+            {
+                failedChannel.Abort();
+            }
+
+            _rankingRequest = null;
+            _entries = null;
+            _failureNotice!.Visible = false;
+            _loadingLabel!.Visible = true;
+        }
+
         private sealed class RankingEntry
         {
-            internal RankingEntry(string playerName, int wins, int points, int matches, bool isCurrentPlayer)
+            internal RankingEntry(int rank, string playerName, int wins, int points, int matches, bool isCurrentPlayer)
             {
+                Rank = rank;
                 PlayerName = playerName;
                 Wins = wins;
                 Points = points;
@@ -190,6 +335,7 @@ namespace Torres.Client.Screens
                 IsCurrentPlayer = isCurrentPlayer;
             }
 
+            internal int Rank { get; }
             internal string PlayerName { get; }
             internal int Wins { get; }
             internal int Points { get; }

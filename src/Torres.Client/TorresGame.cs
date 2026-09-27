@@ -16,9 +16,17 @@ using Torres.Client.Ui;
 
 namespace Torres.Client
 {
+    
+    /// solo guarda el id del jugador logueado en memoria. TODO: reemplazar por el resultado real del login
+    internal static class PlayerSession
+    {
+        internal static int? CurrentUserId { get; set; }
+    }
+    
     internal sealed class TorresGame : Microsoft.Xna.Framework.Game
     {
         private const string ServerStatusAddress = "net.tcp://localhost:8000/status";
+        private const string RankingAddress = "net.tcp://localhost:8000/ranking";
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly LanguageService _languageService = new LanguageService();
@@ -26,6 +34,7 @@ namespace Torres.Client
         private readonly MainMenuScreen _mainMenu;
         private readonly StartupScreen _startup;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
+        private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
         private Panel? _content;
         private Desktop? _desktop;
@@ -44,6 +53,11 @@ namespace Torres.Client
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
                 new EndpointAddress(ServerStatusAddress));
+            
+            _rankingChannelFactory = new ChannelFactory<IRankingService>(
+                new NetTcpBinding(SecurityMode.None),
+                new EndpointAddress(RankingAddress));
+            
             _mainMenu = new MainMenuScreen(_languageService);
             _startup = new StartupScreen(_statusChannelFactory);
             _screensById.Add(ScreenId.Startup, _startup);
@@ -56,7 +70,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Profile, new ProfileScreen());
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
-            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen());
+            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory));
         }
 
         protected override void Initialize()
@@ -119,6 +133,7 @@ namespace Torres.Client
             if (disposing)
             {
                 _statusChannelFactory.Abort();
+                _rankingChannelFactory.Abort();
             }
 
             base.Dispose(disposing);

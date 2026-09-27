@@ -231,6 +231,7 @@ namespace Torres.Client.Localization
         internal static class GlobalRanking
         {
             internal const string HeaderLabel = "GlobalRanking.HeaderLabel";
+            internal const string LoadingLabel = "GlobalRanking.LoadingLabel";
             internal const string EmptyStateTitle = "GlobalRanking.EmptyStateTitle";
             internal const string EmptyStateHint = "GlobalRanking.EmptyStateHint";
             internal const string RowNumberColumn = "GlobalRanking.RowNumberColumn";

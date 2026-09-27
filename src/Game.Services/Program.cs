@@ -9,6 +9,7 @@ using DotNetEnv;
 using Game.Contracts;
 using Game.Persistence;
 using Game.Services;
+using Game.Services.Persistence;
 
 using log4net;
 using log4net.Config;
@@ -36,6 +37,8 @@ builder.Services.AddServiceModelServices();
 builder.Services.AddSingleton(dataSource);
 builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
+builder.Services.AddSingleton<RankingService>();
+builder.Services.AddSingleton<RankingRepository>();
 
 WebApplication app = builder.Build();
 app.UseServiceModel(AddEndpoints);
@@ -49,4 +52,9 @@ static void AddEndpoints(IServiceBuilder serviceBuilder)
     serviceBuilder.AddServiceEndpoint<ServerStatusService, IServerStatusService>(
         new NetTcpBinding(SecurityMode.None),
         StatusPath);
+    
+    serviceBuilder.AddService<RankingService>();
+    serviceBuilder.AddServiceEndpoint<RankingService, IRankingService>(
+        new NetTcpBinding(SecurityMode.None),
+        "/ranking");
 }
