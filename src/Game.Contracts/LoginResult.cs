@@ -9,6 +9,6 @@ namespace Game.Contracts
         public LoginStatus Status { get; set; }
 
         [DataMember]
-        public PlayerIdentity Player { get; set; }
+        public PlayerIdentity? Player { get; set; }
     }
 }

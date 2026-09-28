@@ -18,6 +18,7 @@ namespace Torres.Client.Screens
             columns.Widgets.Add(BuildCard());
             columns.Widgets.Add(Ambience());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
+
             return columns;
         }
 
@@ -36,15 +37,16 @@ namespace Torres.Client.Screens
 
             LocalizedButton enterButton = PrimaryButton(TextKeys.GuestAccess.EnterButton);
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(enterButton);
             actions.Widgets.Add(backButton);
             card.Widgets.Add(actions);
+
             return card;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Login;
         }

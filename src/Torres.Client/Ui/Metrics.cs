@@ -24,9 +24,14 @@ namespace Torres.Client.Ui
         internal const int AppBarBottomSpacing = 20;
 
         internal const int ListSpacing = 6;
+        internal const int ListItemSpacing = 12;
+        internal const int ItemListSpacing = 8;
 
         internal const int MenuSeparatorSpacing = 8;
         internal const int MenuSeparatorInset = 4;
+
+        internal const int ChatSpacing = 7;
+        internal const int ChatMinHeight = 150;
 
         internal static Thickness CardPadding { get; } = new Thickness(CardPaddingSize);
 
@@ -43,5 +48,9 @@ namespace Torres.Client.Ui
         internal static Thickness MenuItemPadding { get; } = new Thickness(12, 11);
 
         internal static Thickness ListItemPadding { get; } = new Thickness(14, 11);
+
+        internal static Thickness ChatPadding { get; } = new Thickness(12, 11);
+
+        internal static Thickness ChipPadding { get; } = new Thickness(10, 3);
     }
 }

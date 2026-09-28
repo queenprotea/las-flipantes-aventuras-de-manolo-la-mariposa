@@ -12,6 +12,11 @@ namespace Torres.Client.Ui
 
         private const int DisplaySize = 44;
         private const int BrandSize = 25;
+        private const int WinnerSize = 26;
+        private const int HeadlineSize = 24;
+        private const int NoticeSize = 23;
+        private const int LargeClockSize = 40;
+        private const int HeadingSize = 22;
         private const int TitleSize = 17;
         private const int MenuItemSize = 17;
         private const int BodySize = 14;
@@ -20,28 +25,42 @@ namespace Torres.Client.Ui
         private const int LabelSize = 11;
         private const int ClockSize = 34;
         private const int ActionPointsSize = 40;
+        private const int RoomCodeSize = 23;
 
-        private static readonly FontSystem System = LoadFontSystem();
+        private static readonly FontSystem _fontSystem = LoadFontSystem();
 
-        internal static SpriteFontBase Display { get; } = System.GetFont(DisplaySize);
+        internal static SpriteFontBase Display { get; } = _fontSystem.GetFont(DisplaySize);
 
-        internal static SpriteFontBase Brand { get; } = System.GetFont(BrandSize);
+        internal static SpriteFontBase Brand { get; } = _fontSystem.GetFont(BrandSize);
 
-        internal static SpriteFontBase Title { get; } = System.GetFont(TitleSize);
+        internal static SpriteFontBase Winner { get; } = _fontSystem.GetFont(WinnerSize);
 
-        internal static SpriteFontBase MenuItem { get; } = System.GetFont(MenuItemSize);
+        internal static SpriteFontBase Headline { get; } = _fontSystem.GetFont(HeadlineSize);
 
-        internal static SpriteFontBase Body { get; } = System.GetFont(BodySize);
+        internal static SpriteFontBase Notice { get; } = _fontSystem.GetFont(NoticeSize);
 
-        internal static SpriteFontBase Control { get; } = System.GetFont(ControlSize);
+        internal static SpriteFontBase Heading { get; } = _fontSystem.GetFont(HeadingSize);
 
-        internal static SpriteFontBase Small { get; } = System.GetFont(SmallSize);
+        internal static SpriteFontBase Title { get; } = _fontSystem.GetFont(TitleSize);
 
-        internal static SpriteFontBase Label { get; } = System.GetFont(LabelSize);
+        internal static SpriteFontBase MenuItem { get; } = _fontSystem.GetFont(MenuItemSize);
 
-        internal static SpriteFontBase Clock { get; } = System.GetFont(ClockSize);
-        
-        internal static SpriteFontBase ActionPoints { get; } = System.GetFont(ActionPointsSize);
+        internal static SpriteFontBase Body { get; } = _fontSystem.GetFont(BodySize);
+
+        internal static SpriteFontBase Control { get; } = _fontSystem.GetFont(ControlSize);
+
+        internal static SpriteFontBase Small { get; } = _fontSystem.GetFont(SmallSize);
+
+        internal static SpriteFontBase Label { get; } = _fontSystem.GetFont(LabelSize);
+
+        internal static SpriteFontBase Clock { get; } = _fontSystem.GetFont(ClockSize);
+
+        internal static SpriteFontBase LargeClock { get; } = _fontSystem.GetFont(LargeClockSize);
+
+        internal static SpriteFontBase ActionPoints { get; } = _fontSystem.GetFont(ActionPointsSize);
+
+        internal static SpriteFontBase RoomCode { get; } = _fontSystem.GetFont(RoomCodeSize);
+
         private static FontSystem LoadFontSystem()
         {
             var fontSystem = new FontSystem();
@@ -50,7 +69,7 @@ namespace Torres.Client.Ui
             {
                 if (stream is null)
                 {
-                    throw new InvalidOperationException($"No se encontró el recurso incrustado {FontResourceName}.");
+                    throw new InvalidOperationException($"The embedded resource {FontResourceName} was not found.");
                 }
 
                 fontSystem.AddFont(stream);

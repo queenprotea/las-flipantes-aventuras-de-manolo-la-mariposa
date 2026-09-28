@@ -5,14 +5,14 @@ using System.IO;
 
 namespace Torres.Client.Localization
 {
-    internal sealed class LanguageService
+    internal sealed class LanguagePreference
     {
         private const string PreferenceFileName = "language.txt";
         private const string PreferenceFolderName = "Torres";
 
         private readonly string _preferencePath;
 
-        internal LanguageService()
+        internal LanguagePreference()
         {
             string folder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -50,6 +50,7 @@ namespace Torres.Client.Localization
 
             Apply(language);
             Save(language);
+
             return true;
         }
 
@@ -88,11 +89,13 @@ namespace Torres.Client.Localization
         private void Save(LanguageOption language)
         {
             string? folder = Path.GetDirectoryName(_preferencePath);
-            if (folder is not null)
+            if (folder is null)
             {
-                Directory.CreateDirectory(folder);
-                File.WriteAllText(_preferencePath, language.UiCultureName);
+                return;
             }
+
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(_preferencePath, language.UiCultureName);
         }
     }
 }

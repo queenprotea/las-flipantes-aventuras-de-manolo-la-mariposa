@@ -47,6 +47,7 @@ namespace Game.Services
             }
 
             _log.InfoFormat("Status check answered; the player table has {0} rows.", playerCount);
+
             return ServerStatus.Ready;
         }
     }

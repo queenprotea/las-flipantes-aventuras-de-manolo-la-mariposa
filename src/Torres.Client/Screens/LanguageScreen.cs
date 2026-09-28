@@ -1,3 +1,5 @@
+using System;
+
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -11,16 +13,20 @@ namespace Torres.Client.Screens
         private const string CurrentMark = "✓";
         private const int NoteSpacing = 10;
 
-        private readonly LanguageService _languageService;
-        private LocalizedButton? _spanishOption;
-        private LocalizedButton? _englishOption;
-        private Label? _spanishMark;
-        private Label? _englishMark;
+        private readonly LanguagePreference _languagePreference;
+        private readonly LocalizedButton _spanishOption = LanguageOptionButton(LanguagePreference.Available[0].NameKey);
+        private readonly LocalizedButton _englishOption = LanguageOptionButton(LanguagePreference.Available[1].NameKey);
+        private readonly Label _spanishMark;
+        private readonly Label _englishMark;
 
-        internal LanguageScreen(LanguageService languageService)
+        internal LanguageScreen(LanguagePreference languagePreference)
             : base(TextKeys.Language.HeaderLabel, true)
         {
-            _languageService = languageService;
+            ArgumentNullException.ThrowIfNull(languagePreference);
+
+            _languagePreference = languagePreference;
+            _spanishMark = _spanishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
+            _englishMark = _englishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
         }
 
         protected override Widget Build()
@@ -28,12 +34,8 @@ namespace Torres.Client.Screens
             VerticalStackPanel card = Card(Sizes.LanguageCardWidth);
             card.Widgets.Add(CardHeader(TextKeys.Language.Title, TextKeys.Language.Hint));
 
-            _spanishOption = LanguageOptionButton(LanguageService.Available[0].NameKey);
-            _englishOption = LanguageOptionButton(LanguageService.Available[1].NameKey);
-            _spanishMark = _spanishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
-            _englishMark = _englishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
-            _spanishOption.Click += OnSpanishClick;
-            _englishOption.Click += OnEnglishClick;
+            _spanishOption.Click += SpanishOptionOnClick;
+            _englishOption.Click += EnglishOptionOnClick;
 
             var options = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
             options.Widgets.Add(_spanishOption);
@@ -45,12 +47,13 @@ namespace Torres.Client.Screens
             card.Widgets.Add(savedHint);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(backButton);
             card.Widgets.Add(actions);
 
             UpdateMarks();
+
             return card;
         }
 
@@ -72,31 +75,31 @@ namespace Torres.Client.Screens
 
         private void UpdateMarks()
         {
-            bool isSpanish = _languageService.IsCurrent(LanguageService.Available[0]);
-            ApplySelection(_spanishOption!, _spanishMark!, isSpanish);
-            ApplySelection(_englishOption!, _englishMark!, !isSpanish);
+            bool isSpanish = _languagePreference.IsCurrent(LanguagePreference.Available[0]);
+            ApplySelection(_spanishOption, _spanishMark, isSpanish);
+            ApplySelection(_englishOption, _englishMark, !isSpanish);
         }
 
-        private void ApplySelection(LocalizedButton option, Label mark, bool isSelected)
+        private static void ApplySelection(LocalizedButton option, Label mark, bool isSelected)
         {
             mark.Visible = isSelected;
             option.Background = isSelected ? Theme.MintTintBrush : Theme.SurfaceBrush;
             option.Border = isSelected ? Theme.MintLineBrush : Theme.LineBrush;
         }
 
-        private void OnSpanishClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void SpanishOptionOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            _languageService.Change(LanguageService.Available[0]);
+            _languagePreference.Change(LanguagePreference.Available[0]);
             UpdateMarks();
         }
 
-        private void OnEnglishClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void EnglishOptionOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            _languageService.Change(LanguageService.Available[1]);
+            _languagePreference.Change(LanguagePreference.Available[1]);
             UpdateMarks();
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }

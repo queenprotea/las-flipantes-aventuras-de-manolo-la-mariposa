@@ -1,5 +1,4 @@
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -31,12 +30,13 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(filler, ProportionType.Fill);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             page.Widgets.Add(BackBar(backButton));
+
             return page;
         }
 
-        private static HorizontalStackPanel BuildSearchRow()
+        private HorizontalStackPanel BuildSearchRow()
         {
             HorizontalStackPanel row = Row();
 
@@ -45,11 +45,13 @@ namespace Torres.Client.Screens
             searchButton.VerticalAlignment = VerticalAlignment.Bottom;
             LocalizedButton createRoomButton = PrimaryButton(TextKeys.Rooms.CreateRoomButton);
             createRoomButton.VerticalAlignment = VerticalAlignment.Bottom;
+            createRoomButton.Click += CreateRoomButtonOnClick;
 
             row.Widgets.Add(searchField);
             row.Widgets.Add(searchButton);
             row.Widgets.Add(createRoomButton);
             StackPanel.SetProportionType(searchField, ProportionType.Fill);
+
             return row;
         }
 
@@ -71,6 +73,7 @@ namespace Torres.Client.Screens
             row.Widgets.Add(spacer);
             row.Widgets.Add(refreshButton);
             StackPanel.SetProportionType(spacer, ProportionType.Fill);
+
             return row;
         }
 
@@ -89,6 +92,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Small,
                 TextColor = Theme.MintInk,
             });
+
             return chip;
         }
 
@@ -121,12 +125,18 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             frame.Widgets.Add(emptyState);
+
             return frame;
         }
 
-        private void OnBackClick(object sender, MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
+        }
+
+        private void CreateRoomButtonOnClick(object sender, MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.CreateRoom;
         }
     }
 }

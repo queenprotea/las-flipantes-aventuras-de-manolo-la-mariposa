@@ -1,3 +1,5 @@
+using System;
+
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -10,16 +12,18 @@ namespace Torres.Client.Screens
     {
         private const string Chevron = "›";
 
-        private readonly LanguageService _languageService;
+        private readonly LanguagePreference _languagePreference;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
-        private LocalizedButton? _ranking;
+        private LocalizedButton? _rankingButton;
 
-        internal MainMenuScreen(LanguageService languageService)
+        internal MainMenuScreen(LanguagePreference languagePreference)
             : base(TextKeys.MainMenu.HeaderLabel, true)
         {
-            _languageService = languageService;
+            ArgumentNullException.ThrowIfNull(languagePreference);
+
+            _languagePreference = languagePreference;
         }
 
         internal bool WasExitRequested { get; private set; }
@@ -31,7 +35,7 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            _languageButton.TextArgumentKey = _languageService.Current.NameKey;
+            _languageButton.TextArgumentKey = _languagePreference.Current.NameKey;
             _languageButton.RefreshText();
         }
 
@@ -42,6 +46,7 @@ namespace Torres.Client.Screens
             columns.Widgets.Add(BuildMenuList());
             columns.Widgets.Add(Ambience());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
+
             return columns;
         }
 
@@ -60,6 +65,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             item.SetTrailingMark(Chevron, Theme.MutedInk);
+
             return item;
         }
 
@@ -71,6 +77,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             box.Widgets.Add(Divider());
+
             return box;
         }
 
@@ -83,24 +90,27 @@ namespace Torres.Client.Screens
             };
 
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.InvitationsButton, false));
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.FriendsButton, false));
+            LocalizedButton friendsButton = MenuItem(TextKeys.MainMenu.FriendsButton, true);
+            friendsButton.Click += FriendsButtonOnClick;
+            list.Widgets.Add(friendsButton);
             list.Widgets.Add(MenuItem(TextKeys.MainMenu.HistoryButton, false));
             
-            _ranking = MenuItem(TextKeys.MainMenu.RankingButton, true);
-            _ranking.Click += OnRankingClick;
-            list.Widgets.Add(_ranking);
+            _rankingButton = MenuItem(TextKeys.MainMenu.RankingButton, true);
+            _rankingButton.Click += RankingButtonOnClick;
+            list.Widgets.Add(_rankingButton);
 
             list.Widgets.Add(BuildSeparator());
 
             _exitButton = MenuItem(TextKeys.MainMenu.ExitButton, true);
-            _exitButton.Click += OnExitClick;
+            _exitButton.Click += ExitButtonOnClick;
             list.Widgets.Add(_exitButton);
 
             _roomsButton = MenuItem(TextKeys.MainMenu.RoomsButton, true);
-            _roomsButton.Click += OnRoomsClick;
+            _roomsButton.Click += RoomsButtonOnClick;
             list.Widgets.Add(_roomsButton);
 
             list.Widgets.Add(BuildLanguageButton());
+
             return list;
         }
 
@@ -119,30 +129,36 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, Metrics.ListSpacing, 0, 0),
             };
-            _languageButton.TextArgumentKey = _languageService.Current.NameKey;
+            _languageButton.TextArgumentKey = _languagePreference.Current.NameKey;
             _languageButton.RefreshText();
-            _languageButton.Click += OnLanguageClick;
+            _languageButton.Click += LanguageButtonOnClick;
+
             return _languageButton;
         }
         
-        private void OnRankingClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void RankingButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.GlobalRanking;
         }
 
-        private void OnExitClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void ExitButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             WasExitRequested = true;
         }
 
-        private void OnRoomsClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void RoomsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Rooms;
         }
 
-        private void OnLanguageClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void LanguageButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Language;
+        }
+
+        private void FriendsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.Friends;
         }
     }
 }

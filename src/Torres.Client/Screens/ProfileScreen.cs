@@ -50,8 +50,9 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(columns, ProportionType.Fill);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             page.Widgets.Add(BackBar(backButton));
+
             return page;
         }
 
@@ -72,6 +73,7 @@ namespace Torres.Client.Screens
             formatHint.HorizontalAlignment = HorizontalAlignment.Center;
             formatHint.Margin = new Thickness(0, AvatarHintSpacing, 0, 0);
             card.Widgets.Add(formatHint);
+
             return card;
         }
 
@@ -84,20 +86,21 @@ namespace Torres.Client.Screens
 
             LocalizedButton saveButton = PrimaryButton(TextKeys.Profile.SaveButton);
             LocalizedButton settingsButton = SecondaryButton(TextKeys.Profile.AccountSettingsButton);
-            settingsButton.Click += OnSettingsClick;
+            settingsButton.Click += SettingsButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(saveButton);
             actions.Widgets.Add(settingsButton);
             card.Widgets.Add(actions);
+
             return card;
         }
 
-        private void OnSettingsClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void SettingsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.AccountSettings;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }

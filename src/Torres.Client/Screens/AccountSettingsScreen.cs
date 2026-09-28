@@ -25,8 +25,9 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(card, ProportionType.Fill);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.AccountSettings.BackToProfileButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             page.Widgets.Add(BackBar(backButton));
+
             return page;
         }
 
@@ -46,10 +47,11 @@ namespace Torres.Client.Screens
             LocalizedButton deleteButton = DestructiveButton(TextKeys.AccountSettings.DeleteAccountButton);
             deleteButton.HorizontalAlignment = HorizontalAlignment.Left;
             block.Widgets.Add(deleteButton);
+
             return block;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Profile;
         }

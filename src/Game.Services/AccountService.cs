@@ -37,11 +37,21 @@ namespace Game.Services
         {
             RegistrationResult? invalidField = FindInvalidField(username, email, password);
 
-            if (invalidField is not null)
+            return invalidField ?? await CreateAccountAsync(username, email, password);
+        }
+
+        public async Task<LoginResult> LoginAsync(string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
             {
-                return invalidField.Value;
+                return new LoginResult { Status = LoginStatus.InvalidCredentials };
             }
-            
+
+            return await AuthenticateAsync(username, password);
+        }
+
+        private async Task<RegistrationResult> CreateAccountAsync(string username, string email, string password)
+        {
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, PasswordWorkFactor);
             PlayerCreationOutcome outcome;
             try
@@ -54,6 +64,11 @@ namespace Game.Services
                 return RegistrationResult.DatabaseUnavailable;
             }
 
+            return ToRegistrationResult(outcome);
+        }
+
+        private static RegistrationResult ToRegistrationResult(PlayerCreationOutcome outcome)
+        {
             switch (outcome)
             {
                 case PlayerCreationOutcome.Created:
@@ -71,13 +86,8 @@ namespace Game.Services
             }
         }
 
-        public async Task<LoginResult> LoginAsync(string username, string password)
+        private async Task<LoginResult> AuthenticateAsync(string username, string password)
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
-            {
-                return new LoginResult { Status = LoginStatus.InvalidCredentials };
-            }
-
             PlayerAccount? account;
             try
             {
@@ -89,12 +99,18 @@ namespace Game.Services
                 return new LoginResult { Status = LoginStatus.DatabaseUnavailable };
             }
 
+            return VerifyCredentials(account, password);
+        }
+
+        private static LoginResult VerifyCredentials(PlayerAccount? account, string password)
+        {
             if ((account is null) || !BCrypt.Net.BCrypt.Verify(password, account.PasswordHash))
             {
                 return new LoginResult { Status = LoginStatus.InvalidCredentials };
             }
 
-            _log.Info("A player logged in.");
+            _log.InfoFormat("Player {0} logged in.", account.PlayerId);
+
             return new LoginResult
             {
                 Status = LoginStatus.LoggedIn,
@@ -109,25 +125,21 @@ namespace Game.Services
 
         private static RegistrationResult? FindInvalidField(string username, string email, string password)
         {
-            RegistrationResult? result = null;
-
+            RegistrationResult? invalidField = null;
             if ((username is null) || !_usernamePattern.IsMatch(username))
             {
-                result = RegistrationResult.InvalidUsername;
-                return result;
+                invalidField = RegistrationResult.InvalidUsername;
             }
             else if ((email is null) || (email.IndexOf('@') <= 0) || (email.Length > LongestEmail))
             {
-                result = RegistrationResult.InvalidEmail;
-                return result;
+                invalidField = RegistrationResult.InvalidEmail;
             }
             else if ((password is null) || !_passwordPattern.IsMatch(password))
             {
-                result = RegistrationResult.InvalidPassword;
-                return result;
+                invalidField = RegistrationResult.InvalidPassword;
             }
 
-            return result;
+            return invalidField;
         }
     }
 }

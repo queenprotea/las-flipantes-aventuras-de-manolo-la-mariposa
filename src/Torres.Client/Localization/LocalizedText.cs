@@ -5,12 +5,12 @@ namespace Torres.Client.Localization
 {
     internal static class LocalizedText
     {
-        private static readonly ResourceManager Manager =
+        private static readonly ResourceManager _manager =
             new ResourceManager("Torres.Client.Resources.Strings", typeof(LocalizedText).Assembly);
 
         internal static string Get(string key)
         {
-            return Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+            return _manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
         }
 
         internal static string Format(string key, params object[] arguments)

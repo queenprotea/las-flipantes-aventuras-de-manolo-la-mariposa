@@ -62,8 +62,9 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(columns, ProportionType.Fill);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             page.Widgets.Add(BackBar(backButton));
+
             return page;
         }
 
@@ -80,8 +81,8 @@ namespace Torres.Client.Screens
             card.Widgets.Add(passwordField);
 
             LocalizedButton createAccountButton = SecondaryButton(TextKeys.Login.CreateAccountButton);
-            _logInButton.Click += OnLogInClick;
-            createAccountButton.Click += OnCreateAccountClick;
+            _logInButton.Click += LogInButtonOnClick;
+            createAccountButton.Click += CreateAccountButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(_logInButton);
             actions.Widgets.Add(createAccountButton);
@@ -89,16 +90,17 @@ namespace Torres.Client.Screens
 
             LocalizedButton forgotButton = LinkButton(TextKeys.Login.ForgotAccessLink);
             LocalizedButton guestButton = LinkButton(TextKeys.Login.PlayAsGuestLink);
-            forgotButton.Click += OnForgotClick;
-            guestButton.Click += OnGuestClick;
+            forgotButton.Click += ForgotButtonOnClick;
+            guestButton.Click += GuestButtonOnClick;
             HorizontalStackPanel links = Row();
             links.Widgets.Add(forgotButton);
             links.Widgets.Add(guestButton);
             card.Widgets.Add(links);
+
             return card;
         }
 
-        private void OnLogInClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void LogInButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             _errorLabel.Visible = false;
 
@@ -141,8 +143,14 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void EnterAs(PlayerIdentity player)
+        private void EnterAs(PlayerIdentity? player)
         {
+            if (player is null)
+            {
+                ShowError(TextKeys.Common.ServerErrorTitle);
+                return;
+            }
+
             _session.Start(player);
             _passwordField.Box.Text = string.Empty;
             RequestedScreen = ScreenId.MainMenu;
@@ -164,22 +172,22 @@ namespace Torres.Client.Screens
             _accountChannel = null;
         }
 
-        private void OnCreateAccountClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void CreateAccountButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Register;
         }
 
-        private void OnForgotClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void ForgotButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.PasswordRecovery;
         }
 
-        private void OnGuestClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void GuestButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.GuestAccess;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }

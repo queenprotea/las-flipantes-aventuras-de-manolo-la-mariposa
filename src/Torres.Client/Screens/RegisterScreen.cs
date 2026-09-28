@@ -28,11 +28,12 @@ namespace Torres.Client.Screens
 
         private IAccountService? _accountChannel;
         private Task<RegistrationResult>? _registration;
+
         internal RegisterScreen(ChannelFactory<IAccountService> accountChannelFactory)
             : base(TextKeys.Register.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(accountChannelFactory);
-            
+
             _accountChannelFactory = accountChannelFactory;
         }
 
@@ -42,7 +43,7 @@ namespace Torres.Client.Screens
             {
                 return;
             }
-            
+
             Task<RegistrationResult> registration = _registration;
             _registration = null;
             _createAccountButton.Enabled = true;
@@ -55,7 +56,7 @@ namespace Torres.Client.Screens
             columns.Widgets.Add(BuildCard());
             columns.Widgets.Add(Ambience());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
-            
+
             return columns;
         }
 
@@ -89,10 +90,10 @@ namespace Torres.Client.Screens
             return group;
         }
 
-        private void CreateAccountButtonOnClick(object sender, MyraEventArgs eventArgs)
+        private void CreateAccountButtonOnClick(object sender, MyraEventArgs e)
         {
             _serverMessage.Visible = false;
-            
+
             bool isUsernameMissing = ReportIfEmpty(_usernameField, _usernameMessage);
             bool isEmailMissing = ReportIfEmpty(_emailField, _emailMessage);
             bool isPasswordMissing = ReportIfEmpty(_passwordField, _passwordMessage);
@@ -100,7 +101,7 @@ namespace Torres.Client.Screens
             {
                 return;
             }
-            
+
             _createAccountButton.Enabled = false;
             _accountChannel = _accountChannelFactory.CreateChannel();
             _registration = _accountChannel.RegisterAsync(_usernameField.Value, _emailField.Value, _passwordField.Value);
@@ -120,10 +121,11 @@ namespace Torres.Client.Screens
             if (!registration.IsCompletedSuccessfully)
             {
                 AbortChannel();
-                ShowMenssage(_serverMessage, TextKeys.Common.ServerErrorTitle);
-                
+                ShowMessage(_serverMessage, TextKeys.Common.ServerErrorTitle);
+
                 return;
             }
+
             ShowResult(registration.Result);
         }
 
@@ -134,40 +136,45 @@ namespace Torres.Client.Screens
                 case RegistrationResult.Created:
                     RequestedScreen = ScreenId.MainMenu;
                     break;
+
                 case RegistrationResult.UsernameTaken:
-                    ShowMenssage(_usernameMessage, TextKeys.Register.UsernameUnavailable);
+                    ShowMessage(_usernameMessage, TextKeys.Register.UsernameUnavailable);
                     break;
+
                 case RegistrationResult.EmailTaken:
-                    ShowMenssage(_emailMessage, TextKeys.Register.EmailAlreadyExists);
+                    ShowMessage(_emailMessage, TextKeys.Register.EmailAlreadyExists);
                     break;
+
                 case RegistrationResult.InvalidUsername:
-                    ShowMenssage(_usernameMessage, TextKeys.Register.UsernameInvalidFormat);
+                    ShowMessage(_usernameMessage, TextKeys.Register.UsernameInvalidFormat);
                     break;
+
                 case RegistrationResult.InvalidEmail:
-                    ShowMenssage(_emailMessage, TextKeys.Register.EmailInvalidFormat);
+                    ShowMessage(_emailMessage, TextKeys.Register.EmailInvalidFormat);
                     break;
+
                 case RegistrationResult.InvalidPassword:
-                    ShowMenssage(_passwordMessage, TextKeys.Register.PasswordInvalidFormat);
+                    ShowMessage(_passwordMessage, TextKeys.Register.PasswordInvalidFormat);
                     break;
+
                 case RegistrationResult.DatabaseUnavailable:
-                    ShowMenssage(_serverMessage, TextKeys.Common.ServerErrorTitle);
+                    ShowMessage(_serverMessage, TextKeys.Common.ServerErrorTitle);
                     break;
-                
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(result), result, null);
             }
-            
         }
 
-        private static void ShowMenssage(LocalizedLabel menssage, string textKey)
+        private static void ShowMessage(LocalizedLabel message, string textKey)
         {
-            menssage.TextKey = textKey;
-            menssage.Visible = true;
+            message.TextKey = textKey;
+            message.Visible = true;
         }
 
         private void AbortChannel()
         {
-            if(_accountChannel is ICommunicationObject failedChannel)
+            if (_accountChannel is ICommunicationObject failedChannel)
             {
                 failedChannel.Abort();
             }
@@ -175,7 +182,7 @@ namespace Torres.Client.Screens
             _accountChannel = null;
         }
 
-        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Login;
         }

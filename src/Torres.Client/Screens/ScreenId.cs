@@ -25,5 +25,25 @@ namespace Torres.Client.Screens
         Match,
 
         GlobalRanking,
+        
+        CreateRoom,
+
+        Room,
+
+        MatchPreparation,
+
+        InitialPlacement,
+
+        RoundSummary,
+
+        Result,
+
+        Friends,
+
+        Disconnection,
+
+        Resume,
+
+        MatchInProgress,
     }
 }

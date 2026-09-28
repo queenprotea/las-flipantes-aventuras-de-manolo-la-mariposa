@@ -56,6 +56,7 @@ namespace Torres.Client.Localization
             content.Widgets.Add(_label);
             content.Widgets.Add(markLabel);
             Content = content;
+
             return markLabel;
         }
 

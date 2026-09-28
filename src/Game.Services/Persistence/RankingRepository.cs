@@ -25,6 +25,7 @@ namespace Game.Persistence
         public RankingRepository(NpgsqlDataSource dataSource)
         {
             ArgumentNullException.ThrowIfNull(dataSource);
+
             _dataSource = dataSource;
         }
 
@@ -32,7 +33,8 @@ namespace Game.Persistence
         {
             await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
 
-            var rows = await connection.QueryAsync<RankingRow>(GlobalRankingSql);
+            IEnumerable<RankingRow> rows = await connection.QueryAsync<RankingRow>(GlobalRankingSql);
+
             return rows.AsList();
         }
     }

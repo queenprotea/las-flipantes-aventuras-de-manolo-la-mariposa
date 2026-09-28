@@ -41,7 +41,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
-            _statusCheck ??= StartStatusCheck();
+            _statusCheck ??= StartStatusCheckAsync();
             if ((_statusLabel is null) || (_failureNotice is null) || !_statusCheck.IsCompleted)
             {
                 return;
@@ -51,11 +51,12 @@ namespace Torres.Client.Screens
             if (isServerReady)
             {
                 ShowReady(_statusLabel, gameTime);
-                return;
             }
-
-            _statusLabel.Visible = false;
-            _failureNotice.Visible = true;
+            else
+            {
+                _statusLabel.Visible = false;
+                _failureNotice.Visible = true;
+            }
         }
 
         protected override Widget Build()
@@ -106,8 +107,8 @@ namespace Torres.Client.Screens
 
             LocalizedButton retryButton = PrimaryButton(TextKeys.Common.RetryButton);
             LocalizedButton exitButton = SecondaryButton(TextKeys.Common.ExitButton);
-            retryButton.Click += OnRetryClick;
-            exitButton.Click += OnExitClick;
+            retryButton.Click += RetryButtonOnClick;
+            exitButton.Click += ExitButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.HorizontalAlignment = HorizontalAlignment.Center;
             actions.Widgets.Add(retryButton);
@@ -122,10 +123,11 @@ namespace Torres.Client.Screens
             };
             notice.Widgets.Add(message);
             notice.Widgets.Add(actions);
+
             return notice;
         }
 
-        private Task<ServerStatus> StartStatusCheck()
+        private Task<ServerStatus> StartStatusCheckAsync()
         {
             _statusChannel = _statusChannelFactory.CreateChannel();
 
@@ -142,7 +144,7 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void OnRetryClick(object sender, MyraEventArgs arguments)
+        private void RetryButtonOnClick(object sender, MyraEventArgs e)
         {
             if (_statusChannel is ICommunicationObject failedChannel)
             {
@@ -160,7 +162,7 @@ namespace Torres.Client.Screens
             _statusLabel.TextKey = TextKeys.Startup.ConnectingStatus;
         }
 
-        private void OnExitClick(object sender, MyraEventArgs arguments)
+        private void ExitButtonOnClick(object sender, MyraEventArgs e)
         {
             WasExitRequested = true;
         }

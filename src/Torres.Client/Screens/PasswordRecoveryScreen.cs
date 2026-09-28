@@ -7,13 +7,13 @@ namespace Torres.Client.Screens
 {
     internal sealed class PasswordRecoveryScreen : Screen
     {
-        private VerticalStackPanel? _emailStep;
-        private VerticalStackPanel? _codeStep;
-        private VerticalStackPanel? _passwordStep;
-        private LabeledTextBox? _emailField;
-        private LabeledTextBox? _codeField;
-        private LocalizedLabel? _emailError;
-        private LocalizedLabel? _codeError;
+        private readonly VerticalStackPanel _emailStep = Card(Sizes.RecoveryCardWidth);
+        private readonly VerticalStackPanel _codeStep = Card(Sizes.RecoveryCardWidth);
+        private readonly VerticalStackPanel _passwordStep = Card(Sizes.RecoveryCardWidth);
+        private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.PasswordRecovery.EmailLabel, false);
+        private readonly LabeledTextBox _codeField = new LabeledTextBox(TextKeys.PasswordRecovery.CodeLabel, false);
+        private readonly LocalizedLabel _emailError = Error(TextKeys.PasswordRecovery.InvalidEmail);
+        private readonly LocalizedLabel _codeError = Error(TextKeys.PasswordRecovery.InvalidCode);
 
         internal PasswordRecoveryScreen()
             : base(TextKeys.PasswordRecovery.HeaderLabel, true)
@@ -31,52 +31,49 @@ namespace Torres.Client.Screens
             steps.Widgets.Add(BuildCodeStep());
             steps.Widgets.Add(BuildPasswordStep());
 
-            ShowStep(_emailStep!);
+            ShowStep(_emailStep);
+
             return steps;
         }
 
         private VerticalStackPanel BuildEmailStep()
         {
             var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
-            _emailField = new LabeledTextBox(TextKeys.PasswordRecovery.EmailLabel, false);
-            _emailError = Error(TextKeys.PasswordRecovery.InvalidEmail);
             field.Widgets.Add(_emailField);
             field.Widgets.Add(_emailError);
 
             LocalizedButton sendCodeButton = PrimaryButton(TextKeys.PasswordRecovery.SendCodeButton);
-            sendCodeButton.Click += OnSendCodeClick;
+            sendCodeButton.Click += SendCodeButtonOnClick;
             sendCodeButton.HorizontalAlignment = HorizontalAlignment.Left;
             VerticalStackPanel actions = WrappedRow();
             actions.Widgets.Add(sendCodeButton);
             actions.Widgets.Add(BackToLoginButton());
 
-            _emailStep = Card(Sizes.RecoveryCardWidth);
             _emailStep.HorizontalAlignment = HorizontalAlignment.Left;
             _emailStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step1Title, TextKeys.PasswordRecovery.Step1Hint));
             _emailStep.Widgets.Add(field);
             _emailStep.Widgets.Add(actions);
+
             return _emailStep;
         }
 
         private VerticalStackPanel BuildCodeStep()
         {
             var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
-            _codeField = new LabeledTextBox(TextKeys.PasswordRecovery.CodeLabel, false);
-            _codeError = Error(TextKeys.PasswordRecovery.InvalidCode);
             field.Widgets.Add(_codeField);
             field.Widgets.Add(_codeError);
 
             LocalizedButton verifyButton = PrimaryButton(TextKeys.PasswordRecovery.VerifyButton);
-            verifyButton.Click += OnVerifyClick;
+            verifyButton.Click += VerifyButtonOnClick;
             HorizontalStackPanel actions = Row();
             actions.Widgets.Add(verifyButton);
 
-            _codeStep = Card(Sizes.RecoveryCardWidth);
             _codeStep.HorizontalAlignment = HorizontalAlignment.Left;
             _codeStep.Visible = false;
             _codeStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step2Title, TextKeys.PasswordRecovery.Step2Hint));
             _codeStep.Widgets.Add(field);
             _codeStep.Widgets.Add(actions);
+
             return _codeStep;
         }
 
@@ -88,13 +85,13 @@ namespace Torres.Client.Screens
             actions.Widgets.Add(saveButton);
             actions.Widgets.Add(BackToLoginButton());
 
-            _passwordStep = Card(Sizes.RecoveryCardWidth);
             _passwordStep.HorizontalAlignment = HorizontalAlignment.Left;
             _passwordStep.Visible = false;
             _passwordStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step3Title, TextKeys.PasswordRecovery.Step3Hint));
             _passwordStep.Widgets.Add(new LabeledTextBox(TextKeys.PasswordRecovery.NewPasswordLabel, true));
             _passwordStep.Widgets.Add(new LabeledTextBox(TextKeys.PasswordRecovery.RepeatPasswordLabel, true));
             _passwordStep.Widgets.Add(actions);
+
             return _passwordStep;
         }
 
@@ -102,38 +99,39 @@ namespace Torres.Client.Screens
         {
             LocalizedButton backButton = SecondaryButton(TextKeys.PasswordRecovery.BackToLoginButton);
             backButton.HorizontalAlignment = HorizontalAlignment.Left;
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
+
             return backButton;
         }
 
         private void ShowStep(VerticalStackPanel step)
         {
-            _emailStep!.Visible = step == _emailStep;
-            _codeStep!.Visible = step == _codeStep;
-            _passwordStep!.Visible = step == _passwordStep;
+            _emailStep.Visible = step == _emailStep;
+            _codeStep.Visible = step == _codeStep;
+            _passwordStep.Visible = step == _passwordStep;
         }
 
-        private void OnSendCodeClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void SendCodeButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            bool isValid = _emailField!.Value.Contains('@');
-            _emailError!.Visible = !isValid;
+            bool isValid = _emailField.Value.Contains('@');
+            _emailError.Visible = !isValid;
             if (isValid)
             {
-                ShowStep(_codeStep!);
+                ShowStep(_codeStep);
             }
         }
 
-        private void OnVerifyClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void VerifyButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            bool isValid = _codeField!.Value.Length > 0;
-            _codeError!.Visible = !isValid;
+            bool isValid = _codeField.Value.Length > 0;
+            _codeError.Visible = !isValid;
             if (isValid)
             {
-                ShowStep(_passwordStep!);
+                ShowStep(_passwordStep);
             }
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Login;
         }

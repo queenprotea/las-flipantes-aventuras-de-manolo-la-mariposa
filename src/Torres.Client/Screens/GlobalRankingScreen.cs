@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.ServiceModel;
@@ -37,10 +37,10 @@ namespace Torres.Client.Screens
 
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
         private readonly PlayerSession _session;
+        private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Visible = false };
+        private readonly LocalizedLabel _loadingLabel = Hint(TextKeys.GlobalRanking.LoadingLabel);
+        private readonly VerticalStackPanel _failureNotice;
 
-        private Widget? _contentPlaceholder;
-        private LocalizedLabel? _loadingLabel;
-        private VerticalStackPanel? _failureNotice;
         private IRankingService? _rankingChannel;
         private Task<GlobalRankingResponseContract>? _rankingRequest;
         private List<RankingEntryContract>? _entries;
@@ -50,88 +50,88 @@ namespace Torres.Client.Screens
         {
             ArgumentNullException.ThrowIfNull(rankingChannelFactory);
             ArgumentNullException.ThrowIfNull(session);
+
             _rankingChannelFactory = rankingChannelFactory;
             _session = session;
+            _failureNotice = BuildFailureNotice();
         }
 
         internal override void Update(GameTime gameTime)
         {
-            _rankingRequest ??= StartRankingRequest();
-            if (_contentPlaceholder is null || _loadingLabel is null || _failureNotice is null)
-            {
-                return;
-            }
-
-            if (_entries is not null || !_rankingRequest.IsCompleted)
+            _rankingRequest ??= StartRankingRequestAsync();
+            if ((_entries is not null) || !_rankingRequest.IsCompleted)
             {
                 return;
             }
 
             _loadingLabel.Visible = false;
-
-            if (!_rankingRequest.IsCompletedSuccessfully)
+            if (_rankingRequest.IsCompletedSuccessfully)
             {
-                if (_rankingChannel is ICommunicationObject failedChannel)
-                {
-                    failedChannel.Abort();
-                }
-
-                _failureNotice.Visible = true;
-                return;
+                ShowRanking(_rankingRequest.Result);
             }
-
-            if (_rankingChannel is ICommunicationObject completedChannel)
+            else
             {
-                completedChannel.Close();
+                ShowFailure();
             }
-
-            _entries = _rankingRequest.Result.Entries;
-            RenderEntries(_entries);
         }
 
         protected override Widget Build()
         {
             VerticalStackPanel pagePanel = Page();
-
-            _loadingLabel = Hint(TextKeys.GlobalRanking.LoadingLabel);
             pagePanel.Widgets.Add(_loadingLabel);
-
-            var placeholder = new VerticalStackPanel { Visible = false };
-            _contentPlaceholder = placeholder;
-            pagePanel.Widgets.Add(placeholder);
-            StackPanel.SetProportionType(placeholder, ProportionType.Fill);
-
-            _failureNotice = BuildFailureNotice();
+            pagePanel.Widgets.Add(_contentPlaceholder);
+            StackPanel.SetProportionType(_contentPlaceholder, ProportionType.Fill);
             pagePanel.Widgets.Add(_failureNotice);
 
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
+            backButton.Click += BackButtonOnClick;
             pagePanel.Widgets.Add(BackBar(backButton));
 
             return pagePanel;
         }
 
-        private Task<GlobalRankingResponseContract> StartRankingRequest()
+        private Task<GlobalRankingResponseContract> StartRankingRequestAsync()
         {
             _rankingChannel = _rankingChannelFactory.CreateChannel();
+
             return _rankingChannel.GetGlobalRankingAsync();
+        }
+
+        private void ShowRanking(GlobalRankingResponseContract response)
+        {
+            if (_rankingChannel is ICommunicationObject completedChannel)
+            {
+                completedChannel.Close();
+            }
+
+            _entries = response.Entries;
+            RenderEntries(_entries);
+        }
+
+        private void ShowFailure()
+        {
+            if (_rankingChannel is ICommunicationObject failedChannel)
+            {
+                failedChannel.Abort();
+            }
+
+            _failureNotice.Visible = true;
         }
 
         private void RenderEntries(List<RankingEntryContract> entries)
         {
-            var placeholder = (VerticalStackPanel)_contentPlaceholder!;
-            placeholder.Widgets.Clear();
+            _contentPlaceholder.Widgets.Clear();
 
             if (entries.Count == 0)
             {
-                placeholder.Widgets.Add(EmptyState(TextKeys.GlobalRanking.EmptyStateTitle, TextKeys.GlobalRanking.EmptyStateHint));
+                _contentPlaceholder.Widgets.Add(EmptyState(TextKeys.GlobalRanking.EmptyStateTitle, TextKeys.GlobalRanking.EmptyStateHint));
             }
             else
             {
-                placeholder.Widgets.Add(BuildTable(entries));
+                _contentPlaceholder.Widgets.Add(BuildTable(entries));
             }
 
-            placeholder.Visible = true;
+            _contentPlaceholder.Visible = true;
         }
 
         private VerticalStackPanel BuildFailureNotice()
@@ -152,7 +152,7 @@ namespace Torres.Client.Screens
             message.Widgets.Add(Paragraph(TextKeys.Common.ServerErrorDetail));
 
             LocalizedButton retryButton = PrimaryButton(TextKeys.Common.RetryButton);
-            retryButton.Click += OnRetryClick;
+            retryButton.Click += RetryButtonOnClick;
 
             var notice = new VerticalStackPanel
             {
@@ -162,6 +162,7 @@ namespace Torres.Client.Screens
             };
             notice.Widgets.Add(message);
             notice.Widgets.Add(retryButton);
+
             return notice;
         }
 
@@ -183,10 +184,9 @@ namespace Torres.Client.Screens
             AddHeaderRow(rankingGrid);
             AddDivider(rankingGrid, DividerRowIndex);
 
-            for (int entryIndex = 0; entryIndex < entries.Count; entryIndex++)
+            for (var entryIndex = 0; entryIndex < entries.Count; entryIndex++)
             {
-                int rank = entryIndex + 1;
-                AddEntryRow(rankingGrid, FirstEntryRowIndex + entryIndex, rank, entries[entryIndex]);
+                AddEntryRow(rankingGrid, entryIndex, entries[entryIndex]);
             }
 
             return rankingGrid;
@@ -194,11 +194,11 @@ namespace Torres.Client.Screens
 
         private static void AddHeaderRow(Grid rankingGrid)
         {
-            AddCell(rankingGrid, HeaderRowIndex, ColumnIndexRank, RightAligned(Hint(TextKeys.GlobalRanking.RowNumberColumn)));
-            AddCell(rankingGrid, HeaderRowIndex, ColumnIndexPlayer, Hint(TextKeys.GlobalRanking.PlayerColumn));
-            AddCell(rankingGrid, HeaderRowIndex, ColumnIndexWins, RightAligned(Hint(TextKeys.GlobalRanking.WinsColumn)));
-            AddCell(rankingGrid, HeaderRowIndex, ColumnIndexPoints, RightAligned(Hint(TextKeys.GlobalRanking.PointsColumn)));
-            AddCell(rankingGrid, HeaderRowIndex, ColumnIndexMatches, RightAligned(Hint(TextKeys.GlobalRanking.MatchesColumn)));
+            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), RightAligned(Hint(TextKeys.GlobalRanking.RowNumberColumn)));
+            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayer), Hint(TextKeys.GlobalRanking.PlayerColumn));
+            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexWins), RightAligned(Hint(TextKeys.GlobalRanking.WinsColumn)));
+            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), RightAligned(Hint(TextKeys.GlobalRanking.PointsColumn)));
+            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexMatches), RightAligned(Hint(TextKeys.GlobalRanking.MatchesColumn)));
         }
 
         private static void AddDivider(Grid rankingGrid, int targetRowIndex)
@@ -209,13 +209,15 @@ namespace Torres.Client.Screens
             rankingGrid.Widgets.Add(dividerPanel);
         }
 
-        private void AddEntryRow(Grid rankingGrid, int targetRowIndex, int rank, RankingEntryContract entry)
+        private void AddEntryRow(Grid rankingGrid, int entryIndex, RankingEntryContract entry)
         {
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexRank, RowNumber(rank));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexPlayer, PlayerCell(entry));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexWins, RowNumber(entry.Wins));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexPoints, RowNumber(entry.Points));
-            AddCell(rankingGrid, targetRowIndex, ColumnIndexMatches, RowNumber(entry.Matches));
+            int rowIndex = FirstEntryRowIndex + entryIndex;
+            int rank = entryIndex + 1;
+            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexRank), RowNumber(rank));
+            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexPlayer), PlayerCell(entry));
+            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexWins), RowNumber(entry.Wins));
+            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexPoints), RowNumber(entry.Points));
+            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexMatches), RowNumber(entry.Matches));
         }
 
         private Widget PlayerCell(RankingEntryContract entry)
@@ -225,9 +227,10 @@ namespace Torres.Client.Screens
                 return RowLabel(entry.PlayerName, Theme.Ink);
             }
 
-            var cellPanel = Row();
+            HorizontalStackPanel cellPanel = Row();
             cellPanel.Widgets.Add(RowLabel(entry.PlayerName, Theme.MintInk));
             cellPanel.Widgets.Add(YouTag());
+
             return cellPanel;
         }
 
@@ -252,6 +255,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Label,
                 TextColor = Theme.MintInk,
             });
+
             return tagPanel;
         }
 
@@ -275,22 +279,23 @@ namespace Torres.Client.Screens
             where TLabel : Label
         {
             targetLabel.TextAlign = TextHorizontalAlignment.Right;
+
             return targetLabel;
         }
 
-        private static void AddCell(Grid rankingGrid, int targetRowIndex, int targetColumnIndex, Widget cellWidget)
+        private static void AddCell(Grid rankingGrid, CellPosition position, Widget cellWidget)
         {
-            Grid.SetRow(cellWidget, targetRowIndex);
-            Grid.SetColumn(cellWidget, targetColumnIndex);
+            Grid.SetRow(cellWidget, position.Row);
+            Grid.SetColumn(cellWidget, position.Column);
             rankingGrid.Widgets.Add(cellWidget);
         }
 
-        private void OnBackClick(object sender, MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }
 
-        private void OnRetryClick(object sender, MyraEventArgs arguments)
+        private void RetryButtonOnClick(object sender, MyraEventArgs e)
         {
             if (_rankingChannel is ICommunicationObject failedChannel)
             {
@@ -299,8 +304,10 @@ namespace Torres.Client.Screens
 
             _rankingRequest = null;
             _entries = null;
-            _failureNotice!.Visible = false;
-            _loadingLabel!.Visible = true;
+            _failureNotice.Visible = false;
+            _loadingLabel.Visible = true;
         }
+
+        private sealed record CellPosition(int Row, int Column);
     }
 }

@@ -10,7 +10,6 @@ namespace Torres.Client.Localization
     {
         private readonly string _labelKey;
         private readonly Label _label = new Label();
-        private readonly TextBox _box = new TextBox();
 
         internal LabeledTextBox(string labelKey, bool isSecret)
         {
@@ -20,24 +19,24 @@ namespace Torres.Client.Localization
             _label.Font = Fonts.Label;
             _label.TextColor = Theme.MutedInk;
 
-            _box.PasswordField = isSecret;
-            _box.Font = Fonts.Control;
-            _box.TextColor = Theme.Ink;
-            _box.Padding = Metrics.InputPadding;
-            _box.Background = Theme.SurfaceSunkenBrush;
-            _box.FocusedBackground = Theme.SurfaceBrush;
-            _box.Border = Theme.StrongLineBrush;
-            _box.BorderThickness = Sizes.Border;
-            _box.HorizontalAlignment = HorizontalAlignment.Stretch;
+            Box.PasswordField = isSecret;
+            Box.Font = Fonts.Control;
+            Box.TextColor = Theme.Ink;
+            Box.Padding = Metrics.InputPadding;
+            Box.Background = Theme.SurfaceSunkenBrush;
+            Box.FocusedBackground = Theme.SurfaceBrush;
+            Box.Border = Theme.StrongLineBrush;
+            Box.BorderThickness = Sizes.Border;
+            Box.HorizontalAlignment = HorizontalAlignment.Stretch;
 
             Widgets.Add(_label);
-            Widgets.Add(_box);
+            Widgets.Add(Box);
             RefreshText();
         }
 
-        internal string Value => _box.Text ?? string.Empty;
+        internal string Value => Box.Text ?? string.Empty;
 
-        internal TextBox Box => _box;
+        internal TextBox Box { get; } = new TextBox();
 
         public void RefreshText()
         {

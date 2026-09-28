@@ -26,13 +26,13 @@ namespace Torres.Client
         private const string RankingAddress = "net.tcp://localhost:8000/ranking";
 
         private readonly GraphicsDeviceManager _graphics;
-        private readonly LanguageService _languageService = new LanguageService();
+        private readonly LanguagePreference _languagePreference = new LanguagePreference();
         private readonly PlayerSession _session = new PlayerSession();
         private readonly Dictionary<ScreenId, Screen> _screensById = new Dictionary<ScreenId, Screen>();
         private readonly MainMenuScreen _mainMenu;
         private readonly StartupScreen _startup;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
-        private readonly ChannelFactory<IAccountService>  _accountChannelFactory;
+        private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
         private Panel? _content;
@@ -51,7 +51,7 @@ namespace Torres.Client
             _graphics.HardwareModeSwitch = false;
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
-            Window.ClientSizeChanged += OnClientSizeChanged;
+            Window.ClientSizeChanged += WindowOnClientSizeChanged;
 
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
@@ -65,18 +65,18 @@ namespace Torres.Client
                 new NetTcpBinding(SecurityMode.None),
                 new EndpointAddress(RankingAddress));
 
-            _mainMenu = new MainMenuScreen(_languageService);
+            _mainMenu = new MainMenuScreen(_languagePreference);
             _startup = new StartupScreen(_statusChannelFactory);
         }
 
         protected override void Initialize()
         {
-            _languageService.LoadSavedPreference();
-            _appliedUiCulture = _languageService.Current.UiCultureName;
+            _languagePreference.LoadSavedPreference();
+            _appliedUiCulture = _languagePreference.Current.UiCultureName;
             MyraEnvironment.Game = this;
             WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
 
-            RegistrerScrenns();
+            RegisterScreens();
 
             _topBar = new TopBarView(_session);
             _content = new Panel
@@ -98,16 +98,16 @@ namespace Torres.Client
             _desktop = new Desktop();
             _desktop.HasExternalTextInput = true;
             _desktop.Root = root;
-            Window.TextInput += OnTextInput;
+            Window.TextInput += WindowOnTextInput;
             Show(ScreenId.Startup);
             base.Initialize();
         }
 
-        private void RegistrerScrenns()
+        private void RegisterScreens()
         {
             _screensById.Add(ScreenId.Startup, _startup);
             _screensById.Add(ScreenId.MainMenu, _mainMenu);
-            _screensById.Add(ScreenId.Language, new LanguageScreen(_languageService));
+            _screensById.Add(ScreenId.Language, new LanguageScreen(_languagePreference));
             _screensById.Add(ScreenId.Login, new LoginScreen(_accountChannelFactory, _session));
             _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
@@ -117,6 +117,16 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.Match, new MatchScreen());
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _session));
+            _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
+            _screensById.Add(ScreenId.Room, new RoomScreen());
+            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen());
+            _screensById.Add(ScreenId.InitialPlacement, new InitialPlacementScreen());
+            _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen());
+            _screensById.Add(ScreenId.Result, new ResultScreen());
+            _screensById.Add(ScreenId.Friends, new FriendsScreen());
+            _screensById.Add(ScreenId.Disconnection, new DisconnectionScreen());
+            _screensById.Add(ScreenId.Resume, new ResumeScreen());
+            _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen());
         }
 
         protected override void Update(GameTime gameTime)
@@ -136,14 +146,14 @@ namespace Torres.Client
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Theme.Surface);
-            _desktop!.Render();
+            _desktop?.Render();
             base.Draw(gameTime);
         }
 
         protected override void UnloadContent()
         {
-            Window.TextInput -= OnTextInput;
-            Window.ClientSizeChanged -= OnClientSizeChanged;
+            Window.TextInput -= WindowOnTextInput;
+            Window.ClientSizeChanged -= WindowOnClientSizeChanged;
             base.UnloadContent();
         }
 
@@ -159,12 +169,12 @@ namespace Torres.Client
             base.Dispose(disposing);
         }
 
-        private void OnTextInput(object? sender, TextInputEventArgs eventArguments)
+        private void WindowOnTextInput(object? sender, TextInputEventArgs e)
         {
-            _desktop!.OnChar(eventArguments.Character);
+            _desktop?.OnChar(e.Character);
         }
 
-        private void OnClientSizeChanged(object? sender, EventArgs eventArguments)
+        private void WindowOnClientSizeChanged(object? sender, EventArgs e)
         {
             if (_graphics.IsFullScreen)
             {
@@ -205,14 +215,18 @@ namespace Torres.Client
 
         private void FollowLanguage()
         {
-            if (_languageService.Current.UiCultureName == _appliedUiCulture)
+            if (_languagePreference.Current.UiCultureName == _appliedUiCulture)
             {
                 return;
             }
 
-            _appliedUiCulture = _languageService.Current.UiCultureName;
+            _appliedUiCulture = _languagePreference.Current.UiCultureName;
             _mainMenu.FollowLanguage();
-            LanguageRefresher.Refresh(_topBar!.Panel);
+            if (_topBar is not null)
+            {
+                LanguageRefresher.Refresh(_topBar.Panel);
+            }
+
             foreach (Screen screen in _screensById.Values)
             {
                 RefreshIfBuilt(screen);
@@ -239,13 +253,13 @@ namespace Torres.Client
                 return;
             }
 
-            if (_topBar!.WasLogInRequested)
+            if ((_topBar is not null) && _topBar.WasLogInRequested)
             {
                 _topBar.ClearRequest();
                 Show(ScreenId.Login);
             }
 
-            if (_topBar.WasProfileRequested)
+            if ((_topBar is not null) && _topBar.WasProfileRequested)
             {
                 _topBar.ClearRequest();
                 Show(ScreenId.Profile);
@@ -263,11 +277,11 @@ namespace Torres.Client
             _openScreen = screenId;
             Screen screen = _screensById[screenId];
 
-            _content!.Widgets.Clear();
-            _content.Widgets.Add(screen.Root);
+            _content?.Widgets.Clear();
+            _content?.Widgets.Add(screen.Root);
             screen.Open();
             LanguageRefresher.Refresh(screen.Root);
-            _topBar!.Follow(screen);
+            _topBar?.Follow(screen);
         }
     }
 }
