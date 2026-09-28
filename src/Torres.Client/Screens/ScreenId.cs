@@ -19,16 +19,24 @@ namespace Torres.Client.Screens
         AccountSettings,
 
         Language,
-        
+
         Rooms,
-        
+
         Match,
 
         GlobalRanking,
-        
-        CreateRoom,
+
+        Friends,
+
+        ReceivedRequests,
 
         Room,
+
+        InvitePlayers,
+
+        CreateRoom,
+
+        History,
 
         MatchPreparation,
 
@@ -37,8 +45,6 @@ namespace Torres.Client.Screens
         RoundSummary,
 
         Result,
-
-        Friends,
 
         Disconnection,
 

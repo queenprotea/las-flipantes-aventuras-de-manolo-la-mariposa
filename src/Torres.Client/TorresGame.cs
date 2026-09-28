@@ -118,12 +118,15 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Match, new MatchScreen());
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _session));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
+            _screensById.Add(ScreenId.Friends, new FriendsScreen());
+            _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen());
             _screensById.Add(ScreenId.Room, new RoomScreen());
+            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
+            _screensById.Add(ScreenId.History, new HistoryScreen());
             _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen());
             _screensById.Add(ScreenId.InitialPlacement, new InitialPlacementScreen());
             _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen());
             _screensById.Add(ScreenId.Result, new ResultScreen());
-            _screensById.Add(ScreenId.Friends, new FriendsScreen());
             _screensById.Add(ScreenId.Disconnection, new DisconnectionScreen());
             _screensById.Add(ScreenId.Resume, new ResumeScreen());
             _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen());

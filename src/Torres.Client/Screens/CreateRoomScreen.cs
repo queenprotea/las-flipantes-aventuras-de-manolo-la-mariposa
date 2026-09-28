@@ -1,5 +1,6 @@
+using System;
+
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -9,165 +10,118 @@ namespace Torres.Client.Screens
 {
     internal sealed class CreateRoomScreen : Screen
     {
-        private const int OptionSpacing = 10;
-        private const int OptionTextSpacing = 2;
-        private const int RadioMarkSize = 18;
-        private const int RadioDotSize = 7;
-        private const int OptionsPerRow = 2;
-        private const int OptionsWidth = Sizes.CreateRoomCardWidth - (2 * Metrics.CardPaddingSize) - (2 * Sizes.BorderSize);
-        private const int OptionWidth = (OptionsWidth - OptionSpacing) / OptionsPerRow;
+        private const int CardWidth = 460;
+        private const int OptionCardWidth = 200;
 
-        private static readonly Thickness _optionPadding = new Thickness(13);
-
-        private readonly Button _publicOption;
-        private readonly Button _privateOption;
-        private readonly Panel _publicMark;
-        private readonly Panel _privateMark;
+        private bool _isPublic = true;
+        private VerticalStackPanel? _optionsPlaceholder;
 
         internal CreateRoomScreen()
             : base(TextKeys.CreateRoom.HeaderLabel, true)
         {
-            _publicMark = BuildRadioMark();
-            _privateMark = BuildRadioMark();
-            _publicOption = BuildRoomTypeOption(TextKeys.CreateRoom.PublicOption, TextKeys.CreateRoom.PublicOptionHint, _publicMark);
-            _privateOption = BuildRoomTypeOption(TextKeys.CreateRoom.PrivateOption, TextKeys.CreateRoom.PrivateOptionHint, _privateMark);
         }
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = Columns();
-            Panel ambience = Ambience();
-            columns.Widgets.Add(BuildCreateCard());
-            columns.Widgets.Add(ambience);
-            StackPanel.SetProportionType(ambience, ProportionType.Fill);
+            VerticalStackPanel page = Page();
 
-            return columns;
+            HorizontalStackPanel columns = Columns();
+
+            VerticalStackPanel card = Card(CardWidth);
+            card.VerticalAlignment = VerticalAlignment.Center;
+            card.Widgets.Add(CardHeader(TextKeys.CreateRoom.Title, TextKeys.CreateRoom.Hint));
+
+            var optionsPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+            _optionsPlaceholder = optionsPlaceholder;
+            card.Widgets.Add(optionsPlaceholder);
+            RenderOptions();
+
+            card.Widgets.Add(Paragraph(TextKeys.CreateRoom.SharedRulesHint));
+            card.Widgets.Add(BuildActionsRow());
+
+            columns.Widgets.Add(card);
+            columns.Widgets.Add(Ambience());
+
+            page.Widgets.Add(columns);
+            StackPanel.SetProportionType(columns, ProportionType.Fill);
+
+            return page;
         }
 
-        private VerticalStackPanel BuildCreateCard()
+        private void RenderOptions()
         {
-            VerticalStackPanel card = Card(Sizes.CreateRoomCardWidth);
-            card.VerticalAlignment = VerticalAlignment.Center;
+            _optionsPlaceholder!.Widgets.Clear();
 
-            var options = new HorizontalStackPanel
+            HorizontalStackPanel optionsRow = Row();
+
+            Panel publicCard = BuildOptionCard(
+                TextKeys.CreateRoom.PublicOption,
+                TextKeys.CreateRoom.PublicOptionHint,
+                isSelected: _isPublic,
+                onSelect: () => SelectVisibility(true));
+            publicCard.Width = OptionCardWidth;
+            optionsRow.Widgets.Add(publicCard);
+
+            Panel privateCard = BuildOptionCard(
+                TextKeys.CreateRoom.PrivateOption,
+                TextKeys.CreateRoom.PrivateOptionHint,
+                isSelected: !_isPublic,
+                onSelect: () => SelectVisibility(false));
+            privateCard.Width = OptionCardWidth;
+            optionsRow.Widgets.Add(privateCard);
+
+            _optionsPlaceholder.Widgets.Add(optionsRow);
+        }
+
+        private void SelectVisibility(bool isPublic)
+        {
+            _isPublic = isPublic;
+            RenderOptions();
+        }
+
+        private static Panel BuildOptionCard(string titleKey, string hintKey, bool isSelected, Action onSelect)
+        {
+            LocalizedButton titleButton = isSelected ? PrimaryButton(titleKey) : SecondaryButton(titleKey);
+            titleButton.HorizontalAlignment = HorizontalAlignment.Stretch;
+            titleButton.Click += (sender, arguments) => onSelect();
+
+            var content = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
+            content.Widgets.Add(titleButton);
+            content.Widgets.Add(Hint(hintKey));
+
+            var card = new Panel
             {
-                Spacing = OptionSpacing,
+                Padding = Metrics.CardPadding,
+                Background = isSelected ? Theme.MintTintBrush : Theme.SurfaceBrush,
+                Border = isSelected ? Theme.MintLineBrush : Theme.LineBrush,
+                BorderThickness = Sizes.Border,
             };
-            _publicOption.Click += PublicOptionOnClick;
-            _privateOption.Click += PrivateOptionOnClick;
-            options.Widgets.Add(_publicOption);
-            options.Widgets.Add(_privateOption);
-            SelectRoomType(true);
-
-            card.Widgets.Add(CardHeader(TextKeys.CreateRoom.Title, TextKeys.CreateRoom.Hint));
-            card.Widgets.Add(options);
-            card.Widgets.Add(Hint(TextKeys.CreateRoom.SharedRulesHint));
-            card.Widgets.Add(BuildActionButtons());
-
+            card.Widgets.Add(content);
             return card;
         }
 
-        private static Button BuildRoomTypeOption(string titleKey, string hintKey, Panel radioMark)
+        private HorizontalStackPanel BuildActionsRow()
         {
-            var texts = new VerticalStackPanel
-            {
-                Spacing = OptionTextSpacing,
-            };
-            texts.Widgets.Add(new LocalizedLabel(titleKey)
-            {
-                Font = Fonts.Control,
-                TextColor = Theme.Ink,
-            });
-            texts.Widgets.Add(Hint(hintKey));
+            HorizontalStackPanel bar = Row();
 
-            var content = new HorizontalStackPanel
-            {
-                Spacing = OptionSpacing,
-            };
-            content.Widgets.Add(texts);
-            content.Widgets.Add(radioMark);
-            StackPanel.SetProportionType(texts, ProportionType.Fill);
-
-            var option = new Button
-            {
-                Content = content,
-                Width = OptionWidth,
-                Padding = _optionPadding,
-                BorderThickness = Sizes.Border,
-            };
-
-            return option;
-        }
-
-        private static Panel BuildRadioMark()
-        {
-            var mark = new Panel
-            {
-                Width = RadioMarkSize,
-                Height = RadioMarkSize,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Top,
-            };
-            mark.Widgets.Add(new Panel
-            {
-                Width = RadioDotSize,
-                Height = RadioDotSize,
-                Background = Theme.MintInkBrush,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-
-            return mark;
-        }
-
-        private HorizontalStackPanel BuildActionButtons()
-        {
             LocalizedButton createButton = PrimaryButton(TextKeys.CreateRoom.CreateRoomButton);
+            // TODO: connect to CreateRoomAsync(_isPublic).
+            createButton.Click += OnCreateClick;
+            bar.Widgets.Add(createButton);
+
             LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
-            createButton.Click += CreateButtonOnClick;
-            backButton.Click += BackButtonOnClick;
+            backButton.Click += OnBackClick;
+            bar.Widgets.Add(backButton);
 
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(createButton);
-            actions.Widgets.Add(backButton);
-
-            return actions;
+            return bar;
         }
 
-        private void SelectRoomType(bool isPublic)
-        {
-            ShowOptionState(_publicOption, _publicMark, isPublic);
-            ShowOptionState(_privateOption, _privateMark, !isPublic);
-        }
-
-        private static void ShowOptionState(Button option, Panel radioMark, bool isSelected)
-        {
-            option.Background = isSelected ? Theme.MintTintBrush : Theme.SurfaceBrush;
-            option.OverBackground = option.Background;
-            option.PressedBackground = option.Background;
-            option.Border = isSelected ? Theme.MintLineBrush : Theme.StrongLineBrush;
-
-            radioMark.Background = isSelected ? Theme.MintBrush : Theme.SurfaceBrush;
-            radioMark.Border = isSelected ? Theme.MintLineBrush : Theme.StrongLineBrush;
-            radioMark.Widgets[0].Visible = isSelected;
-        }
-
-        private void PublicOptionOnClick(object sender, MyraEventArgs e)
-        {
-            SelectRoomType(true);
-        }
-
-        private void PrivateOptionOnClick(object sender, MyraEventArgs e)
-        {
-            SelectRoomType(false);
-        }
-
-        private void CreateButtonOnClick(object sender, MyraEventArgs e)
+        private void OnCreateClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.Room;
         }
 
-        private void BackButtonOnClick(object sender, MyraEventArgs e)
+        private void OnBackClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.Rooms;
         }

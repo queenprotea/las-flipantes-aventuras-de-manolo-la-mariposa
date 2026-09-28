@@ -449,7 +449,7 @@
     <value>Aquí verás las invitaciones a sala que te envíen tus amigos.</value>
   </data>
   <data name="Invitations.InvitedByMessage" xml:space="preserve">
-    <value>{0} te invitó a su sala</value>
+    <value>te invitó a su sala</value>
   </data>
   <data name="Invitations.RoomLabel" xml:space="preserve">
     <value>Sala</value>
@@ -954,5 +954,8 @@
   </data>
   <data name="GlobalRanking.LoadingLabel" xml:space="preserve">
     <value>Cargando ranking...</value>
+  </data>
+  <data name="Friends.InviteToRoomButton" xml:space="preserve">
+    <value>Invitar a Sala</value>
   </data>
 </root>

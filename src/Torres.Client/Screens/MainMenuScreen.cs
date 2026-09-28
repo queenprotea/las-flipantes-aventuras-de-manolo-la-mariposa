@@ -17,6 +17,9 @@ namespace Torres.Client.Screens
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
         private LocalizedButton? _rankingButton;
+        private LocalizedButton? _friendsButton;
+        private LocalizedButton? _invitationsButton;
+        private LocalizedButton? _historyButton;
 
         internal MainMenuScreen(LanguagePreference languagePreference)
             : base(TextKeys.MainMenu.HeaderLabel, true)
@@ -89,12 +92,16 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.InvitationsButton, false));
-            LocalizedButton friendsButton = MenuItem(TextKeys.MainMenu.FriendsButton, true);
-            friendsButton.Click += FriendsButtonOnClick;
-            list.Widgets.Add(friendsButton);
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.HistoryButton, false));
-            
+            _invitationsButton = MenuItem(TextKeys.MainMenu.InvitationsButton, true);
+            _invitationsButton.Click += InvitationsButtonOnClick;
+            list.Widgets.Add(_invitationsButton);
+            _friendsButton = MenuItem(TextKeys.MainMenu.FriendsButton, true);
+            _friendsButton.Click += FriendsButtonOnClick;
+            list.Widgets.Add(_friendsButton);
+            _historyButton = MenuItem(TextKeys.MainMenu.HistoryButton, true);
+            _historyButton.Click += HistoryButtonOnClick;
+            list.Widgets.Add(_historyButton);
+
             _rankingButton = MenuItem(TextKeys.MainMenu.RankingButton, true);
             _rankingButton.Click += RankingButtonOnClick;
             list.Widgets.Add(_rankingButton);
@@ -135,7 +142,7 @@ namespace Torres.Client.Screens
 
             return _languageButton;
         }
-        
+
         private void RankingButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.GlobalRanking;
@@ -159,6 +166,16 @@ namespace Torres.Client.Screens
         private void FriendsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Friends;
+        }
+
+        private void InvitationsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.ReceivedRequests;
+        }
+
+        private void HistoryButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.History;
         }
     }
 }

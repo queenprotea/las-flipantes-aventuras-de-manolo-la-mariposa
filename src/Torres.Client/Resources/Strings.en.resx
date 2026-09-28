@@ -449,7 +449,7 @@
     <value>Room invitations from your friends will appear here.</value>
   </data>
   <data name="Invitations.InvitedByMessage" xml:space="preserve">
-    <value>{0} invited you to their room</value>
+    <value>invited you to their room</value>
   </data>
   <data name="Invitations.RoomLabel" xml:space="preserve">
     <value>Room</value>
@@ -954,5 +954,8 @@
   </data>
   <data name="GlobalRanking.LoadingLabel" xml:space="preserve">
     <value>Loading ranking...</value>
+  </data>
+  <data name="Friends.InviteToRoomButton" xml:space="preserve">
+    <value>Invite to Room</value>
   </data>
 </root>

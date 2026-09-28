@@ -1,7 +1,6 @@
-using FontStashSharp.RichText;
+using System.Collections.Generic;
 
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -11,28 +10,9 @@ namespace Torres.Client.Screens
 {
     internal sealed class RoomScreen : Screen
     {
-        private const int HeaderSpacing = 12;
-        private const int PlayersHeaderSpacing = 9;
-        private const int BadgeSpacing = 7;
-        private const int YouTagSpacing = 4;
-        private const int SideColumnSpacing = 12;
-        private const int EmptyRankingSpacing = 4;
-        private const int PlayerColorSize = 20;
-        private const string Separator = "·";
-        private const string RemovePlayerSymbol = "×";
-
-        private const string PreviewRoomCode = "K7QM";
-
-        private static readonly Thickness _roomCodePadding = new Thickness(16, 7);
-        private static readonly Thickness _emptyRankingPadding = new Thickness(14, 20);
-
-        private static readonly RoomPlayer[] _previewPlayers =
-        {
-            new RoomPlayer("jesus", true, true, false, true, Theme.MintBrush, Theme.MintAltBrush),
-            new RoomPlayer("valentin", false, false, false, true, Theme.LavenderBrush, Theme.ButterTintBrush),
-            new RoomPlayer("salma", false, false, true, true, Theme.ButterBrush, Theme.LavenderTintBrush),
-            new RoomPlayer("scarleth", false, false, false, false, Theme.SkyBrush, Theme.SkyTintBrush),
-        };
+        private readonly string _roomCode = "TR-8492";
+        private readonly bool _isPublic = true;
+        private readonly List<RoomPlayer> _players = SamplePlayers();
 
         internal RoomScreen()
             : base(TextKeys.Room.HeaderLabel, true)
@@ -41,318 +21,229 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = Columns();
-            VerticalStackPanel players = BuildPlayersColumn();
-            columns.Widgets.Add(players);
-            columns.Widgets.Add(BuildSideColumn());
-            StackPanel.SetProportionType(players, ProportionType.Fill);
-
             VerticalStackPanel page = Page();
-            page.Spacing = Metrics.ColumnSpacing;
-            page.Widgets.Add(BuildHeader());
-            page.Widgets.Add(columns);
-            StackPanel.SetProportionType(columns, ProportionType.Fill);
+            page.Spacing = Metrics.FieldSpacing;
+
+            page.Widgets.Add(BuildTopBar());
+            LocalizedLabel hostHint = Hint(TextKeys.Room.HostOnlyHint);
+            hostHint.HorizontalAlignment = HorizontalAlignment.Right;
+            page.Widgets.Add(hostHint);
+            page.Widgets.Add(BuildPlayersHeader());
+            page.Widgets.Add(BuildPlayersList());
+            page.Widgets.Add(BuildRoomRankingSection());
 
             return page;
         }
 
-        private HorizontalStackPanel BuildHeader()
+        private HorizontalStackPanel BuildTopBar()
         {
-            var roomCode = new Label
+            HorizontalStackPanel bar = Row();
+            bar.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+            var codeGroup = new Label
             {
-                Text = PreviewRoomCode,
-                Font = Fonts.RoomCode,
-                TextColor = Theme.Ink,
-                Padding = _roomCodePadding,
-                Background = Theme.SurfaceAltBrush,
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
+                Text = _roomCode,
+                Font = Fonts.Title,
+                TextColor = Theme.MintInk,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            bar.Widgets.Add(codeGroup);
 
             LocalizedButton copyButton = SmallSecondaryButton(TextKeys.Room.CopyButton);
+            // TODO: connect to Clipboard.SetText(_roomCode).
             copyButton.VerticalAlignment = VerticalAlignment.Center;
+            bar.Widgets.Add(copyButton);
 
-            var publicChip = new LocalizedLabel(TextKeys.Room.PublicBadge)
-            {
-                TextColor = Theme.MintInk,
-            };
+            bar.Widgets.Add(BuildBadge(_isPublic ? TextKeys.Room.PublicBadge : TextKeys.Room.PrivateBadge));
+            bar.VerticalAlignment = VerticalAlignment.Top;
 
             var spacer = new Panel();
-            var header = new HorizontalStackPanel
-            {
-                Spacing = HeaderSpacing,
-            };
-            header.Widgets.Add(roomCode);
-            header.Widgets.Add(copyButton);
-            header.Widgets.Add(Chip(publicChip, Theme.MintTintBrush, Theme.MintBrush));
-            header.Widgets.Add(spacer);
-            header.Widgets.Add(BuildHeaderActions());
+            bar.Widgets.Add(spacer);
             StackPanel.SetProportionType(spacer, ProportionType.Fill);
+
+            LocalizedButton inviteButton = SecondaryButton(TextKeys.Room.InvitePlayersButton);
+            inviteButton.Click += OnInviteClick;
+            bar.Widgets.Add(inviteButton);
+
+            LocalizedButton leaveButton = DestructiveButton(TextKeys.Room.LeaveButton);
+            leaveButton.Click += OnLeaveClick;
+            bar.Widgets.Add(leaveButton);
+
+            LocalizedButton startButton = PrimaryButton(TextKeys.Room.StartMatchButton);
+            // TODO: connect to StartMatchAsync (solo el anfitrión).
+            bar.Widgets.Add(startButton);
+
+            return bar;
+        }
+
+        private HorizontalStackPanel BuildPlayersHeader()
+        {
+            HorizontalStackPanel header = Row();
+            header.Widgets.Add(Title(TextKeys.Room.PlayersTitle));
+
+            string occupancyText = LocalizedText.Format(TextKeys.Room.OccupancyLabel, _players.Count);
+            header.Widgets.Add(PlainMutedLabel(occupancyText));
+
+            int activeCount = ActivePlayerCount();
+            if (activeCount != _players.Count)
+            {
+                string activeText = LocalizedText.Format(TextKeys.Room.ActiveCountLabel, activeCount);
+                header.Widgets.Add(PlainMutedLabel(activeText));
+            }
 
             return header;
         }
 
-        private HorizontalStackPanel BuildHeaderActions()
+        private int ActivePlayerCount()
         {
-            LocalizedButton inviteButton = LavenderButton(TextKeys.Room.InvitePlayersButton);
-            LocalizedButton leaveButton = SecondaryButton(TextKeys.Room.LeaveButton);
-            LocalizedButton startButton = PrimaryButton(TextKeys.Room.StartMatchButton);
-            leaveButton.Click += LeaveButtonOnClick;
-            startButton.Click += StartButtonOnClick;
-
-            HorizontalStackPanel actions = Row();
-            actions.VerticalAlignment = VerticalAlignment.Center;
-            actions.Widgets.Add(inviteButton);
-            actions.Widgets.Add(leaveButton);
-            actions.Widgets.Add(startButton);
-
-            return actions;
+            int active = 0;
+            foreach (RoomPlayer player in _players)
+            {
+                if (!player.IsDisconnected)
+                {
+                    active++;
+                }
+            }
+            return active;
         }
 
-        private static VerticalStackPanel BuildPlayersColumn()
+        private Widget BuildPlayersList()
         {
-            var title = new HorizontalStackPanel
-            {
-                Spacing = PlayersHeaderSpacing,
-            };
-            title.Widgets.Add(Title(TextKeys.Room.PlayersTitle));
-            title.Widgets.Add(new LocalizedLabel(TextKeys.Room.OccupancyLabel)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MutedInk,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                TextArguments = new object[] { _previewPlayers.Length },
-            });
-
-            int connectedCount = CountConnectedPlayers();
-            if (connectedCount < _previewPlayers.Length)
-            {
-                title.Widgets.Add(new Label
-                {
-                    Text = Separator,
-                    Font = Fonts.Small,
-                    TextColor = Theme.MutedInk,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                });
-                title.Widgets.Add(new LocalizedLabel(TextKeys.Room.ActiveCountLabel)
-                {
-                    Font = Fonts.Small,
-                    TextColor = Theme.MutedInk,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                    TextArguments = new object[] { connectedCount },
-                });
-            }
-
-            var list = new VerticalStackPanel
-            {
-                Spacing = Metrics.ItemListSpacing,
-            };
-            foreach (RoomPlayer player in _previewPlayers)
+            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            foreach (RoomPlayer player in _players)
             {
                 list.Widgets.Add(BuildPlayerRow(player));
             }
-
-            var column = new VerticalStackPanel
-            {
-                Spacing = PlayersHeaderSpacing,
-                VerticalAlignment = VerticalAlignment.Top,
-            };
-            column.Widgets.Add(title);
-            column.Widgets.Add(list);
-
-            return column;
+            return list;
         }
 
-        private static int CountConnectedPlayers()
+        private Panel BuildPlayerRow(RoomPlayer player)
         {
-            int connectedCount = 0;
-            foreach (RoomPlayer player in _previewPlayers)
-            {
-                if (player.IsConnected)
-                {
-                    connectedCount++;
-                }
-            }
+            HorizontalStackPanel itemRow = Row();
 
-            return connectedCount;
-        }
-
-        private static HorizontalStackPanel BuildPlayerRow(RoomPlayer player)
-        {
-            var color = new Panel
-            {
-                Width = PlayerColorSize,
-                Height = PlayerColorSize,
-                Background = player.ColorBrush,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            Panel avatar = SmallAvatar(player.AvatarBrush);
-            var spacer = new Panel();
-            HorizontalStackPanel row = ListItem();
-            row.Widgets.Add(color);
-            row.Widgets.Add(avatar);
-            row.Widgets.Add(BuildPlayerName(player));
-            row.Widgets.Add(spacer);
-            row.Widgets.Add(BuildPlayerBadges(player));
-            StackPanel.SetProportionType(spacer, ProportionType.Fill);
-
-            return row;
-        }
-
-        private static HorizontalStackPanel BuildPlayerName(RoomPlayer player)
-        {
-            var name = new HorizontalStackPanel
-            {
-                Spacing = YouTagSpacing,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            name.Widgets.Add(new Label
-            {
-                Text = player.Name,
-                Font = Fonts.Control,
-                TextColor = Theme.Ink,
-            });
-
-            if (player.IsYou)
-            {
-                name.Widgets.Add(new Label
-                {
-                    Text = Separator,
-                    Font = Fonts.Small,
-                    TextColor = Theme.MutedInk,
-                });
-                name.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
-                {
-                    Font = Fonts.Small,
-                    TextColor = Theme.MutedInk,
-                });
-            }
-
-            return name;
-        }
-
-        private static HorizontalStackPanel BuildPlayerBadges(RoomPlayer player)
-        {
-            var badges = new HorizontalStackPanel
-            {
-                Spacing = BadgeSpacing,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            if (!player.IsConnected)
-            {
-                var disconnectedChip = new LocalizedLabel(TextKeys.Room.DisconnectedStatus)
-                {
-                    TextColor = Theme.BlushInk,
-                };
-                badges.Widgets.Add(Chip(disconnectedChip, Theme.BlushTintBrush, Theme.BlushBrush));
-            }
-
-            if (player.IsGuest)
-            {
-                var guestChip = new LocalizedLabel(TextKeys.Room.GuestBadge)
-                {
-                    TextColor = Theme.LavenderInk,
-                };
-                badges.Widgets.Add(Chip(guestChip, Theme.LavenderTintBrush, Theme.LavenderBrush));
-            }
-
+            HorizontalStackPanel nameLine = Row();
+            nameLine.Widgets.Add(NameLabel(player.Username));
             if (player.IsHost)
             {
-                var hostChip = new LocalizedLabel(TextKeys.Room.HostBadge)
-                {
-                    TextColor = Theme.ButterInk,
-                };
-                badges.Widgets.Add(Chip(hostChip, Theme.ButterTintBrush, Theme.ButterBrush));
+                nameLine.Widgets.Add(BuildBadge(TextKeys.Room.HostBadge));
             }
-            else
+            if (player.IsGuest)
             {
-                badges.Widgets.Add(BuildRemovePlayerButton());
+                nameLine.Widgets.Add(BuildBadge(TextKeys.Room.GuestBadge));
+            }
+            itemRow.Widgets.Add(nameLine);
+            StackPanel.SetProportionType(nameLine, ProportionType.Fill);
+
+            if (player.IsDisconnected)
+            {
+                itemRow.Widgets.Add(BuildBadge(TextKeys.Room.DisconnectedStatus));
             }
 
-            return badges;
+            if (!player.IsHost)
+            {
+                LocalizedButton removeButton = DestructiveButton(TextKeys.Room.RemovePlayerToolTip);
+                // TODO: connect to RemovePlayerAsync (solo el anfitrión puede verlo/usarlo).
+                itemRow.Widgets.Add(removeButton);
+            }
+
+            return BuildItemCard(itemRow);
         }
 
-        private static Button BuildRemovePlayerButton()
+        private Widget BuildRoomRankingSection()
         {
-            var removeButton = new Button
+            var section = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+            section.Widgets.Add(Title(TextKeys.Room.RoomRankingTitle));
+            // TODO: reemplazar por la tabla real cuando haya partidas jugadas en esta sala.
+            section.Widgets.Add(EmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint));
+            return section;
+        }
+
+        private static Panel BuildItemCard(Widget content)
+        {
+            var card = new Panel
             {
-                Content = new Label
-                {
-                    Text = RemovePlayerSymbol,
-                    Font = Fonts.Small,
-                    TextColor = Theme.BlushInk,
-                },
-                Padding = Metrics.SmallButtonPadding,
-                Background = Theme.BlushTintBrush,
-                OverBackground = Theme.BlushTintBrush,
-                PressedBackground = Theme.BlushTintBrush,
-                Border = Theme.BlushBrush,
+                Padding = Metrics.ListItemPadding,
+                Background = Theme.SurfaceAltBrush,
+                Border = Theme.LineBrush,
                 BorderThickness = Sizes.Border,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-
-            return removeButton;
+            card.Widgets.Add(content);
+            return card;
         }
 
-        private static VerticalStackPanel BuildSideColumn()
+        private static Panel BuildBadge(string textKey)
         {
-            var ranking = new VerticalStackPanel
+            var badge = new Panel
             {
-                Spacing = PlayersHeaderSpacing,
-            };
-            ranking.Widgets.Add(Title(TextKeys.Room.RoomRankingTitle));
-            ranking.Widgets.Add(BuildEmptyRanking());
-
-            VerticalStackPanel chat = ChatPanel();
-            var column = new VerticalStackPanel
-            {
-                Spacing = SideColumnSpacing,
-                Width = Sizes.RoomSideColumnWidth,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            column.Widgets.Add(ranking);
-            column.Widgets.Add(chat);
-            StackPanel.SetProportionType(chat, ProportionType.Fill);
-
-            return column;
-        }
-
-        private static VerticalStackPanel BuildEmptyRanking()
-        {
-            var emptyRanking = new VerticalStackPanel
-            {
-                Spacing = EmptyRankingSpacing,
-                Padding = _emptyRankingPadding,
-                Background = Theme.SurfaceSunkenBrush,
-                Border = Theme.StrongLineBrush,
+                Padding = Metrics.PillButtonPadding,
+                Background = Theme.MintTintBrush,
+                Border = Theme.MintLineBrush,
                 BorderThickness = Sizes.Border,
+                VerticalAlignment = VerticalAlignment.Center,
             };
-            emptyRanking.Widgets.Add(new LocalizedLabel(TextKeys.Room.EmptyRankingTitle)
+            badge.Widgets.Add(new LocalizedLabel(textKey)
             {
-                Font = Fonts.Body,
-                TextColor = Theme.SoftInk,
-                HorizontalAlignment = HorizontalAlignment.Center,
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
             });
-
-            LocalizedLabel hint = Hint(TextKeys.Room.EmptyRankingHint);
-            hint.TextAlign = TextHorizontalAlignment.Center;
-            emptyRanking.Widgets.Add(hint);
-
-            return emptyRanking;
+            return badge;
         }
 
-        private void LeaveButtonOnClick(object sender, MyraEventArgs e)
+        private static Label PlainMutedLabel(string text)
         {
+            return new Label
+            {
+                Text = text,
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+        }
+
+        private static Label NameLabel(string username)
+        {
+            return new Label
+            {
+                Text = username,
+                Font = Fonts.Body,
+                TextColor = Theme.Ink,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+        }
+
+        private void OnInviteClick(object sender, MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.InvitePlayers;
+        }
+
+        private void OnLeaveClick(object sender, MyraEventArgs arguments)
+        {
+            // TODO: connect to LeaveRoomAsync.
             RequestedScreen = ScreenId.Rooms;
         }
 
-        private void StartButtonOnClick(object sender, MyraEventArgs e)
+        private static List<RoomPlayer> SamplePlayers() => new()
         {
-            RequestedScreen = ScreenId.MatchPreparation;
-        }
+            new RoomPlayer("ana_torres", isHost: true, isGuest: false, isDisconnected: false),
+            new RoomPlayer("luis_m", isHost: false, isGuest: false, isDisconnected: false),
+            new RoomPlayer("sofia99", isHost: false, isGuest: true, isDisconnected: true),
+        };
 
-        private sealed record RoomPlayer(string Name, bool IsYou, bool IsHost, bool IsGuest, bool IsConnected, IBrush ColorBrush, IBrush AvatarBrush);
+        private sealed class RoomPlayer
+        {
+            internal RoomPlayer(string username, bool isHost, bool isGuest, bool isDisconnected)
+            {
+                Username = username;
+                IsHost = isHost;
+                IsGuest = isGuest;
+                IsDisconnected = isDisconnected;
+            }
+
+            internal string Username { get; }
+            internal bool IsHost { get; }
+            internal bool IsGuest { get; }
+            internal bool IsDisconnected { get; }
+        }
     }
 }
