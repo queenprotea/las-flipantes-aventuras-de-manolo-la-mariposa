@@ -35,5 +35,7 @@ namespace Torres.Client.Screens
         CreateRoom,
         
         History,
+        
+        MatchDetail,
     }
 }

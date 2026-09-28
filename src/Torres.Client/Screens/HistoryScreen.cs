@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 
+using Microsoft.Xna.Framework;
+
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
-
-using Microsoft.Xna.Framework;
 
 using Torres.Client.Localization;
 using Torres.Client.Ui;
@@ -18,6 +18,28 @@ namespace Torres.Client.Screens
         private const int PlayersColumnWidth = 90;
         private const int StatColumnWidth = 90;
         private const int ResultColumnWidth = 170;
+
+        private const int NoThickness = 0;
+        private const int FirstRankPosition = 1;
+
+        private const int ColumnCount = 6;
+        private const int ColumnIndexDate = 0;
+        private const int ColumnIndexPlayers = 1;
+        private const int ColumnIndexOpponents = 2;
+        private const int ColumnIndexRank = 3;
+        private const int ColumnIndexPoints = 4;
+        private const int ColumnIndexResult = 5;
+
+        private const int HeaderRowIndex = 0;
+        private const int DividerRowIndex = 1;
+        private const int FirstMatchRowIndex = 2;
+
+        private const string DateFormat = "dd MMM yyyy";
+        private const string OrdinalSuffix = ".\u00b0";
+        private const string MissingValueText = "\u2014";
+        private const string WinMark = "\u2713";
+        private const string ThousandsSeparatedFormat = "N0";
+        private const string OpponentSeparator = ", ";
 
         private readonly List<MatchRecord> _matches = SampleMatches();
 
@@ -55,96 +77,119 @@ namespace Torres.Client.Screens
             };
         }
 
-        private Widget BuildTable()
+        private Grid BuildTable()
         {
-            var grid = new Grid
+            var historyGrid = new Grid
             {
                 ColumnSpacing = Theme.ColumnSpacing,
                 RowSpacing = Theme.FieldSpacing,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, DateColumnWidth));
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, PlayersColumnWidth));
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Fill));
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
-            grid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, ResultColumnWidth));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, DateColumnWidth));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, PlayersColumnWidth));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Fill));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
+            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, ResultColumnWidth));
 
-            AddHeaderRow(grid);
-            AddDivider(grid, 1);
+            AddHeaderRow(historyGrid);
+            AddDivider(historyGrid, DividerRowIndex);
 
-            for (int index = 0; index < _matches.Count; index++)
+            for (int matchIndex = 0; matchIndex < _matches.Count; matchIndex++)
             {
-                AddMatchRow(grid, index + 2, _matches[index]);
+                AddMatchRow(historyGrid, FirstMatchRowIndex + matchIndex, _matches[matchIndex]);
             }
 
-            return grid;
+            return historyGrid;
         }
 
-        private static void AddHeaderRow(Grid grid)
+        private static void AddHeaderRow(Grid historyGrid)
         {
-            AddCell(grid, 0, 0, Hint(TextKeys.History.DateColumn));
-            AddCell(grid, 0, 1, Hint(TextKeys.History.PlayersColumn));
-            AddCell(grid, 0, 2, Hint(TextKeys.History.OpponentsColumn));
-            AddCell(grid, 0, 3, RightAligned(Hint(TextKeys.History.RankColumn)));
-            AddCell(grid, 0, 4, RightAligned(Hint(TextKeys.History.PointsColumn)));
-            AddCell(grid, 0, 5, Hint(TextKeys.History.ResultColumn));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexDate, Hint(TextKeys.History.DateColumn));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexPlayers, Hint(TextKeys.History.PlayersColumn));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexOpponents, Hint(TextKeys.History.OpponentsColumn));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexRank, RightAligned(Hint(TextKeys.History.RankColumn)));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexPoints, RightAligned(Hint(TextKeys.History.PointsColumn)));
+            AddCell(historyGrid, HeaderRowIndex, ColumnIndexResult, Hint(TextKeys.History.ResultColumn));
         }
 
-        private static void AddDivider(Grid grid, int row)
+        private static void AddDivider(Grid historyGrid, int rowIndex)
         {
-            Panel divider = Divider();
-            Grid.SetRow(divider, row);
-            Grid.SetColumnSpan(divider, 6);
-            grid.Widgets.Add(divider);
+            Panel dividerLine = Divider();
+            Grid.SetRow(dividerLine, rowIndex);
+            Grid.SetColumnSpan(dividerLine, ColumnCount);
+            historyGrid.Widgets.Add(dividerLine);
         }
 
-        private static void AddMatchRow(Grid grid, int row, MatchRecord match)
+        private void AddMatchRow(Grid historyGrid, int rowIndex, MatchRecord match)
         {
-            AddCell(grid, row, 0, DataLabel(FormatDate(match.PlayedAt)));
-            AddCell(grid, row, 1, DataLabel(match.PlayerCount.ToString(CultureInfo.CurrentCulture)));
-            AddCell(grid, row, 2, DataLabel(FormatOpponents(match)));
-            AddCell(grid, row, 3, RightAligned(DataLabel(FormatRank(match.Rank))));
-            AddCell(grid, row, 4, RightAligned(DataLabel(FormatPoints(match.Points))));
-            AddCell(grid, row, 5, BuildResultChip(match));
+            AddCell(historyGrid, rowIndex, ColumnIndexDate, DataLabel(FormatDate(match.PlayedAt)));
+            AddCell(historyGrid, rowIndex, ColumnIndexPlayers, DataLabel(match.PlayerCount.ToString(CultureInfo.CurrentCulture)));
+            AddCell(historyGrid, rowIndex, ColumnIndexOpponents, DataLabel(FormatOpponents(match)));
+            AddCell(historyGrid, rowIndex, ColumnIndexRank, RightAligned(DataLabel(FormatRank(match.Rank))));
+            AddCell(historyGrid, rowIndex, ColumnIndexPoints, RightAligned(DataLabel(FormatPoints(match.Points))));
+            AddCell(historyGrid, rowIndex, ColumnIndexResult, BuildResultChip(match));
+
+            // Added last so it sits on top of the row and catches the click anywhere in it.
+            AddRowClickTarget(historyGrid, rowIndex);
+        }
+
+        private void AddRowClickTarget(Grid historyGrid, int rowIndex)
+        {
+            var rowClickTarget = new Button
+            {
+                Background = null,
+                OverBackground = null,
+                PressedBackground = null,
+                Border = null,
+                BorderThickness = new Thickness(NoThickness),
+                Padding = new Thickness(NoThickness),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            rowClickTarget.Click += OnMatchRowClick;
+
+            Grid.SetRow(rowClickTarget, rowIndex);
+            Grid.SetColumnSpan(rowClickTarget, ColumnCount);
+            historyGrid.Widgets.Add(rowClickTarget);
         }
 
         private static string FormatDate(DateTime playedAt)
         {
-            return playedAt.ToString("dd MMM yyyy", CultureInfo.CurrentCulture).ToLower(CultureInfo.CurrentCulture);
+            return playedAt.ToString(DateFormat, CultureInfo.CurrentCulture).ToLower(CultureInfo.CurrentCulture);
         }
 
         private static string FormatRank(int? rank)
         {
-            return rank.HasValue ? $"{rank.Value.ToString(CultureInfo.CurrentCulture)}.°" : "—";
+            return rank.HasValue ? rank.Value.ToString(CultureInfo.CurrentCulture) + OrdinalSuffix : MissingValueText;
         }
 
         private static string FormatPoints(int? points)
         {
-            return points.HasValue ? points.Value.ToString("N0", CultureInfo.CurrentCulture) : "—";
+            return points.HasValue ? points.Value.ToString(ThousandsSeparatedFormat, CultureInfo.CurrentCulture) : MissingValueText;
         }
 
         private static string FormatOpponents(MatchRecord match)
         {
-            string named = string.Join(", ", match.NamedOpponents);
+            string namedOpponents = string.Join(OpponentSeparator, match.NamedOpponents);
 
             if (match.GuestOpponentCount <= 0)
             {
-                return named;
+                return namedOpponents;
             }
 
             string guestPhrase = match.GuestOpponentCount == 1
                 ? LocalizedText.Get(TextKeys.History.GuestOpponentMessage)
                 : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, match.GuestOpponentCount);
 
-            return string.IsNullOrEmpty(named) ? guestPhrase : $"{named} {guestPhrase}";
+            return string.IsNullOrEmpty(namedOpponents) ? guestPhrase : $"{namedOpponents} {guestPhrase}";
         }
 
         private static Widget BuildResultChip(MatchRecord match)
         {
             return match.Status switch
             {
-                MatchStatus.Finished when match.Rank == 1 => BuildWinChip(),
+                MatchStatus.Finished when match.Rank == FirstRankPosition => BuildWinChip(),
                 MatchStatus.Finished => BuildNeutralChip(TextKeys.History.FinishedStatus),
                 MatchStatus.Forfeited => BuildNeutralChip(TextKeys.History.ForfeitedStatus),
                 MatchStatus.Interrupted => BuildBlushChip(TextKeys.History.InterruptedStatus),
@@ -154,7 +199,7 @@ namespace Torres.Client.Screens
 
         private static Panel BuildWinChip()
         {
-            var chip = new Panel
+            var winChip = new Panel
             {
                 Padding = Theme.PillButtonPadding,
                 Background = Theme.MintTintBrush,
@@ -163,60 +208,66 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            HorizontalStackPanel content = Row();
-            content.Widgets.Add(new Label { Text = "✓", Font = Fonts.Small, TextColor = Theme.MintInk });
-            content.Widgets.Add(new LocalizedLabel(TextKeys.History.FinishedStatus) { Font = Fonts.Small, TextColor = Theme.MintInk });
-            chip.Widgets.Add(content);
-            return chip;
+            HorizontalStackPanel chipContent = Row();
+            chipContent.Widgets.Add(new Label { Text = WinMark, Font = Fonts.Small, TextColor = Theme.MintInk });
+            chipContent.Widgets.Add(new LocalizedLabel(TextKeys.History.FinishedStatus) { Font = Fonts.Small, TextColor = Theme.MintInk });
+            winChip.Widgets.Add(chipContent);
+            return winChip;
         }
 
-        private static Panel BuildNeutralChip(string textKey)
+        private static Panel BuildNeutralChip(string statusTextKey)
         {
-            return BuildChip(textKey, Theme.SurfaceAltBrush, Theme.LineBrush, Theme.MutedInk);
+            return BuildChip(statusTextKey, Theme.SurfaceAltBrush, Theme.LineBrush, Theme.MutedInk);
         }
 
-        private static Panel BuildBlushChip(string textKey)
+        private static Panel BuildBlushChip(string statusTextKey)
         {
-            return BuildChip(textKey, Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
+            return BuildChip(statusTextKey, Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
         }
 
-        private static Panel BuildChip(string textKey, IBrush background, IBrush border, Color textColor)
+        private static Panel BuildChip(string statusTextKey, IBrush chipBackground, IBrush chipBorder, Color chipTextColor)
         {
             var chip = new Panel
             {
                 Padding = Theme.PillButtonPadding,
-                Background = background,
-                Border = border,
+                Background = chipBackground,
+                Border = chipBorder,
                 BorderThickness = Theme.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            chip.Widgets.Add(new LocalizedLabel(textKey) { Font = Fonts.Small, TextColor = textColor });
+            chip.Widgets.Add(new LocalizedLabel(statusTextKey) { Font = Fonts.Small, TextColor = chipTextColor });
             return chip;
         }
 
-        private static Label DataLabel(string text)
+        private static Label DataLabel(string labelText)
         {
             return new Label
             {
-                Text = text,
+                Text = labelText,
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
             };
         }
 
-        private static T RightAligned<T>(T label)
-            where T : Label
+        private static TLabel RightAligned<TLabel>(TLabel targetLabel)
+            where TLabel : Label
         {
-            label.TextAlign = FontStashSharp.RichText.TextHorizontalAlignment.Right;
-            return label;
+            targetLabel.TextAlign = FontStashSharp.RichText.TextHorizontalAlignment.Right;
+            return targetLabel;
         }
 
-        private static void AddCell(Grid grid, int row, int column, Widget widget)
+        private static void AddCell(Grid historyGrid, int rowIndex, int columnIndex, Widget cellContent)
         {
-            Grid.SetRow(widget, row);
-            Grid.SetColumn(widget, column);
-            grid.Widgets.Add(widget);
+            Grid.SetRow(cellContent, rowIndex);
+            Grid.SetColumn(cellContent, columnIndex);
+            historyGrid.Widgets.Add(cellContent);
+        }
+
+        private void OnMatchRowClick(object sender, Myra.Events.MyraEventArgs arguments)
+        {
+            // TODO: tell MatchDetailScreen which match was clicked once the service exists.
+            RequestedScreen = ScreenId.MatchDetail;
         }
 
         private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)

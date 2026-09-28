@@ -70,6 +70,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
             _screensById.Add(ScreenId.History, new HistoryScreen());
+            _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen());
         }
 
         protected override void Initialize()
