@@ -51,5 +51,7 @@ namespace Torres.Client.Screens
         Resume,
 
         MatchInProgress,
+
+        MatchDetail,
     }
 }
