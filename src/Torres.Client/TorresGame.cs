@@ -64,6 +64,12 @@ namespace Torres.Client
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory));
+            _screensById.Add(ScreenId.Friends, new FriendsScreen());
+            _screensById.Add(ScreenId.ReceivedRequests, new  ReceivedRequestsScreen());
+            _screensById.Add(ScreenId.Room, new RoomScreen());
+            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
+            _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
+            _screensById.Add(ScreenId.History, new HistoryScreen());
         }
 
         protected override void Initialize()

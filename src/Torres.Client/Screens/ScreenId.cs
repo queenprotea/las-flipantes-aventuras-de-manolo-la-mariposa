@@ -23,5 +23,17 @@ namespace Torres.Client.Screens
         Rooms,
         
         GlobalRanking,
+        
+        Friends,
+        
+        ReceivedRequests,
+        
+        Room,
+        
+        InvitePlayers,
+        
+        CreateRoom,
+        
+        History,
     }
 }

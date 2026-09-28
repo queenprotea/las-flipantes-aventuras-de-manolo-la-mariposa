@@ -1,3 +1,4 @@
+using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -14,7 +15,10 @@ namespace Torres.Client.Screens
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
-        private LocalizedButton? _ranking;
+        private LocalizedButton? _rankingButton;
+        private LocalizedButton? _friendsButton;
+        private LocalizedButton? _invitationsButton;
+        private LocalizedButton? _historyButton;
 
         internal MainMenuScreen(LanguageService languageService)
             : base(TextKeys.MainMenu.HeaderLabel, true)
@@ -82,13 +86,21 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.InvitationsButton, false));
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.FriendsButton, false));
-            list.Widgets.Add(MenuItem(TextKeys.MainMenu.HistoryButton, false));
+            _invitationsButton = MenuItem(TextKeys.MainMenu.InvitationsButton, true);
+            _invitationsButton.Click += OnInvitationsClick;
+            list.Widgets.Add(_invitationsButton);
             
-            _ranking = MenuItem(TextKeys.MainMenu.RankingButton, true);
-            _ranking.Click += OnRankingClick;
-            list.Widgets.Add(_ranking);
+            _friendsButton = MenuItem(TextKeys.MainMenu.FriendsButton, true);
+            _friendsButton.Click += OnFriendsClick;
+            list.Widgets.Add(_friendsButton);
+            
+            _historyButton = MenuItem(TextKeys.MainMenu.HistoryButton, true);
+            _historyButton.Click += OnHistoryClick;
+            list.Widgets.Add(_historyButton);
+            
+            _rankingButton = MenuItem(TextKeys.MainMenu.RankingButton, true);
+            _rankingButton.Click += OnRankingClick;
+            list.Widgets.Add(_rankingButton);
 
             list.Widgets.Add(BuildSeparator());
 
@@ -125,22 +137,31 @@ namespace Torres.Client.Screens
             return _languageButton;
         }
         
-        private void OnRankingClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void OnRankingClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.GlobalRanking;
         }
-
-        private void OnExitClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void OnFriendsClick(object sender, MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.Friends;
+        }
+        private void OnInvitationsClick(object sender, MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.ReceivedRequests;
+        }
+        private void OnHistoryClick(object sender, MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.History;
+        }
+        private void OnExitClick(object sender, MyraEventArgs arguments)
         {
             WasExitRequested = true;
         }
-
-        private void OnRoomsClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void OnRoomsClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.Rooms;
         }
-
-        private void OnLanguageClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void OnLanguageClick(object sender, MyraEventArgs arguments)
         {
             RequestedScreen = ScreenId.Language;
         }

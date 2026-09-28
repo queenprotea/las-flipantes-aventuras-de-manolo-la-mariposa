@@ -177,6 +177,7 @@ namespace Torres.Client.Localization
             internal const string SelfExcludedHint = "Friends.SelfExcludedHint";
             internal const string NoResultsTitle = "Friends.NoResultsTitle";
             internal const string NoResultsHint = "Friends.NoResultsHint";
+            internal const string InviteToRoomButton = "Friends.InviteToRoomButton";
         }
 
         internal static class Invitations

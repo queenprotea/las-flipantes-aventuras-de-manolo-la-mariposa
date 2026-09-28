@@ -36,7 +36,7 @@ namespace Torres.Client.Screens
             return page;
         }
 
-        private static HorizontalStackPanel BuildSearchRow()
+        private HorizontalStackPanel BuildSearchRow()
         {
             HorizontalStackPanel row = Row();
 
@@ -45,6 +45,7 @@ namespace Torres.Client.Screens
             searchButton.VerticalAlignment = VerticalAlignment.Bottom;
             LocalizedButton createRoomButton = PrimaryButton(TextKeys.Rooms.CreateRoomButton);
             createRoomButton.VerticalAlignment = VerticalAlignment.Bottom;
+            createRoomButton.Click += OnCreateRoomClick;
 
             row.Widgets.Add(searchField);
             row.Widgets.Add(searchButton);
@@ -122,6 +123,11 @@ namespace Torres.Client.Screens
             };
             frame.Widgets.Add(emptyState);
             return frame;
+        }
+
+        private void OnCreateRoomClick(object sender, MyraEventArgs arguments)
+        {
+            RequestedScreen = ScreenId.CreateRoom;
         }
 
         private void OnBackClick(object sender, MyraEventArgs arguments)
