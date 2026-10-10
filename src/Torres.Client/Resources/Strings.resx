@@ -109,6 +109,9 @@
   <data name="Common.RequiredField" xml:space="preserve">
     <value>Completa este campo.</value>
   </data>
+  <data name="Common.RankPosition" xml:space="preserve">
+    <value>{0}.°</value>
+  </data>
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Conectando…</value>
   </data>

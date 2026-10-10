@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 
 using Npgsql;
 
@@ -9,56 +9,74 @@ namespace Game.Persistence
 {
     public sealed class PlayerRepository
     {
-        private const string CountSql = "SELECT count(*) FROM player";
-        private const string InsertSql =
-            "INSERT INTO player (username, email, password_hash) VALUES (@Username, @Email, @PasswordHash)";
-        private const string FindByUsernameSql =
-            "SELECT player_id AS PlayerId, username AS Username, email AS Email, password_hash AS PasswordHash "
-            + "FROM player WHERE lower(username) = lower(@Username)";
         private const string UsernameIndex = "ux_player_username_lower";
 
-        private readonly NpgsqlDataSource _dataSource;
+        private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 
-        public PlayerRepository(NpgsqlDataSource dataSource)
+        public PlayerRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(dataSource);
+            ArgumentNullException.ThrowIfNull(contextFactory);
 
-            _dataSource = dataSource;
+            _contextFactory = contextFactory;
         }
 
         public async Task<long> CountAsync()
         {
-            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
 
-            return await connection.ExecuteScalarAsync<long>(CountSql);
+            long playerCount = await databaseContext.Players.LongCountAsync();
+
+            return playerCount;
         }
 
         public async Task<PlayerCreationOutcome> CreateAsync(string username, string email, string passwordHash)
         {
-            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+            ArgumentNullException.ThrowIfNull(username);
+            ArgumentNullException.ThrowIfNull(email);
+            ArgumentNullException.ThrowIfNull(passwordHash);
+
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            var newPlayer = new Player
+            {
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash,
+            };
+            databaseContext.Players.Add(newPlayer);
+            PlayerCreationOutcome creationOutcome = PlayerCreationOutcome.Created;
             try
             {
-                await connection.ExecuteAsync(
-                    InsertSql,
-                    new { Username = username, Email = email, PasswordHash = passwordHash });
+                await databaseContext.SaveChangesAsync();
             }
-            catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+            catch (DbUpdateException exception)
+                when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } uniqueViolation)
             {
-                return exception.ConstraintName == UsernameIndex
-                    ? PlayerCreationOutcome.UsernameTaken
-                    : PlayerCreationOutcome.EmailTaken;
+                creationOutcome = ToTakenOutcome(uniqueViolation.ConstraintName);
             }
 
-            return PlayerCreationOutcome.Created;
+            return creationOutcome;
         }
 
-        public async Task<PlayerAccount?> FindByUsernameAsync(string username)
+        public async Task<Player?> FindByUsernameAsync(string username)
         {
-            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+            ArgumentNullException.ThrowIfNull(username);
 
-            return await connection.QuerySingleOrDefaultAsync<PlayerAccount>(
-                FindByUsernameSql,
-                new { Username = username });
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            Player? player = await databaseContext.Players
+                .AsNoTracking()
+                .SingleOrDefaultAsync(storedPlayer => storedPlayer.Username.ToLower() == username.ToLower());
+
+            return player;
+        }
+
+        private static PlayerCreationOutcome ToTakenOutcome(string? violatedIndex)
+        {
+            PlayerCreationOutcome takenOutcome = violatedIndex == UsernameIndex
+                ? PlayerCreationOutcome.UsernameTaken
+                : PlayerCreationOutcome.EmailTaken;
+
+            return takenOutcome;
         }
     }
 }

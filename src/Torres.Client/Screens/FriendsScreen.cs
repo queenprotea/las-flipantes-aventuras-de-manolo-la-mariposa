@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -11,322 +12,349 @@ namespace Torres.Client.Screens
 {
     internal sealed class FriendsScreen : Screen
     {
-        private enum FriendsTabId { Friends, Received, Sent }
-        private enum SearchStatus { New, Friend, Sent, Received }
+        private readonly List<FriendEntry> _friends = CreateSampleFriends();
+        private readonly List<RequestEntry> _receivedRequests = CreateSampleReceivedRequests();
+        private readonly List<RequestEntry> _sentRequests = CreateSampleSentRequests();
+        private readonly List<SearchResultEntry> _searchablePlayers = CreateSampleSearchResults();
+        private readonly VerticalStackPanel _tabContentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
 
-        private readonly List<FriendEntry> _friends = SampleFriends();
-        private readonly List<RequestEntry> _received = SampleReceived();
-        private readonly List<RequestEntry> _sent = SampleSent();
-        private readonly List<SearchResultEntry> _allSearchable = SampleSearchResults();
-
-        private FriendsTabId _activeTab = FriendsTabId.Friends;
+        private FriendsTab _activeTab = FriendsTab.Friends;
         private string _searchTerm = string.Empty;
-        private VerticalStackPanel? _contentPlaceholder;
-        private LabeledTextBox? _searchField;
 
         internal FriendsScreen()
             : base(TextKeys.Friends.HeaderLabel, true)
         {
         }
 
+        private enum FriendsTab
+        {
+            Friends,
+            Received,
+            Sent,
+        }
+
+        private enum SearchStatus
+        {
+            New,
+            Friend,
+            Sent,
+            Received,
+        }
+
         protected override Widget Build()
         {
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Spacing = Metrics.FieldSpacing;
-
             page.Widgets.Add(BuildSearchRow());
-
-            var placeholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
-            _contentPlaceholder = placeholder;
-            page.Widgets.Add(placeholder);
-            StackPanel.SetProportionType(placeholder, ProportionType.Fill);
-
+            page.Widgets.Add(_tabContentPlaceholder);
+            StackPanel.SetProportionType(_tabContentPlaceholder, ProportionType.Fill);
             RenderTab();
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
-            page.Widgets.Add(BackBar(backButton));
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += BackButtonOnClick;
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private HorizontalStackPanel BuildSearchRow()
         {
-            HorizontalStackPanel row = Row();
-
-            _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
-            _searchField.Box.TextChanged += (sender, args) =>
-            {
-                _searchTerm = _searchField.Value;
-                RenderTab();
-            };
-
-            row.Widgets.Add(_searchField);
+            HorizontalStackPanel searchRow = CreateButtonRow();
+            _searchField.Box.TextChanged += SearchBoxOnTextChanged;
+            searchRow.Widgets.Add(_searchField);
             StackPanel.SetProportionType(_searchField, ProportionType.Fill);
-            return row;
+
+            return searchRow;
         }
 
         private void RenderTab()
         {
-            _contentPlaceholder!.Widgets.Clear();
-            _contentPlaceholder.Widgets.Add(BuildTabsRow());
-            _contentPlaceholder.Widgets.Add(
-                string.IsNullOrWhiteSpace(_searchTerm) ? BuildActiveTabContent() : BuildSearchResults());
+            Widget tabContent = string.IsNullOrWhiteSpace(_searchTerm) ? BuildActiveTabContent() : BuildSearchResults();
+            _tabContentPlaceholder.Widgets.Clear();
+            _tabContentPlaceholder.Widgets.Add(BuildTabsRow());
+            _tabContentPlaceholder.Widgets.Add(tabContent);
         }
 
         private HorizontalStackPanel BuildTabsRow()
         {
-            HorizontalStackPanel tabsRow = Row();
-            tabsRow.Widgets.Add(BuildTabButton(TextKeys.Friends.FriendsTab, FriendsTabId.Friends));
-            tabsRow.Widgets.Add(BuildTabButton(TextKeys.Friends.ReceivedTab, FriendsTabId.Received));
-            tabsRow.Widgets.Add(BuildTabButton(TextKeys.Friends.SentTab, FriendsTabId.Sent));
+            LocalizedButton friendsTabButton = BuildTabButton(TextKeys.Friends.FriendsTab, FriendsTab.Friends);
+            LocalizedButton receivedTabButton = BuildTabButton(TextKeys.Friends.ReceivedTab, FriendsTab.Received);
+            LocalizedButton sentTabButton = BuildTabButton(TextKeys.Friends.SentTab, FriendsTab.Sent);
+            friendsTabButton.Click += FriendsTabButtonOnClick;
+            receivedTabButton.Click += ReceivedTabButtonOnClick;
+            sentTabButton.Click += SentTabButtonOnClick;
+
+            HorizontalStackPanel tabsRow = CreateButtonRow();
+            tabsRow.Widgets.Add(friendsTabButton);
+            tabsRow.Widgets.Add(receivedTabButton);
+            tabsRow.Widgets.Add(sentTabButton);
+
             return tabsRow;
         }
 
-        private LocalizedButton BuildTabButton(string textKey, FriendsTabId tab)
+        private LocalizedButton BuildTabButton(string textKey, FriendsTab tab)
         {
-            LocalizedButton button = tab == _activeTab ? PrimaryButton(textKey) : SecondaryButton(textKey);
-            button.Click += (sender, arguments) =>
-            {
-                _activeTab = tab;
-                RenderTab();
-            };
-            return button;
+            LocalizedButton tabButton = tab == _activeTab ? CreatePrimaryButton(textKey) : CreateSecondaryButton(textKey);
+
+            return tabButton;
         }
 
         private Widget BuildActiveTabContent()
         {
-            return _activeTab switch
+            Widget activeTabContent = _activeTab switch
             {
-                FriendsTabId.Friends => BuildFriendsList(),
-                FriendsTabId.Received => BuildReceivedList(),
-                FriendsTabId.Sent => BuildSentList(),
+                FriendsTab.Received => BuildReceivedList(),
+                FriendsTab.Sent => BuildSentList(),
                 _ => BuildFriendsList(),
             };
+
+            return activeTabContent;
         }
 
         private VerticalStackPanel BuildFriendsList()
         {
             if (_friends.Count == 0)
             {
-                return EmptyState(TextKeys.Friends.EmptyStateTitle, TextKeys.Friends.EmptyStateHint);
+                VerticalStackPanel noFriendsState = CreateEmptyState(TextKeys.Friends.EmptyStateTitle, TextKeys.Friends.EmptyStateHint);
+                return noFriendsState;
             }
 
-            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            var friendsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
             foreach (FriendEntry friend in _friends)
             {
-                HorizontalStackPanel itemRow = Row();
-                itemRow.Widgets.Add(NameLabel(friend.Username));
+                HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(CreateUsernameLabel(friend.Username));
 
                 var spacer = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
                 StackPanel.SetProportionType(spacer, ProportionType.Part);
                 itemRow.Widgets.Add(spacer);
 
-                LocalizedButton inviteToRoomButton = SecondaryButton(TextKeys.Friends.InviteToRoomButton);
-                // TODO: connect to InviteToRoom
+                LocalizedButton inviteToRoomButton = CreateSecondaryButton(TextKeys.Friends.InviteToRoomButton);
                 itemRow.Widgets.Add(inviteToRoomButton);
 
-                LocalizedButton removeButton = DestructiveButton(TextKeys.Friends.RemoveFriendButton);
-                // TODO: connect to DeleteFriend when it exists
+                LocalizedButton removeButton = CreateDestructiveButton(TextKeys.Friends.RemoveFriendButton);
                 itemRow.Widgets.Add(removeButton);
 
-                list.Widgets.Add(BuildItemCard(itemRow));
+                friendsList.Widgets.Add(CreateItemCard(itemRow));
             }
-            return list;
+
+            return friendsList;
         }
 
         private Widget BuildReceivedList()
         {
-            var container = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
-            container.Widgets.Add(Title(TextKeys.Friends.RequestsTitle));
-
-            if (_received.Count == 0)
+            var receivedSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+            receivedSection.Widgets.Add(CreateTitle(TextKeys.Friends.RequestsTitle));
+            if (_receivedRequests.Count == 0)
             {
-                container.Widgets.Add(EmptyState(TextKeys.Friends.NoReceivedTitle, TextKeys.Friends.NoReceivedHint));
-                return container;
+                receivedSection.Widgets.Add(CreateEmptyState(TextKeys.Friends.NoReceivedTitle, TextKeys.Friends.NoReceivedHint));
+                return receivedSection;
             }
 
-            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (RequestEntry request in _received)
+            var requestsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            foreach (RequestEntry request in _receivedRequests)
             {
-                HorizontalStackPanel itemRow = Row();
+                HorizontalStackPanel itemRow = CreateButtonRow();
                 itemRow.HorizontalAlignment = HorizontalAlignment.Stretch;
 
                 var nameColumn = new VerticalStackPanel();
-                nameColumn.Widgets.Add(NameLabel(request.Username));
-                nameColumn.Widgets.Add(Hint(TextKeys.Friends.FriendRequestMessage));
+                nameColumn.Widgets.Add(CreateUsernameLabel(request.Username));
+                nameColumn.Widgets.Add(CreateHint(TextKeys.Friends.FriendRequestMessage));
                 itemRow.Widgets.Add(nameColumn);
 
                 var spacer = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
                 StackPanel.SetProportionType(spacer, ProportionType.Part);
                 itemRow.Widgets.Add(spacer);
 
-                LocalizedButton acceptButton = PrimaryButton(TextKeys.Friends.AcceptButton);
-                // TODO: connect to AcceptFriendRequest
+                LocalizedButton acceptButton = CreatePrimaryButton(TextKeys.Friends.AcceptButton);
                 itemRow.Widgets.Add(acceptButton);
 
-                LocalizedButton rejectButton = SecondaryButton(TextKeys.Friends.RejectButton);
-                // TODO: connect to RejectFriendRequest
+                LocalizedButton rejectButton = CreateSecondaryButton(TextKeys.Friends.RejectButton);
                 itemRow.Widgets.Add(rejectButton);
 
-                list.Widgets.Add(BuildItemCard(itemRow));
+                requestsList.Widgets.Add(CreateItemCard(itemRow));
             }
-            container.Widgets.Add(list);
-            return container;
+
+            receivedSection.Widgets.Add(requestsList);
+
+            return receivedSection;
         }
 
         private VerticalStackPanel BuildSentList()
         {
-            if (_sent.Count == 0)
+            if (_sentRequests.Count == 0)
             {
-                return EmptyState(TextKeys.Friends.NoSentTitle, TextKeys.Friends.NoSentHint);
+                VerticalStackPanel noSentState = CreateEmptyState(TextKeys.Friends.NoSentTitle, TextKeys.Friends.NoSentHint);
+                return noSentState;
             }
 
-            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (RequestEntry request in _sent)
+            var sentList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            foreach (RequestEntry request in _sentRequests)
             {
-                HorizontalStackPanel itemRow = Row();
+                HorizontalStackPanel itemRow = CreateButtonRow();
 
                 var nameColumn = new VerticalStackPanel();
-                nameColumn.Widgets.Add(NameLabel(request.Username));
-                nameColumn.Widgets.Add(Hint(TextKeys.Friends.AwaitingResponseMessage));
+                nameColumn.Widgets.Add(CreateUsernameLabel(request.Username));
+                nameColumn.Widgets.Add(CreateHint(TextKeys.Friends.AwaitingResponseMessage));
                 itemRow.Widgets.Add(nameColumn);
+                itemRow.Widgets.Add(CreateStatusBadge(TextKeys.Friends.PendingStatus));
 
-                itemRow.Widgets.Add(BuildChip(TextKeys.Friends.PendingStatus));
-
-                list.Widgets.Add(BuildItemCard(itemRow));
+                sentList.Widgets.Add(CreateItemCard(itemRow));
             }
-            return list;
+
+            return sentList;
         }
 
         private VerticalStackPanel BuildSearchResults()
         {
-            List<SearchResultEntry> matches = _allSearchable
-                .Where(entry => entry.Username.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+            List<SearchResultEntry> matchingPlayers = _searchablePlayers
+                .Where(searchablePlayer => searchablePlayer.Username.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-
-            if (matches.Count == 0)
+            if (matchingPlayers.Count == 0)
             {
-                return EmptyState(TextKeys.Friends.NoResultsTitle, TextKeys.Friends.NoResultsHint);
+                VerticalStackPanel noResultsState = CreateEmptyState(TextKeys.Friends.NoResultsTitle, TextKeys.Friends.NoResultsHint);
+                return noResultsState;
             }
 
-            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (SearchResultEntry result in matches)
+            var resultsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            foreach (SearchResultEntry matchingPlayer in matchingPlayers)
             {
-                HorizontalStackPanel itemRow = Row();
-                itemRow.Widgets.Add(NameLabel(result.Username));
-                itemRow.Widgets.Add(BuildSearchStatusWidget(result.Status));
-                list.Widgets.Add(BuildItemCard(itemRow));
+                HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(CreateUsernameLabel(matchingPlayer.Username));
+                itemRow.Widgets.Add(BuildSearchStatusWidget(matchingPlayer.Status));
+                resultsList.Widgets.Add(CreateItemCard(itemRow));
             }
 
-            var container = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
-            container.Widgets.Add(list);
-            container.Widgets.Add(Hint(TextKeys.Friends.SelfExcludedHint));
-            return container;
+            var searchResults = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+            searchResults.Widgets.Add(resultsList);
+            searchResults.Widgets.Add(CreateHint(TextKeys.Friends.SelfExcludedHint));
+
+            return searchResults;
         }
 
-        private static Widget BuildSearchStatusWidget(SearchStatus status)
+        private static Widget BuildSearchStatusWidget(SearchStatus searchStatus)
         {
-            return status switch
+            Widget statusWidget = searchStatus switch
             {
-                SearchStatus.New => PrimaryButton(TextKeys.Friends.SendRequestButton), // TODO: connect to SendFriendRequestAsync.
-                SearchStatus.Friend => BuildChip(TextKeys.Friends.AlreadyFriendsStatus),
-                SearchStatus.Sent => BuildChip(TextKeys.Friends.RequestSentStatus),
-                SearchStatus.Received => BuildChip(TextKeys.Friends.RequestReceivedStatus),
-                _ => BuildChip(TextKeys.Friends.AlreadyFriendsStatus),
+                SearchStatus.New => CreatePrimaryButton(TextKeys.Friends.SendRequestButton),
+                SearchStatus.Sent => CreateStatusBadge(TextKeys.Friends.RequestSentStatus),
+                SearchStatus.Received => CreateStatusBadge(TextKeys.Friends.RequestReceivedStatus),
+                _ => CreateStatusBadge(TextKeys.Friends.AlreadyFriendsStatus),
             };
+
+            return statusWidget;
         }
 
-        private static Panel BuildItemCard(Widget content)
+        private void SelectTab(FriendsTab tab)
         {
-            var card = new Panel
-            {
-                Padding = Metrics.ListItemPadding,
-                Background = Theme.SurfaceAltBrush,
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            card.Widgets.Add(content);
-            return card;
+            _activeTab = tab;
+            RenderTab();
         }
 
-        private static Panel BuildChip(string textKey)
+        private void SearchBoxOnTextChanged(object sender, ValueChangedEventArgs<string> e)
         {
-            var chip = new Panel
-            {
-                Padding = Metrics.PillButtonPadding,
-                Background = Theme.MintTintBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            chip.Widgets.Add(new LocalizedLabel(textKey)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MintInk,
-            });
-            return chip;
+            _searchTerm = _searchField.Value;
+            RenderTab();
         }
 
-        private static Label NameLabel(string username)
+        private void FriendsTabButtonOnClick(object sender, MyraEventArgs e)
         {
-            return new Label { Text = username, Font = Fonts.Body, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
+            SelectTab(FriendsTab.Friends);
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void ReceivedTabButtonOnClick(object sender, MyraEventArgs e)
+        {
+            SelectTab(FriendsTab.Received);
+        }
+
+        private void SentTabButtonOnClick(object sender, MyraEventArgs e)
+        {
+            SelectTab(FriendsTab.Sent);
+        }
+
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }
 
-        private static List<FriendEntry> SampleFriends() => new()
+        private static List<FriendEntry> CreateSampleFriends()
         {
-            new FriendEntry("luis_m"),
-            new FriendEntry("sofia99"),
-            new FriendEntry("dgomez"),
-        };
+            var sampleFriends = new List<FriendEntry>
+            {
+                new FriendEntry(PreviewSamples.LuisPlayer),
+                new FriendEntry(PreviewSamples.SofiaPlayer),
+                new FriendEntry(PreviewSamples.DiegoPlayer),
+            };
 
-        private static List<RequestEntry> SampleReceived() => new()
-        {
-            new RequestEntry("marco_r"),
-            new RequestEntry("pau_v"),
-        };
+            return sampleFriends;
+        }
 
-        private static List<RequestEntry> SampleSent() => new()
+        private static List<RequestEntry> CreateSampleReceivedRequests()
         {
-            new RequestEntry("ines_b"),
-            new RequestEntry("tomas"),
-        };
+            var sampleReceivedRequests = new List<RequestEntry>
+            {
+                new RequestEntry(PreviewSamples.MarcoPlayer),
+                new RequestEntry(PreviewSamples.PauPlayer),
+            };
 
-        private static List<SearchResultEntry> SampleSearchResults() => new()
+            return sampleReceivedRequests;
+        }
+
+        private static List<RequestEntry> CreateSampleSentRequests()
         {
-            new SearchResultEntry("nuevo_jugador", SearchStatus.New),
-            new SearchResultEntry("luis_m", SearchStatus.Friend),
-            new SearchResultEntry("ines_b", SearchStatus.Sent),
-            new SearchResultEntry("marco_r", SearchStatus.Received),
-        };
+            var sampleSentRequests = new List<RequestEntry>
+            {
+                new RequestEntry(PreviewSamples.InesPlayer),
+                new RequestEntry(PreviewSamples.TomasPlayer),
+            };
+
+            return sampleSentRequests;
+        }
+
+        private static List<SearchResultEntry> CreateSampleSearchResults()
+        {
+            var sampleSearchResults = new List<SearchResultEntry>
+            {
+                new SearchResultEntry(PreviewSamples.NewPlayer, SearchStatus.New),
+                new SearchResultEntry(PreviewSamples.LuisPlayer, SearchStatus.Friend),
+                new SearchResultEntry(PreviewSamples.InesPlayer, SearchStatus.Sent),
+                new SearchResultEntry(PreviewSamples.MarcoPlayer, SearchStatus.Received),
+            };
+
+            return sampleSearchResults;
+        }
 
         private sealed class FriendEntry
         {
-            internal FriendEntry(string username) => Username = username;
+            internal FriendEntry(string username)
+            {
+                Username = username;
+            }
+
             internal string Username { get; }
         }
 
         private sealed class RequestEntry
         {
-            internal RequestEntry(string username) => Username = username;
+            internal RequestEntry(string username)
+            {
+                Username = username;
+            }
+
             internal string Username { get; }
         }
 
         private sealed class SearchResultEntry
         {
-            internal SearchResultEntry(string username, SearchStatus status)
+            internal SearchResultEntry(string username, SearchStatus searchStatus)
             {
                 Username = username;
-                Status = status;
+                Status = searchStatus;
             }
 
             internal string Username { get; }
+
             internal SearchStatus Status { get; }
         }
     }

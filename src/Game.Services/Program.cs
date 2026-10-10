@@ -16,26 +16,29 @@ using log4net.Config;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-using Npgsql;
-
-const int NetTcpPort = 8000;
-const string StatusPath = "/status";
-const string AccountPath = "/account";
-const string RankingPath = "/ranking";
 const string LogConfigurationFile = "log4net.config";
+const string HostLoggerName = "Game.Services.Host";
+const string ServerListeningMessage = "Server listening on net.tcp port {0}";
 
 Env.TraversePath().Load();
 XmlConfigurator.Configure(
     LogManager.GetRepository(typeof(ServerStatusService).Assembly),
     new FileInfo(Path.Combine(AppContext.BaseDirectory, LogConfigurationFile)));
-ILog log = LogManager.GetLogger(typeof(ServerStatusService).Assembly, "Game.Services.Host");
+ILog hostLog = LogManager.GetLogger(typeof(ServerStatusService).Assembly, HostLoggerName);
 
-await using NpgsqlDataSource dataSource = DatabaseSettings.CreateDataSource();
+DatabaseSettings databaseSettings = DatabaseSettings.ReadFromEnvironment();
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseNetTcp(NetTcpPort);
+var hostOptions = new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory,
+};
+WebApplicationBuilder builder = WebApplication.CreateBuilder(hostOptions);
+ServerSettings serverSettings = ServerSettings.Read(builder.Configuration);
+
+builder.WebHost.UseNetTcp(serverSettings.NetTcpPort);
 builder.Services.AddServiceModelServices();
-builder.Services.AddSingleton(dataSource);
+builder.Services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
 builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
 builder.Services.AddSingleton<AccountService>();
@@ -45,7 +48,7 @@ builder.Services.AddSingleton<RankingService>();
 WebApplication app = builder.Build();
 app.UseServiceModel(AddEndpoints);
 
-log.InfoFormat("Server listening on net.tcp://localhost:{0}{1}", NetTcpPort, StatusPath);
+hostLog.InfoFormat(ServerListeningMessage, serverSettings.NetTcpPort);
 await app.RunAsync();
 
 static void AddEndpoints(IServiceBuilder serviceBuilder)
@@ -53,13 +56,13 @@ static void AddEndpoints(IServiceBuilder serviceBuilder)
     serviceBuilder.AddService<ServerStatusService>();
     serviceBuilder.AddServiceEndpoint<ServerStatusService, IServerStatusService>(
         new NetTcpBinding(SecurityMode.None),
-        StatusPath);
+        ServiceEndpointPaths.ServerStatus);
     serviceBuilder.AddService<AccountService>();
     serviceBuilder.AddServiceEndpoint<AccountService, IAccountService>(
         new NetTcpBinding(SecurityMode.None),
-        AccountPath);
+        ServiceEndpointPaths.Account);
     serviceBuilder.AddService<RankingService>();
     serviceBuilder.AddServiceEndpoint<RankingService, IRankingService>(
         new NetTcpBinding(SecurityMode.None),
-        RankingPath);
+        ServiceEndpointPaths.Ranking);
 }

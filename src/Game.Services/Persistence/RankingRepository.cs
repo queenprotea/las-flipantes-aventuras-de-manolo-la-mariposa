@@ -1,41 +1,34 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
-using Dapper;
-
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed record RankingRow(string Username, long Wins, long TotalScore, long MatchesPlayed);
-
     public sealed class RankingRepository
     {
-        private const string GlobalRankingSql = @"
-            SELECT username,
-                   wins,
-                   total_score AS totalscore,
-                   matches_played AS matchesplayed
-            FROM player_ranking
-            ORDER BY wins DESC, total_score DESC, matches_played ASC";
+        private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 
-        private readonly NpgsqlDataSource _dataSource;
-
-        public RankingRepository(NpgsqlDataSource dataSource)
+        public RankingRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(dataSource);
+            ArgumentNullException.ThrowIfNull(contextFactory);
 
-            _dataSource = dataSource;
+            _contextFactory = contextFactory;
         }
 
-        public async Task<List<RankingRow>> GetGlobalRankingAsync()
+        public async Task<List<PlayerRanking>> GetGlobalRankingAsync()
         {
-            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
 
-            IEnumerable<RankingRow> rows = await connection.QueryAsync<RankingRow>(GlobalRankingSql);
+            List<PlayerRanking> rankings = await databaseContext.PlayerRankings
+                .OrderByDescending(ranking => ranking.Wins)
+                .ThenByDescending(ranking => ranking.TotalScore)
+                .ThenBy(ranking => ranking.MatchesPlayed)
+                .ToListAsync();
 
-            return rows.AsList();
+            return rankings;
         }
     }
 }

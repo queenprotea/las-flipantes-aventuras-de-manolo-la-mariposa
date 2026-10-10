@@ -10,8 +10,6 @@ namespace Torres.Client.Screens
 {
     internal sealed class MainMenuScreen : Screen
     {
-        private const string Chevron = "›";
-
         private readonly LanguagePreference _languagePreference;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
@@ -38,24 +36,24 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            _languageButton.TextArgumentKey = _languagePreference.Current.NameKey;
+            _languageButton.TextArgumentKey = _languagePreference.CurrentLanguage.NameKey;
             _languageButton.RefreshText();
         }
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = Columns();
+            HorizontalStackPanel columns = CreateColumns();
             columns.Spacing = Metrics.MenuRowSpacing;
             columns.Widgets.Add(BuildMenuList());
-            columns.Widgets.Add(Ambience());
+            columns.Widgets.Add(CreateAmbiencePanel());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
 
             return columns;
         }
 
-        private static LocalizedButton MenuItem(string textKey, bool isAvailable)
+        private static LocalizedButton CreateMenuItem(string textKey, bool isAvailable)
         {
-            var item = new LocalizedButton(textKey)
+            var menuItem = new LocalizedButton(textKey)
             {
                 LabelColor = isAvailable ? Theme.Ink : Theme.MutedInk,
                 LabelFont = Fonts.MenuItem,
@@ -67,58 +65,58 @@ namespace Torres.Client.Screens
                 BorderThickness = new Thickness(0),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            item.SetTrailingMark(Chevron, Theme.MutedInk);
+            menuItem.SetTrailingMark(DisplaySymbols.MenuChevron, Theme.MutedInk);
 
-            return item;
+            return menuItem;
         }
 
         private static Panel BuildSeparator()
         {
-            var box = new Panel
+            var separatorPanel = new Panel
             {
                 Padding = new Thickness(Metrics.MenuSeparatorInset, Metrics.MenuSeparatorSpacing),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            box.Widgets.Add(Divider());
+            separatorPanel.Widgets.Add(CreateDivider());
 
-            return box;
+            return separatorPanel;
         }
 
         private VerticalStackPanel BuildMenuList()
         {
-            var list = new VerticalStackPanel
+            var menuList = new VerticalStackPanel
             {
                 Width = Sizes.MenuListWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            _invitationsButton = MenuItem(TextKeys.MainMenu.InvitationsButton, true);
+            _invitationsButton = CreateMenuItem(TextKeys.MainMenu.InvitationsButton, true);
             _invitationsButton.Click += InvitationsButtonOnClick;
-            list.Widgets.Add(_invitationsButton);
-            _friendsButton = MenuItem(TextKeys.MainMenu.FriendsButton, true);
+            menuList.Widgets.Add(_invitationsButton);
+            _friendsButton = CreateMenuItem(TextKeys.MainMenu.FriendsButton, true);
             _friendsButton.Click += FriendsButtonOnClick;
-            list.Widgets.Add(_friendsButton);
-            _historyButton = MenuItem(TextKeys.MainMenu.HistoryButton, true);
+            menuList.Widgets.Add(_friendsButton);
+            _historyButton = CreateMenuItem(TextKeys.MainMenu.HistoryButton, true);
             _historyButton.Click += HistoryButtonOnClick;
-            list.Widgets.Add(_historyButton);
+            menuList.Widgets.Add(_historyButton);
 
-            _rankingButton = MenuItem(TextKeys.MainMenu.RankingButton, true);
+            _rankingButton = CreateMenuItem(TextKeys.MainMenu.RankingButton, true);
             _rankingButton.Click += RankingButtonOnClick;
-            list.Widgets.Add(_rankingButton);
+            menuList.Widgets.Add(_rankingButton);
 
-            list.Widgets.Add(BuildSeparator());
+            menuList.Widgets.Add(BuildSeparator());
 
-            _exitButton = MenuItem(TextKeys.MainMenu.ExitButton, true);
+            _exitButton = CreateMenuItem(TextKeys.MainMenu.ExitButton, true);
             _exitButton.Click += ExitButtonOnClick;
-            list.Widgets.Add(_exitButton);
+            menuList.Widgets.Add(_exitButton);
 
-            _roomsButton = MenuItem(TextKeys.MainMenu.RoomsButton, true);
+            _roomsButton = CreateMenuItem(TextKeys.MainMenu.RoomsButton, true);
             _roomsButton.Click += RoomsButtonOnClick;
-            list.Widgets.Add(_roomsButton);
+            menuList.Widgets.Add(_roomsButton);
 
-            list.Widgets.Add(BuildLanguageButton());
+            menuList.Widgets.Add(BuildLanguageButton());
 
-            return list;
+            return menuList;
         }
 
         private LocalizedButton BuildLanguageButton()
@@ -136,7 +134,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, Metrics.ListSpacing, 0, 0),
             };
-            _languageButton.TextArgumentKey = _languagePreference.Current.NameKey;
+            _languageButton.TextArgumentKey = _languagePreference.CurrentLanguage.NameKey;
             _languageButton.RefreshText();
             _languageButton.Click += LanguageButtonOnClick;
 

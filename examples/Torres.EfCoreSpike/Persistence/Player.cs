@@ -1,6 +1,8 @@
-namespace Game.Persistence
+using System;
+
+namespace Torres.EfCoreSpike.Persistence
 {
-    public sealed class PlayerAccount
+    public sealed class Player
     {
         public int PlayerId { get; set; }
 
@@ -9,5 +11,9 @@ namespace Game.Persistence
         public string Email { get; set; } = string.Empty;
 
         public string PasswordHash { get; set; } = string.Empty;
+
+        public string? AvatarReference { get; set; }
+
+        public DateTime CreatedAt { get; set; }
     }
 }

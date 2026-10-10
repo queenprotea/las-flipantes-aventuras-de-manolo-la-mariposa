@@ -1,45 +1,54 @@
 using System;
 
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 namespace Game.Persistence
 {
-    public static class DatabaseSettings
+    public sealed class DatabaseSettings
     {
-        private const string HostVariable = "TORRES_DB_HOST";
-        private const string UserVariable = "TORRES_DB_USER";
-        private const string PasswordVariable = "TORRES_DB_PASSWORD";
-        private const string DefaultHost = "localhost";
-        private const int DatabasePort = 5432;
-        private const string DatabaseName = "torres";
-        private const string SchemaName = "torres";
-        private const int ConnectionTimeoutSeconds = 5;
+        private const string ConnectionVariable = "TORRES_DB_CONNECTION";
+        private const string MissingConnectionMessage = "The environment variable TORRES_DB_CONNECTION is not set.";
 
-        public static NpgsqlDataSource CreateDataSource()
+        private readonly string _connectionString;
+
+        private DatabaseSettings(string connectionString)
         {
-            var builder = new NpgsqlConnectionStringBuilder
-            {
-                Host = Environment.GetEnvironmentVariable(HostVariable) ?? DefaultHost,
-                Port = DatabasePort,
-                Database = DatabaseName,
-                Username = ReadRequired(UserVariable),
-                Password = ReadRequired(PasswordVariable),
-                SearchPath = SchemaName,
-                Timeout = ConnectionTimeoutSeconds,
-            };
-
-            return NpgsqlDataSource.Create(builder.ConnectionString);
+            _connectionString = connectionString;
         }
 
-        private static string ReadRequired(string variableName)
+        public static DatabaseSettings ReadFromEnvironment()
         {
-            string? value = Environment.GetEnvironmentVariable(variableName);
-            if (string.IsNullOrWhiteSpace(value))
+            string? connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                throw new InvalidOperationException($"The environment variable {variableName} is not set.");
+                throw new InvalidOperationException(MissingConnectionMessage);
             }
 
-            return value;
+            var settings = new DatabaseSettings(connectionString);
+
+            return settings;
+        }
+
+        public void ConfigureContext(DbContextOptionsBuilder optionsBuilder)
+        {
+            ArgumentNullException.ThrowIfNull(optionsBuilder);
+
+            optionsBuilder.UseNpgsql(_connectionString, ConfigureNpgsql);
+        }
+
+        private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsqlOptions)
+        {
+            npgsqlOptions.ExecutionStrategy(CreateExecutionStrategy);
+        }
+
+        private static IExecutionStrategy CreateExecutionStrategy(ExecutionStrategyDependencies dependencies)
+        {
+            var executionStrategy = new NonRetryingExecutionStrategy(dependencies);
+
+            return executionStrategy;
         }
     }
 }

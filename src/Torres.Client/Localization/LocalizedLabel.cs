@@ -6,7 +6,7 @@ namespace Torres.Client.Localization
     {
         private string _textKey;
         private object[]? _textArguments;
-        
+
         internal LocalizedLabel(string textKey)
         {
             _textKey = textKey;
@@ -22,7 +22,7 @@ namespace Torres.Client.Localization
                 RefreshText();
             }
         }
-        
+
         internal object[]? TextArguments
         {
             get => _textArguments;

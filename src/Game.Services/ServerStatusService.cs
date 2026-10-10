@@ -12,19 +12,16 @@ using Npgsql;
 
 namespace Game.Services
 {
-    /// <summary>
-    /// Answers the client's availability check by reading the database.
-    /// </summary>
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public sealed class ServerStatusService : IServerStatusService
     {
+        private const string StatusReadFailedMessage = "The database could not be read during the status check.";
+        private const string StatusAnsweredMessage = "Status check answered; the player table has {0} rows.";
+
         private static readonly ILog _log = LogManager.GetLogger(typeof(ServerStatusService));
 
         private readonly PlayerRepository _playerRepository;
 
-        /// <summary>
-        /// Creates the service over the repository used to reach the database.
-        /// </summary>
         public ServerStatusService(PlayerRepository playerRepository)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
@@ -32,7 +29,6 @@ namespace Game.Services
             _playerRepository = playerRepository;
         }
 
-        /// <inheritdoc/>
         public async Task<ServerStatus> GetStatusAsync()
         {
             long playerCount;
@@ -42,11 +38,11 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error("The database could not be read during the status check.", exception);
+                _log.Error(StatusReadFailedMessage, exception);
                 return ServerStatus.DatabaseUnavailable;
             }
 
-            _log.InfoFormat("Status check answered; the player table has {0} rows.", playerCount);
+            _log.InfoFormat(StatusAnsweredMessage, playerCount);
 
             return ServerStatus.Ready;
         }

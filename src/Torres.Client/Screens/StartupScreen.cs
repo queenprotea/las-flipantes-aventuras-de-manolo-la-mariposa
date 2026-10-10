@@ -17,7 +17,7 @@ namespace Torres.Client.Screens
 {
     internal sealed class StartupScreen : Screen
     {
-        private const double ReadySeconds = 0.8;
+        private const double ReadyDisplaySeconds = 0.8;
         private const int StatusSpacing = 14;
         private const int NoticeWidth = 420;
 
@@ -70,7 +70,7 @@ namespace Torres.Client.Screens
             };
             _failureNotice = BuildFailureNotice();
 
-            return new VerticalStackPanel
+            var startupLayout = new VerticalStackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -86,59 +86,63 @@ namespace Torres.Client.Screens
                     _failureNotice,
                 },
             };
+
+            return startupLayout;
         }
 
         private VerticalStackPanel BuildFailureNotice()
         {
-            var message = new VerticalStackPanel
+            var failureMessage = new VerticalStackPanel
             {
                 Padding = Metrics.CardPadding,
                 Background = Theme.BlushTintBrush,
                 Border = Theme.BlushBrush,
                 BorderThickness = Sizes.Border,
             };
-            message.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
+            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.BlushInk,
                 Wrap = true,
             });
-            message.Widgets.Add(Paragraph(TextKeys.Common.ServerErrorDetail));
+            failureMessage.Widgets.Add(CreateParagraph(TextKeys.Common.ServerErrorDetail));
 
-            LocalizedButton retryButton = PrimaryButton(TextKeys.Common.RetryButton);
-            LocalizedButton exitButton = SecondaryButton(TextKeys.Common.ExitButton);
+            LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
+            LocalizedButton exitButton = CreateSecondaryButton(TextKeys.Common.ExitButton);
             retryButton.Click += RetryButtonOnClick;
             exitButton.Click += ExitButtonOnClick;
-            HorizontalStackPanel actions = Row();
-            actions.HorizontalAlignment = HorizontalAlignment.Center;
-            actions.Widgets.Add(retryButton);
-            actions.Widgets.Add(exitButton);
+            HorizontalStackPanel failureActions = CreateButtonRow();
+            failureActions.HorizontalAlignment = HorizontalAlignment.Center;
+            failureActions.Widgets.Add(retryButton);
+            failureActions.Widgets.Add(exitButton);
 
-            var notice = new VerticalStackPanel
+            var failureNotice = new VerticalStackPanel
             {
                 Width = NoticeWidth,
                 Spacing = Metrics.FieldSpacing,
                 Margin = new Thickness(0, StatusSpacing, 0, 0),
                 Visible = false,
             };
-            notice.Widgets.Add(message);
-            notice.Widgets.Add(actions);
+            failureNotice.Widgets.Add(failureMessage);
+            failureNotice.Widgets.Add(failureActions);
 
-            return notice;
+            return failureNotice;
         }
 
         private Task<ServerStatus> StartStatusCheckAsync()
         {
             _statusChannel = _statusChannelFactory.CreateChannel();
 
-            return _statusChannel.GetStatusAsync();
+            Task<ServerStatus> statusCheck = _statusChannel.GetStatusAsync();
+
+            return statusCheck;
         }
 
         private void ShowReady(LocalizedLabel statusLabel, GameTime gameTime)
         {
             statusLabel.TextKey = TextKeys.Startup.ReadyStatus;
             _readyElapsedSeconds += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_readyElapsedSeconds >= ReadySeconds)
+            if (_readyElapsedSeconds >= ReadyDisplaySeconds)
             {
                 RequestedScreen = ScreenId.MainMenu;
             }

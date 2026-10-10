@@ -6,9 +6,7 @@
     <RollForward>Major</RollForward>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <!-- Idioma de Strings.resx (el archivo sin sufijo). Equivale al Resources.resx del ejemplo WPF. -->
     <NeutralLanguage>es</NeutralLanguage>
-    <!-- Solo se copian las carpetas satélite que el juego ofrece: evita las de terceros. -->
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <PropertyGroup>
@@ -27,10 +25,6 @@
       <LogicalName>Icon.bmp</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <!--
-    Genera la clase Strings (equivalente a Properties.Resources de WPF) al compilar con
-    dotnet build, sin depender del generador de Visual Studio: funciona en macOS, Linux y Windows.
-  -->
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">
       <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>

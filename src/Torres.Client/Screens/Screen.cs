@@ -12,7 +12,7 @@ namespace Torres.Client.Screens
 {
     internal abstract class Screen
     {
-        private Widget? _root;
+        private Widget? _rootWidget;
 
         protected Screen(string headerKey, bool showsTopBar)
         {
@@ -25,12 +25,12 @@ namespace Torres.Client.Screens
         internal bool ShowsTopBar { get; }
 
         internal ScreenId? RequestedScreen { get; set; }
-        
+
         internal object[]? HeaderArguments { get; private protected set; }
 
-        internal Widget Root => _root ??= Build();
+        internal Widget Root => _rootWidget ??= Build();
 
-        internal bool IsBuilt => _root is not null;
+        internal bool IsBuilt => _rootWidget is not null;
 
         internal virtual void Update(GameTime gameTime)
         {
@@ -42,28 +42,32 @@ namespace Torres.Client.Screens
 
         protected abstract Widget Build();
 
-        protected static VerticalStackPanel Page()
+        protected static VerticalStackPanel CreatePage()
         {
-            return new VerticalStackPanel
+            var page = new VerticalStackPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
+
+            return page;
         }
 
-        protected static HorizontalStackPanel Columns()
+        protected static HorizontalStackPanel CreateColumns()
         {
-            return new HorizontalStackPanel
+            var columns = new HorizontalStackPanel
             {
                 Spacing = Metrics.ColumnSpacing,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
+
+            return columns;
         }
 
-        protected static VerticalStackPanel Card(int width)
+        protected static VerticalStackPanel CreateCard(int width)
         {
-            return new VerticalStackPanel
+            var card = new VerticalStackPanel
             {
                 Spacing = Metrics.FieldSpacing,
                 Width = width,
@@ -73,124 +77,136 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Top,
             };
+
+            return card;
         }
 
-        protected static VerticalStackPanel CardHeader(string titleKey, string hintKey)
+        protected static VerticalStackPanel CreateCardHeader(string titleKey, string hintKey)
         {
-            var header = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
-            header.Widgets.Add(Title(titleKey));
-            header.Widgets.Add(Hint(hintKey));
+            var cardHeader = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
+            cardHeader.Widgets.Add(CreateTitle(titleKey));
+            cardHeader.Widgets.Add(CreateHint(hintKey));
 
-            return header;
+            return cardHeader;
         }
 
-        protected static LocalizedLabel Title(string textKey)
+        protected static LocalizedLabel CreateTitle(string textKey)
         {
-            return new LocalizedLabel(textKey)
+            var title = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Title,
                 TextColor = Theme.Ink,
                 Wrap = true,
             };
+
+            return title;
         }
 
-        protected static LocalizedLabel Hint(string textKey)
+        protected static LocalizedLabel CreateHint(string textKey)
         {
-            return new LocalizedLabel(textKey)
+            var hint = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 Wrap = true,
             };
+
+            return hint;
         }
 
-        protected static LocalizedLabel Paragraph(string textKey)
+        protected static LocalizedLabel CreateParagraph(string textKey)
         {
-            return new LocalizedLabel(textKey)
+            var paragraph = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.SoftInk,
                 Wrap = true,
             };
+
+            return paragraph;
         }
 
-        protected static LocalizedLabel Error(string textKey)
+        protected static LocalizedLabel CreateErrorMessage(string textKey)
         {
-            return new LocalizedLabel(textKey)
+            var errorMessage = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.BlushInk,
                 Wrap = true,
                 Visible = false,
             };
+
+            return errorMessage;
         }
 
-        protected static LocalizedLabel Success(string textKey)
+        protected static LocalizedLabel CreateSuccessMessage(string textKey)
         {
-            return new LocalizedLabel(textKey)
+            var successMessage = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MintInk,
                 Wrap = true,
             };
+
+            return successMessage;
         }
 
-        protected static LocalizedButton PrimaryButton(string textKey)
+        protected static LocalizedButton CreatePrimaryButton(string textKey)
         {
-            LocalizedButton button = BaseButton(textKey, Theme.MintInk);
-            button.Background = Theme.MintBrush;
-            button.OverBackground = Theme.MintAltBrush;
-            button.PressedBackground = Theme.MintAltBrush;
-            button.Border = Theme.MintLineBrush;
+            LocalizedButton primaryButton = CreateBaseButton(textKey, Theme.MintInk);
+            primaryButton.Background = Theme.MintBrush;
+            primaryButton.OverBackground = Theme.MintAltBrush;
+            primaryButton.PressedBackground = Theme.MintAltBrush;
+            primaryButton.Border = Theme.MintLineBrush;
 
-            return button;
+            return primaryButton;
         }
 
-        protected static LocalizedButton SecondaryButton(string textKey)
+        protected static LocalizedButton CreateSecondaryButton(string textKey)
         {
-            LocalizedButton button = BaseButton(textKey, Theme.Ink);
-            button.Background = Theme.SurfaceBrush;
-            button.OverBackground = Theme.SurfaceSunkenBrush;
-            button.PressedBackground = Theme.SurfaceSunkenBrush;
-            button.Border = Theme.StrongLineBrush;
+            LocalizedButton secondaryButton = CreateBaseButton(textKey, Theme.Ink);
+            secondaryButton.Background = Theme.SurfaceBrush;
+            secondaryButton.OverBackground = Theme.SurfaceSunkenBrush;
+            secondaryButton.PressedBackground = Theme.SurfaceSunkenBrush;
+            secondaryButton.Border = Theme.StrongLineBrush;
 
-            return button;
+            return secondaryButton;
         }
 
-        protected static LocalizedButton SmallSecondaryButton(string textKey)
+        protected static LocalizedButton CreateSmallSecondaryButton(string textKey)
         {
-            LocalizedButton button = SecondaryButton(textKey);
-            button.LabelFont = Fonts.Small;
-            button.Padding = Metrics.SmallButtonPadding;
+            LocalizedButton smallSecondaryButton = CreateSecondaryButton(textKey);
+            smallSecondaryButton.LabelFont = Fonts.Small;
+            smallSecondaryButton.Padding = Metrics.SmallButtonPadding;
 
-            return button;
+            return smallSecondaryButton;
         }
 
-        protected static LocalizedButton DestructiveButton(string textKey)
+        protected static LocalizedButton CreateDestructiveButton(string textKey)
         {
-            LocalizedButton button = BaseButton(textKey, Theme.BlushInk);
-            button.Background = Theme.BlushTintBrush;
-            button.OverBackground = Theme.BlushTintBrush;
-            button.PressedBackground = Theme.BlushTintBrush;
-            button.Border = Theme.BlushBrush;
+            LocalizedButton destructiveButton = CreateBaseButton(textKey, Theme.BlushInk);
+            destructiveButton.Background = Theme.BlushTintBrush;
+            destructiveButton.OverBackground = Theme.BlushTintBrush;
+            destructiveButton.PressedBackground = Theme.BlushTintBrush;
+            destructiveButton.Border = Theme.BlushBrush;
 
-            return button;
+            return destructiveButton;
         }
 
-        protected static LocalizedButton LavenderButton(string textKey)
+        protected static LocalizedButton CreateLavenderButton(string textKey)
         {
-            LocalizedButton button = BaseButton(textKey, Theme.LavenderInk);
-            button.Background = Theme.LavenderBrush;
-            button.OverBackground = Theme.LavenderTintBrush;
-            button.PressedBackground = Theme.LavenderTintBrush;
-            button.Border = Theme.LavenderLineBrush;
+            LocalizedButton lavenderButton = CreateBaseButton(textKey, Theme.LavenderInk);
+            lavenderButton.Background = Theme.LavenderBrush;
+            lavenderButton.OverBackground = Theme.LavenderTintBrush;
+            lavenderButton.PressedBackground = Theme.LavenderTintBrush;
+            lavenderButton.Border = Theme.LavenderLineBrush;
 
-            return button;
+            return lavenderButton;
         }
 
-        protected static LocalizedButton LinkButton(string textKey)
+        protected static LocalizedButton CreateLinkButton(string textKey)
         {
-            var button = new LocalizedButton(textKey)
+            var linkButton = new LocalizedButton(textKey)
             {
                 LabelColor = Theme.LavenderInk,
                 LabelFont = Fonts.Small,
@@ -202,36 +218,40 @@ namespace Torres.Client.Screens
                 BorderThickness = new Thickness(0),
             };
 
-            return button;
+            return linkButton;
         }
 
-        protected static HorizontalStackPanel Row()
+        protected static HorizontalStackPanel CreateButtonRow()
         {
-            return new HorizontalStackPanel { Spacing = Metrics.ButtonSpacing };
+            var buttonRow = new HorizontalStackPanel { Spacing = Metrics.ButtonSpacing };
+
+            return buttonRow;
         }
 
-        protected static VerticalStackPanel WrappedRow()
+        protected static VerticalStackPanel CreateWrappedButtonRow()
         {
-            return new VerticalStackPanel
+            var wrappedButtonRow = new VerticalStackPanel
             {
                 Spacing = Metrics.ButtonSpacing,
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
+
+            return wrappedButtonRow;
         }
 
-        protected static HorizontalStackPanel BackBar(LocalizedButton backButton)
+        protected static HorizontalStackPanel CreateBackBar(LocalizedButton backButton)
         {
-            HorizontalStackPanel bar = Row();
-            bar.Margin = new Thickness(0, Metrics.ColumnSpacing, 0, 0);
-            bar.VerticalAlignment = VerticalAlignment.Bottom;
-            bar.Widgets.Add(backButton);
+            HorizontalStackPanel backBar = CreateButtonRow();
+            backBar.Margin = new Thickness(0, Metrics.ColumnSpacing, 0, 0);
+            backBar.VerticalAlignment = VerticalAlignment.Bottom;
+            backBar.Widgets.Add(backButton);
 
-            return bar;
+            return backBar;
         }
 
-        protected static Panel Ambience()
+        protected static Panel CreateAmbiencePanel()
         {
-            return new Panel
+            var ambiencePanel = new Panel
             {
                 Background = Theme.MintTintBrush,
                 Border = Theme.LineBrush,
@@ -239,11 +259,13 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
+
+            return ambiencePanel;
         }
 
-        protected static Panel Avatar()
+        protected static Panel CreateAvatar()
         {
-            return new Panel
+            var avatar = new Panel
             {
                 Width = Sizes.LargeAvatarSize,
                 Height = Sizes.LargeAvatarSize,
@@ -252,11 +274,13 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
+
+            return avatar;
         }
 
-        protected static HorizontalStackPanel ListItem()
+        protected static HorizontalStackPanel CreateListItem()
         {
-            return new HorizontalStackPanel
+            var listItem = new HorizontalStackPanel
             {
                 Spacing = Metrics.ListItemSpacing,
                 Padding = Metrics.ListItemPadding,
@@ -264,41 +288,45 @@ namespace Torres.Client.Screens
                 Border = Theme.LineBrush,
                 BorderThickness = Sizes.Border,
             };
+
+            return listItem;
         }
 
-        protected static Panel SmallAvatar(IBrush background)
+        protected static Panel CreateSmallAvatar(IBrush avatarBackground)
         {
-            return new Panel
+            var smallAvatar = new Panel
             {
                 Width = Sizes.SmallAvatarSize,
                 Height = Sizes.SmallAvatarSize,
-                Background = background,
+                Background = avatarBackground,
                 Border = Theme.LineBrush,
                 BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+
+            return smallAvatar;
         }
 
-        protected static Panel Chip(LocalizedLabel label, IBrush background, IBrush border)
+        protected static Panel CreateChip(LocalizedLabel chipLabel, IBrush chipBackground, IBrush chipBorder)
         {
-            label.Font = Fonts.Label;
+            chipLabel.Font = Fonts.Label;
 
-            var chip = new Panel
+            var chipPanel = new Panel
             {
                 Padding = Metrics.ChipPadding,
-                Background = background,
-                Border = border,
+                Background = chipBackground,
+                Border = chipBorder,
                 BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            chip.Widgets.Add(label);
+            chipPanel.Widgets.Add(chipLabel);
 
-            return chip;
+            return chipPanel;
         }
 
-        protected static Label PlayerNameLabel(string playerName, Color textColor)
+        protected static Label CreatePlayerNameLabel(string playerName, Color textColor)
         {
-            return new Label
+            var playerNameLabel = new Label
             {
                 Text = playerName,
                 Font = Fonts.Control,
@@ -306,28 +334,30 @@ namespace Torres.Client.Screens
                 AutoEllipsisMethod = AutoEllipsisMethod.Character,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+
+            return playerNameLabel;
         }
 
-        protected static VerticalStackPanel GameSection(string labelKey, Widget content)
+        protected static VerticalStackPanel CreateGameSection(string labelKey, Widget sectionContent)
         {
-            var section = new VerticalStackPanel
+            var gameSection = new VerticalStackPanel
             {
                 Spacing = MatchLayout.SectionLabelSpacing,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            section.Widgets.Add(new LocalizedLabel(labelKey)
+            gameSection.Widgets.Add(new LocalizedLabel(labelKey)
             {
                 Font = Fonts.Label,
                 TextColor = Theme.MutedInk,
             });
-            section.Widgets.Add(content);
+            gameSection.Widgets.Add(sectionContent);
 
-            return section;
+            return gameSection;
         }
 
-        protected static VerticalStackPanel ChatPanel()
+        protected static VerticalStackPanel CreateChatPanel()
         {
-            var chat = new VerticalStackPanel
+            var chatPanel = new VerticalStackPanel
             {
                 Spacing = Metrics.ChatSpacing,
                 Padding = Metrics.ChatPadding,
@@ -336,45 +366,96 @@ namespace Torres.Client.Screens
             };
 
             var spacer = new Panel();
-            chat.Widgets.Add(new LocalizedLabel(TextKeys.Chat.NoMessages)
+            chatPanel.Widgets.Add(new LocalizedLabel(TextKeys.Chat.NoMessages)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
             });
-            chat.Widgets.Add(spacer);
-            chat.Widgets.Add(Divider());
-            chat.Widgets.Add(new LocalizedLabel(TextKeys.Chat.InputPlaceholder)
+            chatPanel.Widgets.Add(spacer);
+            chatPanel.Widgets.Add(CreateDivider());
+            chatPanel.Widgets.Add(new LocalizedLabel(TextKeys.Chat.InputPlaceholder)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
             });
             StackPanel.SetProportionType(spacer, ProportionType.Fill);
 
-            return chat;
+            return chatPanel;
         }
 
-        internal static Panel Divider()
+        internal static Panel CreateDivider()
         {
-            return new Panel
+            var divider = new Panel
             {
                 Height = Sizes.BorderSize,
                 Background = Theme.LineBrush,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
+
+            return divider;
         }
 
-        private static LocalizedButton BaseButton(string textKey, Color labelColor)
+        private static LocalizedButton CreateBaseButton(string textKey, Color labelColor)
         {
-            return new LocalizedButton(textKey)
+            var baseButton = new LocalizedButton(textKey)
             {
                 LabelColor = labelColor,
                 LabelFont = Fonts.Control,
                 Padding = Metrics.ButtonPadding,
                 BorderThickness = Sizes.Border,
             };
+
+            return baseButton;
         }
-        
-        protected static VerticalStackPanel EmptyState(string titleKey, string hintKey)
+
+        protected static Panel CreateItemCard(Widget itemContent)
+        {
+            var itemCard = new Panel
+            {
+                Padding = Metrics.ListItemPadding,
+                Background = Theme.SurfaceAltBrush,
+                Border = Theme.LineBrush,
+                BorderThickness = Sizes.Border,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            itemCard.Widgets.Add(itemContent);
+
+            return itemCard;
+        }
+
+        protected static Panel CreateStatusBadge(string textKey)
+        {
+            var statusBadge = new Panel
+            {
+                Padding = Metrics.PillButtonPadding,
+                Background = Theme.MintTintBrush,
+                Border = Theme.MintLineBrush,
+                BorderThickness = Sizes.Border,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            statusBadge.Widgets.Add(new LocalizedLabel(textKey)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
+
+            return statusBadge;
+        }
+
+        protected static Label CreateUsernameLabel(string username)
+        {
+            var usernameLabel = new Label
+            {
+                Text = username,
+                Font = Fonts.Body,
+                TextColor = Theme.Ink,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            return usernameLabel;
+        }
+
+        protected static VerticalStackPanel CreateEmptyState(string titleKey, string hintKey)
         {
             var emptyState = new VerticalStackPanel
             {
@@ -384,11 +465,11 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            LocalizedLabel title = Title(titleKey);
+            LocalizedLabel title = CreateTitle(titleKey);
             title.TextAlign = TextHorizontalAlignment.Center;
             emptyState.Widgets.Add(title);
 
-            LocalizedLabel hint = Hint(hintKey);
+            LocalizedLabel hint = CreateHint(hintKey);
             hint.TextAlign = TextHorizontalAlignment.Center;
             emptyState.Widgets.Add(hint);
 

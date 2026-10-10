@@ -13,4 +13,5 @@
   <data name="ChangeLanguage_Hint" xml:space="preserve"><value>Se aplica de inmediato a todas las pantallas.</value></data>
   <data name="ChangeLanguage_Note" xml:space="preserve"><value>La preferencia se guarda en este equipo, no en tu cuenta.</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Volver</value></data>
+  <data name="Common_GameName" xml:space="preserve"><value>Torres</value></data>
 </root>

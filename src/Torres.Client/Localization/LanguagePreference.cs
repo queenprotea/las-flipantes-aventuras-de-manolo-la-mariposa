@@ -9,47 +9,54 @@ namespace Torres.Client.Localization
     {
         private const string PreferenceFileName = "language.txt";
         private const string PreferenceFolderName = "Torres";
+        private const string SpanishUiCulture = "es";
+        private const string SpanishFormatCulture = "es-MX";
+        private const string EnglishUiCulture = "en";
+        private const string EnglishFormatCulture = "en-US";
 
         private readonly string _preferencePath;
 
         internal LanguagePreference()
         {
-            string folder = Path.Combine(
+            string preferenceFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 PreferenceFolderName);
-            _preferencePath = Path.Combine(folder, PreferenceFileName);
+            _preferencePath = Path.Combine(preferenceFolder, PreferenceFileName);
         }
 
-        internal static IReadOnlyList<LanguageOption> Available { get; } = new[]
-        {
-            new LanguageOption("es", "es-MX", TextKeys.Language.SpanishOption),
-            new LanguageOption("en", "en-US", TextKeys.Language.EnglishOption),
-        };
+        internal static LanguageOption Spanish { get; } =
+            new LanguageOption(SpanishUiCulture, SpanishFormatCulture, TextKeys.Language.SpanishOption);
 
-        internal LanguageOption Current { get; private set; } = Available[0];
+        internal static LanguageOption English { get; } =
+            new LanguageOption(EnglishUiCulture, EnglishFormatCulture, TextKeys.Language.EnglishOption);
+
+        internal static IReadOnlyList<LanguageOption> AvailableLanguages { get; } = new[] { Spanish, English };
+
+        internal LanguageOption CurrentLanguage { get; private set; } = Spanish;
 
         internal void LoadSavedPreference()
         {
-            LanguageOption language = Available[0];
+            LanguageOption savedLanguage = Spanish;
             if (File.Exists(_preferencePath))
             {
-                language = Find(File.ReadAllText(_preferencePath).Trim()) ?? Available[0];
+                string savedUiCultureName = File.ReadAllText(_preferencePath).Trim();
+                savedLanguage = FindByUiCultureName(savedUiCultureName) ?? Spanish;
             }
 
-            Apply(language);
+            ApplyCulture(savedLanguage);
         }
 
         internal bool Change(LanguageOption language)
         {
             ArgumentNullException.ThrowIfNull(language);
 
-            if (language.UiCultureName == Current.UiCultureName)
+            if (language.UiCultureName == CurrentLanguage.UiCultureName)
             {
                 return false;
             }
 
-            Apply(language);
-            Save(language);
+            ApplyCulture(language);
+            SavePreference(language);
 
             return true;
         }
@@ -58,23 +65,25 @@ namespace Torres.Client.Localization
         {
             ArgumentNullException.ThrowIfNull(language);
 
-            return language.UiCultureName == Current.UiCultureName;
+            bool isCurrentLanguage = language.UiCultureName == CurrentLanguage.UiCultureName;
+
+            return isCurrentLanguage;
         }
 
-        private static LanguageOption? Find(string uiCultureName)
+        private static LanguageOption? FindByUiCultureName(string uiCultureName)
         {
-            foreach (LanguageOption option in Available)
+            foreach (LanguageOption availableLanguage in AvailableLanguages)
             {
-                if (option.UiCultureName == uiCultureName)
+                if (availableLanguage.UiCultureName == uiCultureName)
                 {
-                    return option;
+                    return availableLanguage;
                 }
             }
 
             return null;
         }
 
-        private void Apply(LanguageOption language)
+        private void ApplyCulture(LanguageOption language)
         {
             CultureInfo uiCulture = CultureInfo.GetCultureInfo(language.UiCultureName);
             CultureInfo formatCulture = CultureInfo.GetCultureInfo(language.FormatCultureName);
@@ -83,18 +92,18 @@ namespace Torres.Client.Localization
             CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
             CultureInfo.CurrentCulture = formatCulture;
             CultureInfo.DefaultThreadCurrentCulture = formatCulture;
-            Current = language;
+            CurrentLanguage = language;
         }
 
-        private void Save(LanguageOption language)
+        private void SavePreference(LanguageOption language)
         {
-            string? folder = Path.GetDirectoryName(_preferencePath);
-            if (folder is null)
+            string? preferenceFolder = Path.GetDirectoryName(_preferencePath);
+            if (preferenceFolder is null)
             {
                 return;
             }
 
-            Directory.CreateDirectory(folder);
+            Directory.CreateDirectory(preferenceFolder);
             File.WriteAllText(_preferencePath, language.UiCultureName);
         }
     }

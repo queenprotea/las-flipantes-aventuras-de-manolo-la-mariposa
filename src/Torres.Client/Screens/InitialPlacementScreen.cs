@@ -12,16 +12,14 @@ namespace Torres.Client.Screens
 {
     internal sealed class InitialPlacementScreen : Screen
     {
-        private const string PlacedMark = "✓";
-        private const string PreviewClock = "1:30";
         private const double PreviewSecondsBeforeMatch = 3;
 
         private static readonly PlacementPlayer[] _previewPlayers =
         {
-            new PlacementPlayer("jesus", true, true, false, Theme.MintBrush),
-            new PlacementPlayer("valentin", false, false, true, Theme.LavenderBrush),
-            new PlacementPlayer("salma", false, false, false, Theme.ButterBrush),
-            new PlacementPlayer("scarleth", false, false, false, Theme.SkyBrush),
+            new PlacementPlayer(PreviewSamples.SeatOnePlayer, true, true, false, Theme.MintBrush),
+            new PlacementPlayer(PreviewSamples.SeatTwoPlayer, false, false, true, Theme.LavenderBrush),
+            new PlacementPlayer(PreviewSamples.SeatThreePlayer, false, false, false, Theme.ButterBrush),
+            new PlacementPlayer(PreviewSamples.SeatFourPlayer, false, false, false, Theme.SkyBrush),
         };
 
         private double _secondsShown;
@@ -49,23 +47,23 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel center = BuildCenter();
-            HorizontalStackPanel columns = Columns();
+            VerticalStackPanel centerPanel = BuildCenter();
+            HorizontalStackPanel columns = CreateColumns();
             columns.Widgets.Add(BuildSideBar());
-            columns.Widgets.Add(center);
+            columns.Widgets.Add(centerPanel);
             columns.Widgets.Add(BuildSideColumn());
-            StackPanel.SetProportionType(center, ProportionType.Fill);
+            StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
 
             return columns;
         }
 
         private static VerticalStackPanel BuildSideBar()
         {
-            var players = new VerticalStackPanel();
+            var playersPanel = new VerticalStackPanel();
             var turnOrder = new VerticalStackPanel();
             for (var i = 0; i < _previewPlayers.Length; i++)
             {
-                players.Widgets.Add(BuildPlayerRow(_previewPlayers[i]));
+                playersPanel.Widgets.Add(BuildPlayerRow(_previewPlayers[i]));
                 turnOrder.Widgets.Add(BuildTurnOrderRow(_previewPlayers[i], i + 1));
             }
 
@@ -75,66 +73,67 @@ namespace Torres.Client.Screens
                 Width = MatchLayout.SidebarWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            sideBar.Widgets.Add(GameSection(TextKeys.InitialPlacement.PlayersLabel, players));
-            sideBar.Widgets.Add(Divider());
-            sideBar.Widgets.Add(GameSection(TextKeys.InitialPlacement.TurnOrderLabel, turnOrder));
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.PlayersLabel, playersPanel));
+            sideBar.Widgets.Add(CreateDivider());
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.TurnOrderLabel, turnOrder));
 
             return sideBar;
         }
 
         private static HorizontalStackPanel BuildPlayerRow(PlacementPlayer player)
         {
-            var identity = new VerticalStackPanel
+            var playerIdentity = new VerticalStackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            identity.Widgets.Add(PlayerNameLabel(player.Name, player.IsPlacing ? Theme.MintInk : Theme.Ink));
+            Color nameColor = player.IsPlacing ? Theme.MintInk : Theme.Ink;
+            playerIdentity.Widgets.Add(CreatePlayerNameLabel(player.Name, nameColor));
 
             if (player.IsYou)
             {
-                identity.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
+                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
                 {
                     Font = Fonts.Label,
                     TextColor = Theme.MutedInk,
                 });
             }
 
-            HorizontalStackPanel row = BuildColorRow(player.ColorBrush, MatchLayout.PlayerIconSize);
-            row.Widgets.Add(identity);
-            StackPanel.SetProportionType(identity, ProportionType.Fill);
+            HorizontalStackPanel playerRow = BuildColorRow(player.ColorBrush, MatchLayout.PlayerIconSize);
+            playerRow.Widgets.Add(playerIdentity);
+            StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
             if (player.IsPlacing)
             {
-                row.Background = Theme.MintTintBrush;
+                playerRow.Background = Theme.MintTintBrush;
             }
 
-            return row;
+            return playerRow;
         }
 
         private static HorizontalStackPanel BuildTurnOrderRow(PlacementPlayer player, int seatNumber)
         {
-            Label name = PlayerNameLabel(player.Name, Theme.Ink);
-            HorizontalStackPanel row = BuildColorRow(player.ColorBrush, MatchLayout.TurnOrderIconSize);
-            row.Widgets.Add(name);
-            row.Widgets.Add(new Label
+            Label nameLabel = CreatePlayerNameLabel(player.Name, Theme.Ink);
+            HorizontalStackPanel turnOrderRow = BuildColorRow(player.ColorBrush, MatchLayout.TurnOrderIconSize);
+            turnOrderRow.Widgets.Add(nameLabel);
+            turnOrderRow.Widgets.Add(new Label
             {
-                Text = player.HasPlaced ? PlacedMark : seatNumber.ToString(CultureInfo.CurrentCulture),
+                Text = player.HasPlaced ? DisplaySymbols.CheckMark : seatNumber.ToString(CultureInfo.CurrentCulture),
                 Font = Fonts.Small,
                 TextColor = Theme.SoftInk,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            StackPanel.SetProportionType(name, ProportionType.Fill);
+            StackPanel.SetProportionType(nameLabel, ProportionType.Fill);
 
-            return row;
+            return turnOrderRow;
         }
 
         private static HorizontalStackPanel BuildColorRow(IBrush colorBrush, int iconSize)
         {
-            var row = new HorizontalStackPanel
+            var colorRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
                 Padding = MatchLayout.PlayerRowPadding,
             };
-            row.Widgets.Add(new Panel
+            colorRow.Widgets.Add(new Panel
             {
                 Width = iconSize,
                 Height = iconSize,
@@ -142,12 +141,12 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Center,
             });
 
-            return row;
+            return colorRow;
         }
 
         private static VerticalStackPanel BuildCenter()
         {
-            var board = new Panel
+            var boardPlaceholder = new Panel
             {
                 Background = Theme.SurfaceAltBrush,
                 Border = Theme.StrongLineBrush,
@@ -156,35 +155,35 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
 
-            var center = new VerticalStackPanel
+            var centerPanel = new VerticalStackPanel
             {
                 Spacing = MatchLayout.CenterSpacing,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
-            center.Widgets.Add(new Label
+            centerPanel.Widgets.Add(new Label
             {
-                Text = PreviewClock,
+                Text = PreviewSamples.PlacementClock,
                 Font = Fonts.Clock,
                 TextColor = Theme.MintInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            center.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction)
+            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction)
             {
                 Font = Fonts.Title,
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            center.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction)
+            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction)
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextArguments = new object[] { FindPlacingPlayerName() },
             });
-            center.Widgets.Add(board);
-            StackPanel.SetProportionType(board, ProportionType.Fill);
+            centerPanel.Widgets.Add(boardPlaceholder);
+            StackPanel.SetProportionType(boardPlaceholder, ProportionType.Fill);
 
-            return center;
+            return centerPanel;
         }
 
         private static string FindPlacingPlayerName()
@@ -203,7 +202,7 @@ namespace Torres.Client.Screens
 
         private static VerticalStackPanel BuildSideColumn()
         {
-            VerticalStackPanel chat = ChatPanel();
+            VerticalStackPanel chat = CreateChatPanel();
             var sideColumn = new VerticalStackPanel
             {
                 Width = MatchLayout.SideColumnWidth,

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -11,11 +12,11 @@ namespace Torres.Client.Screens
 {
     internal sealed class InvitePlayersScreen : Screen
     {
-        private readonly List<InviteCandidate> _friends = SampleFriends();
+        private readonly List<InviteCandidate> _friends = CreateSampleFriends();
+        private readonly VerticalStackPanel _candidatesPlaceholder = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
 
         private string _searchTerm = string.Empty;
-        private VerticalStackPanel? _listPlaceholder;
-        private LabeledTextBox? _searchField;
 
         internal InvitePlayersScreen()
             : base(TextKeys.InvitePlayers.HeaderLabel, true)
@@ -24,141 +25,105 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Spacing = Metrics.FieldSpacing;
-
             page.Widgets.Add(BuildSearchRow());
-            page.Widgets.Add(Title(TextKeys.InvitePlayers.MyFriendsTab));
+            page.Widgets.Add(CreateTitle(TextKeys.InvitePlayers.MyFriendsTab));
+            page.Widgets.Add(_candidatesPlaceholder);
+            StackPanel.SetProportionType(_candidatesPlaceholder, ProportionType.Fill);
+            RenderCandidates();
 
-            var placeholder = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            _listPlaceholder = placeholder;
-            page.Widgets.Add(placeholder);
-            StackPanel.SetProportionType(placeholder, ProportionType.Fill);
+            LocalizedButton inviteByEmailButton = CreateSecondaryButton(TextKeys.InvitePlayers.InviteByEmailButton);
+            page.Widgets.Add(inviteByEmailButton);
 
-            Render();
-
-            LocalizedButton emailButton = SecondaryButton(TextKeys.InvitePlayers.InviteByEmailButton);
-            // TODO: connect to InviteByEmailAsync.
-            page.Widgets.Add(emailButton);
-
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToRoomButton);
-            backButton.Click += OnBackClick;
-            page.Widgets.Add(BackBar(backButton));
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToRoomButton);
+            backButton.Click += BackButtonOnClick;
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private HorizontalStackPanel BuildSearchRow()
         {
-            HorizontalStackPanel row = Row();
-
-            _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
-            _searchField.Box.TextChanged += (sender, args) =>
-            {
-                _searchTerm = _searchField!.Value;
-                Render();
-            };
-
-            row.Widgets.Add(_searchField);
+            HorizontalStackPanel searchRow = CreateButtonRow();
+            _searchField.Box.TextChanged += SearchBoxOnTextChanged;
+            searchRow.Widgets.Add(_searchField);
             StackPanel.SetProportionType(_searchField, ProportionType.Fill);
-            return row;
+
+            return searchRow;
         }
 
-        private void Render()
+        private void RenderCandidates()
         {
-            _listPlaceholder!.Widgets.Clear();
-
-            if (_friends.Count == 0)
+            _candidatesPlaceholder.Widgets.Clear();
+            List<InviteCandidate> matchingCandidates = FindMatchingCandidates();
+            if (matchingCandidates.Count == 0)
             {
-                _listPlaceholder.Widgets.Add(EmptyState(TextKeys.Friends.EmptyStateTitle, TextKeys.Friends.EmptyStateHint));
+                _candidatesPlaceholder.Widgets.Add(BuildNoCandidatesState());
                 return;
             }
 
-            List<InviteCandidate> matches = string.IsNullOrWhiteSpace(_searchTerm)
+            foreach (InviteCandidate candidate in matchingCandidates)
+            {
+                HorizontalStackPanel itemRow = CreateButtonRow();
+                Label usernameLabel = CreateUsernameLabel(candidate.Username);
+                itemRow.Widgets.Add(usernameLabel);
+                StackPanel.SetProportionType(usernameLabel, ProportionType.Fill);
+
+                Widget invitationControl = candidate.IsInvited ? CreateStatusBadge(TextKeys.InvitePlayers.InvitedBadge) : BuildInviteButton();
+                itemRow.Widgets.Add(invitationControl);
+
+                _candidatesPlaceholder.Widgets.Add(CreateItemCard(itemRow));
+            }
+        }
+
+        private List<InviteCandidate> FindMatchingCandidates()
+        {
+            List<InviteCandidate> matchingCandidates = string.IsNullOrWhiteSpace(_searchTerm)
                 ? _friends
                 : _friends.Where(candidate => candidate.Username.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            if (matches.Count == 0)
-            {
-                _listPlaceholder.Widgets.Add(EmptyState(TextKeys.Friends.NoResultsTitle, TextKeys.Friends.NoResultsHint));
-                return;
-            }
+            return matchingCandidates;
+        }
 
-            foreach (InviteCandidate candidate in matches)
-            {
-                HorizontalStackPanel itemRow = Row();
+        private VerticalStackPanel BuildNoCandidatesState()
+        {
+            VerticalStackPanel noCandidatesState = _friends.Count == 0
+                ? CreateEmptyState(TextKeys.Friends.EmptyStateTitle, TextKeys.Friends.EmptyStateHint)
+                : CreateEmptyState(TextKeys.Friends.NoResultsTitle, TextKeys.Friends.NoResultsHint);
 
-                Label nameLabel = NameLabel(candidate.Username);
-                itemRow.Widgets.Add(nameLabel);
-                StackPanel.SetProportionType(nameLabel, ProportionType.Fill);
-
-                itemRow.Widgets.Add(candidate.IsInvited ? BuildInvitedBadge() : BuildInviteButton());
-
-                _listPlaceholder.Widgets.Add(BuildItemCard(itemRow));
-            }
+            return noCandidatesState;
         }
 
         private static LocalizedButton BuildInviteButton()
         {
-            LocalizedButton inviteButton = PrimaryButton(TextKeys.InvitePlayers.InviteButton);
-            // TODO: connect to InvitePlayerAsync.
+            LocalizedButton inviteButton = CreatePrimaryButton(TextKeys.InvitePlayers.InviteButton);
+
             return inviteButton;
         }
 
-        private static Panel BuildInvitedBadge()
+        private void SearchBoxOnTextChanged(object sender, ValueChangedEventArgs<string> e)
         {
-            var badge = new Panel
-            {
-                Padding = Metrics.PillButtonPadding,
-                Background = Theme.MintTintBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            badge.Widgets.Add(new LocalizedLabel(TextKeys.InvitePlayers.InvitedBadge)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MintInk,
-            });
-            return badge;
+            _searchTerm = _searchField.Value;
+            RenderCandidates();
         }
 
-        private static Panel BuildItemCard(Widget content)
-        {
-            var card = new Panel
-            {
-                Padding = Metrics.ListItemPadding,
-                Background = Theme.SurfaceAltBrush,
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            card.Widgets.Add(content);
-            return card;
-        }
-
-        private static Label NameLabel(string username)
-        {
-            return new Label
-            {
-                Text = username,
-                Font = Fonts.Body,
-                TextColor = Theme.Ink,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-        }
-
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.Room;
         }
 
-        private static List<InviteCandidate> SampleFriends() => new()
+        private static List<InviteCandidate> CreateSampleFriends()
         {
-            new InviteCandidate("luis_m", isInvited: false),
-            new InviteCandidate("sofia99", isInvited: true),
-            new InviteCandidate("dgomez", isInvited: false),
-        };
+            var sampleFriends = new List<InviteCandidate>
+            {
+                new InviteCandidate(PreviewSamples.LuisPlayer, isInvited: false),
+                new InviteCandidate(PreviewSamples.SofiaPlayer, isInvited: true),
+                new InviteCandidate(PreviewSamples.DiegoPlayer, isInvited: false),
+            };
+
+            return sampleFriends;
+        }
 
         private sealed class InviteCandidate
         {
@@ -169,6 +134,7 @@ namespace Torres.Client.Screens
             }
 
             internal string Username { get; }
+
             internal bool IsInvited { get; }
         }
     }

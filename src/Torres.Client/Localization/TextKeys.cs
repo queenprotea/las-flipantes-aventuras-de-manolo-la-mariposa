@@ -27,6 +27,7 @@ namespace Torres.Client.Localization
             internal const string DisconnectedTag = "Common.DisconnectedTag";
             internal const string WithdrewTag = "Common.WithdrewTag";
             internal const string RequiredField = "Common.RequiredField";
+            internal const string RankPosition = "Common.RankPosition";
         }
 
         internal static class Startup

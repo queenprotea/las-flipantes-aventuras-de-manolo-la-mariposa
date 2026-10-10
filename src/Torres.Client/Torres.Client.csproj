@@ -43,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
   </ItemGroup>
 

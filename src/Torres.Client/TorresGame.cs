@@ -21,102 +21,97 @@ namespace Torres.Client
 {
     internal sealed class TorresGame : Microsoft.Xna.Framework.Game
     {
-        private const string ServerStatusAddress = "net.tcp://localhost:8000/status";
-        private const string AccountAddress = "net.tcp://localhost:8000/account";
-        private const string RankingAddress = "net.tcp://localhost:8000/ranking";
-
-        private readonly GraphicsDeviceManager _graphics;
+        private readonly GraphicsDeviceManager _graphicsDeviceManager;
         private readonly LanguagePreference _languagePreference = new LanguagePreference();
-        private readonly PlayerSession _session = new PlayerSession();
+        private readonly PlayerSession _playerSession = new PlayerSession();
         private readonly Dictionary<ScreenId, Screen> _screensById = new Dictionary<ScreenId, Screen>();
-        private readonly MainMenuScreen _mainMenu;
-        private readonly StartupScreen _startup;
+        private readonly MainMenuScreen _mainMenuScreen;
+        private readonly StartupScreen _startupScreen;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
-        private Panel? _content;
+        private Panel? _screenContainer;
         private Desktop? _desktop;
-        private TopBarView? _topBar;
+        private TopBarView? _topBarView;
         private ScreenId _openScreen = ScreenId.Startup;
-        private string _appliedUiCulture = string.Empty;
-        private KeyboardState _previousKeyboard;
-        private Point _windowedSize = new Point(Sizes.WindowWidth, Sizes.WindowHeight);
+        private string _appliedUiCultureName = string.Empty;
+        private KeyboardState _previousKeyboardState;
+        private Point _windowedClientSize = new Point(Sizes.WindowWidth, Sizes.WindowHeight);
 
         internal TorresGame()
         {
-            _graphics = new GraphicsDeviceManager(this);
-            _graphics.PreferredBackBufferWidth = Sizes.WindowWidth;
-            _graphics.PreferredBackBufferHeight = Sizes.WindowHeight;
-            _graphics.HardwareModeSwitch = false;
+            _graphicsDeviceManager = new GraphicsDeviceManager(this);
+            _graphicsDeviceManager.PreferredBackBufferWidth = Sizes.WindowWidth;
+            _graphicsDeviceManager.PreferredBackBufferHeight = Sizes.WindowHeight;
+            _graphicsDeviceManager.HardwareModeSwitch = false;
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += WindowOnClientSizeChanged;
 
+            ClientSettings clientSettings = ClientSettings.Load();
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
-                new EndpointAddress(ServerStatusAddress));
-
+                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.ServerStatus));
             _accountChannelFactory = new ChannelFactory<IAccountService>(
                 new NetTcpBinding(SecurityMode.None),
-                new EndpointAddress(AccountAddress));
-
+                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Account));
             _rankingChannelFactory = new ChannelFactory<IRankingService>(
                 new NetTcpBinding(SecurityMode.None),
-                new EndpointAddress(RankingAddress));
+                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
 
-            _mainMenu = new MainMenuScreen(_languagePreference);
-            _startup = new StartupScreen(_statusChannelFactory);
+            _mainMenuScreen = new MainMenuScreen(_languagePreference);
+            _startupScreen = new StartupScreen(_statusChannelFactory);
         }
 
         protected override void Initialize()
         {
             _languagePreference.LoadSavedPreference();
-            _appliedUiCulture = _languagePreference.Current.UiCultureName;
+            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
             MyraEnvironment.Game = this;
             WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
 
             RegisterScreens();
 
-            _topBar = new TopBarView(_session);
-            _content = new Panel
+            _topBarView = new TopBarView(_playerSession);
+            _screenContainer = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
 
-            var root = new VerticalStackPanel
+            var layoutRoot = new VerticalStackPanel
             {
                 Padding = new Thickness(Metrics.ScreenPaddingX, Metrics.ScreenPaddingY),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
-            root.Widgets.Add(_topBar.Panel);
-            root.Widgets.Add(_content);
-            StackPanel.SetProportionType(_content, ProportionType.Fill);
+            layoutRoot.Widgets.Add(_topBarView.Root);
+            layoutRoot.Widgets.Add(_screenContainer);
+            StackPanel.SetProportionType(_screenContainer, ProportionType.Fill);
 
             _desktop = new Desktop();
             _desktop.HasExternalTextInput = true;
-            _desktop.Root = root;
+            _desktop.Root = layoutRoot;
             Window.TextInput += WindowOnTextInput;
-            Show(ScreenId.Startup);
+            ShowScreen(ScreenId.Startup);
             base.Initialize();
         }
 
         private void RegisterScreens()
         {
-            _screensById.Add(ScreenId.Startup, _startup);
-            _screensById.Add(ScreenId.MainMenu, _mainMenu);
+            _screensById.Add(ScreenId.Startup, _startupScreen);
+            _screensById.Add(ScreenId.MainMenu, _mainMenuScreen);
             _screensById.Add(ScreenId.Language, new LanguageScreen(_languagePreference));
-            _screensById.Add(ScreenId.Login, new LoginScreen(_accountChannelFactory, _session));
+            _screensById.Add(ScreenId.Login, new LoginScreen(_accountChannelFactory, _playerSession));
             _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
             _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
-            _screensById.Add(ScreenId.Profile, new ProfileScreen(_session));
+            _screensById.Add(ScreenId.Profile, new ProfileScreen(_playerSession));
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen());
             _screensById.Add(ScreenId.Match, new MatchScreen());
-            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _session));
+            _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
             _screensById.Add(ScreenId.Friends, new FriendsScreen());
             _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen());
@@ -135,15 +130,15 @@ namespace Torres.Client
 
         protected override void Update(GameTime gameTime)
         {
-            Screen screen = _screensById[_openScreen];
-            screen.Update(gameTime);
+            Screen openScreen = _screensById[_openScreen];
+            openScreen.Update(gameTime);
             Window.Title = LocalizedText.Get(TextKeys.Common.WindowTitle);
 
-            KeyboardState keyboard = Keyboard.GetState();
-            FollowLanguage();
-            FollowFullScreenKey(keyboard);
-            FollowNavigation(screen, keyboard);
-            _previousKeyboard = keyboard;
+            KeyboardState keyboardState = Keyboard.GetState();
+            FollowLanguageChange();
+            FollowFullScreenKey(keyboardState);
+            FollowNavigation(openScreen, keyboardState);
+            _previousKeyboardState = keyboardState;
             base.Update(gameTime);
         }
 
@@ -180,19 +175,19 @@ namespace Torres.Client
 
         private void WindowOnClientSizeChanged(object? sender, EventArgs e)
         {
-            if (_graphics.IsFullScreen)
+            if (_graphicsDeviceManager.IsFullScreen)
             {
                 return;
             }
 
-            Rectangle client = Window.ClientBounds;
-            _graphics.PreferredBackBufferWidth = client.Width;
-            _graphics.PreferredBackBufferHeight = client.Height;
+            Rectangle clientBounds = Window.ClientBounds;
+            _graphicsDeviceManager.PreferredBackBufferWidth = clientBounds.Width;
+            _graphicsDeviceManager.PreferredBackBufferHeight = clientBounds.Height;
         }
 
-        private void FollowFullScreenKey(KeyboardState keyboard)
+        private void FollowFullScreenKey(KeyboardState keyboardState)
         {
-            if (keyboard.IsKeyDown(Keys.F11) && _previousKeyboard.IsKeyUp(Keys.F11))
+            if (keyboardState.IsKeyDown(Keys.F11) && _previousKeyboardState.IsKeyUp(Keys.F11))
             {
                 ToggleFullScreen();
             }
@@ -200,92 +195,92 @@ namespace Torres.Client
 
         private void ToggleFullScreen()
         {
-            if (_graphics.IsFullScreen)
+            if (_graphicsDeviceManager.IsFullScreen)
             {
-                _graphics.PreferredBackBufferWidth = _windowedSize.X;
-                _graphics.PreferredBackBufferHeight = _windowedSize.Y;
+                _graphicsDeviceManager.PreferredBackBufferWidth = _windowedClientSize.X;
+                _graphicsDeviceManager.PreferredBackBufferHeight = _windowedClientSize.Y;
             }
             else
             {
-                _windowedSize = new Point(Window.ClientBounds.Width, Window.ClientBounds.Height);
-                DisplayMode display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
-                _graphics.PreferredBackBufferWidth = display.Width;
-                _graphics.PreferredBackBufferHeight = display.Height;
+                _windowedClientSize = new Point(Window.ClientBounds.Width, Window.ClientBounds.Height);
+                DisplayMode displayMode = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+                _graphicsDeviceManager.PreferredBackBufferWidth = displayMode.Width;
+                _graphicsDeviceManager.PreferredBackBufferHeight = displayMode.Height;
             }
 
-            _graphics.IsFullScreen = !_graphics.IsFullScreen;
-            _graphics.ApplyChanges();
+            _graphicsDeviceManager.IsFullScreen = !_graphicsDeviceManager.IsFullScreen;
+            _graphicsDeviceManager.ApplyChanges();
         }
 
-        private void FollowLanguage()
+        private void FollowLanguageChange()
         {
-            if (_languagePreference.Current.UiCultureName == _appliedUiCulture)
+            if (_languagePreference.CurrentLanguage.UiCultureName == _appliedUiCultureName)
             {
                 return;
             }
 
-            _appliedUiCulture = _languagePreference.Current.UiCultureName;
-            _mainMenu.FollowLanguage();
-            if (_topBar is not null)
+            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
+            _mainMenuScreen.FollowLanguage();
+            if (_topBarView is not null)
             {
-                LanguageRefresher.Refresh(_topBar.Panel);
+                LanguageRefresher.Refresh(_topBarView.Root);
             }
 
-            foreach (Screen screen in _screensById.Values)
+            foreach (Screen registeredScreen in _screensById.Values)
             {
-                RefreshIfBuilt(screen);
+                RefreshIfBuilt(registeredScreen);
             }
         }
 
-        private void RefreshIfBuilt(Screen screen)
+        private static void RefreshIfBuilt(Screen registeredScreen)
         {
-            if (!screen.IsBuilt)
+            if (!registeredScreen.IsBuilt)
             {
                 return;
             }
 
-            LanguageRefresher.Refresh(screen.Root);
+            LanguageRefresher.Refresh(registeredScreen.Root);
         }
 
-        private void FollowNavigation(Screen screen, KeyboardState keyboard)
+        private void FollowNavigation(Screen openScreen, KeyboardState keyboardState)
         {
-            bool escapePressed = keyboard.IsKeyDown(Keys.Escape) && _previousKeyboard.IsKeyUp(Keys.Escape);
+            bool isEscapePressed = keyboardState.IsKeyDown(Keys.Escape) && _previousKeyboardState.IsKeyUp(Keys.Escape);
 
-            if (_mainMenu.WasExitRequested || _startup.WasExitRequested || escapePressed)
+            if (_mainMenuScreen.WasExitRequested || _startupScreen.WasExitRequested || isEscapePressed)
             {
                 Exit();
                 return;
             }
 
-            if ((_topBar is not null) && _topBar.WasLogInRequested)
+            if ((_topBarView is not null) && _topBarView.WasLogInRequested)
             {
-                _topBar.ClearRequest();
-                Show(ScreenId.Login);
+                _topBarView.ClearRequests();
+                ShowScreen(ScreenId.Login);
             }
 
-            if ((_topBar is not null) && _topBar.WasProfileRequested)
+            if ((_topBarView is not null) && _topBarView.WasProfileRequested)
             {
-                _topBar.ClearRequest();
-                Show(ScreenId.Profile);
+                _topBarView.ClearRequests();
+                ShowScreen(ScreenId.Profile);
             }
 
-            if (screen.RequestedScreen is ScreenId requested)
+            if (openScreen.RequestedScreen is ScreenId requestedScreen)
             {
-                screen.RequestedScreen = null;
-                Show(requested);
+                openScreen.RequestedScreen = null;
+                ShowScreen(requestedScreen);
             }
         }
 
-        private void Show(ScreenId screenId)
+        private void ShowScreen(ScreenId screenId)
         {
             _openScreen = screenId;
-            Screen screen = _screensById[screenId];
+            Screen selectedScreen = _screensById[screenId];
 
-            _content?.Widgets.Clear();
-            _content?.Widgets.Add(screen.Root);
-            screen.Open();
-            LanguageRefresher.Refresh(screen.Root);
-            _topBar?.Follow(screen);
+            _screenContainer?.Widgets.Clear();
+            _screenContainer?.Widgets.Add(selectedScreen.Root);
+            selectedScreen.Open();
+            LanguageRefresher.Refresh(selectedScreen.Root);
+            _topBarView?.FollowScreen(selectedScreen);
         }
     }
 }

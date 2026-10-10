@@ -17,38 +17,38 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel card = Card(Sizes.AccountSettingsCardWidth);
+            VerticalStackPanel card = CreateCard(Sizes.AccountSettingsCardWidth);
             card.Widgets.Add(BuildDeleteBlock());
 
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Widgets.Add(card);
             StackPanel.SetProportionType(card, ProportionType.Fill);
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.AccountSettings.BackToProfileButton);
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.AccountSettings.BackToProfileButton);
             backButton.Click += BackButtonOnClick;
-            page.Widgets.Add(BackBar(backButton));
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private static VerticalStackPanel BuildDeleteBlock()
         {
-            var block = new VerticalStackPanel { Spacing = BlockSpacing };
-            var header = new VerticalStackPanel { Spacing = HeaderSpacing };
-            header.Widgets.Add(new LocalizedLabel(TextKeys.AccountSettings.DeleteAccountTitle)
+            var deleteAccountBlock = new VerticalStackPanel { Spacing = BlockSpacing };
+            var deleteAccountHeader = new VerticalStackPanel { Spacing = HeaderSpacing };
+            deleteAccountHeader.Widgets.Add(new LocalizedLabel(TextKeys.AccountSettings.DeleteAccountTitle)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 Wrap = true,
             });
-            header.Widgets.Add(Hint(TextKeys.AccountSettings.DeleteAccountHint));
-            block.Widgets.Add(header);
+            deleteAccountHeader.Widgets.Add(CreateHint(TextKeys.AccountSettings.DeleteAccountHint));
+            deleteAccountBlock.Widgets.Add(deleteAccountHeader);
 
-            LocalizedButton deleteButton = DestructiveButton(TextKeys.AccountSettings.DeleteAccountButton);
+            LocalizedButton deleteButton = CreateDestructiveButton(TextKeys.AccountSettings.DeleteAccountButton);
             deleteButton.HorizontalAlignment = HorizontalAlignment.Left;
-            block.Widgets.Add(deleteButton);
+            deleteAccountBlock.Widgets.Add(deleteButton);
 
-            return block;
+            return deleteAccountBlock;
         }
 
         private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)

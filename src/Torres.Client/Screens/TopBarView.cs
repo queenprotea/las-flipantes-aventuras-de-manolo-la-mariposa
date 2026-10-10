@@ -11,13 +11,11 @@ namespace Torres.Client.Screens
 {
     internal sealed class TopBarView
     {
-        private const string ConnectionDot = "●";
-
         private readonly LocalizedLabel _headerLabel = new LocalizedLabel(TextKeys.MainMenu.HeaderLabel);
         private readonly Label _usernameLabel = new Label();
         private readonly PlayerSession _session;
         private readonly LocalizedButton _logInButton;
-        private readonly HorizontalStackPanel _account;
+        private readonly HorizontalStackPanel _accountSummary;
 
         internal TopBarView(PlayerSession session)
         {
@@ -25,48 +23,48 @@ namespace Torres.Client.Screens
 
             _session = session;
             _logInButton = BuildLogInButton();
-            _account = BuildAccount();
+            _accountSummary = BuildAccountSummary();
 
             _headerLabel.Font = Fonts.Label;
             _headerLabel.TextColor = Theme.MutedInk;
 
-            var content = new Panel
+            var barContent = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Padding = new Thickness(0, 0, 0, Metrics.AppBarSpacing),
             };
-            content.Widgets.Add(BuildLogo());
-            content.Widgets.Add(BuildIdentity());
+            barContent.Widgets.Add(BuildLogo());
+            barContent.Widgets.Add(BuildIdentity());
 
-            var panel = new VerticalStackPanel
+            var barRoot = new VerticalStackPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Margin = new Thickness(0, 0, 0, Metrics.AppBarBottomSpacing),
             };
-            panel.Widgets.Add(content);
-            panel.Widgets.Add(Screen.Divider());
-            Panel = panel;
+            barRoot.Widgets.Add(barContent);
+            barRoot.Widgets.Add(Screen.CreateDivider());
+            Root = barRoot;
         }
 
-        internal Widget Panel { get; }
+        internal Widget Root { get; }
 
         internal bool WasLogInRequested { get; private set; }
 
         internal bool WasProfileRequested { get; private set; }
 
-        internal void Follow(Screen screen)
+        internal void FollowScreen(Screen shownScreen)
         {
-            Panel.Visible = screen.ShowsTopBar;
-            if (screen.ShowsTopBar)
+            Root.Visible = shownScreen.ShowsTopBar;
+            if (shownScreen.ShowsTopBar)
             {
-                _headerLabel.TextKey = screen.HeaderKey;
-                _headerLabel.TextArguments = screen.HeaderArguments;
+                _headerLabel.TextKey = shownScreen.HeaderKey;
+                _headerLabel.TextArguments = shownScreen.HeaderArguments;
             }
 
             FollowSession();
         }
 
-        internal void ClearRequest()
+        internal void ClearRequests()
         {
             WasLogInRequested = false;
             WasProfileRequested = false;
@@ -75,42 +73,42 @@ namespace Torres.Client.Screens
         private void FollowSession()
         {
             _logInButton.Visible = !_session.IsLoggedIn;
-            _account.Visible = _session.IsLoggedIn;
+            _accountSummary.Visible = _session.IsLoggedIn;
             _usernameLabel.Text = _session.Player?.Username ?? string.Empty;
         }
 
         private VerticalStackPanel BuildLogo()
         {
-            var logo = new VerticalStackPanel
+            var logoPanel = new VerticalStackPanel
             {
-                Spacing = 2,
+                Spacing = Metrics.LogoSpacing,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            logo.Widgets.Add(new LocalizedLabel(TextKeys.Common.GameName)
+            logoPanel.Widgets.Add(new LocalizedLabel(TextKeys.Common.GameName)
             {
                 Font = Fonts.Brand,
                 TextColor = Theme.Ink,
             });
-            logo.Widgets.Add(_headerLabel);
+            logoPanel.Widgets.Add(_headerLabel);
 
-            return logo;
+            return logoPanel;
         }
 
         private HorizontalStackPanel BuildIdentity()
         {
-            var identity = new HorizontalStackPanel
+            var identityPanel = new HorizontalStackPanel
             {
                 Spacing = Metrics.ColumnSpacing,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            identity.Widgets.Add(BuildConnectionStatus());
-            identity.Widgets.Add(_logInButton);
-            identity.Widgets.Add(_account);
+            identityPanel.Widgets.Add(BuildConnectionStatus());
+            identityPanel.Widgets.Add(_logInButton);
+            identityPanel.Widgets.Add(_accountSummary);
             FollowSession();
 
-            return identity;
+            return identityPanel;
         }
 
         private LocalizedButton BuildLogInButton()
@@ -132,35 +130,35 @@ namespace Torres.Client.Screens
             return logInButton;
         }
 
-        private HorizontalStackPanel BuildAccount()
+        private HorizontalStackPanel BuildAccountSummary()
         {
             _usernameLabel.Font = Fonts.Control;
             _usernameLabel.TextColor = Theme.Ink;
             _usernameLabel.HorizontalAlignment = HorizontalAlignment.Right;
 
-            var names = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
-            names.Widgets.Add(_usernameLabel);
-            names.Widgets.Add(new LocalizedLabel(TextKeys.Common.RegisteredRole)
+            var accountNames = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
+            accountNames.Widgets.Add(_usernameLabel);
+            accountNames.Widgets.Add(new LocalizedLabel(TextKeys.Common.RegisteredRole)
             {
                 Font = Fonts.Label,
                 TextColor = Theme.MutedInk,
                 HorizontalAlignment = HorizontalAlignment.Right,
             });
 
-            var account = new HorizontalStackPanel
+            var accountSummary = new HorizontalStackPanel
             {
                 Spacing = Metrics.ButtonSpacing,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            account.Widgets.Add(names);
-            account.Widgets.Add(BuildAvatarButton());
+            accountSummary.Widgets.Add(accountNames);
+            accountSummary.Widgets.Add(BuildAvatarButton());
 
-            return account;
+            return accountSummary;
         }
 
         private Button BuildAvatarButton()
         {
-            var avatar = new Panel
+            var avatarPanel = new Panel
             {
                 Width = Sizes.AppBarAvatarSize,
                 Height = Sizes.AppBarAvatarSize,
@@ -171,7 +169,7 @@ namespace Torres.Client.Screens
 
             var avatarButton = new Button
             {
-                Content = avatar,
+                Content = avatarPanel,
                 Padding = new Thickness(0),
                 Background = null,
                 OverBackground = null,
@@ -187,26 +185,26 @@ namespace Torres.Client.Screens
 
         private HorizontalStackPanel BuildConnectionStatus()
         {
-            var status = new HorizontalStackPanel
+            var connectionStatus = new HorizontalStackPanel
             {
                 Spacing = Metrics.FieldLabelSpacing,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            status.Widgets.Add(new Label
+            connectionStatus.Widgets.Add(new Label
             {
-                Text = ConnectionDot,
+                Text = DisplaySymbols.ConnectionDot,
                 Font = Fonts.Label,
                 TextColor = Theme.Blush,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            status.Widgets.Add(new LocalizedLabel(TextKeys.Common.OfflineStatus)
+            connectionStatus.Widgets.Add(new LocalizedLabel(TextKeys.Common.OfflineStatus)
             {
                 Font = Fonts.Label,
                 TextColor = Theme.MutedInk,
                 VerticalAlignment = VerticalAlignment.Center,
             });
 
-            return status;
+            return connectionStatus;
         }
 
         private void LogInButtonOnClick(object sender, Myra.Events.MyraEventArgs e)

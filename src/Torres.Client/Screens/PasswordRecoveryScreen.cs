@@ -7,13 +7,13 @@ namespace Torres.Client.Screens
 {
     internal sealed class PasswordRecoveryScreen : Screen
     {
-        private readonly VerticalStackPanel _emailStep = Card(Sizes.RecoveryCardWidth);
-        private readonly VerticalStackPanel _codeStep = Card(Sizes.RecoveryCardWidth);
-        private readonly VerticalStackPanel _passwordStep = Card(Sizes.RecoveryCardWidth);
+        private readonly VerticalStackPanel _emailStep = CreateCard(Sizes.RecoveryCardWidth);
+        private readonly VerticalStackPanel _codeStep = CreateCard(Sizes.RecoveryCardWidth);
+        private readonly VerticalStackPanel _passwordStep = CreateCard(Sizes.RecoveryCardWidth);
         private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.PasswordRecovery.EmailLabel, false);
         private readonly LabeledTextBox _codeField = new LabeledTextBox(TextKeys.PasswordRecovery.CodeLabel, false);
-        private readonly LocalizedLabel _emailError = Error(TextKeys.PasswordRecovery.InvalidEmail);
-        private readonly LocalizedLabel _codeError = Error(TextKeys.PasswordRecovery.InvalidCode);
+        private readonly LocalizedLabel _emailError = CreateErrorMessage(TextKeys.PasswordRecovery.InvalidEmail);
+        private readonly LocalizedLabel _codeError = CreateErrorMessage(TextKeys.PasswordRecovery.InvalidCode);
 
         internal PasswordRecoveryScreen()
             : base(TextKeys.PasswordRecovery.HeaderLabel, true)
@@ -22,93 +22,93 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var steps = new Panel
+            var screenLayout = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            steps.Widgets.Add(BuildEmailStep());
-            steps.Widgets.Add(BuildCodeStep());
-            steps.Widgets.Add(BuildPasswordStep());
+            screenLayout.Widgets.Add(BuildEmailStep());
+            screenLayout.Widgets.Add(BuildCodeStep());
+            screenLayout.Widgets.Add(BuildPasswordStep());
 
             ShowStep(_emailStep);
 
-            return steps;
+            return screenLayout;
         }
 
         private VerticalStackPanel BuildEmailStep()
         {
-            var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
-            field.Widgets.Add(_emailField);
-            field.Widgets.Add(_emailError);
+            var emailFieldGroup = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
+            emailFieldGroup.Widgets.Add(_emailField);
+            emailFieldGroup.Widgets.Add(_emailError);
 
-            LocalizedButton sendCodeButton = PrimaryButton(TextKeys.PasswordRecovery.SendCodeButton);
+            LocalizedButton sendCodeButton = CreatePrimaryButton(TextKeys.PasswordRecovery.SendCodeButton);
             sendCodeButton.Click += SendCodeButtonOnClick;
             sendCodeButton.HorizontalAlignment = HorizontalAlignment.Left;
-            VerticalStackPanel actions = WrappedRow();
-            actions.Widgets.Add(sendCodeButton);
-            actions.Widgets.Add(BackToLoginButton());
+            VerticalStackPanel stepActions = CreateWrappedButtonRow();
+            stepActions.Widgets.Add(sendCodeButton);
+            stepActions.Widgets.Add(BackToLoginButton());
 
             _emailStep.HorizontalAlignment = HorizontalAlignment.Left;
-            _emailStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step1Title, TextKeys.PasswordRecovery.Step1Hint));
-            _emailStep.Widgets.Add(field);
-            _emailStep.Widgets.Add(actions);
+            _emailStep.Widgets.Add(CreateCardHeader(TextKeys.PasswordRecovery.Step1Title, TextKeys.PasswordRecovery.Step1Hint));
+            _emailStep.Widgets.Add(emailFieldGroup);
+            _emailStep.Widgets.Add(stepActions);
 
             return _emailStep;
         }
 
         private VerticalStackPanel BuildCodeStep()
         {
-            var field = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
-            field.Widgets.Add(_codeField);
-            field.Widgets.Add(_codeError);
+            var codeFieldGroup = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
+            codeFieldGroup.Widgets.Add(_codeField);
+            codeFieldGroup.Widgets.Add(_codeError);
 
-            LocalizedButton verifyButton = PrimaryButton(TextKeys.PasswordRecovery.VerifyButton);
+            LocalizedButton verifyButton = CreatePrimaryButton(TextKeys.PasswordRecovery.VerifyButton);
             verifyButton.Click += VerifyButtonOnClick;
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(verifyButton);
+            HorizontalStackPanel stepActions = CreateButtonRow();
+            stepActions.Widgets.Add(verifyButton);
 
             _codeStep.HorizontalAlignment = HorizontalAlignment.Left;
             _codeStep.Visible = false;
-            _codeStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step2Title, TextKeys.PasswordRecovery.Step2Hint));
-            _codeStep.Widgets.Add(field);
-            _codeStep.Widgets.Add(actions);
+            _codeStep.Widgets.Add(CreateCardHeader(TextKeys.PasswordRecovery.Step2Title, TextKeys.PasswordRecovery.Step2Hint));
+            _codeStep.Widgets.Add(codeFieldGroup);
+            _codeStep.Widgets.Add(stepActions);
 
             return _codeStep;
         }
 
         private VerticalStackPanel BuildPasswordStep()
         {
-            LocalizedButton saveButton = PrimaryButton(TextKeys.PasswordRecovery.SaveButton);
+            LocalizedButton saveButton = CreatePrimaryButton(TextKeys.PasswordRecovery.SaveButton);
             saveButton.HorizontalAlignment = HorizontalAlignment.Left;
-            VerticalStackPanel actions = WrappedRow();
-            actions.Widgets.Add(saveButton);
-            actions.Widgets.Add(BackToLoginButton());
+            VerticalStackPanel stepActions = CreateWrappedButtonRow();
+            stepActions.Widgets.Add(saveButton);
+            stepActions.Widgets.Add(BackToLoginButton());
 
             _passwordStep.HorizontalAlignment = HorizontalAlignment.Left;
             _passwordStep.Visible = false;
-            _passwordStep.Widgets.Add(CardHeader(TextKeys.PasswordRecovery.Step3Title, TextKeys.PasswordRecovery.Step3Hint));
+            _passwordStep.Widgets.Add(CreateCardHeader(TextKeys.PasswordRecovery.Step3Title, TextKeys.PasswordRecovery.Step3Hint));
             _passwordStep.Widgets.Add(new LabeledTextBox(TextKeys.PasswordRecovery.NewPasswordLabel, true));
             _passwordStep.Widgets.Add(new LabeledTextBox(TextKeys.PasswordRecovery.RepeatPasswordLabel, true));
-            _passwordStep.Widgets.Add(actions);
+            _passwordStep.Widgets.Add(stepActions);
 
             return _passwordStep;
         }
 
         private LocalizedButton BackToLoginButton()
         {
-            LocalizedButton backButton = SecondaryButton(TextKeys.PasswordRecovery.BackToLoginButton);
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.PasswordRecovery.BackToLoginButton);
             backButton.HorizontalAlignment = HorizontalAlignment.Left;
             backButton.Click += BackButtonOnClick;
 
             return backButton;
         }
 
-        private void ShowStep(VerticalStackPanel step)
+        private void ShowStep(VerticalStackPanel visibleStep)
         {
-            _emailStep.Visible = step == _emailStep;
-            _codeStep.Visible = step == _codeStep;
-            _passwordStep.Visible = step == _passwordStep;
+            _emailStep.Visible = visibleStep == _emailStep;
+            _codeStep.Visible = visibleStep == _codeStep;
+            _passwordStep.Visible = visibleStep == _passwordStep;
         }
 
         private void SendCodeButtonOnClick(object sender, Myra.Events.MyraEventArgs e)

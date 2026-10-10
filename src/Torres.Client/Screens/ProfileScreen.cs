@@ -41,35 +41,35 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = Columns();
+            HorizontalStackPanel columns = CreateColumns();
             columns.Widgets.Add(BuildAvatarCard());
             columns.Widgets.Add(BuildAccountCard());
 
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Widgets.Add(columns);
             StackPanel.SetProportionType(columns, ProportionType.Fill);
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
             backButton.Click += BackButtonOnClick;
-            page.Widgets.Add(BackBar(backButton));
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private static VerticalStackPanel BuildAvatarCard()
         {
-            VerticalStackPanel card = Card(Sizes.ProfileAvatarCardWidth);
+            VerticalStackPanel card = CreateCard(Sizes.ProfileAvatarCardWidth);
             card.Spacing = 0;
 
-            Panel avatar = Avatar();
+            Panel avatar = CreateAvatar();
             avatar.Margin = new Thickness(0, 0, 0, AvatarSpacing);
             card.Widgets.Add(avatar);
 
-            LocalizedButton changeAvatarButton = SmallSecondaryButton(TextKeys.Profile.ChangeAvatarButton);
+            LocalizedButton changeAvatarButton = CreateSmallSecondaryButton(TextKeys.Profile.ChangeAvatarButton);
             changeAvatarButton.HorizontalAlignment = HorizontalAlignment.Center;
             card.Widgets.Add(changeAvatarButton);
 
-            LocalizedLabel formatHint = Hint(TextKeys.Profile.AvatarFormatHint);
+            LocalizedLabel formatHint = CreateHint(TextKeys.Profile.AvatarFormatHint);
             formatHint.HorizontalAlignment = HorizontalAlignment.Center;
             formatHint.Margin = new Thickness(0, AvatarHintSpacing, 0, 0);
             card.Widgets.Add(formatHint);
@@ -79,18 +79,18 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildAccountCard()
         {
-            VerticalStackPanel card = Card(Sizes.ProfileAccountCardWidth);
-            card.Widgets.Add(CardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
+            VerticalStackPanel card = CreateCard(Sizes.ProfileAccountCardWidth);
+            card.Widgets.Add(CreateCardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
             card.Widgets.Add(_usernameField);
             card.Widgets.Add(_emailField);
 
-            LocalizedButton saveButton = PrimaryButton(TextKeys.Profile.SaveButton);
-            LocalizedButton settingsButton = SecondaryButton(TextKeys.Profile.AccountSettingsButton);
+            LocalizedButton saveButton = CreatePrimaryButton(TextKeys.Profile.SaveButton);
+            LocalizedButton settingsButton = CreateSecondaryButton(TextKeys.Profile.AccountSettingsButton);
             settingsButton.Click += SettingsButtonOnClick;
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(saveButton);
-            actions.Widgets.Add(settingsButton);
-            card.Widgets.Add(actions);
+            HorizontalStackPanel accountActions = CreateButtonRow();
+            accountActions.Widgets.Add(saveButton);
+            accountActions.Widgets.Add(settingsButton);
+            card.Widgets.Add(accountActions);
 
             return card;
         }

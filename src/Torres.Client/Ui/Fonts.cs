@@ -9,6 +9,7 @@ namespace Torres.Client.Ui
     internal static class Fonts
     {
         private const string FontResourceName = "DejaVuSans.ttf";
+        private const string MissingFontMessage = "The embedded resource DejaVuSans.ttf was not found.";
 
         private const int DisplaySize = 44;
         private const int BrandSize = 25;
@@ -27,52 +28,59 @@ namespace Torres.Client.Ui
         private const int ActionPointsSize = 40;
         private const int RoomCodeSize = 23;
 
-        private static readonly FontSystem _fontSystem = LoadFontSystem();
+        private static FontSystem? _fontSystem;
 
-        internal static SpriteFontBase Display { get; } = _fontSystem.GetFont(DisplaySize);
+        internal static SpriteFontBase Display => GetFontSystem().GetFont(DisplaySize);
 
-        internal static SpriteFontBase Brand { get; } = _fontSystem.GetFont(BrandSize);
+        internal static SpriteFontBase Brand => GetFontSystem().GetFont(BrandSize);
 
-        internal static SpriteFontBase Winner { get; } = _fontSystem.GetFont(WinnerSize);
+        internal static SpriteFontBase Winner => GetFontSystem().GetFont(WinnerSize);
 
-        internal static SpriteFontBase Headline { get; } = _fontSystem.GetFont(HeadlineSize);
+        internal static SpriteFontBase Headline => GetFontSystem().GetFont(HeadlineSize);
 
-        internal static SpriteFontBase Notice { get; } = _fontSystem.GetFont(NoticeSize);
+        internal static SpriteFontBase Notice => GetFontSystem().GetFont(NoticeSize);
 
-        internal static SpriteFontBase Heading { get; } = _fontSystem.GetFont(HeadingSize);
+        internal static SpriteFontBase Heading => GetFontSystem().GetFont(HeadingSize);
 
-        internal static SpriteFontBase Title { get; } = _fontSystem.GetFont(TitleSize);
+        internal static SpriteFontBase Title => GetFontSystem().GetFont(TitleSize);
 
-        internal static SpriteFontBase MenuItem { get; } = _fontSystem.GetFont(MenuItemSize);
+        internal static SpriteFontBase MenuItem => GetFontSystem().GetFont(MenuItemSize);
 
-        internal static SpriteFontBase Body { get; } = _fontSystem.GetFont(BodySize);
+        internal static SpriteFontBase Body => GetFontSystem().GetFont(BodySize);
 
-        internal static SpriteFontBase Control { get; } = _fontSystem.GetFont(ControlSize);
+        internal static SpriteFontBase Control => GetFontSystem().GetFont(ControlSize);
 
-        internal static SpriteFontBase Small { get; } = _fontSystem.GetFont(SmallSize);
+        internal static SpriteFontBase Small => GetFontSystem().GetFont(SmallSize);
 
-        internal static SpriteFontBase Label { get; } = _fontSystem.GetFont(LabelSize);
+        internal static SpriteFontBase Label => GetFontSystem().GetFont(LabelSize);
 
-        internal static SpriteFontBase Clock { get; } = _fontSystem.GetFont(ClockSize);
+        internal static SpriteFontBase Clock => GetFontSystem().GetFont(ClockSize);
 
-        internal static SpriteFontBase LargeClock { get; } = _fontSystem.GetFont(LargeClockSize);
+        internal static SpriteFontBase LargeClock => GetFontSystem().GetFont(LargeClockSize);
 
-        internal static SpriteFontBase ActionPoints { get; } = _fontSystem.GetFont(ActionPointsSize);
+        internal static SpriteFontBase ActionPoints => GetFontSystem().GetFont(ActionPointsSize);
 
-        internal static SpriteFontBase RoomCode { get; } = _fontSystem.GetFont(RoomCodeSize);
+        internal static SpriteFontBase RoomCode => GetFontSystem().GetFont(RoomCodeSize);
+
+        private static FontSystem GetFontSystem()
+        {
+            _fontSystem ??= LoadFontSystem();
+
+            return _fontSystem;
+        }
 
         private static FontSystem LoadFontSystem()
         {
             var fontSystem = new FontSystem();
-            Assembly assembly = typeof(Fonts).Assembly;
-            using (Stream? stream = assembly.GetManifestResourceStream(FontResourceName))
+            Assembly clientAssembly = typeof(Fonts).Assembly;
+            using (Stream? fontStream = clientAssembly.GetManifestResourceStream(FontResourceName))
             {
-                if (stream is null)
+                if (fontStream is null)
                 {
-                    throw new InvalidOperationException($"The embedded resource {FontResourceName} was not found.");
+                    throw new InvalidOperationException(MissingFontMessage);
                 }
 
-                fontSystem.AddFont(stream);
+                fontSystem.AddFont(fontStream);
             }
 
             return fontSystem;

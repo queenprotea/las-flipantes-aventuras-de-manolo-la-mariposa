@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -18,11 +19,18 @@ namespace Game.Services
     {
         private const int PasswordWorkFactor = 11;
         private const int LongestEmail = 254;
+        private const string UsernameFormat = "^[A-Za-z0-9_]{3,20}$";
+        private const string PasswordFormat = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$";
+        private const string RegistrationWriteFailedMessage = "The database could not be written during a registration.";
+        private const string AccountCreatedMessage = "An account was created.";
+        private const string UnknownCreationOutcomeMessage = "Unknown creation outcome {0}.";
+        private const string LoginReadFailedMessage = "The database could not be read during a log in.";
+        private const string PlayerLoggedInMessage = "Player {0} logged in.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
-        private static readonly Regex _usernamePattern = new Regex("^[A-Za-z0-9_]{3,20}$");
+        private static readonly Regex _usernamePattern = new Regex(UsernameFormat);
         private static readonly Regex _passwordPattern =
-            new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$");
+            new Regex(PasswordFormat);
 
         private readonly PlayerRepository _playerRepository;
 
@@ -36,91 +44,107 @@ namespace Game.Services
         public async Task<RegistrationResult> RegisterAsync(string username, string email, string password)
         {
             RegistrationResult? invalidField = FindInvalidField(username, email, password);
+            if (invalidField is RegistrationResult rejectedField)
+            {
+                return rejectedField;
+            }
 
-            return invalidField ?? await CreateAccountAsync(username, email, password);
+            RegistrationResult registrationResult = await CreateAccountAsync(username, email, password);
+
+            return registrationResult;
         }
 
         public async Task<LoginResult> LoginAsync(string username, string password)
         {
+            LoginResult loginResult;
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
             {
-                return new LoginResult { Status = LoginStatus.InvalidCredentials };
+                loginResult = new LoginResult { Status = LoginStatus.InvalidCredentials };
+            }
+            else
+            {
+                loginResult = await AuthenticateAsync(username, password);
             }
 
-            return await AuthenticateAsync(username, password);
+            return loginResult;
         }
 
         private async Task<RegistrationResult> CreateAccountAsync(string username, string email, string password)
         {
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, PasswordWorkFactor);
-            PlayerCreationOutcome outcome;
+            PlayerCreationOutcome creationOutcome;
             try
             {
-                outcome = await _playerRepository.CreateAsync(username, email, passwordHash);
+                creationOutcome = await _playerRepository.CreateAsync(username, email, passwordHash);
             }
             catch (NpgsqlException exception)
             {
-                _log.Error("The database could not be written during a registration.", exception);
+                _log.Error(RegistrationWriteFailedMessage, exception);
                 return RegistrationResult.DatabaseUnavailable;
             }
 
-            return ToRegistrationResult(outcome);
+            RegistrationResult registrationResult = ToRegistrationResult(creationOutcome);
+            if (registrationResult == RegistrationResult.Created)
+            {
+                _log.Info(AccountCreatedMessage);
+            }
+
+            return registrationResult;
         }
 
-        private static RegistrationResult ToRegistrationResult(PlayerCreationOutcome outcome)
+        private static RegistrationResult ToRegistrationResult(PlayerCreationOutcome creationOutcome)
         {
-            switch (outcome)
+            RegistrationResult registrationResult = creationOutcome switch
             {
-                case PlayerCreationOutcome.Created:
-                    _log.Info("An account was created.");
-                    return RegistrationResult.Created;
+                PlayerCreationOutcome.Created => RegistrationResult.Created,
+                PlayerCreationOutcome.UsernameTaken => RegistrationResult.UsernameTaken,
+                PlayerCreationOutcome.EmailTaken => RegistrationResult.EmailTaken,
+                _ => throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, UnknownCreationOutcomeMessage, creationOutcome)),
+            };
 
-                case PlayerCreationOutcome.UsernameTaken:
-                    return RegistrationResult.UsernameTaken;
-
-                case PlayerCreationOutcome.EmailTaken:
-                    return RegistrationResult.EmailTaken;
-
-                default:
-                    throw new InvalidOperationException($"Unknown creation outcome {outcome}.");
-            }
+            return registrationResult;
         }
 
         private async Task<LoginResult> AuthenticateAsync(string username, string password)
         {
-            PlayerAccount? account;
+            Player? player;
             try
             {
-                account = await _playerRepository.FindByUsernameAsync(username);
+                player = await _playerRepository.FindByUsernameAsync(username);
             }
             catch (NpgsqlException exception)
             {
-                _log.Error("The database could not be read during a log in.", exception);
-                return new LoginResult { Status = LoginStatus.DatabaseUnavailable };
+                _log.Error(LoginReadFailedMessage, exception);
+                var unavailableResult = new LoginResult { Status = LoginStatus.DatabaseUnavailable };
+                return unavailableResult;
             }
 
-            return VerifyCredentials(account, password);
+            LoginResult loginResult = VerifyCredentials(player, password);
+
+            return loginResult;
         }
 
-        private static LoginResult VerifyCredentials(PlayerAccount? account, string password)
+        private static LoginResult VerifyCredentials(Player? player, string password)
         {
-            if ((account is null) || !BCrypt.Net.BCrypt.Verify(password, account.PasswordHash))
+            if ((player is null) || !BCrypt.Net.BCrypt.Verify(password, player.PasswordHash))
             {
-                return new LoginResult { Status = LoginStatus.InvalidCredentials };
+                var rejectedResult = new LoginResult { Status = LoginStatus.InvalidCredentials };
+                return rejectedResult;
             }
 
-            _log.InfoFormat("Player {0} logged in.", account.PlayerId);
-
-            return new LoginResult
+            _log.InfoFormat(PlayerLoggedInMessage, player.PlayerId);
+            var loggedInResult = new LoginResult
             {
                 Status = LoginStatus.LoggedIn,
                 Player = new PlayerIdentity
                 {
-                    PlayerId = account.PlayerId,
-                    Username = account.Username,
-                    Email = account.Email,
+                    PlayerId = player.PlayerId,
+                    Username = player.Username,
+                    Email = player.Email,
                 },
             };
+
+            return loggedInResult;
         }
 
         private static RegistrationResult? FindInvalidField(string username, string email, string password)

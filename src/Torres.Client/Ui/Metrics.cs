@@ -21,6 +21,7 @@ namespace Torres.Client.Ui
         internal const int MenuRowSpacing = 26;
 
         internal const int AppBarSpacing = 14;
+        internal const int LogoSpacing = 2;
         internal const int AppBarBottomSpacing = 20;
 
         internal const int ListSpacing = 6;

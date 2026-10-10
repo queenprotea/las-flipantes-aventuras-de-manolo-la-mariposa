@@ -18,6 +18,7 @@ namespace Game.Services
     public sealed class RankingService : IRankingService
     {
         private const string RankingUnavailableReason = "The global ranking is not available right now.";
+        private const string RankingReadFailedMessage = "The database could not be read while building the global ranking.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RankingService));
 
@@ -32,31 +33,34 @@ namespace Game.Services
 
         public async Task<GlobalRankingResponseContract> GetGlobalRankingAsync()
         {
-            List<RankingRow> rows;
+            List<PlayerRanking> rankings;
             try
             {
-                rows = await _rankingRepository.GetGlobalRankingAsync();
+                rankings = await _rankingRepository.GetGlobalRankingAsync();
             }
             catch (NpgsqlException exception)
             {
-                _log.Error("The database could not be read while building the global ranking.", exception);
+                _log.Error(RankingReadFailedMessage, exception);
                 throw new FaultException(RankingUnavailableReason);
             }
 
-            List<RankingEntryContract> entries = rows.Select(ToContract).ToList();
+            List<RankingEntryContract> entries = rankings.Select(ToContract).ToList();
+            var response = new GlobalRankingResponseContract { Entries = entries };
 
-            return new GlobalRankingResponseContract { Entries = entries };
+            return response;
         }
 
-        private static RankingEntryContract ToContract(RankingRow row)
+        private static RankingEntryContract ToContract(PlayerRanking ranking)
         {
-            return new RankingEntryContract
+            var entry = new RankingEntryContract
             {
-                PlayerName = row.Username,
-                Wins = (int)row.Wins,
-                Points = (int)row.TotalScore,
-                Matches = (int)row.MatchesPlayed,
+                PlayerName = ranking.Username,
+                Wins = (int)ranking.Wins,
+                Points = (int)ranking.TotalScore,
+                Matches = (int)ranking.MatchesPlayed,
             };
+
+            return entry;
         }
     }
 }

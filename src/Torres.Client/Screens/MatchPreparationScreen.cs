@@ -23,10 +23,10 @@ namespace Torres.Client.Screens
 
         private static readonly Seat[] _previewSeats =
         {
-            new Seat("jesus", Theme.MintBrush),
-            new Seat("valentin", Theme.LavenderBrush),
-            new Seat("salma", Theme.ButterBrush),
-            new Seat("scarleth", Theme.SkyBrush),
+            new Seat(PreviewSamples.SeatOnePlayer, Theme.MintBrush),
+            new Seat(PreviewSamples.SeatTwoPlayer, Theme.LavenderBrush),
+            new Seat(PreviewSamples.SeatThreePlayer, Theme.ButterBrush),
+            new Seat(PreviewSamples.SeatFourPlayer, Theme.SkyBrush),
         };
 
         private double _secondsShown;
@@ -54,7 +54,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            Panel scene = Ambience();
+            Panel scene = CreateAmbiencePanel();
             scene.Width = Sizes.PreparationSceneWidth;
             scene.Height = Sizes.PreparationSceneHeight;
             scene.HorizontalAlignment = HorizontalAlignment.Center;
@@ -77,18 +77,18 @@ namespace Torres.Client.Screens
                 TextArguments = new object[] { _previewSeats.Length },
             };
 
-            var content = new VerticalStackPanel
+            var screenLayout = new VerticalStackPanel
             {
                 Width = Sizes.MatchPreparationWidth,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            content.Widgets.Add(scene);
-            content.Widgets.Add(title);
-            content.Widgets.Add(summary);
-            content.Widgets.Add(BuildSeatingOrder());
+            screenLayout.Widgets.Add(scene);
+            screenLayout.Widgets.Add(title);
+            screenLayout.Widgets.Add(summary);
+            screenLayout.Widgets.Add(BuildSeatingOrder());
 
-            return content;
+            return screenLayout;
         }
 
         private static VerticalStackPanel BuildSeatingOrder()
@@ -113,33 +113,33 @@ namespace Torres.Client.Screens
 
             seating.Widgets.Add(seats);
 
-            var section = new VerticalStackPanel
+            var seatingOrder = new VerticalStackPanel
             {
                 Spacing = SummarySpacing,
                 Margin = new Thickness(0, SummarySpacing, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            section.Widgets.Add(Divider());
-            section.Widgets.Add(seating);
+            seatingOrder.Widgets.Add(CreateDivider());
+            seatingOrder.Widgets.Add(seating);
 
-            return section;
+            return seatingOrder;
         }
 
         private static HorizontalStackPanel BuildSeatRow(Seat seat)
         {
-            var row = new HorizontalStackPanel
+            var seatRow = new HorizontalStackPanel
             {
                 Spacing = SeatRowSpacing,
                 Padding = _seatRowPadding,
             };
-            row.Widgets.Add(new Panel
+            seatRow.Widgets.Add(new Panel
             {
                 Width = SeatColorSize,
                 Height = SeatColorSize,
                 Background = seat.ColorBrush,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            row.Widgets.Add(new Label
+            seatRow.Widgets.Add(new Label
             {
                 Text = seat.PlayerName,
                 Font = Fonts.Control,
@@ -147,7 +147,7 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Center,
             });
 
-            return row;
+            return seatRow;
         }
 
         private sealed record Seat(string PlayerName, IBrush ColorBrush);

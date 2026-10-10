@@ -20,11 +20,11 @@ namespace Torres.Client.Screens
         private readonly PlayerSession _session;
         private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Login.UsernameLabel, false);
         private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Login.PasswordLabel, true);
-        private readonly LocalizedLabel _errorLabel = Error(TextKeys.Login.InvalidCredentials);
-        private readonly LocalizedButton _logInButton = PrimaryButton(TextKeys.Login.LogInButton);
+        private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Login.InvalidCredentials);
+        private readonly LocalizedButton _logInButton = CreatePrimaryButton(TextKeys.Login.LogInButton);
 
         private IAccountService? _accountChannel;
-        private Task<LoginResult>? _login;
+        private Task<LoginResult>? _loginRequest;
 
         internal LoginScreen(ChannelFactory<IAccountService> accountChannelFactory, PlayerSession session)
             : base(TextKeys.Login.HeaderLabel, true)
@@ -38,41 +38,41 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
-            if ((_login is null) || !_login.IsCompleted)
+            if ((_loginRequest is null) || !_loginRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<LoginResult> login = _login;
-            _login = null;
+            Task<LoginResult> completedLogin = _loginRequest;
+            _loginRequest = null;
             _logInButton.Enabled = true;
             AbortChannel();
-            ShowOutcome(login);
+            ShowOutcome(completedLogin);
         }
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = Columns();
+            HorizontalStackPanel columns = CreateColumns();
             columns.Widgets.Add(BuildCard());
-            columns.Widgets.Add(Ambience());
+            columns.Widgets.Add(CreateAmbiencePanel());
             StackPanel.SetProportionType(columns.Widgets[1], ProportionType.Fill);
 
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Widgets.Add(columns);
             StackPanel.SetProportionType(columns, ProportionType.Fill);
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
             backButton.Click += BackButtonOnClick;
-            page.Widgets.Add(BackBar(backButton));
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private VerticalStackPanel BuildCard()
         {
-            VerticalStackPanel card = Card(Sizes.LoginCardWidth);
+            VerticalStackPanel card = CreateCard(Sizes.LoginCardWidth);
             card.VerticalAlignment = VerticalAlignment.Center;
-            card.Widgets.Add(CardHeader(TextKeys.Login.Title, TextKeys.Login.Hint));
+            card.Widgets.Add(CreateCardHeader(TextKeys.Login.Title, TextKeys.Login.Hint));
             card.Widgets.Add(_usernameField);
 
             var passwordField = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
@@ -80,22 +80,22 @@ namespace Torres.Client.Screens
             passwordField.Widgets.Add(_errorLabel);
             card.Widgets.Add(passwordField);
 
-            LocalizedButton createAccountButton = SecondaryButton(TextKeys.Login.CreateAccountButton);
+            LocalizedButton createAccountButton = CreateSecondaryButton(TextKeys.Login.CreateAccountButton);
             _logInButton.Click += LogInButtonOnClick;
             createAccountButton.Click += CreateAccountButtonOnClick;
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(_logInButton);
-            actions.Widgets.Add(createAccountButton);
-            card.Widgets.Add(actions);
+            HorizontalStackPanel accountActions = CreateButtonRow();
+            accountActions.Widgets.Add(_logInButton);
+            accountActions.Widgets.Add(createAccountButton);
+            card.Widgets.Add(accountActions);
 
-            LocalizedButton forgotButton = LinkButton(TextKeys.Login.ForgotAccessLink);
-            LocalizedButton guestButton = LinkButton(TextKeys.Login.PlayAsGuestLink);
-            forgotButton.Click += ForgotButtonOnClick;
+            LocalizedButton forgotAccessButton = CreateLinkButton(TextKeys.Login.ForgotAccessLink);
+            LocalizedButton guestButton = CreateLinkButton(TextKeys.Login.PlayAsGuestLink);
+            forgotAccessButton.Click += ForgotButtonOnClick;
             guestButton.Click += GuestButtonOnClick;
-            HorizontalStackPanel links = Row();
-            links.Widgets.Add(forgotButton);
-            links.Widgets.Add(guestButton);
-            card.Widgets.Add(links);
+            HorizontalStackPanel accessLinks = CreateButtonRow();
+            accessLinks.Widgets.Add(forgotAccessButton);
+            accessLinks.Widgets.Add(guestButton);
+            card.Widgets.Add(accessLinks);
 
             return card;
         }
@@ -112,22 +112,22 @@ namespace Torres.Client.Screens
 
             _logInButton.Enabled = false;
             _accountChannel = _accountChannelFactory.CreateChannel();
-            _login = _accountChannel.LoginAsync(_usernameField.Value.Trim(), _passwordField.Value);
+            _loginRequest = _accountChannel.LoginAsync(_usernameField.Value.Trim(), _passwordField.Value);
         }
 
-        private void ShowOutcome(Task<LoginResult> login)
+        private void ShowOutcome(Task<LoginResult> completedLogin)
         {
-            if (!login.IsCompletedSuccessfully)
+            if (!completedLogin.IsCompletedSuccessfully)
             {
                 ShowError(TextKeys.Common.ServerErrorTitle);
                 return;
             }
 
-            LoginResult result = login.Result;
-            switch (result.Status)
+            LoginResult loginResult = completedLogin.Result;
+            switch (loginResult.Status)
             {
                 case LoginStatus.LoggedIn:
-                    EnterAs(result.Player);
+                    EnterAs(loginResult.Player);
                     break;
 
                 case LoginStatus.InvalidCredentials:
@@ -139,7 +139,7 @@ namespace Torres.Client.Screens
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(login), result.Status, null);
+                    throw new ArgumentOutOfRangeException(nameof(completedLogin), loginResult.Status, null);
             }
         }
 
@@ -164,9 +164,9 @@ namespace Torres.Client.Screens
 
         private void AbortChannel()
         {
-            if (_accountChannel is ICommunicationObject channel)
+            if (_accountChannel is ICommunicationObject openChannel)
             {
-                channel.Abort();
+                openChannel.Abort();
             }
 
             _accountChannel = null;

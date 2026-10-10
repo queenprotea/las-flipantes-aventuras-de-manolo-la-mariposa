@@ -14,8 +14,6 @@ namespace Torres.Client.Screens
         private const int TitleBottomSpacing = 6;
         private const int MessageBottomSpacing = 14;
         private const int HintTopSpacing = 12;
-        private const string PreviewRoomCode = "K7QM";
-
         internal MatchInProgressScreen()
             : base(TextKeys.MatchInProgress.HeaderLabel, true)
         {
@@ -23,39 +21,39 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            LocalizedLabel abandonHint = Hint(TextKeys.MatchInProgress.AbandonHint);
+            LocalizedLabel abandonHint = CreateHint(TextKeys.MatchInProgress.AbandonHint);
             abandonHint.TextAlign = TextHorizontalAlignment.Center;
             abandonHint.HorizontalAlignment = HorizontalAlignment.Center;
             abandonHint.Margin = new Thickness(0, HintTopSpacing, 0, 0);
 
-            var content = new VerticalStackPanel
+            var screenLayout = new VerticalStackPanel
             {
                 Width = Sizes.MatchInProgressWidth,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            content.Widgets.Add(BuildDialog());
-            content.Widgets.Add(abandonHint);
+            screenLayout.Widgets.Add(BuildDialog());
+            screenLayout.Widgets.Add(abandonHint);
 
-            return content;
+            return screenLayout;
         }
 
         private VerticalStackPanel BuildDialog()
         {
-            LocalizedButton returnButton = PrimaryButton(TextKeys.MatchInProgress.ReturnToMatchButton);
-            LocalizedButton abandonButton = DestructiveButton(TextKeys.MatchInProgress.AbandonButton);
+            LocalizedButton returnButton = CreatePrimaryButton(TextKeys.MatchInProgress.ReturnToMatchButton);
+            LocalizedButton abandonButton = CreateDestructiveButton(TextKeys.MatchInProgress.AbandonButton);
             returnButton.Click += ReturnButtonOnClick;
             abandonButton.Click += AbandonButtonOnClick;
 
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(returnButton);
-            actions.Widgets.Add(abandonButton);
+            HorizontalStackPanel dialogActions = CreateButtonRow();
+            dialogActions.Widgets.Add(returnButton);
+            dialogActions.Widgets.Add(abandonButton);
 
-            LocalizedLabel message = Paragraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
-            message.Margin = new Thickness(0, 0, 0, MessageBottomSpacing);
-            message.TextArguments = new object[] { PreviewRoomCode };
+            LocalizedLabel offlineMessage = CreateParagraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
+            offlineMessage.Margin = new Thickness(0, 0, 0, MessageBottomSpacing);
+            offlineMessage.TextArguments = new object[] { PreviewSamples.MatchRoomCode };
 
-            VerticalStackPanel dialog = Card(Sizes.DialogWidth);
+            VerticalStackPanel dialog = CreateCard(Sizes.DialogWidth);
             dialog.Spacing = 0;
             dialog.HorizontalAlignment = HorizontalAlignment.Center;
             dialog.Widgets.Add(new LocalizedLabel(TextKeys.MatchInProgress.Title)
@@ -64,8 +62,8 @@ namespace Torres.Client.Screens
                 TextColor = Theme.Ink,
                 Margin = new Thickness(0, 0, 0, TitleBottomSpacing),
             });
-            dialog.Widgets.Add(message);
-            dialog.Widgets.Add(actions);
+            dialog.Widgets.Add(offlineMessage);
+            dialog.Widgets.Add(dialogActions);
 
             return dialog;
         }

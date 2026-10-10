@@ -5,7 +5,7 @@ namespace Torres.LocalizationExample.Screens
 {
     public interface IScreen
     {
-        void Update(MouseState mouse, bool clicked);
+        void Update(MouseState mouseState, bool wasClicked);
 
         void Draw(SpriteBatch spriteBatch);
     }

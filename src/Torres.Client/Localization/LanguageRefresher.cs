@@ -7,38 +7,38 @@ namespace Torres.Client.Localization
 {
     internal static class LanguageRefresher
     {
-        internal static int Refresh(Widget root)
+        internal static int Refresh(Widget rootWidget)
         {
-            ArgumentNullException.ThrowIfNull(root);
+            ArgumentNullException.ThrowIfNull(rootWidget);
 
-            int refreshed = 0;
-            if (root is ILocalizedWidget localized)
+            int refreshedWidgetCount = 0;
+            if (rootWidget is ILocalizedWidget localizedWidget)
             {
-                localized.RefreshText();
-                refreshed += 1;
+                localizedWidget.RefreshText();
+                refreshedWidgetCount += 1;
             }
 
-            foreach (Widget child in Children(root))
+            foreach (Widget childWidget in GetChildWidgets(rootWidget))
             {
-                refreshed += Refresh(child);
+                refreshedWidgetCount += Refresh(childWidget);
             }
 
-            return refreshed;
+            return refreshedWidgetCount;
         }
 
-        private static IEnumerable<Widget> Children(Widget widget)
+        private static IEnumerable<Widget> GetChildWidgets(Widget parentWidget)
         {
-            if (widget is Container container)
+            IEnumerable<Widget> childWidgets = Array.Empty<Widget>();
+            if (parentWidget is Container parentContainer)
             {
-                return container.Widgets;
+                childWidgets = parentContainer.Widgets;
+            }
+            else if ((parentWidget is ContentControl contentControl) && (contentControl.Content is not null))
+            {
+                childWidgets = new[] { contentControl.Content };
             }
 
-            if ((widget is ContentControl content) && (content.Content is not null))
-            {
-                return new[] { content.Content };
-            }
-
-            return Array.Empty<Widget>();
+            return childWidgets;
         }
     }
 }

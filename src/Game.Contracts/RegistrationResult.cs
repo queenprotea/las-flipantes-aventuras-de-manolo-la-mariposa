@@ -16,13 +16,13 @@ namespace Game.Contracts
 
         [EnumMember]
         InvalidEmail,
-        
+
         [EnumMember]
         InvalidPassword,
-        
+
         [EnumMember]
         InvalidUsername,
-        
+
         [EnumMember]
         DatabaseUnavailable,
     }

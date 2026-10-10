@@ -5,17 +5,24 @@ namespace Torres.Client.Localization
 {
     internal static class LocalizedText
     {
-        private static readonly ResourceManager _manager =
-            new ResourceManager("Torres.Client.Resources.Strings", typeof(LocalizedText).Assembly);
+        private const string ResourceBaseName = "Torres.Client.Resources.Strings";
+
+        private static readonly ResourceManager _resourceManager =
+            new ResourceManager(ResourceBaseName, typeof(LocalizedText).Assembly);
 
         internal static string Get(string key)
         {
-            return _manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+            string localizedText = _resourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+            return localizedText;
         }
 
         internal static string Format(string key, params object[] arguments)
         {
-            return string.Format(CultureInfo.CurrentCulture, Get(key), arguments);
+            string textPattern = Get(key);
+            string formattedText = string.Format(CultureInfo.CurrentCulture, textPattern, arguments);
+
+            return formattedText;
         }
     }
 }

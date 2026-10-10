@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-using Microsoft.Xna.Framework;
-
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -35,13 +33,11 @@ namespace Torres.Client.Screens
         private const int FirstMatchRowIndex = 2;
 
         private const string DateFormat = "dd MMM yyyy";
-        private const string OrdinalSuffix = ".\u00b0";
-        private const string MissingValueText = "\u2014";
-        private const string WinMark = "\u2713";
-        private const string ThousandsSeparatedFormat = "N0";
-        private const string OpponentSeparator = ", ";
 
-        private readonly List<MatchRecord> _matches = SampleMatches();
+        private static readonly ChipStyle _neutralChipStyle = new ChipStyle(Theme.SurfaceAltBrush, Theme.LineBrush, Theme.MutedInk);
+        private static readonly ChipStyle _blushChipStyle = new ChipStyle(Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
+
+        private readonly List<MatchRecord> _matches = CreateSampleMatches();
 
         internal HistoryScreen()
             : base(TextKeys.History.HeaderLabel, true)
@@ -50,24 +46,24 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
 
-            Widget content = _matches.Count == 0
-                ? EmptyState(TextKeys.History.EmptyStateTitle, TextKeys.History.EmptyStateHint)
+            Widget historyContent = _matches.Count == 0
+                ? CreateEmptyState(TextKeys.History.EmptyStateTitle, TextKeys.History.EmptyStateHint)
                 : BuildScrollableTable();
-            page.Widgets.Add(content);
-            StackPanel.SetProportionType(content, ProportionType.Fill);
+            page.Widgets.Add(historyContent);
+            StackPanel.SetProportionType(historyContent, ProportionType.Fill);
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
-            page.Widgets.Add(BackBar(backButton));
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += BackButtonOnClick;
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
         private ScrollViewer BuildScrollableTable()
         {
-            return new ScrollViewer
+            var scrollableTable = new ScrollViewer
             {
                 Content = BuildTable(),
                 ShowVerticalScrollBar = true,
@@ -75,6 +71,8 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Top,
             };
+
+            return scrollableTable;
         }
 
         private Grid BuildTable()
@@ -105,17 +103,17 @@ namespace Torres.Client.Screens
 
         private static void AddHeaderRow(Grid historyGrid)
         {
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexDate, Hint(TextKeys.History.DateColumn));
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexPlayers, Hint(TextKeys.History.PlayersColumn));
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexOpponents, Hint(TextKeys.History.OpponentsColumn));
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexRank, RightAligned(Hint(TextKeys.History.RankColumn)));
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexPoints, RightAligned(Hint(TextKeys.History.PointsColumn)));
-            AddCell(historyGrid, HeaderRowIndex, ColumnIndexResult, Hint(TextKeys.History.ResultColumn));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexDate), CreateHint(TextKeys.History.DateColumn));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayers), CreateHint(TextKeys.History.PlayersColumn));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexOpponents), CreateHint(TextKeys.History.OpponentsColumn));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), AlignRight(CreateHint(TextKeys.History.RankColumn)));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), AlignRight(CreateHint(TextKeys.History.PointsColumn)));
+            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexResult), CreateHint(TextKeys.History.ResultColumn));
         }
 
         private static void AddDivider(Grid historyGrid, int rowIndex)
         {
-            Panel dividerLine = Divider();
+            Panel dividerLine = CreateDivider();
             Grid.SetRow(dividerLine, rowIndex);
             Grid.SetColumnSpan(dividerLine, ColumnCount);
             historyGrid.Widgets.Add(dividerLine);
@@ -123,14 +121,13 @@ namespace Torres.Client.Screens
 
         private void AddMatchRow(Grid historyGrid, int rowIndex, MatchRecord match)
         {
-            AddCell(historyGrid, rowIndex, ColumnIndexDate, DataLabel(FormatDate(match.PlayedAt)));
-            AddCell(historyGrid, rowIndex, ColumnIndexPlayers, DataLabel(match.PlayerCount.ToString(CultureInfo.CurrentCulture)));
-            AddCell(historyGrid, rowIndex, ColumnIndexOpponents, DataLabel(FormatOpponents(match)));
-            AddCell(historyGrid, rowIndex, ColumnIndexRank, RightAligned(DataLabel(FormatRank(match.Rank))));
-            AddCell(historyGrid, rowIndex, ColumnIndexPoints, RightAligned(DataLabel(FormatPoints(match.Points))));
-            AddCell(historyGrid, rowIndex, ColumnIndexResult, BuildResultChip(match));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexDate), CreateDataLabel(FormatDate(match.PlayedAt)));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexPlayers), CreateDataLabel(DisplayFormats.FormatInteger(match.PlayerCount)));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexOpponents), CreateDataLabel(FormatOpponents(match)));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexRank), AlignRight(CreateDataLabel(FormatRank(match.Rank))));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexPoints), AlignRight(CreateDataLabel(FormatPoints(match.Points))));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexResult), BuildResultChip(match));
 
-            // Added last so it sits on top of the row and catches the click anywhere in it.
             AddRowClickTarget(historyGrid, rowIndex);
         }
 
@@ -147,7 +144,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
-            rowClickTarget.Click += OnMatchRowClick;
+            rowClickTarget.Click += MatchRowButtonOnClick;
 
             Grid.SetRow(rowClickTarget, rowIndex);
             Grid.SetColumnSpan(rowClickTarget, ColumnCount);
@@ -156,22 +153,29 @@ namespace Torres.Client.Screens
 
         private static string FormatDate(DateTime playedAt)
         {
-            return playedAt.ToString(DateFormat, CultureInfo.CurrentCulture).ToLower(CultureInfo.CurrentCulture);
+            string formattedDate = DisplayFormats.FormatDate(playedAt, DateFormat);
+            string lowerCaseDate = formattedDate.ToLower(CultureInfo.CurrentCulture);
+
+            return lowerCaseDate;
         }
 
         private static string FormatRank(int? rank)
         {
-            return rank.HasValue ? rank.Value.ToString(CultureInfo.CurrentCulture) + OrdinalSuffix : MissingValueText;
+            string rankText = rank.HasValue ? DisplayFormats.FormatRankPosition(rank.Value) : DisplaySymbols.MissingValue;
+
+            return rankText;
         }
 
         private static string FormatPoints(int? points)
         {
-            return points.HasValue ? points.Value.ToString(ThousandsSeparatedFormat, CultureInfo.CurrentCulture) : MissingValueText;
+            string pointsText = points.HasValue ? DisplayFormats.FormatThousands(points.Value) : DisplaySymbols.MissingValue;
+
+            return pointsText;
         }
 
         private static string FormatOpponents(MatchRecord match)
         {
-            string namedOpponents = string.Join(OpponentSeparator, match.NamedOpponents);
+            string namedOpponents = string.Join(DisplaySymbols.ListSeparator, match.NamedOpponents);
 
             if (match.GuestOpponentCount <= 0)
             {
@@ -182,12 +186,14 @@ namespace Torres.Client.Screens
                 ? LocalizedText.Get(TextKeys.History.GuestOpponentMessage)
                 : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, match.GuestOpponentCount);
 
-            return string.IsNullOrEmpty(namedOpponents) ? guestPhrase : $"{namedOpponents} {guestPhrase}";
+            string opponentsText = string.IsNullOrEmpty(namedOpponents) ? guestPhrase : $"{namedOpponents} {guestPhrase}";
+
+            return opponentsText;
         }
 
         private static Widget BuildResultChip(MatchRecord match)
         {
-            return match.Status switch
+            Widget resultChip = match.Status switch
             {
                 MatchStatus.Finished when match.Rank == FirstRankPosition => BuildWinChip(),
                 MatchStatus.Finished => BuildNeutralChip(TextKeys.History.FinishedStatus),
@@ -195,6 +201,8 @@ namespace Torres.Client.Screens
                 MatchStatus.Interrupted => BuildBlushChip(TextKeys.History.InterruptedStatus),
                 _ => BuildNeutralChip(TextKeys.History.FinishedStatus),
             };
+
+            return resultChip;
         }
 
         private static Panel BuildWinChip()
@@ -208,87 +216,105 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            HorizontalStackPanel chipContent = Row();
-            chipContent.Widgets.Add(new Label { Text = WinMark, Font = Fonts.Small, TextColor = Theme.MintInk });
+            HorizontalStackPanel chipContent = CreateButtonRow();
+            chipContent.Widgets.Add(new Label { Text = DisplaySymbols.CheckMark, Font = Fonts.Small, TextColor = Theme.MintInk });
             chipContent.Widgets.Add(new LocalizedLabel(TextKeys.History.FinishedStatus) { Font = Fonts.Small, TextColor = Theme.MintInk });
             winChip.Widgets.Add(chipContent);
+
             return winChip;
         }
 
         private static Panel BuildNeutralChip(string statusTextKey)
         {
-            return BuildChip(statusTextKey, Theme.SurfaceAltBrush, Theme.LineBrush, Theme.MutedInk);
+            Panel neutralChip = BuildChip(statusTextKey, _neutralChipStyle);
+
+            return neutralChip;
         }
 
         private static Panel BuildBlushChip(string statusTextKey)
         {
-            return BuildChip(statusTextKey, Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
+            Panel blushChip = BuildChip(statusTextKey, _blushChipStyle);
+
+            return blushChip;
         }
 
-        private static Panel BuildChip(string statusTextKey, IBrush chipBackground, IBrush chipBorder, Color chipTextColor)
+        private static Panel BuildChip(string statusTextKey, ChipStyle chipStyle)
         {
-            var chip = new Panel
+            var statusChip = new Panel
             {
                 Padding = Metrics.PillButtonPadding,
-                Background = chipBackground,
-                Border = chipBorder,
+                Background = chipStyle.Background,
+                Border = chipStyle.Border,
                 BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            chip.Widgets.Add(new LocalizedLabel(statusTextKey) { Font = Fonts.Small, TextColor = chipTextColor });
-            return chip;
+            statusChip.Widgets.Add(new LocalizedLabel(statusTextKey) { Font = Fonts.Small, TextColor = chipStyle.TextColor });
+
+            return statusChip;
         }
 
-        private static Label DataLabel(string labelText)
+        private static Label CreateDataLabel(string labelText)
         {
-            return new Label
+            var dataLabel = new Label
             {
                 Text = labelText,
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+
+            return dataLabel;
         }
 
-        private static TLabel RightAligned<TLabel>(TLabel targetLabel)
+        private static TLabel AlignRight<TLabel>(TLabel targetLabel)
             where TLabel : Label
         {
             targetLabel.TextAlign = FontStashSharp.RichText.TextHorizontalAlignment.Right;
+
             return targetLabel;
         }
 
-        private static void AddCell(Grid historyGrid, int rowIndex, int columnIndex, Widget cellContent)
+        private static void AddCell(Grid historyGrid, CellPosition cellPosition, Widget cellContent)
         {
-            Grid.SetRow(cellContent, rowIndex);
-            Grid.SetColumn(cellContent, columnIndex);
+            Grid.SetRow(cellContent, cellPosition.Row);
+            Grid.SetColumn(cellContent, cellPosition.Column);
             historyGrid.Widgets.Add(cellContent);
         }
 
-        private void OnMatchRowClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void MatchRowButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            // TODO: tell MatchDetailScreen which match was clicked once the service exists.
             RequestedScreen = ScreenId.MatchDetail;
         }
 
-        private void OnBackClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }
 
-        private static List<MatchRecord> SampleMatches() => new()
+        private static List<MatchRecord> CreateSampleMatches()
         {
-            new MatchRecord(new DateTime(2026, 9, 5), playerCount: 4, namedOpponents: new[] { "luis_m", "sofia99" }, guestOpponentCount: 1, rank: 1, points: 148, status: MatchStatus.Finished),
-            new MatchRecord(new DateTime(2026, 9, 4), playerCount: 3, namedOpponents: new[] { "dgomez", "marco_r" }, guestOpponentCount: 0, rank: 3, points: 61, status: MatchStatus.Finished),
-            new MatchRecord(new DateTime(2026, 9, 3), playerCount: 2, namedOpponents: new[] { "luis_m" }, guestOpponentCount: 0, rank: 2, points: 44, status: MatchStatus.Forfeited),
-            new MatchRecord(new DateTime(2026, 9, 2), playerCount: 4, namedOpponents: new[] { "sofia99", "marco_r", "dgomez" }, guestOpponentCount: 0, rank: 4, points: 27, status: MatchStatus.Finished),
-            new MatchRecord(new DateTime(2026, 9, 1), playerCount: 3, namedOpponents: new[] { "luis_m", "dgomez" }, guestOpponentCount: 0, rank: null, points: null, status: MatchStatus.Interrupted),
-        };
+            var sampleMatches = new List<MatchRecord>
+            {
+                new MatchRecord(new DateTime(2026, 9, 5), playerCount: 4, namedOpponents: new[] { PreviewSamples.LuisPlayer, PreviewSamples.SofiaPlayer }, guestOpponentCount: 1, rank: 1, points: 148, matchStatus: MatchStatus.Finished),
+                new MatchRecord(new DateTime(2026, 9, 4), playerCount: 3, namedOpponents: new[] { PreviewSamples.DiegoPlayer, PreviewSamples.MarcoPlayer }, guestOpponentCount: 0, rank: 3, points: 61, matchStatus: MatchStatus.Finished),
+                new MatchRecord(new DateTime(2026, 9, 3), playerCount: 2, namedOpponents: new[] { PreviewSamples.LuisPlayer }, guestOpponentCount: 0, rank: 2, points: 44, matchStatus: MatchStatus.Forfeited),
+                new MatchRecord(new DateTime(2026, 9, 2), playerCount: 4, namedOpponents: new[] { PreviewSamples.SofiaPlayer, PreviewSamples.MarcoPlayer, PreviewSamples.DiegoPlayer }, guestOpponentCount: 0, rank: 4, points: 27, matchStatus: MatchStatus.Finished),
+                new MatchRecord(new DateTime(2026, 9, 1), playerCount: 3, namedOpponents: new[] { PreviewSamples.LuisPlayer, PreviewSamples.DiegoPlayer }, guestOpponentCount: 0, rank: null, points: null, matchStatus: MatchStatus.Interrupted),
+            };
 
-        private enum MatchStatus { Finished, Forfeited, Interrupted }
+            return sampleMatches;
+        }
+
+        private enum MatchStatus
+        {
+            Finished,
+            Forfeited,
+            Interrupted,
+        }
 
         private sealed class MatchRecord
         {
-            internal MatchRecord(DateTime playedAt, int playerCount, IReadOnlyList<string> namedOpponents, int guestOpponentCount, int? rank, int? points, MatchStatus status)
+            internal MatchRecord(DateTime playedAt, int playerCount, IReadOnlyList<string> namedOpponents, int guestOpponentCount, int? rank, int? points, MatchStatus matchStatus)
             {
                 PlayedAt = playedAt;
                 PlayerCount = playerCount;
@@ -296,15 +322,21 @@ namespace Torres.Client.Screens
                 GuestOpponentCount = guestOpponentCount;
                 Rank = rank;
                 Points = points;
-                Status = status;
+                Status = matchStatus;
             }
 
             internal DateTime PlayedAt { get; }
+
             internal int PlayerCount { get; }
+
             internal IReadOnlyList<string> NamedOpponents { get; }
+
             internal int GuestOpponentCount { get; }
+
             internal int? Rank { get; }
+
             internal int? Points { get; }
+
             internal MatchStatus Status { get; }
         }
     }

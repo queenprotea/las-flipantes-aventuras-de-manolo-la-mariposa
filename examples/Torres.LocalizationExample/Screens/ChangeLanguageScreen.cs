@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
 using Torres.LocalizationExample.Localization;
 using Torres.LocalizationExample.Resources;
 
@@ -9,55 +12,80 @@ namespace Torres.LocalizationExample.Screens
 {
     public sealed class ChangeLanguageScreen : IScreen
     {
-        private readonly TorresGame game;
-        private readonly LanguageService languages;
-        private readonly List<(MenuButton Button, LanguageOption Language)> options = new();
-        private readonly MenuButton backButton;
+        private const float ScreenLeft = 60;
+        private const float TitleTop = 40;
+        private const float HintTop = 90;
+        private const float FirstLanguageTop = 180;
+        private const float LanguageSpacing = 50;
+        private const float NoteTop = 320;
+        private const float BackButtonTop = 400;
 
-        public ChangeLanguageScreen(TorresGame game, LanguageService languages, IScreen returnTo)
+        private readonly TorresGame _game;
+        private readonly LanguageService _languageService;
+        private readonly SpriteFont _uiFont;
+        private readonly IScreen _returnScreen;
+        private readonly List<(MenuButton Button, LanguageOption Language)> _languageButtons =
+            new List<(MenuButton Button, LanguageOption Language)>();
+        private readonly MenuButton _backButton;
+
+        public ChangeLanguageScreen(TorresGame game, LanguageService languageService, SpriteFont uiFont, IScreen returnScreen)
         {
-            this.game = game;
-            this.languages = languages;
+            ArgumentNullException.ThrowIfNull(game);
+            ArgumentNullException.ThrowIfNull(languageService);
+            ArgumentNullException.ThrowIfNull(uiFont);
+            ArgumentNullException.ThrowIfNull(returnScreen);
 
-            float y = 180;
-            foreach (LanguageOption language in LanguageService.Available)
+            _game = game;
+            _languageService = languageService;
+            _uiFont = uiFont;
+            _returnScreen = returnScreen;
+            float languageButtonTop = FirstLanguageTop;
+            foreach (LanguageOption availableLanguage in LanguageService.AvailableLanguages)
             {
-                LanguageOption selected = language;
-                var button = new MenuButton(
-                    () => selected.NativeName, new Vector2(60, y), () => languages.Change(selected));
-                options.Add((button, language));
-                y += 50;
+                var languageButton = new MenuButton(
+                    () => availableLanguage.NativeName,
+                    new Vector2(ScreenLeft, languageButtonTop),
+                    () => languageService.Change(availableLanguage));
+                _languageButtons.Add((languageButton, availableLanguage));
+                languageButtonTop += LanguageSpacing;
             }
 
-            backButton = new MenuButton(() => Strings.Common_Back, new Vector2(60, 400), () => game.Show(returnTo));
+            _backButton = new MenuButton(() => Strings.Common_Back, new Vector2(ScreenLeft, BackButtonTop), ReturnToPreviousScreen);
         }
 
-        public void Update(MouseState mouse, bool clicked)
+        public void Update(MouseState mouseState, bool wasClicked)
         {
-            foreach ((MenuButton button, LanguageOption language) in options)
+            foreach ((MenuButton languageButton, _) in _languageButtons)
             {
-                button.Update(game.Font, mouse.Position, clicked);
+                languageButton.Update(_uiFont, mouseState.Position, wasClicked);
             }
 
-            foreach ((MenuButton button, LanguageOption language) in options)
+            foreach ((MenuButton languageButton, LanguageOption buttonLanguage) in _languageButtons)
             {
-                button.IsMarked = language.CultureCode == languages.Current.CultureCode;
+                languageButton.IsMarked = buttonLanguage.CultureCode == _languageService.CurrentLanguage.CultureCode;
             }
 
-            backButton.Update(game.Font, mouse.Position, clicked);
+            _backButton.Update(_uiFont, mouseState.Position, wasClicked);
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(game.Font, Strings.ChangeLanguage_Title, new Vector2(60, 40), Color.LightGreen);
-            spriteBatch.DrawString(game.Font, Strings.ChangeLanguage_Hint, new Vector2(60, 90), Color.LightGray);
-            foreach ((MenuButton button, LanguageOption language) in options)
+            ArgumentNullException.ThrowIfNull(spriteBatch);
+
+            spriteBatch.DrawString(_uiFont, Strings.ChangeLanguage_Title, new Vector2(ScreenLeft, TitleTop), Color.LightGreen);
+            spriteBatch.DrawString(_uiFont, Strings.ChangeLanguage_Hint, new Vector2(ScreenLeft, HintTop), Color.LightGray);
+            foreach ((MenuButton languageButton, _) in _languageButtons)
             {
-                button.Draw(spriteBatch, game.Font);
+                languageButton.Draw(spriteBatch, _uiFont);
             }
 
-            spriteBatch.DrawString(game.Font, Strings.ChangeLanguage_Note, new Vector2(60, 320), Color.LightGray);
-            backButton.Draw(spriteBatch, game.Font);
+            spriteBatch.DrawString(_uiFont, Strings.ChangeLanguage_Note, new Vector2(ScreenLeft, NoteTop), Color.LightGray);
+            _backButton.Draw(spriteBatch, _uiFont);
+        }
+
+        private void ReturnToPreviousScreen()
+        {
+            _game.ShowScreen(_returnScreen);
         }
     }
 }

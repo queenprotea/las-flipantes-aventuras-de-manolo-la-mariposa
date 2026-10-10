@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
+
+using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
@@ -31,13 +33,10 @@ namespace Torres.Client.Screens
         private const int DividerRowOffset = 1;
 
         private const string LeadingWeekdayPattern = @"^dddd[,\s]*";
-        private const string OrdinalSuffix = ".\u00b0";
-        private const string ThousandsSeparatedFormat = "N0";
 
-        private static readonly Thickness CellPadding = new Thickness(NoSpacing, Metrics.ListSpacing, NoSpacing, Metrics.ListSpacing);
+        private static readonly Thickness _cellPadding = new Thickness(NoSpacing, Metrics.ListSpacing, NoSpacing, Metrics.ListSpacing);
 
-        // TODO: replace with the match selected in HistoryScreen once the service exists.
-        private readonly MatchDetailInfo _match = SampleMatchDetail();
+        private readonly PlayedMatch _playedMatch = CreateSamplePlayedMatch();
 
         internal MatchDetailScreen()
             : base(TextKeys.MatchDetail.HeaderLabel, true)
@@ -46,36 +45,38 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
 
-            VerticalStackPanel card = Card(CardWidth);
+            VerticalStackPanel card = CreateCard(CardWidth);
             card.HorizontalAlignment = HorizontalAlignment.Left;
             card.Widgets.Add(BuildMatchHeading());
             card.Widgets.Add(BuildResultsTable());
             card.Widgets.Add(BuildBackButton());
 
             page.Widgets.Add(card);
+
             return page;
         }
 
         private VerticalStackPanel BuildMatchHeading()
         {
-            int durationInMinutes = (int)_match.Duration.TotalMinutes;
+            int durationInMinutes = (int)_playedMatch.Duration.TotalMinutes;
 
             var heading = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
-            heading.Widgets.Add(new ComputedLabel(() => FormatLongDate(_match.PlayedAt))
+            heading.Widgets.Add(new ComputedLabel(() => FormatLongDate(_playedMatch.PlayedAt))
             {
                 Font = Fonts.Title,
                 TextColor = Theme.Ink,
                 Wrap = true,
             });
             heading.Widgets.Add(new ComputedLabel(
-                () => LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, _match.PlayerCount, durationInMinutes))
+                () => LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, _playedMatch.PlayerCount, durationInMinutes))
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 Wrap = true,
             });
+
             return heading;
         }
 
@@ -94,10 +95,10 @@ namespace Torres.Client.Screens
             AddHeaderRow(resultsGrid);
             AddDivider(resultsGrid, HeaderDividerRowIndex);
 
-            for (int participantIndex = 0; participantIndex < _match.Participants.Count; participantIndex++)
+            for (int participantIndex = 0; participantIndex < _playedMatch.Participants.Count; participantIndex++)
             {
                 int participantRowIndex = FirstParticipantRowIndex + (participantIndex * RowsPerParticipant);
-                AddParticipantRow(resultsGrid, participantRowIndex, _match.Participants[participantIndex]);
+                AddParticipantRow(resultsGrid, participantRowIndex, _playedMatch.Participants[participantIndex]);
                 AddDivider(resultsGrid, participantRowIndex + DividerRowOffset);
             }
 
@@ -106,9 +107,9 @@ namespace Torres.Client.Screens
 
         private static void AddHeaderRow(Grid resultsGrid)
         {
-            AddCell(resultsGrid, HeaderRowIndex, ColumnIndexRank, Hint(TextKeys.MatchDetail.RankColumn));
-            AddCell(resultsGrid, HeaderRowIndex, ColumnIndexPlayer, Hint(TextKeys.MatchDetail.PlayerColumn));
-            AddCell(resultsGrid, HeaderRowIndex, ColumnIndexPoints, Hint(TextKeys.MatchDetail.PointsColumn));
+            AddCell(resultsGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), CreateHint(TextKeys.MatchDetail.RankColumn));
+            AddCell(resultsGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayer), CreateHint(TextKeys.MatchDetail.PlayerColumn));
+            AddCell(resultsGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), CreateHint(TextKeys.MatchDetail.PointsColumn));
         }
 
         private static void AddParticipantRow(Grid resultsGrid, int rowIndex, MatchParticipantResult participant)
@@ -118,13 +119,11 @@ namespace Torres.Client.Screens
                 AddCurrentPlayerHighlight(resultsGrid, rowIndex);
             }
 
-            var playerColor = participant.IsCurrentPlayer ? Theme.MintInk : Theme.Ink;
+            Color playerColor = participant.IsCurrentPlayer ? Theme.MintInk : Theme.Ink;
 
-            AddCell(resultsGrid, rowIndex, ColumnIndexRank,
-                ComputedDataLabel(() => FormatRank(participant.Rank), Theme.Ink));
-            AddCell(resultsGrid, rowIndex, ColumnIndexPlayer, DataLabel(participant.Username, playerColor));
-            AddCell(resultsGrid, rowIndex, ColumnIndexPoints,
-                ComputedDataLabel(() => FormatPoints(participant.Points), Theme.Ink));
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexRank), CreateComputedDataLabel(() => DisplayFormats.FormatRankPosition(participant.Rank), Theme.Ink));
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPlayer), CreateDataLabel(participant.Username, playerColor));
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPoints), CreateComputedDataLabel(() => DisplayFormats.FormatThousands(participant.Points), Theme.Ink));
         }
 
         private static void AddCurrentPlayerHighlight(Grid resultsGrid, int rowIndex)
@@ -142,50 +141,55 @@ namespace Torres.Client.Screens
 
         private static void AddDivider(Grid resultsGrid, int rowIndex)
         {
-            Panel dividerLine = Divider();
+            Panel dividerLine = CreateDivider();
             Grid.SetRow(dividerLine, rowIndex);
             Grid.SetColumnSpan(dividerLine, ColumnCount);
             resultsGrid.Widgets.Add(dividerLine);
         }
 
-        private static void AddCell(Grid resultsGrid, int rowIndex, int columnIndex, Widget cellContent)
+        private static void AddCell(Grid resultsGrid, CellPosition cellPosition, Widget cellContent)
         {
-            cellContent.Margin = CellPadding;
-            Grid.SetRow(cellContent, rowIndex);
-            Grid.SetColumn(cellContent, columnIndex);
+            cellContent.Margin = _cellPadding;
+            Grid.SetRow(cellContent, cellPosition.Row);
+            Grid.SetColumn(cellContent, cellPosition.Column);
             resultsGrid.Widgets.Add(cellContent);
         }
 
-        private static Label DataLabel(string labelText, Microsoft.Xna.Framework.Color labelColor)
+        private static Label CreateDataLabel(string labelText, Color labelColor)
         {
-            return new Label
+            var dataLabel = new Label
             {
                 Text = labelText,
                 Font = Fonts.Body,
                 TextColor = labelColor,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+
+            return dataLabel;
         }
-        
-        private static ComputedLabel ComputedDataLabel(Func<string> textProvider, Microsoft.Xna.Framework.Color labelColor)
+
+        private static ComputedLabel CreateComputedDataLabel(Func<string> textProvider, Color labelColor)
         {
-            return new ComputedLabel(textProvider)
+            var computedDataLabel = new ComputedLabel(textProvider)
             {
                 Font = Fonts.Body,
                 TextColor = labelColor,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+
+            return computedDataLabel;
         }
 
         private LocalizedButton BuildBackButton()
         {
-            LocalizedButton backToHistoryButton = SecondaryButton(TextKeys.MatchDetail.BackToHistoryButton);
+            LocalizedButton backToHistoryButton = CreateSecondaryButton(TextKeys.MatchDetail.BackToHistoryButton);
             backToHistoryButton.HorizontalAlignment = HorizontalAlignment.Left;
-            backToHistoryButton.Click += OnBackToHistoryClick;
+            backToHistoryButton.Click += BackToHistoryButtonOnClick;
+
             return backToHistoryButton;
         }
 
-        private void OnBackToHistoryClick(object sender, Myra.Events.MyraEventArgs arguments)
+        private void BackToHistoryButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = ScreenId.History;
         }
@@ -197,41 +201,36 @@ namespace Torres.Client.Screens
                 currentCulture.DateTimeFormat.LongDatePattern,
                 LeadingWeekdayPattern,
                 string.Empty);
-            return playedAt.ToString(datePatternWithoutWeekday, currentCulture);
+
+            string longDate = playedAt.ToString(datePatternWithoutWeekday, currentCulture);
+
+            return longDate;
         }
 
-        private static string FormatRank(int rank)
+        private static PlayedMatch CreateSamplePlayedMatch()
         {
-            return rank.ToString(CultureInfo.CurrentCulture) + OrdinalSuffix;
-        }
-
-        private static string FormatPoints(int points)
-        {
-            return points.ToString(ThousandsSeparatedFormat, CultureInfo.CurrentCulture);
-        }
-
-        private static MatchDetailInfo SampleMatchDetail()
-        {
-            const int sampleDurationInMinutes = 38;
+            const int SampleDurationInMinutes = 38;
 
             var sampleParticipants = new List<MatchParticipantResult>
             {
-                new MatchParticipantResult(rank: 1, username: "ana_torres", points: 148, isCurrentPlayer: true),
-                new MatchParticipantResult(rank: 2, username: "luis_m", points: 131, isCurrentPlayer: false),
-                new MatchParticipantResult(rank: 3, username: "sofia99", points: 96, isCurrentPlayer: false),
-                new MatchParticipantResult(rank: 4, username: "Oruga_23", points: 72, isCurrentPlayer: false),
+                new MatchParticipantResult(rank: 1, username: PreviewSamples.AnaPlayer, points: 148, isCurrentPlayer: true),
+                new MatchParticipantResult(rank: 2, username: PreviewSamples.LuisPlayer, points: 131, isCurrentPlayer: false),
+                new MatchParticipantResult(rank: 3, username: PreviewSamples.SofiaPlayer, points: 96, isCurrentPlayer: false),
+                new MatchParticipantResult(rank: 4, username: PreviewSamples.OrugaPlayer, points: 72, isCurrentPlayer: false),
             };
 
-            return new MatchDetailInfo(
+            var samplePlayedMatch = new PlayedMatch(
                 playedAt: new DateTime(2026, 9, 5),
-                duration: TimeSpan.FromMinutes(sampleDurationInMinutes),
+                duration: TimeSpan.FromMinutes(SampleDurationInMinutes),
                 participants: sampleParticipants);
+
+            return samplePlayedMatch;
         }
     }
-    
-    internal sealed class MatchDetailInfo
+
+    internal sealed class PlayedMatch
     {
-        internal MatchDetailInfo(DateTime playedAt, TimeSpan duration, IReadOnlyList<MatchParticipantResult> participants)
+        internal PlayedMatch(DateTime playedAt, TimeSpan duration, IReadOnlyList<MatchParticipantResult> participants)
         {
             PlayedAt = playedAt;
             Duration = duration;
@@ -246,6 +245,7 @@ namespace Torres.Client.Screens
 
         internal int PlayerCount => Participants.Count;
     }
+
     internal sealed class MatchParticipantResult
     {
         internal MatchParticipantResult(int rank, string username, int points, bool isCurrentPlayer)

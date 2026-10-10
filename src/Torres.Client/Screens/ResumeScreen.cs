@@ -17,17 +17,14 @@ namespace Torres.Client.Screens
         private const int PlayersTopSpacing = 22;
         private const int PlayersTopPadding = 16;
         private const int HintTopSpacing = 16;
-        private const string ReturnedMark = "✓";
-        private const string WaitingMark = "◷";
-        private const string PreviewClock = "2:14";
         private const double PreviewSecondsBeforeMatch = 5;
 
         private static readonly ResumePlayer[] _previewPlayers =
         {
-            new ResumePlayer("jesus", true, Theme.MintBrush),
-            new ResumePlayer("valentin", true, Theme.LavenderBrush),
-            new ResumePlayer("salma", false, Theme.ButterBrush),
-            new ResumePlayer("scarleth", false, Theme.SkyBrush),
+            new ResumePlayer(PreviewSamples.SeatOnePlayer, true, Theme.MintBrush),
+            new ResumePlayer(PreviewSamples.SeatTwoPlayer, true, Theme.LavenderBrush),
+            new ResumePlayer(PreviewSamples.SeatThreePlayer, false, Theme.ButterBrush),
+            new ResumePlayer(PreviewSamples.SeatFourPlayer, false, Theme.SkyBrush),
         };
 
         private double _secondsShown;
@@ -55,18 +52,18 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            LocalizedLabel noActionNeeded = Hint(TextKeys.Resume.NoActionNeededMessage);
+            LocalizedLabel noActionNeeded = CreateHint(TextKeys.Resume.NoActionNeededMessage);
             noActionNeeded.TextAlign = TextHorizontalAlignment.Center;
             noActionNeeded.HorizontalAlignment = HorizontalAlignment.Center;
             noActionNeeded.Margin = new Thickness(0, HintTopSpacing, 0, 0);
 
-            var content = new VerticalStackPanel
+            var screenLayout = new VerticalStackPanel
             {
                 Width = Sizes.ResumeWidth,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            content.Widgets.Add(new Panel
+            screenLayout.Widgets.Add(new Panel
             {
                 Width = Sizes.ResumeIconSize,
                 Height = Sizes.ResumeIconSize,
@@ -75,80 +72,80 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            content.Widgets.Add(new LocalizedLabel(TextKeys.Resume.Title)
+            screenLayout.Widgets.Add(new LocalizedLabel(TextKeys.Resume.Title)
             {
                 Font = Fonts.Notice,
                 TextColor = Theme.Ink,
                 Margin = new Thickness(0, TitleTopSpacing, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            content.Widgets.Add(new LocalizedLabel(TextKeys.Resume.WaitingStatus)
+            screenLayout.Widgets.Add(new LocalizedLabel(TextKeys.Resume.WaitingStatus)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.MutedInk,
                 Margin = new Thickness(0, 0, 0, StatusBottomSpacing),
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            content.Widgets.Add(new Label
+            screenLayout.Widgets.Add(new Label
             {
-                Text = PreviewClock,
+                Text = PreviewSamples.ResumeClock,
                 Font = Fonts.Clock,
                 TextColor = Theme.MintInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            content.Widgets.Add(BuildPlayers());
-            content.Widgets.Add(noActionNeeded);
+            screenLayout.Widgets.Add(BuildPlayers());
+            screenLayout.Widgets.Add(noActionNeeded);
 
-            return content;
+            return screenLayout;
         }
 
         private static VerticalStackPanel BuildPlayers()
         {
-            var rows = new VerticalStackPanel
+            var playerRows = new VerticalStackPanel
             {
                 Margin = new Thickness(0, PlayersTopPadding, 0, 0),
             };
             foreach (ResumePlayer player in _previewPlayers)
             {
-                rows.Widgets.Add(BuildPlayerRow(player));
+                playerRows.Widgets.Add(BuildPlayerRow(player));
             }
 
-            var players = new VerticalStackPanel
+            var playersPanel = new VerticalStackPanel
             {
                 Margin = new Thickness(0, PlayersTopSpacing, 0, 0),
             };
-            players.Widgets.Add(Divider());
-            players.Widgets.Add(rows);
+            playersPanel.Widgets.Add(CreateDivider());
+            playersPanel.Widgets.Add(playerRows);
 
-            return players;
+            return playersPanel;
         }
 
         private static HorizontalStackPanel BuildPlayerRow(ResumePlayer player)
         {
-            Label name = PlayerNameLabel(player.Name, Theme.Ink);
-            var row = new HorizontalStackPanel
+            Label nameLabel = CreatePlayerNameLabel(player.Name, Theme.Ink);
+            var playerRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
                 Padding = MatchLayout.PlayerRowPadding,
             };
-            row.Widgets.Add(new Panel
+            playerRow.Widgets.Add(new Panel
             {
                 Width = MatchLayout.PlayerIconSize,
                 Height = MatchLayout.PlayerIconSize,
                 Background = player.ColorBrush,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            row.Widgets.Add(name);
-            row.Widgets.Add(new Label
+            playerRow.Widgets.Add(nameLabel);
+            playerRow.Widgets.Add(new Label
             {
-                Text = player.HasReturned ? ReturnedMark : WaitingMark,
+                Text = player.HasReturned ? DisplaySymbols.CheckMark : DisplaySymbols.WaitingClock,
                 Font = Fonts.Small,
                 TextColor = player.HasReturned ? Theme.MintInk : Theme.MutedInk,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            StackPanel.SetProportionType(name, ProportionType.Fill);
+            StackPanel.SetProportionType(nameLabel, ProportionType.Fill);
 
-            return row;
+            return playerRow;
         }
 
         private sealed record ResumePlayer(string Name, bool HasReturned, IBrush ColorBrush);

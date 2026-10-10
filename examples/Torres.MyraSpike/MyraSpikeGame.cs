@@ -16,111 +16,171 @@ namespace Torres.MyraSpike
 {
     internal sealed class MyraSpikeGame : Game
     {
-        private readonly GraphicsDeviceManager _graphics;
-        private readonly bool _capturing;
+        private const int WindowWidth = 900;
+        private const int WindowHeight = 660;
+        private const string ContentDirectory = "Content";
+        private const string SpanishUiCulture = "es";
+        private const string SpanishFormatCulture = "es-MX";
+        private const string EnglishUiCulture = "en";
+        private const string EnglishFormatCulture = "en-US";
+        private const int RootSpacing = 10;
+        private const int RootMargin = 24;
+        private const int ButtonSpacing = 8;
+        private const int TextBoxWidth = 320;
+        private const int WideContentWidth = 620;
+        private const int ScrollRowSpacing = 4;
+        private const int ScrollViewerHeight = 120;
+        private const int SpanishCaptureFrame = 3;
+        private const int LanguageSwitchFrame = 4;
+        private const int EnglishCaptureFrame = 7;
+        private const string SpanishCaptureFile = "myra-es.png";
+        private const string EnglishCaptureFile = "myra-en.png";
+        private const string SampleDatePattern = "dd MMM yyyy";
+        private const string SampleNumberPattern = "N1";
+        private const double SampleNumber = 1480.5;
+        private const string ReportPattern = "UI={0}  Cultura={1}  {2}  {3}  widgets refrescados={4}";
+        private const string SavedCaptureMessage = "guardado {0}";
+
+        private static readonly Color _backgroundColor = new Color(18, 26, 22);
+        private static readonly DateTime _sampleDate = new DateTime(2026, 9, 5);
+
+        private readonly GraphicsDeviceManager _graphicsDeviceManager;
+        private readonly bool _isCapturing;
         private Desktop? _desktop;
         private Label? _reportLabel;
-        private int _lastRefreshedCount;
-        private int _frames;
+        private int _lastRefreshedWidgetCount;
+        private int _drawnFrameCount;
 
         internal MyraSpikeGame()
         {
-            _graphics = new GraphicsDeviceManager(this);
-            _graphics.PreferredBackBufferWidth = 900;
-            _graphics.PreferredBackBufferHeight = 660;
-            Content.RootDirectory = "Content";
+            _graphicsDeviceManager = new GraphicsDeviceManager(this);
+            _graphicsDeviceManager.PreferredBackBufferWidth = WindowWidth;
+            _graphicsDeviceManager.PreferredBackBufferHeight = WindowHeight;
+            Content.RootDirectory = ContentDirectory;
             IsMouseVisible = true;
-            _capturing = Environment.GetCommandLineArgs().Length > 1;
+            _isCapturing = Environment.GetCommandLineArgs().Length > 1;
         }
 
         protected override void Initialize()
         {
-            ApplyLanguage("es", "es-MX");
+            ApplyLanguage(SpanishUiCulture, SpanishFormatCulture);
             MyraEnvironment.Game = this;
-
-            _desktop = new Desktop();
-            _desktop.Root = Build();
+            _reportLabel = new Label();
+            _desktop = new Desktop { Root = BuildLayout(_reportLabel) };
             UpdateReport();
             base.Initialize();
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(new Color(18, 26, 22));
-            _desktop!.Render();
+            GraphicsDevice.Clear(_backgroundColor);
+            _desktop?.Render();
             base.Draw(gameTime);
-
-            if (_capturing)
+            if (_isCapturing)
             {
-                Capture();
+                AdvanceCapture();
             }
         }
 
-        private Widget Build()
+        private Widget BuildLayout(Label reportLabel)
         {
-            _reportLabel = new Label();
-            var root = new VerticalStackPanel { Spacing = 10, Margin = new Thickness(24) };
+            var spikeLayout = new VerticalStackPanel { Spacing = RootSpacing, Margin = new Thickness(RootMargin) };
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Language.Title));
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Language.Hint) { Wrap = true });
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Common.WindowTitle));
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Startup.ConnectingStatus));
+            spikeLayout.Widgets.Add(BuildLanguageButtons());
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Login.UsernameLabel));
+            spikeLayout.Widgets.Add(new TextBox { Width = TextBoxWidth });
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.Login.PasswordLabel));
+            spikeLayout.Widgets.Add(new TextBox { Width = TextBoxWidth, PasswordField = true });
+            spikeLayout.Widgets.Add(new LocalizedLabel(TextKeys.GuestAccess.Limitations) { Wrap = true, Width = WideContentWidth });
+            spikeLayout.Widgets.Add(BuildScrollableKeys());
+            spikeLayout.Widgets.Add(reportLabel);
 
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Language.Title));
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Language.Hint) { Wrap = true });
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Common.WindowTitle));
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Startup.ConnectingStatus));
+            return spikeLayout;
+        }
 
-            var buttons = new HorizontalStackPanel { Spacing = 8 };
+        private HorizontalStackPanel BuildLanguageButtons()
+        {
             var spanishButton = new LocalizedButton(TextKeys.Language.SpanishOption);
             var englishButton = new LocalizedButton(TextKeys.Language.EnglishOption);
-            spanishButton.Click += OnSpanishClick;
-            englishButton.Click += OnEnglishClick;
-            buttons.Widgets.Add(spanishButton);
-            buttons.Widgets.Add(englishButton);
-            root.Widgets.Add(buttons);
+            spanishButton.Click += SpanishButtonOnClick;
+            englishButton.Click += EnglishButtonOnClick;
 
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Login.UsernameLabel));
-            root.Widgets.Add(new TextBox { Width = 320 });
-            root.Widgets.Add(new LocalizedLabel(TextKeys.Login.PasswordLabel));
-            root.Widgets.Add(new TextBox { Width = 320, PasswordField = true });
-            root.Widgets.Add(new LocalizedLabel(TextKeys.GuestAccess.Limitations) { Wrap = true, Width = 620 });
+            var languageButtons = new HorizontalStackPanel { Spacing = ButtonSpacing };
+            languageButtons.Widgets.Add(spanishButton);
+            languageButtons.Widgets.Add(englishButton);
 
-            var rows = new VerticalStackPanel { Spacing = 4 };
-            foreach (string key in ScrollKeys())
+            return languageButtons;
+        }
+
+        private static ScrollViewer BuildScrollableKeys()
+        {
+            var keyRows = new VerticalStackPanel { Spacing = ScrollRowSpacing };
+            foreach (string textKey in CreateScrollKeys())
             {
-                rows.Widgets.Add(new LocalizedLabel(key));
+                keyRows.Widgets.Add(new LocalizedLabel(textKey));
             }
 
-            root.Widgets.Add(new ScrollViewer { Content = rows, Height = 120, Width = 620 });
-            root.Widgets.Add(_reportLabel);
-            return root;
+            var scrollableKeys = new ScrollViewer { Content = keyRows, Height = ScrollViewerHeight, Width = WideContentWidth };
+
+            return scrollableKeys;
         }
 
-        private static string[] ScrollKeys()
+        private static string[] CreateScrollKeys()
         {
-            return new[]
+            string[] scrollKeys =
             {
-                TextKeys.MainMenu.RoomsButton, TextKeys.MainMenu.InvitationsButton, TextKeys.MainMenu.FriendsButton,
-                TextKeys.MainMenu.HistoryButton, TextKeys.MainMenu.RankingButton, TextKeys.MainMenu.ExitButton,
-                TextKeys.Login.Title, TextKeys.Register.Title, TextKeys.GuestAccess.Title,
-                TextKeys.Profile.AccountTitle, TextKeys.AccountSettings.DeleteAccountTitle,
-                TextKeys.PasswordRecovery.Step1Title, TextKeys.PasswordRecovery.Step2Title,
-                TextKeys.PasswordRecovery.Step3Title, TextKeys.Common.RetryButton, TextKeys.Common.CancelButton,
-                TextKeys.Common.GotItButton, TextKeys.Common.BackToMenuButton, TextKeys.Common.OfflineStatus,
+                TextKeys.MainMenu.RoomsButton,
+                TextKeys.MainMenu.InvitationsButton,
+                TextKeys.MainMenu.FriendsButton,
+                TextKeys.MainMenu.HistoryButton,
+                TextKeys.MainMenu.RankingButton,
+                TextKeys.MainMenu.ExitButton,
+                TextKeys.Login.Title,
+                TextKeys.Register.Title,
+                TextKeys.GuestAccess.Title,
+                TextKeys.Profile.AccountTitle,
+                TextKeys.AccountSettings.DeleteAccountTitle,
+                TextKeys.PasswordRecovery.Step1Title,
+                TextKeys.PasswordRecovery.Step2Title,
+                TextKeys.PasswordRecovery.Step3Title,
+                TextKeys.Common.RetryButton,
+                TextKeys.Common.CancelButton,
+                TextKeys.Common.GotItButton,
+                TextKeys.Common.BackToMenuButton,
+                TextKeys.Common.OfflineStatus,
             };
+
+            return scrollKeys;
         }
 
-        private void OnSpanishClick(object sender, MyraEventArgs arguments)
+        private void SpanishButtonOnClick(object sender, MyraEventArgs e)
         {
-            SwitchLanguage("es", "es-MX");
+            SwitchLanguage(SpanishUiCulture, SpanishFormatCulture);
         }
 
-        private void OnEnglishClick(object sender, MyraEventArgs arguments)
+        private void EnglishButtonOnClick(object sender, MyraEventArgs e)
         {
-            SwitchLanguage("en", "en-US");
+            SwitchLanguage(EnglishUiCulture, EnglishFormatCulture);
         }
 
         private void SwitchLanguage(string uiCultureName, string formatCultureName)
         {
             ApplyLanguage(uiCultureName, formatCultureName);
-            _lastRefreshedCount = LanguageRefresher.Refresh(_desktop!.Root);
+            RefreshDesktopTexts();
             UpdateReport();
+        }
+
+        private void RefreshDesktopTexts()
+        {
+            if (_desktop is null)
+            {
+                return;
+            }
+
+            _lastRefreshedWidgetCount = LanguageRefresher.Refresh(_desktop.Root);
         }
 
         private static void ApplyLanguage(string uiCultureName, string formatCultureName)
@@ -135,49 +195,56 @@ namespace Torres.MyraSpike
 
         private void UpdateReport()
         {
-            string date = new DateTime(2026, 9, 5).ToString("dd MMM yyyy", CultureInfo.CurrentCulture);
-            string number = 1480.5.ToString("N1", CultureInfo.CurrentCulture);
-            _reportLabel!.Text = $"UI={CultureInfo.CurrentUICulture.Name}  Cultura={CultureInfo.CurrentCulture.Name}  " +
-                $"{date}  {number}  widgets refrescados={_lastRefreshedCount}";
+            if (_reportLabel is null)
+            {
+                return;
+            }
+
+            string formattedDate = _sampleDate.ToString(SampleDatePattern, CultureInfo.CurrentCulture);
+            string formattedNumber = SampleNumber.ToString(SampleNumberPattern, CultureInfo.CurrentCulture);
+            _reportLabel.Text = string.Format(
+                CultureInfo.InvariantCulture,
+                ReportPattern,
+                CultureInfo.CurrentUICulture.Name,
+                CultureInfo.CurrentCulture.Name,
+                formattedDate,
+                formattedNumber,
+                _lastRefreshedWidgetCount);
         }
 
-        private void Capture()
+        private void AdvanceCapture()
         {
-            _frames += 1;
-            if (_frames == 3)
+            _drawnFrameCount += 1;
+            if (_drawnFrameCount == SpanishCaptureFrame)
             {
-                Save("myra-es.png");
+                SaveCapture(SpanishCaptureFile);
             }
-
-            if (_frames == 4)
+            else if (_drawnFrameCount == LanguageSwitchFrame)
             {
-                SwitchLanguage("en", "en-US");
+                SwitchLanguage(EnglishUiCulture, EnglishFormatCulture);
             }
-
-            if (_frames == 7)
+            else if (_drawnFrameCount == EnglishCaptureFrame)
             {
-                Save("myra-en.png");
+                SaveCapture(EnglishCaptureFile);
                 Exit();
             }
         }
 
-        private void Save(string fileName)
+        private void SaveCapture(string captureFileName)
         {
-            int width = GraphicsDevice.PresentationParameters.BackBufferWidth;
-            int height = GraphicsDevice.PresentationParameters.BackBufferHeight;
-            var target = new RenderTarget2D(GraphicsDevice, width, height);
-            GraphicsDevice.SetRenderTarget(target);
-            GraphicsDevice.Clear(new Color(18, 26, 22));
-            _desktop!.Render();
+            int captureWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
+            int captureHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
+            using var captureTarget = new RenderTarget2D(GraphicsDevice, captureWidth, captureHeight);
+            GraphicsDevice.SetRenderTarget(captureTarget);
+            GraphicsDevice.Clear(_backgroundColor);
+            _desktop?.Render();
             GraphicsDevice.SetRenderTarget(null);
-
-            using (FileStream stream = File.Create(fileName))
+            using (FileStream captureStream = File.Create(captureFileName))
             {
-                target.SaveAsPng(stream, width, height);
+                captureTarget.SaveAsPng(captureStream, captureWidth, captureHeight);
             }
 
-            target.Dispose();
-            Console.WriteLine("guardado " + Path.GetFullPath(fileName));
+            Console.WriteLine(SavedCaptureMessage, Path.GetFullPath(captureFileName));
         }
     }
 }

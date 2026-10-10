@@ -18,14 +18,13 @@ namespace Torres.Client.Screens
         private const float MutedIconOpacity = 0.5f;
         private const float WithdrawnOpacity = 0.45f;
         private const float FullOpacity = 1f;
-        private const string PreviewClock = "0:41";
 
         private static readonly DisconnectionPlayer[] _previewPlayers =
         {
-            new DisconnectionPlayer("jesus", true, false, true, false, Theme.MintBrush),
-            new DisconnectionPlayer("valentin", false, false, false, false, Theme.LavenderBrush),
-            new DisconnectionPlayer("salma", false, true, true, true, Theme.ButterBrush),
-            new DisconnectionPlayer("scarleth", false, false, true, false, Theme.SkyBrush),
+            new DisconnectionPlayer(PreviewSamples.SeatOnePlayer, true, false, true, false, Theme.MintBrush),
+            new DisconnectionPlayer(PreviewSamples.SeatTwoPlayer, false, false, false, false, Theme.LavenderBrush),
+            new DisconnectionPlayer(PreviewSamples.SeatThreePlayer, false, true, true, true, Theme.ButterBrush),
+            new DisconnectionPlayer(PreviewSamples.SeatFourPlayer, false, false, true, false, Theme.SkyBrush),
         };
 
         internal DisconnectionScreen()
@@ -35,18 +34,18 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel center = BuildCenter();
-            HorizontalStackPanel columns = Columns();
-            columns.Widgets.Add(center);
+            VerticalStackPanel centerPanel = BuildCenter();
+            HorizontalStackPanel columns = CreateColumns();
+            columns.Widgets.Add(centerPanel);
             columns.Widgets.Add(BuildSideColumn());
-            StackPanel.SetProportionType(center, ProportionType.Fill);
+            StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
 
             return columns;
         }
 
         private VerticalStackPanel BuildCenter()
         {
-            var message = new LocalizedLabel(TextKeys.Disconnection.ResumeTurnMessage)
+            var resumeTurnMessage = new LocalizedLabel(TextKeys.Disconnection.ResumeTurnMessage)
             {
                 Width = Sizes.DisconnectionMessageWidth,
                 Font = Fonts.Body,
@@ -56,12 +55,12 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
-            var center = new VerticalStackPanel
+            var centerPanel = new VerticalStackPanel
             {
                 Spacing = CenterSpacing,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            center.Widgets.Add(new Panel
+            centerPanel.Widgets.Add(new Panel
             {
                 Width = Sizes.DisconnectionIconSize,
                 Height = Sizes.DisconnectionIconSize,
@@ -71,46 +70,46 @@ namespace Torres.Client.Screens
                 Opacity = MutedIconOpacity,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            center.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.ConnectionLostTitle)
+            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.ConnectionLostTitle)
             {
                 Font = Fonts.Notice,
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            center.Widgets.Add(new Label
+            centerPanel.Widgets.Add(new Label
             {
-                Text = PreviewClock,
+                Text = PreviewSamples.DisconnectionClock,
                 Font = Fonts.LargeClock,
                 TextColor = Theme.BlushInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            center.Widgets.Add(message);
-            center.Widgets.Add(BuildActions());
+            centerPanel.Widgets.Add(resumeTurnMessage);
+            centerPanel.Widgets.Add(BuildActions());
 
-            return center;
+            return centerPanel;
         }
 
         private HorizontalStackPanel BuildActions()
         {
-            LocalizedButton retryButton = PrimaryButton(TextKeys.Disconnection.RetryButton);
-            LocalizedButton exitButton = SecondaryButton(TextKeys.Disconnection.ExitMatchButton);
+            LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Disconnection.RetryButton);
+            LocalizedButton exitButton = CreateSecondaryButton(TextKeys.Disconnection.ExitMatchButton);
             retryButton.Click += RetryButtonOnClick;
             exitButton.Click += ExitButtonOnClick;
 
-            HorizontalStackPanel actions = Row();
-            actions.HorizontalAlignment = HorizontalAlignment.Center;
-            actions.Widgets.Add(retryButton);
-            actions.Widgets.Add(exitButton);
+            HorizontalStackPanel actionButtons = CreateButtonRow();
+            actionButtons.HorizontalAlignment = HorizontalAlignment.Center;
+            actionButtons.Widgets.Add(retryButton);
+            actionButtons.Widgets.Add(exitButton);
 
-            return actions;
+            return actionButtons;
         }
 
         private static VerticalStackPanel BuildSideColumn()
         {
-            var players = new VerticalStackPanel();
+            var playersPanel = new VerticalStackPanel();
             foreach (DisconnectionPlayer player in _previewPlayers)
             {
-                players.Widgets.Add(BuildPlayerRow(player));
+                playersPanel.Widgets.Add(BuildPlayerRow(player));
             }
 
             var sideColumn = new VerticalStackPanel
@@ -118,81 +117,83 @@ namespace Torres.Client.Screens
                 Width = Sizes.DisconnectionSideWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            sideColumn.Widgets.Add(GameSection(TextKeys.Disconnection.PlayersLabel, players));
+            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Disconnection.PlayersLabel, playersPanel));
 
             return sideColumn;
         }
 
         private static HorizontalStackPanel BuildPlayerRow(DisconnectionPlayer player)
         {
-            var identity = new VerticalStackPanel
+            var playerIdentity = new VerticalStackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            identity.Widgets.Add(PlayerNameLabel(player.Name, Theme.Ink));
+            playerIdentity.Widgets.Add(CreatePlayerNameLabel(player.Name, Theme.Ink));
 
-            HorizontalStackPanel tags = BuildTags(player);
-            if (tags.Widgets.Count > 0)
+            HorizontalStackPanel playerTags = BuildTags(player);
+            if (playerTags.Widgets.Count > 0)
             {
-                identity.Widgets.Add(tags);
+                playerIdentity.Widgets.Add(playerTags);
             }
 
-            var row = new HorizontalStackPanel
+            var playerRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
                 Padding = MatchLayout.PlayerRowPadding,
                 Opacity = player.HasWithdrawn ? WithdrawnOpacity : FullOpacity,
             };
-            row.Widgets.Add(new Panel
+            playerRow.Widgets.Add(new Panel
             {
                 Width = MatchLayout.PlayerIconSize,
                 Height = MatchLayout.PlayerIconSize,
                 Background = player.ColorBrush,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            row.Widgets.Add(identity);
-            StackPanel.SetProportionType(identity, ProportionType.Fill);
+            playerRow.Widgets.Add(playerIdentity);
+            StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
 
-            return row;
+            return playerRow;
         }
 
         private static HorizontalStackPanel BuildTags(DisconnectionPlayer player)
         {
-            var tags = new HorizontalStackPanel
+            var playerTags = new HorizontalStackPanel
             {
                 Spacing = TagSpacing,
             };
 
             if (player.IsYou)
             {
-                tags.Widgets.Add(BuildTag(TextKeys.Common.YouTag, Theme.MutedInk));
+                playerTags.Widgets.Add(BuildTag(TextKeys.Common.YouTag, Theme.MutedInk));
             }
 
             if (player.IsGuest)
             {
-                tags.Widgets.Add(BuildTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
+                playerTags.Widgets.Add(BuildTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
             }
 
             if (!player.IsConnected)
             {
-                tags.Widgets.Add(BuildTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
+                playerTags.Widgets.Add(BuildTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
             }
 
             if (player.HasWithdrawn)
             {
-                tags.Widgets.Add(BuildTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
+                playerTags.Widgets.Add(BuildTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
             }
 
-            return tags;
+            return playerTags;
         }
 
         private static LocalizedLabel BuildTag(string textKey, Color textColor)
         {
-            return new LocalizedLabel(textKey)
+            var playerTag = new LocalizedLabel(textKey)
             {
                 Font = Fonts.Label,
                 TextColor = textColor,
             };
+
+            return playerTag;
         }
 
         private void RetryButtonOnClick(object sender, MyraEventArgs e)

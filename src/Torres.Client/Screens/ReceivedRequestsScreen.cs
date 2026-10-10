@@ -10,7 +10,7 @@ namespace Torres.Client.Screens
 {
     internal sealed class ReceivedRequestsScreen : Screen
     {
-        private readonly List<RequestEntry> _received = SampleReceived();
+        private readonly List<RequestEntry> _receivedInvitations = CreateSampleInvitations();
 
         internal ReceivedRequestsScreen()
             : base(TextKeys.Friends.HeaderLabel, true)
@@ -19,89 +19,71 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel page = Page();
+            VerticalStackPanel page = CreatePage();
             page.Spacing = Metrics.FieldSpacing;
+            page.Widgets.Add(CreateTitle(TextKeys.Invitations.HeaderLabel));
+            page.Widgets.Add(BuildInvitationsContent());
 
-            page.Widgets.Add(Title(TextKeys.Invitations.HeaderLabel));
-            page.Widgets.Add(BuildContent());
-
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackToMenuButton);
-            backButton.Click += OnBackClick;
-            page.Widgets.Add(BackBar(backButton));
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
+            backButton.Click += BackButtonOnClick;
+            page.Widgets.Add(CreateBackBar(backButton));
 
             return page;
         }
 
-        private Widget BuildContent()
+        private Widget BuildInvitationsContent()
         {
-            if (_received.Count == 0)
+            if (_receivedInvitations.Count == 0)
             {
-                return EmptyState(TextKeys.Invitations.EmptyStateTitle, TextKeys.Invitations.EmptyStateHint);
+                VerticalStackPanel noInvitationsState = CreateEmptyState(TextKeys.Invitations.EmptyStateTitle, TextKeys.Invitations.EmptyStateHint);
+                return noInvitationsState;
             }
 
-            var list = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (RequestEntry request in _received)
+            var invitationsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            foreach (RequestEntry invitation in _receivedInvitations)
             {
-                HorizontalStackPanel itemRow = Row();
+                HorizontalStackPanel itemRow = CreateButtonRow();
 
                 var nameColumn = new VerticalStackPanel();
-                nameColumn.Widgets.Add(NameLabel(request.Username));
-                nameColumn.Widgets.Add(Hint(TextKeys.Invitations.InvitedByMessage));
+                nameColumn.Widgets.Add(CreateUsernameLabel(invitation.Username));
+                nameColumn.Widgets.Add(CreateHint(TextKeys.Invitations.InvitedByMessage));
                 itemRow.Widgets.Add(nameColumn);
 
-                LocalizedButton acceptButton = PrimaryButton(TextKeys.Invitations.JoinButton);
-                // TODO: connect to AcceptFriendRequest.
+                LocalizedButton acceptButton = CreatePrimaryButton(TextKeys.Invitations.JoinButton);
                 itemRow.Widgets.Add(acceptButton);
 
-                LocalizedButton rejectButton = SecondaryButton(TextKeys.Invitations.RejectToolTip);
-                // TODO: connect to RejectFriendRequest.
+                LocalizedButton rejectButton = CreateSecondaryButton(TextKeys.Invitations.RejectToolTip);
                 itemRow.Widgets.Add(rejectButton);
 
-                list.Widgets.Add(BuildItemCard(itemRow));
+                invitationsList.Widgets.Add(CreateItemCard(itemRow));
             }
 
-            return list;
+            return invitationsList;
         }
 
-        private static Panel BuildItemCard(Widget content)
-        {
-            var card = new Panel
-            {
-                Padding = Metrics.ListItemPadding,
-                Background = Theme.SurfaceAltBrush,
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            card.Widgets.Add(content);
-            return card;
-        }
-
-        private static Label NameLabel(string username)
-        {
-            return new Label
-            {
-                Text = username,
-                Font = Fonts.Body,
-                TextColor = Theme.Ink,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-        }
-
-        private void OnBackClick(object sender, MyraEventArgs arguments)
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
         }
 
-        private static List<RequestEntry> SampleReceived() => new()
+        private static List<RequestEntry> CreateSampleInvitations()
         {
-            new RequestEntry("marco_r"),
-            new RequestEntry("pau_v"),
-        };
+            var sampleInvitations = new List<RequestEntry>
+            {
+                new RequestEntry(PreviewSamples.MarcoPlayer),
+                new RequestEntry(PreviewSamples.PauPlayer),
+            };
+
+            return sampleInvitations;
+        }
 
         private sealed class RequestEntry
         {
-            internal RequestEntry(string username) => Username = username;
+            internal RequestEntry(string username)
+            {
+                Username = username;
+            }
+
             internal string Username { get; }
         }
     }

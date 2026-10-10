@@ -38,24 +38,24 @@ namespace Torres.Client.Localization
             set => _label.HorizontalAlignment = value;
         }
 
-        internal Label SetTrailingMark(string mark, Color color)
+        internal Label SetTrailingMark(string markText, Color markColor)
         {
             _label.HorizontalAlignment = HorizontalAlignment.Left;
             _label.VerticalAlignment = VerticalAlignment.Center;
 
             var markLabel = new Label
             {
-                Text = mark,
+                Text = markText,
                 Font = _label.Font,
-                TextColor = color,
+                TextColor = markColor,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            var content = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
-            content.Widgets.Add(_label);
-            content.Widgets.Add(markLabel);
-            Content = content;
+            var labelWithMark = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
+            labelWithMark.Widgets.Add(_label);
+            labelWithMark.Widgets.Add(markLabel);
+            Content = labelWithMark;
 
             return markLabel;
         }

@@ -10,12 +10,11 @@ namespace Torres.Client.Screens
 {
     internal sealed class LanguageScreen : Screen
     {
-        private const string CurrentMark = "✓";
         private const int NoteSpacing = 10;
 
         private readonly LanguagePreference _languagePreference;
-        private readonly LocalizedButton _spanishOption = LanguageOptionButton(LanguagePreference.Available[0].NameKey);
-        private readonly LocalizedButton _englishOption = LanguageOptionButton(LanguagePreference.Available[1].NameKey);
+        private readonly LocalizedButton _spanishOption = CreateLanguageOptionButton(LanguagePreference.Spanish.NameKey);
+        private readonly LocalizedButton _englishOption = CreateLanguageOptionButton(LanguagePreference.English.NameKey);
         private readonly Label _spanishMark;
         private readonly Label _englishMark;
 
@@ -25,41 +24,41 @@ namespace Torres.Client.Screens
             ArgumentNullException.ThrowIfNull(languagePreference);
 
             _languagePreference = languagePreference;
-            _spanishMark = _spanishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
-            _englishMark = _englishOption.SetTrailingMark(CurrentMark, Theme.MintInk);
+            _spanishMark = _spanishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);
+            _englishMark = _englishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);
         }
 
         protected override Widget Build()
         {
-            VerticalStackPanel card = Card(Sizes.LanguageCardWidth);
-            card.Widgets.Add(CardHeader(TextKeys.Language.Title, TextKeys.Language.Hint));
+            VerticalStackPanel card = CreateCard(Sizes.LanguageCardWidth);
+            card.Widgets.Add(CreateCardHeader(TextKeys.Language.Title, TextKeys.Language.Hint));
 
             _spanishOption.Click += SpanishOptionOnClick;
             _englishOption.Click += EnglishOptionOnClick;
 
-            var options = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            options.Widgets.Add(_spanishOption);
-            options.Widgets.Add(_englishOption);
-            card.Widgets.Add(options);
+            var languageOptions = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
+            languageOptions.Widgets.Add(_spanishOption);
+            languageOptions.Widgets.Add(_englishOption);
+            card.Widgets.Add(languageOptions);
 
-            LocalizedLabel savedHint = Hint(TextKeys.Language.SavedHint);
+            LocalizedLabel savedHint = CreateHint(TextKeys.Language.SavedHint);
             savedHint.Margin = new Thickness(0, NoteSpacing, 0, 0);
             card.Widgets.Add(savedHint);
 
-            LocalizedButton backButton = SecondaryButton(TextKeys.Common.BackButton);
+            LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackButton);
             backButton.Click += BackButtonOnClick;
-            HorizontalStackPanel actions = Row();
-            actions.Widgets.Add(backButton);
-            card.Widgets.Add(actions);
+            HorizontalStackPanel navigationActions = CreateButtonRow();
+            navigationActions.Widgets.Add(backButton);
+            card.Widgets.Add(navigationActions);
 
-            UpdateMarks();
+            UpdateSelectionMarks();
 
             return card;
         }
 
-        private static LocalizedButton LanguageOptionButton(string textKey)
+        private static LocalizedButton CreateLanguageOptionButton(string textKey)
         {
-            return new LocalizedButton(textKey)
+            var languageOptionButton = new LocalizedButton(textKey)
             {
                 LabelColor = Theme.Ink,
                 LabelFont = Fonts.Control,
@@ -71,32 +70,34 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
+
+            return languageOptionButton;
         }
 
-        private void UpdateMarks()
+        private void UpdateSelectionMarks()
         {
-            bool isSpanish = _languagePreference.IsCurrent(LanguagePreference.Available[0]);
+            bool isSpanish = _languagePreference.IsCurrent(LanguagePreference.Spanish);
             ApplySelection(_spanishOption, _spanishMark, isSpanish);
             ApplySelection(_englishOption, _englishMark, !isSpanish);
         }
 
-        private static void ApplySelection(LocalizedButton option, Label mark, bool isSelected)
+        private static void ApplySelection(LocalizedButton optionButton, Label selectionMark, bool isSelected)
         {
-            mark.Visible = isSelected;
-            option.Background = isSelected ? Theme.MintTintBrush : Theme.SurfaceBrush;
-            option.Border = isSelected ? Theme.MintLineBrush : Theme.LineBrush;
+            selectionMark.Visible = isSelected;
+            optionButton.Background = isSelected ? Theme.MintTintBrush : Theme.SurfaceBrush;
+            optionButton.Border = isSelected ? Theme.MintLineBrush : Theme.LineBrush;
         }
 
         private void SpanishOptionOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            _languagePreference.Change(LanguagePreference.Available[0]);
-            UpdateMarks();
+            _languagePreference.Change(LanguagePreference.Spanish);
+            UpdateSelectionMarks();
         }
 
         private void EnglishOptionOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            _languagePreference.Change(LanguagePreference.Available[1]);
-            UpdateMarks();
+            _languagePreference.Change(LanguagePreference.English);
+            UpdateSelectionMarks();
         }
 
         private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)

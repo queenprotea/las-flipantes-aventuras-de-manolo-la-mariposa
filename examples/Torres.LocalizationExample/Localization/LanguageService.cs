@@ -5,77 +5,76 @@ using System.IO;
 
 namespace Torres.LocalizationExample.Localization
 {
-    /// <summary>
-    /// Idioma de la interfaz del cliente. Sustituye a la línea
-    /// Thread.CurrentThread.CurrentUICulture = ... del App.xaml.cs de WPF.
-    /// La preferencia es del equipo, no de la cuenta (CU-05, POST-2): se guarda en un
-    /// archivo local y nunca viaja al servidor.
-    /// </summary>
     public sealed class LanguageService
     {
         private const string PreferenceFileName = "language.txt";
+        private const string PreferenceFolderName = "Torres";
+        private const string SpanishCultureCode = "es";
+        private const string SpanishNativeName = "Español";
+        private const string EnglishCultureCode = "en";
+        private const string EnglishNativeName = "English";
 
-        // El nombre de cada idioma se muestra siempre en su propio idioma ("Español", "English"),
-        // por eso no vive en los .resx.
-        public static readonly IReadOnlyList<LanguageOption> Available = new[]
-        {
-            new LanguageOption("es", "Español"),
-            new LanguageOption("en", "English"),
-        };
-
-        private readonly string preferencePath;
+        private readonly string _preferenceFolder;
+        private readonly string _preferencePath;
 
         public LanguageService()
         {
-            string folder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Torres");
-            preferencePath = Path.Combine(folder, PreferenceFileName);
+            string applicationDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            _preferenceFolder = Path.Combine(applicationDataFolder, PreferenceFolderName);
+            _preferencePath = Path.Combine(_preferenceFolder, PreferenceFileName);
         }
 
-        public LanguageOption Current { get; private set; } = Available[0];
+        public static IReadOnlyList<LanguageOption> AvailableLanguages { get; } = new[]
+        {
+            new LanguageOption(SpanishCultureCode, SpanishNativeName),
+            new LanguageOption(EnglishCultureCode, EnglishNativeName),
+        };
+
+        public LanguageOption CurrentLanguage { get; private set; } = AvailableLanguages[0];
 
         public void LoadSavedPreference()
         {
-            string code = Available[0].CultureCode;
-            if (File.Exists(preferencePath))
+            string savedCultureCode = AvailableLanguages[0].CultureCode;
+            if (File.Exists(_preferencePath))
             {
-                code = File.ReadAllText(preferencePath).Trim();
+                savedCultureCode = File.ReadAllText(_preferencePath).Trim();
             }
 
-            Apply(Find(code) ?? Available[0]);
+            LanguageOption savedLanguage = FindByCultureCode(savedCultureCode) ?? AvailableLanguages[0];
+            ApplyCulture(savedLanguage);
         }
 
-        /// <returns>false si el idioma ya estaba en uso (CU-05, FA02).</returns>
         public bool Change(LanguageOption language)
         {
-            if (language.CultureCode == Current.CultureCode)
+            ArgumentNullException.ThrowIfNull(language);
+
+            if (language.CultureCode == CurrentLanguage.CultureCode)
             {
                 return false;
             }
 
-            Apply(language);
-            Directory.CreateDirectory(Path.GetDirectoryName(preferencePath)!);
-            File.WriteAllText(preferencePath, language.CultureCode);
+            ApplyCulture(language);
+            Directory.CreateDirectory(_preferenceFolder);
+            File.WriteAllText(_preferencePath, language.CultureCode);
+
             return true;
         }
 
-        private void Apply(LanguageOption language)
+        private void ApplyCulture(LanguageOption language)
         {
-            var culture = CultureInfo.GetCultureInfo(language.CultureCode);
-
-            // Hilo actual y también los que crean las continuaciones async de WCF.
-            CultureInfo.CurrentUICulture = culture;
-            CultureInfo.DefaultThreadCurrentUICulture = culture;
-            Current = language;
+            CultureInfo uiCulture = CultureInfo.GetCultureInfo(language.CultureCode);
+            CultureInfo.CurrentUICulture = uiCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
+            CurrentLanguage = language;
         }
 
-        private static LanguageOption? Find(string cultureCode)
+        private static LanguageOption? FindByCultureCode(string cultureCode)
         {
-            foreach (LanguageOption option in Available)
+            foreach (LanguageOption availableLanguage in AvailableLanguages)
             {
-                if (option.CultureCode == cultureCode)
+                if (availableLanguage.CultureCode == cultureCode)
                 {
-                    return option;
+                    return availableLanguage;
                 }
             }
 
