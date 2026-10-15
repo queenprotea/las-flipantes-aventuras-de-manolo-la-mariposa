@@ -1,3 +1,5 @@
+using System;
+
 namespace Game.Persistence
 {
     public sealed class PlayerRanking
@@ -11,5 +13,9 @@ namespace Game.Persistence
         public long Wins { get; set; }
 
         public long TotalScore { get; set; }
+
+        public int BestScore { get; set; }
+
+        public DateTime LastMatchAt { get; set; }
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Game.Services
+namespace Torres.ArchitectureSpike.Server
 {
     public sealed class ServerSettings
     {

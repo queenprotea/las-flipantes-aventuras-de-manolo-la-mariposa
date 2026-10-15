@@ -8,6 +8,7 @@ using DotNetEnv;
 
 using Game.Contracts;
 using Game.Persistence;
+using Game.Server;
 using Game.Services;
 
 using log4net;
@@ -17,7 +18,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 const string LogConfigurationFile = "log4net.config";
-const string HostLoggerName = "Game.Services.Host";
+const string HostLoggerName = "Game.Server.Host";
 const string ServerListeningMessage = "Server listening on net.tcp port {0}";
 
 Env.TraversePath().Load();

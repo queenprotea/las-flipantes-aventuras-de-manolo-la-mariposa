@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Game.Match</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Game.Domain\Game.Domain.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Game.Persistence\Game.Persistence.csproj" />
+    <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

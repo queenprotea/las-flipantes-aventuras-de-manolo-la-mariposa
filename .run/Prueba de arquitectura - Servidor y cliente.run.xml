@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Prueba de arquitectura - Servidor y cliente" type="CompoundRunConfigurationType">
+    <toRun name="Prueba de arquitectura - Servidor" type="DotNetProject" />
+    <toRun name="Prueba de arquitectura - Cliente" type="DotNetProject" />
+    <method v="2" />
+  </configuration>
+</component>
