@@ -232,8 +232,9 @@ Ejemplo: recuperar la contraseña (CU-03), que se usa sin estar identificado.
 1. **`Game.Contracts`:** en la carpeta de su área (aquí `Account/`), añade el método al contrato (`IAccountService`) con
    `[OperationContract(Name = "…")]` y devolviendo `Task<…>`. Si el resultado tiene varios casos,
    crea un enumerado `[DataContract]` con `[EnumMember]`. **Nunca un texto.**
-2. **`Game.Persistence`:** si necesita datos nuevos, entidad + mapeo en `TorresDbContext` +
-   repositorio (§7.3).
+2. **`Game.Persistence`:** si necesita datos que todavía no se leen, un método nuevo en el
+   repositorio de esa entidad, o un repositorio nuevo en `Repositories/`. Las 16 entidades del
+   esquema ya están mapeadas (§7.3).
 3. **`Game.Services`:** impleméntalo en la clase del servicio. Valida los argumentos, llama al
    repositorio, captura `NpgsqlException` y devuelve el código correspondiente.
 4. **`Game.Server`:** si es un **servicio nuevo**, registra la clase y su repositorio en
