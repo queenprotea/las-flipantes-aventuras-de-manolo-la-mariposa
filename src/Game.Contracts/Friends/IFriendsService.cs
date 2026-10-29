@@ -7,10 +7,10 @@ namespace Game.Contracts
     public interface IFriendsService
     {
         [OperationContract(Name = "GetFriendsOverview")]
-        Task<FriendsOverviewContract> GetFriendsOverviewAsync();
+        Task<FriendsOverviewResponse> GetFriendsOverviewAsync();
 
         [OperationContract(Name = "FindPlayerByUsername")]
-        Task<PlayerSearchContract> FindPlayerByUsernameAsync(string username);
+        Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username);
 
         [OperationContract(Name = "SendFriendRequest")]
         Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId);

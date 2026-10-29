@@ -12,6 +12,15 @@ namespace Game.Contracts
         AlreadyInRoom,
 
         [EnumMember]
+        Banned,
+
+        [EnumMember]
+        InvalidVisibility,
+
+        [EnumMember]
+        NotIdentified,
+
+        [EnumMember]
         DatabaseUnavailable,
     }
 }

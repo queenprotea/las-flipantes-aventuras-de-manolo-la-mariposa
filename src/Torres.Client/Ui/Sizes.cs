@@ -35,6 +35,7 @@ namespace Torres.Client.Ui
         internal const int ResumeIconSize = 62;
         internal const int MatchInProgressWidth = 430;
         internal const int DialogWidth = 330;
+        internal const int SeatSwatchSize = 16;
 
         internal const int MenuListWidth = 268;
         internal const int LargeAvatarSize = 92;

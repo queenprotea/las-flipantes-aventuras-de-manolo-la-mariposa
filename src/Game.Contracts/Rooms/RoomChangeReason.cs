@@ -25,5 +25,14 @@ namespace Game.Contracts
 
         [EnumMember]
         MatchStarted,
+
+        [EnumMember]
+        MemberWentInactive,
+
+        [EnumMember]
+        MemberReturned,
+
+        [EnumMember]
+        MemberTimedOut,
     }
 }

@@ -33,12 +33,15 @@ namespace Game.Services
             new Regex(PasswordFormat);
 
         private readonly PlayerRepository _playerRepository;
+        private readonly SessionTokenIssuer _sessionTokenIssuer;
 
-        public AccountService(PlayerRepository playerRepository)
+        public AccountService(PlayerRepository playerRepository, SessionTokenIssuer sessionTokenIssuer)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
+            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
 
             _playerRepository = playerRepository;
+            _sessionTokenIssuer = sessionTokenIssuer;
         }
 
         public async Task<RegistrationResult> RegisterAsync(string username, string email, string password)
@@ -124,7 +127,7 @@ namespace Game.Services
             return loginResult;
         }
 
-        private static LoginResult VerifyCredentials(Player? player, string password)
+        private LoginResult VerifyCredentials(Player? player, string password)
         {
             if ((player is null) || !BCrypt.Net.BCrypt.Verify(password, player.PasswordHash))
             {
@@ -142,6 +145,7 @@ namespace Game.Services
                     Username = player.Username,
                     Email = player.Email,
                 },
+                SessionToken = _sessionTokenIssuer.Issue(player.PlayerId, player.Username),
             };
 
             return loggedInResult;

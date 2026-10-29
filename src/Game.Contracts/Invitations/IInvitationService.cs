@@ -7,19 +7,19 @@ namespace Game.Contracts
     public interface IInvitationService
     {
         [OperationContract(Name = "GetPendingInvitations")]
-        Task<PendingInvitationsContract> GetPendingInvitationsAsync();
+        Task<PendingInvitationsResponse> GetPendingInvitationsAsync();
 
         [OperationContract(Name = "SendInvitation")]
         Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId);
 
         [OperationContract(Name = "RespondInvitation")]
-        Task<RespondInvitationResponseContract> RespondInvitationAsync(int invitationId, bool accept);
+        Task<RespondInvitationResult> RespondInvitationAsync(int invitationId, bool accept);
     }
     
     [ServiceContract]
     public interface IInvitationCallback
     {
         [OperationContract(Name = "OnRoomInvitationReceived", IsOneWay = true)]
-        void OnRoomInvitationReceived(RoomInvitationContract invitation);
+        void OnRoomInvitationReceived(RoomInvitation invitation);
     }
 }

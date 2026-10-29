@@ -40,6 +40,11 @@ namespace Torres.Client.Ui
         internal static Color BlushTint { get; } = new Color(0xFB, 0xEA, 0xE8);
         internal static Color BlushInk { get; } = new Color(0x8E, 0x4B, 0x47);
 
+        internal static Color SeatGreen { get; } = new Color(0x5F, 0xB3, 0x7F);
+        internal static Color SeatBlue { get; } = new Color(0x5E, 0x9B, 0xD6);
+        internal static Color SeatRed { get; } = new Color(0xD9, 0x5F, 0x5F);
+        internal static Color SeatYellow { get; } = new Color(0xE8, 0xC1, 0x3E);
+
         internal static IBrush SurfaceBrush { get; } = new SolidBrush(Surface);
         internal static IBrush SurfaceAltBrush { get; } = new SolidBrush(SurfaceAlt);
         internal static IBrush SurfaceSunkenBrush { get; } = new SolidBrush(SurfaceSunken);
@@ -59,5 +64,9 @@ namespace Torres.Client.Ui
         internal static IBrush SkyTintBrush { get; } = new SolidBrush(SkyTint);
         internal static IBrush BlushBrush { get; } = new SolidBrush(Blush);
         internal static IBrush BlushTintBrush { get; } = new SolidBrush(BlushTint);
+        internal static IBrush SeatGreenBrush { get; } = new SolidBrush(SeatGreen);
+        internal static IBrush SeatBlueBrush { get; } = new SolidBrush(SeatBlue);
+        internal static IBrush SeatRedBrush { get; } = new SolidBrush(SeatRed);
+        internal static IBrush SeatYellowBrush { get; } = new SolidBrush(SeatYellow);
     }
 }

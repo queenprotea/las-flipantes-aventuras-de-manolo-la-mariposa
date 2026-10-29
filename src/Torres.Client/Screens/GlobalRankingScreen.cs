@@ -41,8 +41,8 @@ namespace Torres.Client.Screens
         private readonly VerticalStackPanel _failureNotice;
 
         private IRankingService? _rankingChannel;
-        private Task<GlobalRankingResponseContract>? _rankingRequest;
-        private List<RankingEntryContract>? _rankingEntries;
+        private Task<GlobalRankingResponse>? _rankingRequest;
+        private List<RankingEntry>? _rankingEntries;
 
         internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory, PlayerSession session)
             : base(TextKeys.GlobalRanking.HeaderLabel, true)
@@ -89,16 +89,16 @@ namespace Torres.Client.Screens
             return pagePanel;
         }
 
-        private Task<GlobalRankingResponseContract> StartRankingRequestAsync()
+        private Task<GlobalRankingResponse> StartRankingRequestAsync()
         {
             _rankingChannel = _rankingChannelFactory.CreateChannel();
 
-            Task<GlobalRankingResponseContract> rankingRequest = _rankingChannel.GetGlobalRankingAsync();
+            Task<GlobalRankingResponse> rankingRequest = _rankingChannel.GetGlobalRankingAsync();
 
             return rankingRequest;
         }
 
-        private void ShowRanking(GlobalRankingResponseContract response)
+        private void ShowRanking(GlobalRankingResponse response)
         {
             if (_rankingChannel is ICommunicationObject completedChannel)
             {
@@ -119,7 +119,7 @@ namespace Torres.Client.Screens
             _failureNotice.Visible = true;
         }
 
-        private void RenderEntries(List<RankingEntryContract> entries)
+        private void RenderEntries(List<RankingEntry> entries)
         {
             _contentPlaceholder.Widgets.Clear();
 
@@ -167,7 +167,7 @@ namespace Torres.Client.Screens
             return failureNotice;
         }
 
-        private Grid BuildTable(List<RankingEntryContract> entries)
+        private Grid BuildTable(List<RankingEntry> entries)
         {
             var rankingGrid = new Grid
             {
@@ -210,7 +210,7 @@ namespace Torres.Client.Screens
             rankingGrid.Widgets.Add(dividerPanel);
         }
 
-        private void AddEntryRow(Grid rankingGrid, int entryIndex, RankingEntryContract entry)
+        private void AddEntryRow(Grid rankingGrid, int entryIndex, RankingEntry entry)
         {
             int rowIndex = FirstEntryRowIndex + entryIndex;
             int rank = entryIndex + 1;
@@ -221,7 +221,7 @@ namespace Torres.Client.Screens
             AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexMatches), CreateNumericCell(entry.Matches));
         }
 
-        private Widget CreatePlayerCell(RankingEntryContract entry)
+        private Widget CreatePlayerCell(RankingEntry entry)
         {
             if (!IsCurrentPlayer(entry))
             {
@@ -236,7 +236,7 @@ namespace Torres.Client.Screens
             return cellPanel;
         }
 
-        private bool IsCurrentPlayer(RankingEntryContract entry)
+        private bool IsCurrentPlayer(RankingEntry entry)
         {
             bool isCurrentPlayer = (_session.Player is PlayerIdentity player)
                 && string.Equals(player.Username, entry.PlayerName, StringComparison.Ordinal);

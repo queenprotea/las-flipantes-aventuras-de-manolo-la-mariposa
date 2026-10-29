@@ -17,6 +17,7 @@ namespace Torres.Client.Screens
     internal sealed class LoginScreen : Screen
     {
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
+        private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _session;
         private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Login.UsernameLabel, false);
         private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Login.PasswordLabel, true);
@@ -25,18 +26,33 @@ namespace Torres.Client.Screens
 
         private IAccountService? _accountChannel;
         private Task<LoginResult>? _loginRequest;
+        private Task<OpenSessionResult>? _sessionOpening;
+        private PlayerIdentity? _loggedInPlayer;
 
-        internal LoginScreen(ChannelFactory<IAccountService> accountChannelFactory, PlayerSession session)
+        internal LoginScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.Login.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(accountChannelFactory);
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
             ArgumentNullException.ThrowIfNull(session);
 
             _accountChannelFactory = accountChannelFactory;
+            _gameSessionConnection = gameSessionConnection;
             _session = session;
         }
 
         internal override void Update(GameTime gameTime)
+        {
+            FollowLogin();
+            FollowSessionOpening();
+        }
+
+        internal void ShowNotice(string textKey)
+        {
+            ShowError(textKey);
+        }
+
+        private void FollowLogin()
         {
             if ((_loginRequest is null) || !_loginRequest.IsCompleted)
             {
@@ -45,9 +61,33 @@ namespace Torres.Client.Screens
 
             Task<LoginResult> completedLogin = _loginRequest;
             _loginRequest = null;
-            _logInButton.Enabled = true;
             AbortChannel();
             ShowOutcome(completedLogin);
+        }
+
+        private void FollowSessionOpening()
+        {
+            if ((_sessionOpening is null) || !_sessionOpening.IsCompleted)
+            {
+                return;
+            }
+
+            Task<OpenSessionResult> completedOpening = _sessionOpening;
+            PlayerIdentity? loggedInPlayer = _loggedInPlayer;
+            _sessionOpening = null;
+            _loggedInPlayer = null;
+            _logInButton.Enabled = true;
+            bool isSessionOpen = completedOpening.IsCompletedSuccessfully
+                && (completedOpening.Result.Status == OpenSessionStatus.SessionOpened);
+            if (isSessionOpen && (loggedInPlayer is not null))
+            {
+                EnterAs(loggedInPlayer, completedOpening.Result);
+            }
+            else
+            {
+                _gameSessionConnection.Abandon();
+                ShowError(TextKeys.Common.ServerErrorTitle);
+            }
         }
 
         protected override Widget Build()
@@ -119,6 +159,7 @@ namespace Torres.Client.Screens
         {
             if (!completedLogin.IsCompletedSuccessfully)
             {
+                _logInButton.Enabled = true;
                 ShowError(TextKeys.Common.ServerErrorTitle);
                 return;
             }
@@ -127,14 +168,16 @@ namespace Torres.Client.Screens
             switch (loginResult.Status)
             {
                 case LoginStatus.LoggedIn:
-                    EnterAs(loginResult.Player);
+                    OpenSession(loginResult);
                     break;
 
                 case LoginStatus.InvalidCredentials:
+                    _logInButton.Enabled = true;
                     ShowError(TextKeys.Login.InvalidCredentials);
                     break;
 
                 case LoginStatus.DatabaseUnavailable:
+                    _logInButton.Enabled = true;
                     ShowError(TextKeys.Common.ServerErrorTitle);
                     break;
 
@@ -143,17 +186,33 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void EnterAs(PlayerIdentity? player)
+        private void OpenSession(LoginResult loginResult)
         {
-            if (player is null)
+            if ((loginResult.Player is null) || string.IsNullOrEmpty(loginResult.SessionToken))
             {
+                _logInButton.Enabled = true;
                 ShowError(TextKeys.Common.ServerErrorTitle);
                 return;
             }
 
+            _loggedInPlayer = loginResult.Player;
+            _sessionOpening = _gameSessionConnection.OpenAsync(loginResult.SessionToken);
+        }
+
+        private void EnterAs(PlayerIdentity player, OpenSessionResult opening)
+        {
+            _gameSessionConnection.Start(opening);
             _session.Start(player);
             _passwordField.Box.Text = string.Empty;
-            RequestedScreen = ScreenId.MainMenu;
+            if (opening.CurrentRoom is null)
+            {
+                RequestedScreen = ScreenId.MainMenu;
+            }
+            else
+            {
+                _session.EnterRoom(opening.CurrentRoom);
+                RequestedScreen = ScreenId.Room;
+            }
         }
 
         private void ShowError(string textKey)

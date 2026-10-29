@@ -18,6 +18,7 @@ namespace Torres.Client.Screens
         private LocalizedButton? _friendsButton;
         private LocalizedButton? _invitationsButton;
         private LocalizedButton? _historyButton;
+        private NoticeBox? _noticeBox;
 
         internal MainMenuScreen(LanguagePreference languagePreference)
             : base(TextKeys.MainMenu.HeaderLabel, true)
@@ -28,6 +29,16 @@ namespace Torres.Client.Screens
         }
 
         internal bool WasExitRequested { get; private set; }
+
+        internal override void Open()
+        {
+            _noticeBox?.Hide();
+        }
+
+        internal void ShowNotice(string titleKey, string bodyKey, object[]? bodyArguments)
+        {
+            _noticeBox?.ShowMessage(titleKey, bodyKey, bodyArguments);
+        }
 
         internal void FollowLanguage()
         {
@@ -89,6 +100,8 @@ namespace Torres.Client.Screens
                 Width = Sizes.MenuListWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
+            _noticeBox = new NoticeBox();
+            menuList.Widgets.Add(_noticeBox);
 
             _invitationsButton = CreateMenuItem(TextKeys.MainMenu.InvitationsButton, true);
             _invitationsButton.Click += InvitationsButtonOnClick;

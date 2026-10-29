@@ -13,6 +13,8 @@ namespace Torres.Client.Screens
     {
         private readonly LocalizedLabel _headerLabel = new LocalizedLabel(TextKeys.MainMenu.HeaderLabel);
         private readonly Label _usernameLabel = new Label();
+        private readonly Label _connectionDot = new Label();
+        private readonly LocalizedLabel _connectionLabel = new LocalizedLabel(TextKeys.Common.OfflineStatus);
         private readonly PlayerSession _session;
         private readonly LocalizedButton _logInButton;
         private readonly HorizontalStackPanel _accountSummary;
@@ -75,6 +77,8 @@ namespace Torres.Client.Screens
             _logInButton.Visible = !_session.IsLoggedIn;
             _accountSummary.Visible = _session.IsLoggedIn;
             _usernameLabel.Text = _session.Player?.Username ?? string.Empty;
+            _connectionDot.TextColor = _session.IsLoggedIn ? Theme.MintLine : Theme.Blush;
+            _connectionLabel.TextKey = _session.IsLoggedIn ? TextKeys.Common.ConnectedStatus : TextKeys.Common.OfflineStatus;
         }
 
         private VerticalStackPanel BuildLogo()
@@ -190,19 +194,14 @@ namespace Torres.Client.Screens
                 Spacing = Metrics.FieldLabelSpacing,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            connectionStatus.Widgets.Add(new Label
-            {
-                Text = DisplaySymbols.ConnectionDot,
-                Font = Fonts.Label,
-                TextColor = Theme.Blush,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            connectionStatus.Widgets.Add(new LocalizedLabel(TextKeys.Common.OfflineStatus)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
+            _connectionDot.Text = DisplaySymbols.ConnectionDot;
+            _connectionDot.Font = Fonts.Label;
+            _connectionDot.VerticalAlignment = VerticalAlignment.Center;
+            connectionStatus.Widgets.Add(_connectionDot);
+            _connectionLabel.Font = Fonts.Label;
+            _connectionLabel.TextColor = Theme.MutedInk;
+            _connectionLabel.VerticalAlignment = VerticalAlignment.Center;
+            connectionStatus.Widgets.Add(_connectionLabel);
 
             return connectionStatus;
         }

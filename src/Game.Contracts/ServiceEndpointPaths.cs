@@ -5,5 +5,6 @@ namespace Game.Contracts
         public const string ServerStatus = "/status";
         public const string Account = "/account";
         public const string Ranking = "/ranking";
+        public const string GameSession = "/GameSession";
     }
 }

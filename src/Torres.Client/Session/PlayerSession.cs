@@ -8,6 +8,8 @@ namespace Torres.Client.Session
     {
         internal PlayerIdentity? Player { get; private set; }
 
+        internal Room? CurrentRoom { get; private set; }
+
         internal bool IsLoggedIn => Player is not null;
 
         internal void Start(PlayerIdentity player)
@@ -15,6 +17,24 @@ namespace Torres.Client.Session
             ArgumentNullException.ThrowIfNull(player);
 
             Player = player;
+        }
+
+        internal void EnterRoom(Room room)
+        {
+            ArgumentNullException.ThrowIfNull(room);
+
+            CurrentRoom = room;
+        }
+
+        internal void LeaveRoom()
+        {
+            CurrentRoom = null;
+        }
+
+        internal void End()
+        {
+            Player = null;
+            CurrentRoom = null;
         }
     }
 }

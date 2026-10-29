@@ -3,27 +3,12 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     [DataContract]
-    public enum RespondInvitationResult
+    public sealed class RespondInvitationResult
     {
-        [EnumMember]
-        Accepted,
+        [DataMember]
+        public RespondInvitationStatus Status { get; set; }
 
-        [EnumMember]
-        Rejected,
-
-        [EnumMember]
-        InvitationNoLongerExists,
-
-        [EnumMember]
-        RoomFull,
-
-        [EnumMember]
-        RoomInMatch,
-
-        [EnumMember]
-        AlreadyInRoom,
-
-        [EnumMember]
-        DatabaseUnavailable,
+        [DataMember]
+        public Room? Room { get; set; }
     }
 }

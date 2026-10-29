@@ -7,9 +7,9 @@ namespace Game.Contracts
     public interface IHistoryService
     {
         [OperationContract(Name = "GetMatchHistory")]
-        Task<MatchHistoryResponseContract> GetMatchHistoryAsync();
+        Task<MatchHistoryResponse> GetMatchHistoryAsync();
 
         [OperationContract(Name = "GetMatchDetail")]
-        Task<MatchDetailContract> GetMatchDetailAsync(int matchId);
+        Task<MatchDetailResponse> GetMatchDetailAsync(int matchId);
     }
 }

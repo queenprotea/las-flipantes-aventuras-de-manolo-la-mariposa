@@ -37,6 +37,14 @@ namespace Torres.Client.Ui
             return formattedValue;
         }
 
+        internal static string FormatRemainingTime(TimeSpan remainingTime)
+        {
+            TimeSpan shownTime = remainingTime < TimeSpan.Zero ? TimeSpan.Zero : remainingTime;
+            string remainingText = LocalizedText.Format(TextKeys.Common.RemainingTime, (int)shownTime.TotalHours, shownTime.Minutes);
+
+            return remainingText;
+        }
+
         internal static string FormatDate(DateTime dateValue, string datePattern)
         {
             string formattedDate = dateValue.ToString(datePattern, CultureInfo.CurrentCulture);

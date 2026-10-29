@@ -31,7 +31,7 @@ namespace Game.Services
             _rankingRepository = rankingRepository;
         }
 
-        public async Task<GlobalRankingResponseContract> GetGlobalRankingAsync()
+        public async Task<GlobalRankingResponse> GetGlobalRankingAsync()
         {
             List<PlayerRanking> rankings;
             try
@@ -44,15 +44,15 @@ namespace Game.Services
                 throw new FaultException(RankingUnavailableReason);
             }
 
-            List<RankingEntryContract> entries = rankings.Select(ToContract).ToList();
-            var response = new GlobalRankingResponseContract { Entries = entries };
+            List<RankingEntry> entries = rankings.Select(ToContract).ToList();
+            var response = new GlobalRankingResponse { Entries = entries };
 
             return response;
         }
 
-        private static RankingEntryContract ToContract(PlayerRanking ranking)
+        private static RankingEntry ToContract(PlayerRanking ranking)
         {
-            var entry = new RankingEntryContract
+            var entry = new RankingEntry
             {
                 PlayerName = ranking.Username,
                 Wins = (int)ranking.Wins,

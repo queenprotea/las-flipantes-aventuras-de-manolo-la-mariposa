@@ -112,6 +112,9 @@
   <data name="Common.RankPosition" xml:space="preserve">
     <value>{0}.°</value>
   </data>
+  <data name="Common.RemainingTime" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Conectando…</value>
   </data>
@@ -195,6 +198,9 @@
   </data>
   <data name="Login.PlayAsGuestLink" xml:space="preserve">
     <value>Jugar como invitado</value>
+  </data>
+  <data name="Login.SignedInElsewhere" xml:space="preserve">
+    <value>Tu cuenta inició sesión en otro equipo, así que esta sesión se cerró.</value>
   </data>
   <data name="Register.HeaderLabel" xml:space="preserve">
     <value>crear cuenta</value>
@@ -442,6 +448,9 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>La búsqueda es exacta: revisa cómo se escribe.</value>
   </data>
+  <data name="Friends.InviteToRoomButton" xml:space="preserve">
+    <value>Invitar a Sala</value>
+  </data>
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitaciones</value>
   </data>
@@ -565,6 +574,9 @@
   <data name="GlobalRanking.MatchesColumn" xml:space="preserve">
     <value>Partidas</value>
   </data>
+  <data name="GlobalRanking.LoadingLabel" xml:space="preserve">
+    <value>Cargando ranking...</value>
+  </data>
   <data name="Rooms.HeaderLabel" xml:space="preserve">
     <value>salas</value>
   </data>
@@ -587,7 +599,10 @@
     <value>Actualizar</value>
   </data>
   <data name="Rooms.OccupancyBadge" xml:space="preserve">
-    <value>{0}/4</value>
+    <value>{0}/{1}</value>
+  </data>
+  <data name="Rooms.HostLabel" xml:space="preserve">
+    <value>Anfitrión: {0}</value>
   </data>
   <data name="Rooms.JoinButton" xml:space="preserve">
     <value>Unirse</value>
@@ -603,6 +618,12 @@
   </data>
   <data name="Rooms.PrivateRoomsHint" xml:space="preserve">
     <value>Las salas privadas no aparecen aquí: se entra a ellas con su código o aceptando una invitación.</value>
+  </data>
+  <data name="Rooms.RoomInMatchError" xml:space="preserve">
+    <value>Esa sala está jugando una partida y no admite a nadie más.</value>
+  </data>
+  <data name="Rooms.AlreadyInRoomError" xml:space="preserve">
+    <value>Ya estás dentro de otra sala.</value>
   </data>
   <data name="CreateRoom.HeaderLabel" xml:space="preserve">
     <value>crear sala</value>
@@ -656,7 +677,7 @@
     <value>Jugadores</value>
   </data>
   <data name="Room.OccupancyLabel" xml:space="preserve">
-    <value>{0} de 4</value>
+    <value>{0} de {1}</value>
   </data>
   <data name="Room.ActiveCountLabel" xml:space="preserve">
     <value>{0} activos</value>
@@ -746,13 +767,16 @@
     <value>Te han sacado de la sala</value>
   </data>
   <data name="Alerts.RemovedFromRoomBody" xml:space="preserve">
-    <value>El anfitrión te ha expulsado de la sala {0}.</value>
+    <value>El anfitrión te ha expulsado de la sala.</value>
   </data>
   <data name="Alerts.SuspensionTitle" xml:space="preserve">
     <value>No puedes entrar a salas</value>
   </data>
   <data name="Alerts.SuspensionBody" xml:space="preserve">
     <value>Tienes una prohibición temporal por mensajes reportados. Podrás volver a jugar dentro de {0}.</value>
+  </data>
+  <data name="Alerts.PermanentBanBody" xml:space="preserve">
+    <value>Tu cuenta tiene una prohibición permanente por mensajes reportados.</value>
   </data>
   <data name="Alerts.RemoveFriendTitle" xml:space="preserve">
     <value>Eliminar amigo</value>
@@ -954,11 +978,5 @@
   </data>
   <data name="MatchInProgress.AbandonHint" xml:space="preserve">
     <value>Si la abandonas, tus orugas salen del jardín y tus flores se quedan.</value>
-  </data>
-  <data name="GlobalRanking.LoadingLabel" xml:space="preserve">
-    <value>Cargando ranking...</value>
-  </data>
-  <data name="Friends.InviteToRoomButton" xml:space="preserve">
-    <value>Invitar a Sala</value>
   </data>
 </root>

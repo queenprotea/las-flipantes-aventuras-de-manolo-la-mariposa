@@ -28,6 +28,7 @@ namespace Torres.Client.Localization
             internal const string WithdrewTag = "Common.WithdrewTag";
             internal const string RequiredField = "Common.RequiredField";
             internal const string RankPosition = "Common.RankPosition";
+            internal const string RemainingTime = "Common.RemainingTime";
         }
 
         internal static class Startup
@@ -72,6 +73,7 @@ namespace Torres.Client.Localization
             internal const string CreateAccountButton = "Login.CreateAccountButton";
             internal const string ForgotAccessLink = "Login.ForgotAccessLink";
             internal const string PlayAsGuestLink = "Login.PlayAsGuestLink";
+            internal const string SignedInElsewhere = "Login.SignedInElsewhere";
         }
 
         internal static class Register
@@ -233,7 +235,6 @@ namespace Torres.Client.Localization
         internal static class GlobalRanking
         {
             internal const string HeaderLabel = "GlobalRanking.HeaderLabel";
-            internal const string LoadingLabel = "GlobalRanking.LoadingLabel";
             internal const string EmptyStateTitle = "GlobalRanking.EmptyStateTitle";
             internal const string EmptyStateHint = "GlobalRanking.EmptyStateHint";
             internal const string RowNumberColumn = "GlobalRanking.RowNumberColumn";
@@ -241,6 +242,7 @@ namespace Torres.Client.Localization
             internal const string WinsColumn = "GlobalRanking.WinsColumn";
             internal const string PointsColumn = "GlobalRanking.PointsColumn";
             internal const string MatchesColumn = "GlobalRanking.MatchesColumn";
+            internal const string LoadingLabel = "GlobalRanking.LoadingLabel";
         }
 
         internal static class Rooms
@@ -253,11 +255,14 @@ namespace Torres.Client.Localization
             internal const string PublicOnlyBadge = "Rooms.PublicOnlyBadge";
             internal const string RefreshButton = "Rooms.RefreshButton";
             internal const string OccupancyBadge = "Rooms.OccupancyBadge";
+            internal const string HostLabel = "Rooms.HostLabel";
             internal const string JoinButton = "Rooms.JoinButton";
             internal const string FullButton = "Rooms.FullButton";
             internal const string EmptyStateTitle = "Rooms.EmptyStateTitle";
             internal const string EmptyStateHint = "Rooms.EmptyStateHint";
             internal const string PrivateRoomsHint = "Rooms.PrivateRoomsHint";
+            internal const string RoomInMatchError = "Rooms.RoomInMatchError";
+            internal const string AlreadyInRoomError = "Rooms.AlreadyInRoomError";
         }
 
         internal static class CreateRoom
@@ -324,6 +329,7 @@ namespace Torres.Client.Localization
             internal const string RemovedFromRoomBody = "Alerts.RemovedFromRoomBody";
             internal const string SuspensionTitle = "Alerts.SuspensionTitle";
             internal const string SuspensionBody = "Alerts.SuspensionBody";
+            internal const string PermanentBanBody = "Alerts.PermanentBanBody";
             internal const string RemoveFriendTitle = "Alerts.RemoveFriendTitle";
             internal const string RemoveFriendBody = "Alerts.RemoveFriendBody";
             internal const string ForfeitTitle = "Alerts.ForfeitTitle";

@@ -21,6 +21,12 @@ namespace Game.Contracts
         RoomInMatch,
 
         [EnumMember]
+        Banned,
+
+        [EnumMember]
+        NotIdentified,
+
+        [EnumMember]
         DatabaseUnavailable,
     }
 }

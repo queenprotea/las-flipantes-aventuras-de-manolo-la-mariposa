@@ -7,7 +7,7 @@ namespace Game.Contracts
     public interface IProfileService
     {
         [OperationContract(Name = "GetProfile")]
-        Task<ProfileContract> GetProfileAsync();
+        Task<ProfileResponse> GetProfileAsync();
 
         [OperationContract(Name = "CheckProfileUsernameAvailability")]
         Task<UsernameAvailability> CheckProfileUsernameAvailabilityAsync(string username);
@@ -16,6 +16,6 @@ namespace Game.Contracts
         Task<UpdateProfileResult> UpdateProfileAsync(string username, byte[]? avatarImage);
 
         [OperationContract(Name = "GetAvatar")]
-        Task<AvatarContract> GetAvatarAsync(string avatarReference);
+        Task<AvatarResponse> GetAvatarAsync(string avatarReference);
     }
 }

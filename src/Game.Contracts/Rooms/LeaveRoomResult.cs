@@ -10,8 +10,5 @@ namespace Game.Contracts
 
         [EnumMember]
         NotInRoom,
-
-        [EnumMember]
-        DatabaseUnavailable,
     }
 }

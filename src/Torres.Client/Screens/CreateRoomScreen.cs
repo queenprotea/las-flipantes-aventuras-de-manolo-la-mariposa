@@ -1,7 +1,15 @@
+using System;
+using System.Threading.Tasks;
+
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
+
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -12,12 +20,51 @@ namespace Torres.Client.Screens
         private const int OptionCardWidth = 200;
 
         private readonly VerticalStackPanel _visibilityOptionsPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly LocalizedButton _createButton = CreatePrimaryButton(TextKeys.CreateRoom.CreateRoomButton);
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _session;
 
         private bool _isPublic = true;
+        private Task<CreateRoomResult>? _creationRequest;
 
-        internal CreateRoomScreen()
+        internal CreateRoomScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.CreateRoom.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(session);
+
+            _gameSessionConnection = gameSessionConnection;
+            _session = session;
+        }
+
+        internal override void Open()
+        {
+            _noticeBox.Hide();
+            if (!_session.IsLoggedIn || !_gameSessionConnection.IsOpen)
+            {
+                RequestedScreen = ScreenId.Login;
+            }
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            if ((_creationRequest is null) || !_creationRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<CreateRoomResult> completedCreation = _creationRequest;
+            _creationRequest = null;
+            _createButton.Enabled = true;
+            if (completedCreation.IsCompletedSuccessfully)
+            {
+                ShowCreationOutcome(completedCreation.Result);
+            }
+            else
+            {
+                _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, null);
+            }
         }
 
         protected override Widget Build()
@@ -28,6 +75,7 @@ namespace Torres.Client.Screens
             card.Widgets.Add(_visibilityOptionsPlaceholder);
             RenderVisibilityOptions();
             card.Widgets.Add(CreateParagraph(TextKeys.CreateRoom.SharedRulesHint));
+            card.Widgets.Add(_noticeBox);
             card.Widgets.Add(BuildActionsRow());
 
             HorizontalStackPanel columns = CreateColumns();
@@ -93,9 +141,8 @@ namespace Torres.Client.Screens
         {
             HorizontalStackPanel actionsRow = CreateButtonRow();
 
-            LocalizedButton createButton = CreatePrimaryButton(TextKeys.CreateRoom.CreateRoomButton);
-            createButton.Click += CreateButtonOnClick;
-            actionsRow.Widgets.Add(createButton);
+            _createButton.Click += CreateButtonOnClick;
+            actionsRow.Widgets.Add(_createButton);
 
             LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackButton);
             backButton.Click += BackButtonOnClick;
@@ -114,9 +161,59 @@ namespace Torres.Client.Screens
             SelectVisibility(false);
         }
 
+        private void ShowCreationOutcome(CreateRoomResult creation)
+        {
+            switch (creation.Status)
+            {
+                case CreateRoomStatus.Created:
+                    EnterRoom(creation.Room);
+                    break;
+
+                case CreateRoomStatus.AlreadyInRoom:
+                    _noticeBox.ShowTitle(TextKeys.Rooms.AlreadyInRoomError);
+                    break;
+
+                case CreateRoomStatus.Banned:
+                    _noticeBox.ShowBan(creation.BanEndsAtUtc);
+                    break;
+
+                case CreateRoomStatus.NotIdentified:
+                    RequestedScreen = ScreenId.Login;
+                    break;
+
+                case CreateRoomStatus.InvalidVisibility:
+                case CreateRoomStatus.DatabaseUnavailable:
+                    _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, null);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(creation), creation.Status, null);
+            }
+        }
+
+        private void EnterRoom(Room? createdRoom)
+        {
+            if (createdRoom is null)
+            {
+                _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, null);
+                return;
+            }
+
+            _session.EnterRoom(createdRoom);
+            RequestedScreen = ScreenId.Room;
+        }
+
         private void CreateButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Room;
+            if (_creationRequest is not null)
+            {
+                return;
+            }
+
+            _noticeBox.Hide();
+            _createButton.Enabled = false;
+            RoomVisibility visibility = _isPublic ? RoomVisibility.Public : RoomVisibility.Private;
+            _creationRequest = _gameSessionConnection.CreateRoomAsync(visibility);
         }
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)

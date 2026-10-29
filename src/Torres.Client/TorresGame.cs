@@ -27,6 +27,7 @@ namespace Torres.Client
         private readonly Dictionary<ScreenId, Screen> _screensById = new Dictionary<ScreenId, Screen>();
         private readonly MainMenuScreen _mainMenuScreen;
         private readonly StartupScreen _startupScreen;
+        private readonly GameSessionConnection _gameSessionConnection;
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
@@ -34,6 +35,7 @@ namespace Torres.Client
         private Panel? _screenContainer;
         private Desktop? _desktop;
         private TopBarView? _topBarView;
+        private LoginScreen? _loginScreen;
         private ScreenId _openScreen = ScreenId.Startup;
         private string _appliedUiCultureName = string.Empty;
         private KeyboardState _previousKeyboardState;
@@ -60,6 +62,7 @@ namespace Torres.Client
                 new NetTcpBinding(SecurityMode.None),
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
 
+            _gameSessionConnection = new GameSessionConnection(clientSettings);
             _mainMenuScreen = new MainMenuScreen(_languagePreference);
             _startupScreen = new StartupScreen(_statusChannelFactory);
         }
@@ -103,19 +106,20 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Startup, _startupScreen);
             _screensById.Add(ScreenId.MainMenu, _mainMenuScreen);
             _screensById.Add(ScreenId.Language, new LanguageScreen(_languagePreference));
-            _screensById.Add(ScreenId.Login, new LoginScreen(_accountChannelFactory, _playerSession));
+            _loginScreen = new LoginScreen(_accountChannelFactory, _gameSessionConnection, _playerSession);
+            _screensById.Add(ScreenId.Login, _loginScreen);
             _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
             _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
             _screensById.Add(ScreenId.Profile, new ProfileScreen(_playerSession));
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
-            _screensById.Add(ScreenId.Rooms, new RoomsScreen());
+            _screensById.Add(ScreenId.Rooms, new RoomsScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.Match, new MatchScreen());
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
-            _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen());
+            _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.Friends, new FriendsScreen());
             _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen());
-            _screensById.Add(ScreenId.Room, new RoomScreen());
+            _screensById.Add(ScreenId.Room, new RoomScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
             _screensById.Add(ScreenId.History, new HistoryScreen());
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen());
@@ -130,6 +134,8 @@ namespace Torres.Client
 
         protected override void Update(GameTime gameTime)
         {
+            _gameSessionConnection.Update(gameTime);
+            FollowGameSession();
             Screen openScreen = _screensById[_openScreen];
             openScreen.Update(gameTime);
             Window.Title = LocalizedText.Get(TextKeys.Common.WindowTitle);
@@ -160,12 +166,67 @@ namespace Torres.Client
         {
             if (disposing)
             {
+                _gameSessionConnection.Close();
                 _statusChannelFactory.Abort();
                 _accountChannelFactory.Abort();
                 _rankingChannelFactory.Abort();
             }
 
             base.Dispose(disposing);
+        }
+
+        private void FollowGameSession()
+        {
+            string? endingNoticeKey = FindSessionEndingNotice();
+            if (endingNoticeKey is not null)
+            {
+                EndGameSession(endingNoticeKey);
+                return;
+            }
+
+            RoomChange? roomChange = _gameSessionConnection.TakeRoomChange();
+            while (roomChange is not null)
+            {
+                ApplyRoomChange(roomChange);
+                roomChange = _gameSessionConnection.TakeRoomChange();
+            }
+        }
+
+        private string? FindSessionEndingNotice()
+        {
+            string? endingNoticeKey = null;
+            if (_gameSessionConnection.TakeTerminationReason() is not null)
+            {
+                endingNoticeKey = TextKeys.Login.SignedInElsewhere;
+            }
+            else if (_gameSessionConnection.WasLost)
+            {
+                endingNoticeKey = TextKeys.Common.ServerErrorTitle;
+            }
+
+            return endingNoticeKey;
+        }
+
+        private void EndGameSession(string noticeKey)
+        {
+            _gameSessionConnection.Abandon();
+            _playerSession.End();
+            ShowScreen(ScreenId.Login);
+            _loginScreen?.ShowNotice(noticeKey);
+        }
+
+        private void ApplyRoomChange(RoomChange roomChange)
+        {
+            if (roomChange.Reason == RoomChangeReason.YouWereKicked)
+            {
+                _playerSession.LeaveRoom();
+                ShowScreen(ScreenId.MainMenu);
+                _mainMenuScreen.ShowNotice(TextKeys.Alerts.RemovedFromRoomTitle, TextKeys.Alerts.RemovedFromRoomBody, null);
+            }
+            else if (_playerSession.CurrentRoom is not null)
+            {
+                _playerSession.EnterRoom(roomChange.Room);
+            }
         }
 
         private void WindowOnTextInput(object? sender, TextInputEventArgs e)

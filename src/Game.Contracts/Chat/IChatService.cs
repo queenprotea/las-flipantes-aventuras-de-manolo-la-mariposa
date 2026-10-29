@@ -14,6 +14,6 @@ namespace Game.Contracts
     public interface IChatCallback
     {
         [OperationContract(Name = "OnChatMessage", IsOneWay = true)]
-        void OnChatMessage(ChatMessageContract message);
+        void OnChatMessage(ChatMessage message);
     }
 }

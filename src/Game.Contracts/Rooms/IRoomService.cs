@@ -3,25 +3,28 @@ using System.Threading.Tasks;
 
 namespace Game.Contracts
 {
-    [ServiceContract(CallbackContract = typeof(IRoomCallback))]
+    [ServiceContract(CallbackContract = typeof(IRoomNoticeReceiver))]
     public interface IRoomService
     {
-        [OperationContract(Name = "CreateRoom")]
-        Task<CreateRoomResponseContract> CreateRoomAsync();
+        [OperationContract(Name = "CreateRoom", IsInitiating = false)]
+        Task<CreateRoomResult> CreateRoomAsync(RoomVisibility visibility);
 
-        [OperationContract(Name = "GetRooms")]
-        Task<RoomListContract> GetRoomsAsync();
+        [OperationContract(Name = "GetRooms", IsInitiating = false)]
+        RoomListResponse GetRooms();
 
-        [OperationContract(Name = "JoinRoom")]
-        Task<JoinRoomResponseContract> JoinRoomAsync(int roomId);
+        [OperationContract(Name = "FindRoom", IsInitiating = false)]
+        RoomListResponse FindRoom(string roomCode);
 
-        [OperationContract(Name = "LeaveRoom")]
+        [OperationContract(Name = "JoinRoom", IsInitiating = false)]
+        Task<JoinRoomResult> JoinRoomAsync(int roomId);
+
+        [OperationContract(Name = "LeaveRoom", IsInitiating = false)]
         Task<LeaveRoomResult> LeaveRoomAsync();
 
-        [OperationContract(Name = "GetCurrentRoom")]
-        Task<RoomLookupContract> GetCurrentRoomAsync();
+        [OperationContract(Name = "GetCurrentRoom", IsInitiating = false)]
+        RoomLookupResponse GetCurrentRoom();
 
-        [OperationContract(Name = "KickPlayer")]
-        Task<KickPlayerResult> KickPlayerAsync(int targetPlayerId);
+        [OperationContract(Name = "KickMember", IsInitiating = false)]
+        KickMemberResult KickMember(int targetMemberId);
     }
 }

@@ -10,5 +10,8 @@ namespace Game.Contracts
 
         [DataMember]
         public PlayerIdentity? Player { get; set; }
+
+        [DataMember]
+        public string? SessionToken { get; set; }
     }
 }

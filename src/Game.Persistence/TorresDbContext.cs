@@ -17,9 +17,9 @@ namespace Game.Persistence
 
         public DbSet<Friendship> Friendships => Set<Friendship>();
 
-        public DbSet<Room> Rooms => Set<Room>();
+        public DbSet<RoomRecord> RoomRecords => Set<RoomRecord>();
 
-        public DbSet<RoomInvitation> RoomInvitations => Set<RoomInvitation>();
+        public DbSet<RoomInvitationRecord> RoomInvitationRecords => Set<RoomInvitationRecord>();
 
         public DbSet<MatchRecord> MatchRecords => Set<MatchRecord>();
 
