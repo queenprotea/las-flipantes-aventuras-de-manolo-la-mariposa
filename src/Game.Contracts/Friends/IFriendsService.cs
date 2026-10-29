@@ -1,24 +1,23 @@
 using System.ServiceModel;
-using System.Threading.Tasks;
 
 namespace Game.Contracts
 {
     [ServiceContract]
     public interface IFriendsService
     {
-        [OperationContract(Name = "GetFriendsOverview")]
-        Task<FriendsOverviewResponse> GetFriendsOverviewAsync();
+        [OperationContract(Name = "GetFriendsOverview", IsInitiating = false)]
+        FriendsOverviewResponse GetFriendsOverview();
 
-        [OperationContract(Name = "FindPlayerByUsername")]
-        Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username);
+        [OperationContract(Name = "FindPlayerByUsername", IsInitiating = false)]
+        PlayerSearchResponse FindPlayerByUsername(string username);
 
-        [OperationContract(Name = "SendFriendRequest")]
-        Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId);
+        [OperationContract(Name = "SendFriendRequest", IsInitiating = false)]
+        FriendRequestResult SendFriendRequest(int targetPlayerId);
 
-        [OperationContract(Name = "RespondFriendRequest")]
-        Task<FriendRequestResponseResult> RespondFriendRequestAsync(int requesterPlayerId, bool accept);
+        [OperationContract(Name = "RespondFriendRequest", IsInitiating = false)]
+        FriendRequestResponseResult RespondFriendRequest(int requesterPlayerId, bool accept);
 
-        [OperationContract(Name = "RemoveFriend")]
-        Task<FriendRemovalResult> RemoveFriendAsync(int friendPlayerId);
+        [OperationContract(Name = "RemoveFriend", IsInitiating = false)]
+        FriendRemovalResult RemoveFriend(int friendPlayerId);
     }
 }

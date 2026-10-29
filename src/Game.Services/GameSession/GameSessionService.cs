@@ -12,14 +12,17 @@ namespace Game.Services
     {
         private readonly SessionService _sessionService;
         private readonly RoomService _roomService;
+        private readonly FriendsService _friendsService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
+            ArgumentNullException.ThrowIfNull(friendsService);
 
             _sessionService = sessionService;
             _roomService = roomService;
+            _friendsService = friendsService;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
@@ -90,6 +93,41 @@ namespace Game.Services
             KickMemberResult kickResult = _roomService.KickMember(targetMemberId);
 
             return kickResult;
+        }
+
+        public FriendsOverviewResponse GetFriendsOverview()
+        {
+            FriendsOverviewResponse overview = _friendsService.GetFriendsOverview();
+
+            return overview;
+        }
+
+        public PlayerSearchResponse FindPlayerByUsername(string username)
+        {
+            PlayerSearchResponse searchResult = _friendsService.FindPlayerByUsername(username);
+
+            return searchResult;
+        }
+
+        public FriendRequestResult SendFriendRequest(int targetPlayerId)
+        {
+            FriendRequestResult requestResult = _friendsService.SendFriendRequest(targetPlayerId);
+
+            return requestResult;
+        }
+
+        public FriendRequestResponseResult RespondFriendRequest(int requesterPlayerId, bool accept)
+        {
+            FriendRequestResponseResult responseResult = _friendsService.RespondFriendRequest(requesterPlayerId, accept);
+
+            return responseResult;
+        }
+
+        public FriendRemovalResult RemoveFriend(int friendPlayerId)
+        {
+            FriendRemovalResult removalResult = _friendsService.RemoveFriend(friendPlayerId);
+
+            return removalResult;
         }
     }
 }

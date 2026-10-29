@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +70,34 @@ namespace Game.Persistence
                 .SingleOrDefaultAsync(storedPlayer => storedPlayer.Username.ToLower() == username.ToLower());
 
             return player;
+        }
+
+        public Player? FindByUsername(string username)
+        {
+            ArgumentNullException.ThrowIfNull(username);
+
+            using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
+
+            Player? player = databaseContext.Players
+                .AsNoTracking()
+                .SingleOrDefault(storedPlayer => storedPlayer.Username.ToLower() == username.ToLower());
+
+            return player;
+        }
+
+        public List<Player> ListByIds(IReadOnlyCollection<int> playerIds)
+        {
+            ArgumentNullException.ThrowIfNull(playerIds);
+
+            using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
+
+            List<Player> players = databaseContext.Players
+                .AsNoTracking()
+                .Where(storedPlayer => playerIds.Contains(storedPlayer.PlayerId))
+                .OrderBy(storedPlayer => storedPlayer.Username)
+                .ToList();
+
+            return players;
         }
 
         private static PlayerCreationOutcome ToTakenOutcome(string? violatedIndex)

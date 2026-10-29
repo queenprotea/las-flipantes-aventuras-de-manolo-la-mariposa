@@ -136,6 +136,34 @@ namespace Torres.Client.Session
             return kick;
         }
 
+        internal Task<FriendsOverviewResponse> GetFriendsOverviewAsync()
+        {
+            Task<FriendsOverviewResponse> overviewReading = Task.Run(RequireChannel().GetFriendsOverview);
+
+            return overviewReading;
+        }
+
+        internal Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username)
+        {
+            Task<PlayerSearchResponse> search = new SessionCall<string, PlayerSearchResponse>(RequireChannel().FindPlayerByUsername, username).StartAsync();
+
+            return search;
+        }
+
+        internal Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId)
+        {
+            Task<FriendRequestResult> sending = new SessionCall<int, FriendRequestResult>(RequireChannel().SendFriendRequest, targetPlayerId).StartAsync();
+
+            return sending;
+        }
+
+        internal Task<FriendRequestResponseResult> AcceptFriendRequestAsync(int requesterPlayerId)
+        {
+            Task<FriendRequestResponseResult> acceptance = new SessionCall<int, FriendRequestResponseResult>(AcceptFriendRequest, requesterPlayerId).StartAsync();
+
+            return acceptance;
+        }
+
         internal void Close()
         {
             if (IsOpen && (_channel is not null))
@@ -171,6 +199,13 @@ namespace Torres.Client.Session
 
             WasLost = !_heartbeat.IsCompletedSuccessfully;
             _heartbeat = null;
+        }
+
+        private FriendRequestResponseResult AcceptFriendRequest(int requesterPlayerId)
+        {
+            FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, true);
+
+            return responseResult;
         }
 
         private IGameSessionService RequireChannel()
