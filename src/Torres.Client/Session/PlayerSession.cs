@@ -8,15 +8,32 @@ namespace Torres.Client.Session
     {
         internal PlayerIdentity? Player { get; private set; }
 
+        internal string? GuestAlias { get; private set; }
+
         internal Room? CurrentRoom { get; private set; }
 
-        internal bool IsLoggedIn => Player is not null;
+        internal bool HasAccount => Player is not null;
+
+        internal bool IsGuest => GuestAlias is not null;
+
+        internal bool IsLoggedIn => HasAccount || IsGuest;
+
+        internal string DisplayName => Player?.Username ?? GuestAlias ?? string.Empty;
 
         internal void Start(PlayerIdentity player)
         {
             ArgumentNullException.ThrowIfNull(player);
 
             Player = player;
+            GuestAlias = null;
+        }
+
+        internal void StartAsGuest(string guestAlias)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(guestAlias);
+
+            Player = null;
+            GuestAlias = guestAlias;
         }
 
         internal void EnterRoom(Room room)
@@ -34,6 +51,7 @@ namespace Torres.Client.Session
         internal void End()
         {
             Player = null;
+            GuestAlias = null;
             CurrentRoom = null;
         }
     }

@@ -31,11 +31,11 @@ namespace Game.Services
         public OpenSessionResult OpenSession(string sessionToken)
         {
             SessionTokenReading tokenReading = string.IsNullOrWhiteSpace(sessionToken)
-                ? new SessionTokenReading(SessionTokenStatus.Invalid, 0, string.Empty)
+                ? new SessionTokenReading(SessionTokenStatus.Invalid, 0, string.Empty, false)
                 : _sessionTokenIssuer.Read(sessionToken);
             OpenSessionResult opening = tokenReading.Status switch
             {
-                SessionTokenStatus.Valid => OpenFor(new SessionOwner(tokenReading.PlayerId, tokenReading.Username)),
+                SessionTokenStatus.Valid => OpenFor(ToOwner(tokenReading)),
                 SessionTokenStatus.Invalid => new OpenSessionResult { Status = OpenSessionStatus.InvalidSessionToken },
                 SessionTokenStatus.Expired => new OpenSessionResult { Status = OpenSessionStatus.SessionTokenExpired },
                 _ => throw new ArgumentOutOfRangeException(nameof(sessionToken)),
@@ -44,7 +44,7 @@ namespace Game.Services
             return opening;
         }
 
-        public HeartbeatResponse IsAlive()
+        public ConnectionCheckResponse IsAlive()
         {
             PlayerSession? caller = _sessionRegistry.FindCaller();
             if (caller is not null)
@@ -52,9 +52,9 @@ namespace Game.Services
                 _sessionRegistry.Touch(caller);
             }
 
-            var heartbeat = new HeartbeatResponse { ServerTimeUtc = _timeProvider.GetUtcNow().UtcDateTime };
+            var connectionCheck = new ConnectionCheckResponse { ServerTimeUtc = _timeProvider.GetUtcNow().UtcDateTime };
 
-            return heartbeat;
+            return connectionCheck;
         }
 
         public async Task<CloseSessionResult> CloseSessionAsync()
@@ -63,10 +63,19 @@ namespace Game.Services
             if (caller is not null)
             {
                 _sessionRegistry.Close(caller);
-                await _roomService.LeaveForAsync(caller.Owner.PlayerId);
+                await _roomService.LeaveForAsync(caller.Owner.OwnerId);
             }
 
             return CloseSessionResult.SessionClosed;
+        }
+
+        private static SessionOwner ToOwner(SessionTokenReading tokenReading)
+        {
+            SessionOwner owner = tokenReading.IsGuest
+                ? SessionOwner.ForGuest(tokenReading.OwnerId, tokenReading.DisplayName)
+                : SessionOwner.ForPlayer(tokenReading.OwnerId, tokenReading.DisplayName);
+
+            return owner;
         }
 
         private OpenSessionResult OpenFor(SessionOwner owner)
@@ -78,11 +87,11 @@ namespace Game.Services
                 Identity = new SessionIdentity
                 {
                     DisplayName = owner.DisplayName,
-                    IsGuest = false,
-                    PlayerId = owner.PlayerId,
+                    IsGuest = owner.IsGuest,
+                    PlayerId = owner.IsGuest ? null : owner.OwnerId,
                 },
-                CurrentRoom = _roomService.Reattach(owner.PlayerId),
-                HeartbeatPeriodSeconds = (int)_sessionTimings.HeartbeatPeriod.TotalSeconds,
+                CurrentRoom = _roomService.Reattach(owner.OwnerId),
+                ConnectionCheckPeriodSeconds = (int)_sessionTimings.ConnectionCheckPeriod.TotalSeconds,
             };
 
             return opening;

@@ -45,10 +45,15 @@ namespace Torres.Client.Screens
             if (!_session.IsLoggedIn || !_gameSessionConnection.IsOpen)
             {
                 RequestedScreen = ScreenId.Login;
-                return;
             }
-
-            RequestRooms();
+            else if (_session.CurrentRoom is not null)
+            {
+                RequestedScreen = ScreenId.Room;
+            }
+            else
+            {
+                RequestRooms();
+            }
         }
 
         internal override void Update(GameTime gameTime)
@@ -257,7 +262,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextArguments = new object[] { room.HostDisplayName },
+                TextArguments = new[] { room.HostDisplayName },
             };
             rowContent.Widgets.Add(hostLabel);
             StackPanel.SetProportionType(hostLabel, ProportionType.Fill);
@@ -267,7 +272,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextArguments = new object[] { room.PlayerCount, room.MaxPlayers },
+                TextArguments = new[] { DisplayFormats.FormatInteger(room.PlayerCount), DisplayFormats.FormatInteger(room.MaxPlayers) },
             };
             rowContent.Widgets.Add(occupancyLabel);
             rowContent.Widgets.Add(BuildJoinControl(room));

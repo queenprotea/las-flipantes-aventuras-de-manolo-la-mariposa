@@ -21,7 +21,6 @@ namespace Torres.Client.Screens
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _session;
         private readonly NoticeBox _noticeBox = new NoticeBox();
-        private readonly VerticalStackPanel _confirmationPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
         private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
 
         private Room? _shownRoom;
@@ -66,7 +65,7 @@ namespace Torres.Client.Screens
             VerticalStackPanel page = CreatePage();
             page.Spacing = Metrics.FieldSpacing;
             page.Widgets.Add(_noticeBox);
-            page.Widgets.Add(_confirmationPlaceholder);
+            page.Widgets.Add(ConfirmationPlaceholder);
             page.Widgets.Add(_contentPlaceholder);
 
             return page;
@@ -138,12 +137,12 @@ namespace Torres.Client.Screens
             HorizontalStackPanel playersHeader = CreateButtonRow();
             playersHeader.Widgets.Add(CreateTitle(TextKeys.Room.PlayersTitle));
 
-            playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.OccupancyLabel, new object[] { room.Members.Count, room.MaxPlayers }));
+            playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.OccupancyLabel, new[] { DisplayFormats.FormatInteger(room.Members.Count), DisplayFormats.FormatInteger(room.MaxPlayers) }));
 
             int activeMemberCount = room.Members.FindAll(IsActiveMember).Count;
             if (activeMemberCount != room.Members.Count)
             {
-                playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.ActiveCountLabel, new object[] { activeMemberCount }));
+                playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.ActiveCountLabel, new[] { DisplayFormats.FormatInteger(activeMemberCount) }));
             }
 
             return playersHeader;
@@ -233,7 +232,7 @@ namespace Torres.Client.Screens
             return rankingSection;
         }
 
-        private static LocalizedLabel CreateMutedLabel(string textKey, object[]? textArguments)
+        private static LocalizedLabel CreateMutedLabel(string textKey, string[]? textArguments)
         {
             var mutedLabel = new LocalizedLabel(textKey)
             {
@@ -248,8 +247,9 @@ namespace Torres.Client.Screens
 
         private void AskKickConfirmation(RoomMember member)
         {
+            _noticeBox.Hide();
             NoticeBox question = ShowConfirmation(TextKeys.Alerts.RemovePlayerTitle, TextKeys.Alerts.RemovePlayerBody);
-            question.SetTitleArguments(new object[] { member.DisplayName });
+            question.SetTitleArguments(new[] { member.DisplayName });
 
             LocalizedButton kickConfirmButton = CreateDestructiveButton(TextKeys.Alerts.RemoveConfirmButton);
             kickConfirmButton.Click += (clickedButton, clickArguments) => StartKick(member.MemberId);
@@ -260,6 +260,7 @@ namespace Torres.Client.Screens
 
         private void AskLeaveConfirmation()
         {
+            _noticeBox.Hide();
             ShowConfirmation(TextKeys.Alerts.LeaveRoomTitle, TextKeys.Alerts.LeaveRoomBody);
 
             LocalizedButton leaveConfirmButton = CreateDestructiveButton(TextKeys.Alerts.LeaveConfirmButton);
@@ -267,32 +268,6 @@ namespace Torres.Client.Screens
             LocalizedButton stayButton = CreateSecondaryButton(TextKeys.Alerts.StayButton);
             stayButton.Click += StayButtonOnClick;
             AddConfirmationButtons(leaveConfirmButton, stayButton);
-        }
-
-        private NoticeBox ShowConfirmation(string titleKey, string bodyKey)
-        {
-            _noticeBox.Hide();
-            _confirmationPlaceholder.Widgets.Clear();
-            var question = new NoticeBox();
-            question.ShowMessage(titleKey, bodyKey, null);
-            _confirmationPlaceholder.Widgets.Add(question);
-            _confirmationPlaceholder.Visible = true;
-
-            return question;
-        }
-
-        private void AddConfirmationButtons(LocalizedButton confirmButton, LocalizedButton cancelButton)
-        {
-            HorizontalStackPanel answerRow = CreateButtonRow();
-            answerRow.Widgets.Add(confirmButton);
-            answerRow.Widgets.Add(cancelButton);
-            _confirmationPlaceholder.Widgets.Add(answerRow);
-        }
-
-        private void HideConfirmation()
-        {
-            _confirmationPlaceholder.Widgets.Clear();
-            _confirmationPlaceholder.Visible = false;
         }
 
         private void StartLeave()

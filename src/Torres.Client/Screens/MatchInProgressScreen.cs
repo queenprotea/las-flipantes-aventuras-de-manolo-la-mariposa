@@ -51,7 +51,7 @@ namespace Torres.Client.Screens
 
             LocalizedLabel offlineMessage = CreateParagraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
             offlineMessage.Margin = new Thickness(0, 0, 0, MessageBottomSpacing);
-            offlineMessage.TextArguments = new object[] { PreviewSamples.MatchRoomCode };
+            offlineMessage.TextArguments = new[] { PreviewSamples.MatchRoomCode };
 
             VerticalStackPanel dialog = CreateCard(Sizes.DialogWidth);
             dialog.Spacing = 0;

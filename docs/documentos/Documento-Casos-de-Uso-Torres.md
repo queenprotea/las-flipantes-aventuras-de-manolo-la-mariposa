@@ -438,7 +438,7 @@ EX02 - Falla en el envío del correo de recuperación
 7. El sistema genera para el invitado un identificador temporal y lo entrega a su cliente, que lo conserva **en
    memoria** mientras la aplicación siga abierta.
 8. El sistema cierra GUIGuestAccess y muestra la ventana GUIMainMenu con el alias del invitado y su marca de invitado,
-   con las opciones "Amigos" e "Historial" no disponibles, sin ofrecer la opción "Invitaciones", y con "Salas",
+   con las opciones "Amigos", "Historial" e "Invitaciones" no disponibles, y con "Salas",
    "Ranking" y "Salir" habilitadas.
 
 **Flujo Alterno**

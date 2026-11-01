@@ -349,6 +349,21 @@
   <data name="Profile.AccountSettingsButton" xml:space="preserve">
     <value>Configurar cuenta</value>
   </data>
+  <data name="Profile.LogOutButton" xml:space="preserve">
+    <value>Cerrar sesión</value>
+  </data>
+  <data name="Profile.GuestTitle" xml:space="preserve">
+    <value>Estás jugando como invitado</value>
+  </data>
+  <data name="Profile.GuestHint" xml:space="preserve">
+    <value>Inicia sesión o crea una cuenta para guardar tu progreso.</value>
+  </data>
+  <data name="Profile.GuestLogInButton" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="Profile.GuestCreateAccountButton" xml:space="preserve">
+    <value>Crear cuenta</value>
+  </data>
   <data name="AccountSettings.HeaderLabel" xml:space="preserve">
     <value>configurar cuenta</value>
   </data>
@@ -798,6 +813,15 @@
   </data>
   <data name="Alerts.EmailFailedBody" xml:space="preserve">
     <value>No pudimos enviar el correo en este momento. Inténtalo más tarde.</value>
+  </data>
+  <data name="Alerts.LogOutTitle" xml:space="preserve">
+    <value>¿Cerrar sesión?</value>
+  </data>
+  <data name="Alerts.LogOutBody" xml:space="preserve">
+    <value>Estás en una sala. Si cierras sesión, saldrás de ella.</value>
+  </data>
+  <data name="Alerts.LogOutConfirmButton" xml:space="preserve">
+    <value>Cerrar sesión</value>
   </data>
   <data name="MatchPreparation.HeaderLabel" xml:space="preserve">
     <value>preparando la partida</value>

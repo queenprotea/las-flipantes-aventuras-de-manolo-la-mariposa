@@ -5,7 +5,7 @@ namespace Torres.Client.Localization
     internal sealed class LocalizedLabel : Label, ILocalizedWidget
     {
         private string _textKey;
-        private object[]? _textArguments;
+        private string[]? _textArguments;
 
         internal LocalizedLabel(string textKey)
         {
@@ -23,7 +23,7 @@ namespace Torres.Client.Localization
             }
         }
 
-        internal object[]? TextArguments
+        internal string[]? TextArguments
         {
             get => _textArguments;
             set

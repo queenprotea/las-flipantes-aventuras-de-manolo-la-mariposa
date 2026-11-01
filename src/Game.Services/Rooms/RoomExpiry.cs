@@ -2,5 +2,5 @@ using System.Collections.Generic;
 
 namespace Game.Services
 {
-    internal sealed record RoomExpiry(IReadOnlyList<int> RemovedPlayerIds, bool HasHostChanged, bool IsRoomEmpty);
+    internal sealed record RoomExpiry(IReadOnlyList<int> RemovedOwnerIds, bool HasHostChanged, bool IsRoomEmpty);
 }

@@ -11,5 +11,8 @@ namespace Game.Contracts
 
         [OperationContract(Name = "Login")]
         Task<LoginResult> LoginAsync(string username, string password);
+
+        [OperationContract(Name = "EnterAsGuest")]
+        GuestAccessResult EnterAsGuest(string alias);
     }
 }

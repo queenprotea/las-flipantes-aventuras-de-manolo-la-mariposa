@@ -10,7 +10,7 @@ namespace Game.Contracts
         OpenSessionResult OpenSession(string sessionToken);
 
         [OperationContract(Name = "IsAlive", IsInitiating = false)]
-        HeartbeatResponse IsAlive();
+        ConnectionCheckResponse IsAlive();
 
         [OperationContract(Name = "CloseSession", IsInitiating = false, IsTerminating = true)]
         Task<CloseSessionResult> CloseSessionAsync();

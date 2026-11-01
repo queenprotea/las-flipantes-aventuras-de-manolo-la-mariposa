@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using CoreWCF;
 
@@ -19,9 +20,9 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(SessionRegistry));
 
-        private readonly object _registryLock = new object();
+        private readonly Lock _registryLock = new Lock();
         private readonly Dictionary<string, PlayerSession> _sessionsById = new Dictionary<string, PlayerSession>(StringComparer.Ordinal);
-        private readonly Dictionary<int, PlayerSession> _sessionsByPlayerId = new Dictionary<int, PlayerSession>();
+        private readonly Dictionary<int, PlayerSession> _sessionsByOwnerId = new Dictionary<int, PlayerSession>();
         private readonly SessionTimings _sessionTimings;
         private readonly TimeProvider _timeProvider;
 
@@ -44,19 +45,19 @@ namespace Game.Services
             PlayerSession? replacedSession;
             lock (_registryLock)
             {
-                _sessionsByPlayerId.TryGetValue(owner.PlayerId, out replacedSession);
+                _sessionsByOwnerId.TryGetValue(owner.OwnerId, out replacedSession);
                 if (replacedSession is not null)
                 {
                     _sessionsById.Remove(replacedSession.SessionId);
                 }
 
-                _sessionsByPlayerId[owner.PlayerId] = openedSession;
+                _sessionsByOwnerId[owner.OwnerId] = openedSession;
                 _sessionsById[openedSession.SessionId] = openedSession;
             }
 
             EndReplacedSession(replacedSession, openedSession);
             openedSession.Watch();
-            _log.InfoFormat(SessionOpenedMessage, owner.PlayerId);
+            _log.InfoFormat(SessionOpenedMessage, owner.OwnerId);
 
             return openedSession;
         }
@@ -87,7 +88,7 @@ namespace Game.Services
             closedSession.Abandon();
             if (wasRemoved)
             {
-                _log.InfoFormat(SessionClosedMessage, closedSession.Owner.PlayerId);
+                _log.InfoFormat(SessionClosedMessage, closedSession.Owner.OwnerId);
             }
         }
 
@@ -99,8 +100,8 @@ namespace Game.Services
             }
 
             lostSession.Drop();
-            _log.InfoFormat(SessionLostMessage, lostSession.Owner.PlayerId);
-            OnSessionLost(new SessionLostEventArgs(lostSession.Owner.PlayerId));
+            _log.InfoFormat(SessionLostMessage, lostSession.Owner.OwnerId);
+            OnSessionLost(new SessionLostEventArgs(lostSession.Owner.OwnerId));
         }
 
         internal IReadOnlyList<PlayerSession> FindSilentSessions()
@@ -115,12 +116,12 @@ namespace Game.Services
             return silentSessions;
         }
 
-        internal void Deliver(int playerId, Notice notice)
+        internal void Deliver(int ownerId, Notice notice)
         {
             PlayerSession? recipientSession;
             lock (_registryLock)
             {
-                _sessionsByPlayerId.TryGetValue(playerId, out recipientSession);
+                _sessionsByOwnerId.TryGetValue(ownerId, out recipientSession);
             }
 
             recipientSession?.Enqueue(notice);
@@ -140,7 +141,7 @@ namespace Game.Services
             else
             {
                 replacedSession.Terminate(SessionTerminationReason.AccountSignedInElsewhere);
-                _log.InfoFormat(SessionReplacedMessage, replacedSession.Owner.PlayerId);
+                _log.InfoFormat(SessionReplacedMessage, replacedSession.Owner.OwnerId);
             }
         }
 
@@ -149,11 +150,11 @@ namespace Game.Services
             bool wasRemoved = false;
             lock (_registryLock)
             {
-                bool isCurrent = _sessionsByPlayerId.TryGetValue(session.Owner.PlayerId, out PlayerSession? currentSession)
+                bool isCurrent = _sessionsByOwnerId.TryGetValue(session.Owner.OwnerId, out PlayerSession? currentSession)
                     && ReferenceEquals(currentSession, session);
                 if (isCurrent)
                 {
-                    _sessionsByPlayerId.Remove(session.Owner.PlayerId);
+                    _sessionsByOwnerId.Remove(session.Owner.OwnerId);
                     _sessionsById.Remove(session.SessionId);
                     wasRemoved = true;
                 }

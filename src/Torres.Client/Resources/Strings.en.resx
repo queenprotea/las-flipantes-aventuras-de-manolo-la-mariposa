@@ -349,6 +349,21 @@
   <data name="Profile.AccountSettingsButton" xml:space="preserve">
     <value>Account settings</value>
   </data>
+  <data name="Profile.LogOutButton" xml:space="preserve">
+    <value>Log out</value>
+  </data>
+  <data name="Profile.GuestTitle" xml:space="preserve">
+    <value>You're playing as a guest</value>
+  </data>
+  <data name="Profile.GuestHint" xml:space="preserve">
+    <value>Log in or create an account to save your progress.</value>
+  </data>
+  <data name="Profile.GuestLogInButton" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="Profile.GuestCreateAccountButton" xml:space="preserve">
+    <value>Create account</value>
+  </data>
   <data name="AccountSettings.HeaderLabel" xml:space="preserve">
     <value>account settings</value>
   </data>
@@ -798,6 +813,15 @@
   </data>
   <data name="Alerts.EmailFailedBody" xml:space="preserve">
     <value>We couldn't send the email right now. Try again later.</value>
+  </data>
+  <data name="Alerts.LogOutTitle" xml:space="preserve">
+    <value>Log out?</value>
+  </data>
+  <data name="Alerts.LogOutBody" xml:space="preserve">
+    <value>You're in a room. If you log out, you'll leave it.</value>
+  </data>
+  <data name="Alerts.LogOutConfirmButton" xml:space="preserve">
+    <value>Log out</value>
   </data>
   <data name="MatchPreparation.HeaderLabel" xml:space="preserve">
     <value>preparing the match</value>

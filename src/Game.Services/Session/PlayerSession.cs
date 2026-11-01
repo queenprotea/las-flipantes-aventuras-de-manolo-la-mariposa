@@ -24,7 +24,7 @@ namespace Game.Services
         private readonly IGameSessionNoticeReceiver _noticeReceiver;
         private readonly SessionRegistry _sessionRegistry;
 
-        private long _lastHeartbeatTicks;
+        private long _lastConnectionCheckTicks;
         private Task _senderTask = Task.CompletedTask;
 
         internal PlayerSession(SessionOwner owner, string sessionId, IGameSessionNoticeReceiver noticeReceiver, SessionRegistry sessionRegistry, DateTime openedAtUtc)
@@ -33,7 +33,7 @@ namespace Game.Services
             SessionId = sessionId;
             _noticeReceiver = noticeReceiver;
             _sessionRegistry = sessionRegistry;
-            _lastHeartbeatTicks = openedAtUtc.Ticks;
+            _lastConnectionCheckTicks = openedAtUtc.Ticks;
         }
 
         internal SessionOwner Owner { get; }
@@ -51,7 +51,7 @@ namespace Game.Services
             }
             else
             {
-                _log.WarnFormat(UnwatchableChannelMessage, Owner.PlayerId);
+                _log.WarnFormat(UnwatchableChannelMessage, Owner.OwnerId);
             }
 
             _senderTask = Task.Run(SendPendingAsync);
@@ -64,12 +64,12 @@ namespace Game.Services
 
         internal void Touch(DateTime nowUtc)
         {
-            Interlocked.Exchange(ref _lastHeartbeatTicks, nowUtc.Ticks);
+            Interlocked.Exchange(ref _lastConnectionCheckTicks, nowUtc.Ticks);
         }
 
         internal bool IsSilentSince(DateTime limitUtc)
         {
-            bool isSilent = Interlocked.Read(ref _lastHeartbeatTicks) < limitUtc.Ticks;
+            bool isSilent = Interlocked.Read(ref _lastConnectionCheckTicks) < limitUtc.Ticks;
 
             return isSilent;
         }
@@ -122,7 +122,7 @@ namespace Game.Services
 
         private void ReportFailedDelivery(Exception exception)
         {
-            string failureMessage = string.Format(CultureInfo.InvariantCulture, DeliveryFailedMessage, Owner.PlayerId);
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, DeliveryFailedMessage, Owner.OwnerId);
             _log.Warn(failureMessage, exception);
             _sessionRegistry.DeclareLost(this);
         }
@@ -140,12 +140,12 @@ namespace Game.Services
             }
             catch (CommunicationException exception)
             {
-                _log.Warn(string.Format(CultureInfo.InvariantCulture, ReplacedCloseFailedMessage, Owner.PlayerId), exception);
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, ReplacedCloseFailedMessage, Owner.OwnerId), exception);
                 terminatedChannel.Abort();
             }
             catch (TimeoutException exception)
             {
-                _log.Warn(string.Format(CultureInfo.InvariantCulture, ReplacedCloseFailedMessage, Owner.PlayerId), exception);
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, ReplacedCloseFailedMessage, Owner.OwnerId), exception);
                 terminatedChannel.Abort();
             }
         }

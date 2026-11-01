@@ -20,6 +20,8 @@ namespace Game.Services
         private const string FriendsUnavailableReason = "The friends of the player are not available right now.";
         private const string PlayerSearchUnavailableReason = "The player search is not available right now.";
         private const string FriendRemovalUnavailableReason = "Removing a friend is not available yet.";
+        private const string GuestNotAllowedReason = "Guests cannot use the friends features.";
+        private const string GuestRejectedMessage = "Guest {0} tried to use the friends features and was rejected.";
         private const string FriendsReadFailedMessage = "The database could not be read while listing the friends of player {0}.";
         private const string PlayerSearchReadFailedMessage = "The database could not be read during a player search by player {0}.";
         private const string FriendRequestWriteFailedMessage = "The database could not be written while player {0} sent a friend request.";
@@ -47,7 +49,7 @@ namespace Game.Services
 
         public FriendsOverviewResponse GetFriendsOverview()
         {
-            int callerPlayerId = GetCallerPlayerId();
+            int callerPlayerId = RequireAccountOwner().OwnerId;
             FriendsOverviewResponse overview;
             try
             {
@@ -65,7 +67,7 @@ namespace Game.Services
 
         public PlayerSearchResponse FindPlayerByUsername(string username)
         {
-            int callerPlayerId = GetCallerPlayerId();
+            int callerPlayerId = RequireAccountOwner().OwnerId;
             var searchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -88,7 +90,7 @@ namespace Game.Services
 
         public FriendRequestResult SendFriendRequest(int targetPlayerId)
         {
-            int callerPlayerId = GetCallerPlayerId();
+            int callerPlayerId = RequireAccountOwner().OwnerId;
             FriendRequestResult requestResult = FriendRequestResult.PlayerNotFound;
 
             if ((targetPlayerId > 0) && (targetPlayerId != callerPlayerId))
@@ -101,7 +103,12 @@ namespace Game.Services
 
         public FriendRequestResponseResult RespondFriendRequest(int requesterPlayerId, bool accept)
         {
-            int callerPlayerId = GetCallerPlayerId();
+            int callerPlayerId = RequireAccountOwner().OwnerId;
+            if (requesterPlayerId <= 0)
+            {
+                return FriendRequestResponseResult.RequestNoLongerExists;
+            }
+
             FriendRequestResponseResult responseResult;
             try
             {
@@ -124,7 +131,7 @@ namespace Game.Services
             throw new FaultException(FriendRemovalUnavailableReason);
         }
 
-        private int GetCallerPlayerId()
+        private SessionOwner RequireAccountOwner()
         {
             PlayerSession? caller = _sessionRegistry.FindCaller();
             if (caller is null)
@@ -132,9 +139,15 @@ namespace Game.Services
                 throw new FaultException(SessionNotOpenReason);
             }
 
-            int callerPlayerId = caller.Owner.PlayerId;
+            if (caller.Owner.IsGuest)
+            {
+                _log.WarnFormat(GuestRejectedMessage, caller.Owner.OwnerId);
+                throw new FaultException(GuestNotAllowedReason);
+            }
 
-            return callerPlayerId;
+            SessionOwner accountOwner = caller.Owner;
+
+            return accountOwner;
         }
 
         private FriendsOverviewResponse ReadFriendsOverview(int callerPlayerId)

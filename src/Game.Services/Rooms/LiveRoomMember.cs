@@ -9,16 +9,19 @@ namespace Game.Services
         internal LiveRoomMember(int memberId, SessionOwner owner, SeatColor color)
         {
             MemberId = memberId;
-            PlayerId = owner.PlayerId;
+            OwnerId = owner.OwnerId;
             DisplayName = owner.DisplayName;
+            IsGuest = owner.IsGuest;
             Color = color;
         }
 
         internal int MemberId { get; }
 
-        internal int PlayerId { get; }
+        internal int OwnerId { get; }
 
         internal string DisplayName { get; }
+
+        internal bool IsGuest { get; }
 
         internal SeatColor Color { get; }
 
@@ -51,7 +54,7 @@ namespace Game.Services
             {
                 MemberId = MemberId,
                 DisplayName = DisplayName,
-                IsGuest = false,
+                IsGuest = IsGuest,
                 Color = Color,
                 IsActive = IsActive,
             };

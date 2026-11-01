@@ -23,6 +23,7 @@ namespace Torres.Client.Screens
         private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Login.PasswordLabel, true);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Login.InvalidCredentials);
         private readonly LocalizedButton _logInButton = CreatePrimaryButton(TextKeys.Login.LogInButton);
+        private readonly LocalizedButton _guestButton;
 
         private IAccountService? _accountChannel;
         private Task<LoginResult>? _loginRequest;
@@ -39,6 +40,12 @@ namespace Torres.Client.Screens
             _accountChannelFactory = accountChannelFactory;
             _gameSessionConnection = gameSessionConnection;
             _session = session;
+            _guestButton = CreateLinkButton(TextKeys.Login.PlayAsGuestLink);
+        }
+
+        internal override void Open()
+        {
+            _guestButton.Visible = !_session.IsGuest;
         }
 
         internal override void Update(GameTime gameTime)
@@ -129,12 +136,11 @@ namespace Torres.Client.Screens
             card.Widgets.Add(accountActions);
 
             LocalizedButton forgotAccessButton = CreateLinkButton(TextKeys.Login.ForgotAccessLink);
-            LocalizedButton guestButton = CreateLinkButton(TextKeys.Login.PlayAsGuestLink);
             forgotAccessButton.Click += ForgotButtonOnClick;
-            guestButton.Click += GuestButtonOnClick;
+            _guestButton.Click += GuestButtonOnClick;
             HorizontalStackPanel accessLinks = CreateButtonRow();
             accessLinks.Widgets.Add(forgotAccessButton);
-            accessLinks.Widgets.Add(guestButton);
+            accessLinks.Widgets.Add(_guestButton);
             card.Widgets.Add(accessLinks);
 
             return card;
@@ -193,6 +199,12 @@ namespace Torres.Client.Screens
                 _logInButton.Enabled = true;
                 ShowError(TextKeys.Common.ServerErrorTitle);
                 return;
+            }
+
+            if (_session.IsGuest)
+            {
+                _gameSessionConnection.CloseSession();
+                _session.End();
             }
 
             _loggedInPlayer = loginResult.Player;

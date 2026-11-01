@@ -13,6 +13,7 @@ namespace Torres.Client.Screens
     internal abstract class Screen
     {
         private Widget? _rootWidget;
+        private VerticalStackPanel? _confirmationPlaceholder;
 
         protected Screen(string headerKey, bool showsTopBar)
         {
@@ -26,7 +27,7 @@ namespace Torres.Client.Screens
 
         internal ScreenId? RequestedScreen { get; set; }
 
-        internal object[]? HeaderArguments { get; private protected set; }
+        internal string[]? HeaderArguments { get; private protected set; }
 
         internal Widget Root => _rootWidget ??= Build();
 
@@ -39,6 +40,8 @@ namespace Torres.Client.Screens
         internal virtual void Open()
         {
         }
+
+        protected VerticalStackPanel ConfirmationPlaceholder => _confirmationPlaceholder ??= new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
 
         protected abstract Widget Build();
 
@@ -245,6 +248,22 @@ namespace Torres.Client.Screens
             backBar.Margin = new Thickness(0, Metrics.ColumnSpacing, 0, 0);
             backBar.VerticalAlignment = VerticalAlignment.Bottom;
             backBar.Widgets.Add(backButton);
+
+            return backBar;
+        }
+
+        protected static Panel CreateBackBar(LocalizedButton backButton, LocalizedButton trailingButton)
+        {
+            var backBar = new Panel
+            {
+                Margin = new Thickness(0, Metrics.ColumnSpacing, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Bottom,
+            };
+            backButton.HorizontalAlignment = HorizontalAlignment.Left;
+            trailingButton.HorizontalAlignment = HorizontalAlignment.Right;
+            backBar.Widgets.Add(backButton);
+            backBar.Widgets.Add(trailingButton);
 
             return backBar;
         }
@@ -474,6 +493,31 @@ namespace Torres.Client.Screens
             emptyState.Widgets.Add(hint);
 
             return emptyState;
+        }
+
+        protected NoticeBox ShowConfirmation(string titleKey, string bodyKey)
+        {
+            ConfirmationPlaceholder.Widgets.Clear();
+            var question = new NoticeBox();
+            question.ShowMessage(titleKey, bodyKey, null);
+            ConfirmationPlaceholder.Widgets.Add(question);
+            ConfirmationPlaceholder.Visible = true;
+
+            return question;
+        }
+
+        protected void AddConfirmationButtons(LocalizedButton confirmButton, LocalizedButton cancelButton)
+        {
+            HorizontalStackPanel answerRow = CreateButtonRow();
+            answerRow.Widgets.Add(confirmButton);
+            answerRow.Widgets.Add(cancelButton);
+            ConfirmationPlaceholder.Widgets.Add(answerRow);
+        }
+
+        protected void HideConfirmation()
+        {
+            ConfirmationPlaceholder.Widgets.Clear();
+            ConfirmationPlaceholder.Visible = false;
         }
     }
 }

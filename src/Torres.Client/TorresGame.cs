@@ -36,6 +36,8 @@ namespace Torres.Client
         private Desktop? _desktop;
         private TopBarView? _topBarView;
         private LoginScreen? _loginScreen;
+        private GuestAccessScreen? _guestAccessScreen;
+        private ProfileScreen? _profileScreen;
         private ScreenId _openScreen = ScreenId.Startup;
         private string _appliedUiCultureName = string.Empty;
         private KeyboardState _previousKeyboardState;
@@ -63,7 +65,7 @@ namespace Torres.Client
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
 
             _gameSessionConnection = new GameSessionConnection(clientSettings);
-            _mainMenuScreen = new MainMenuScreen(_languagePreference);
+            _mainMenuScreen = new MainMenuScreen(_languagePreference, _playerSession);
             _startupScreen = new StartupScreen(_statusChannelFactory);
         }
 
@@ -110,8 +112,10 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Login, _loginScreen);
             _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
-            _screensById.Add(ScreenId.GuestAccess, new GuestAccessScreen());
-            _screensById.Add(ScreenId.Profile, new ProfileScreen(_playerSession));
+            _guestAccessScreen = new GuestAccessScreen(_accountChannelFactory, _gameSessionConnection, _playerSession);
+            _screensById.Add(ScreenId.GuestAccess, _guestAccessScreen);
+            _profileScreen = new ProfileScreen(_playerSession);
+            _screensById.Add(ScreenId.Profile, _profileScreen);
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.Match, new MatchScreen());
@@ -215,6 +219,13 @@ namespace Torres.Client
             _loginScreen?.ShowNotice(noticeKey);
         }
 
+        private void LogOut()
+        {
+            _gameSessionConnection.CloseSession();
+            _playerSession.End();
+            ShowScreen(ScreenId.Login);
+        }
+
         private void ApplyRoomChange(RoomChange roomChange)
         {
             if (roomChange.Reason == RoomChangeReason.YouWereKicked)
@@ -313,6 +324,8 @@ namespace Torres.Client
                 return;
             }
 
+            FollowSessionRequests();
+
             if ((_topBarView is not null) && _topBarView.WasLogInRequested)
             {
                 _topBarView.ClearRequests();
@@ -329,6 +342,22 @@ namespace Torres.Client
             {
                 openScreen.RequestedScreen = null;
                 ShowScreen(requestedScreen);
+            }
+        }
+
+        private void FollowSessionRequests()
+        {
+            if ((_profileScreen is not null) && _profileScreen.WasLogOutRequested)
+            {
+                _profileScreen.ClearRequests();
+                LogOut();
+            }
+
+            if ((_guestAccessScreen is not null) && _guestAccessScreen.WasServerUnreachable)
+            {
+                _guestAccessScreen.ClearRequests();
+                ShowScreen(ScreenId.Login);
+                _loginScreen?.ShowNotice(TextKeys.Common.ServerErrorTitle);
             }
         }
 

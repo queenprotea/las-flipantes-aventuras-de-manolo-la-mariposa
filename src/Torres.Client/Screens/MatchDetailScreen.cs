@@ -70,7 +70,7 @@ namespace Torres.Client.Screens
                 Wrap = true,
             });
             heading.Widgets.Add(new ComputedLabel(
-                () => LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, _playedMatch.PlayerCount, durationInMinutes))
+                () => LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, DisplayFormats.FormatInteger(_playedMatch.PlayerCount), DisplayFormats.FormatInteger(durationInMinutes)))
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,

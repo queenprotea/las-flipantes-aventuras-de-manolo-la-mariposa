@@ -47,7 +47,7 @@ namespace Torres.Client.Screens
         internal RoundSummaryScreen()
             : base(TextKeys.RoundSummary.HeaderLabel, true)
         {
-            HeaderArguments = new object[] { PreviewRound };
+            HeaderArguments = new[] { DisplayFormats.FormatInteger(PreviewRound) };
         }
 
         internal override void Open()
@@ -73,7 +73,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Headline,
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new object[] { PreviewRound },
+                TextArguments = new[] { DisplayFormats.FormatInteger(PreviewRound) },
             };
 
             LocalizedLabel gardenStays = CreateHint(TextKeys.RoundSummary.GardenStaysInstruction);
@@ -81,7 +81,7 @@ namespace Torres.Client.Screens
             gardenStays.TextAlign = TextHorizontalAlignment.Center;
             gardenStays.HorizontalAlignment = HorizontalAlignment.Center;
             gardenStays.Margin = new Thickness(0, 0, 0, TitleBottomSpacing);
-            gardenStays.TextArguments = new object[] { NextRound };
+            gardenStays.TextArguments = new[] { DisplayFormats.FormatInteger(NextRound) };
 
             LocalizedLabel rules = CreateHint(TextKeys.RoundSummary.Round3RulesInstruction);
             rules.TextAlign = TextHorizontalAlignment.Center;

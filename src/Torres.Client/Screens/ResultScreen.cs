@@ -85,14 +85,14 @@ namespace Torres.Client.Screens
                 Font = Fonts.Winner,
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new object[] { _rankedPlayers[0].Name },
+                TextArguments = new[] { _rankedPlayers[0].Name },
             });
             winnerHeader.Widgets.Add(new LocalizedLabel(TextKeys.Result.SummaryLabel)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.MutedInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new object[] { _previewPlayers.Length },
+                TextArguments = new[] { DisplayFormats.FormatInteger(_previewPlayers.Length) },
             });
 
             return winnerHeader;

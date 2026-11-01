@@ -178,7 +178,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new object[] { FindPlacingPlayerName() },
+                TextArguments = new[] { FindPlacingPlayerName() },
             });
             centerPanel.Widgets.Add(boardPlaceholder);
             StackPanel.SetProportionType(boardPlaceholder, ProportionType.Fill);

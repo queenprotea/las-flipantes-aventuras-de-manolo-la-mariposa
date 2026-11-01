@@ -392,6 +392,43 @@ requisito de interfaz en vez de como historia.
 
 ---
 
+### HU-09 · Cerrar sesión, y pasar de invitado a cuenta
+
+**Qué queda sin cubrir.** Ningún caso de uso permite terminar una sesión sin cerrar la aplicación:
+`HU-08` cierra el juego entero. Tampoco hay forma de que un invitado pase a usar una cuenta sin
+reiniciar, porque `CU-01` exige en su `PRE-2` que el usuario no tenga una sesión iniciada.
+
+**Por qué es una excepción en este documento.** A diferencia de las otras ocho, esta historia
+**sí añade una capacidad**: la decidió el equipo el 1 nov 2026, junto con la implementación del
+acceso como invitado. No se apoya en una `FC-xx`; se apoya en esa decisión. Se deja como historia
+y no como caso de uso porque su flujo es mínimo y reutiliza los de `CU-01`, `CU-02` y `CU-18`.
+
+> **Como** jugador con cuenta, **quiero** cerrar sesión desde mi perfil, **para** dejar el equipo
+> libre para otra persona sin cerrar el juego.
+>
+> **Como** invitado, **quiero** iniciar sesión o crear una cuenta desde mi perfil, **para**
+> empezar a guardar mi progreso sin reiniciar el juego.
+
+**Criterios de aceptación**
+
+1. **Dado** un jugador con cuenta fuera de una sala, **cuando** selecciona «Cerrar sesión» en su
+   perfil, **entonces** su sesión se cierra y se muestra GUILogIn.
+2. **Dado** un jugador con cuenta dentro de una sala, **cuando** selecciona «Cerrar sesión»,
+   **entonces** el sistema le pide confirmación. Si confirma, sale de la sala —los demás lo ven
+   como una salida— y se muestra GUILogIn. Si elige «Quedarme», no ocurre nada.
+3. **Dado** un invitado, **cuando** abre su perfil, **entonces** ve su alias, su marca de
+   invitado, las limitaciones del modo invitado y las opciones «Iniciar sesión» y «Crear cuenta»,
+   y no ve «Cerrar sesión».
+4. **Dado** un invitado que eligió «Iniciar sesión», **cuando** inicia sesión correctamente,
+   **entonces** su identidad de invitado termina, sale de la sala en la que estuviera y queda
+   identificado con su cuenta. Si vuelve sin iniciar sesión, sigue siendo invitado.
+5. **Y** después de cerrar sesión se puede volver a iniciar sesión sin reiniciar la aplicación.
+
+**Cubre:** decisión del equipo (1 nov 2026). Amplía `CU-01`, cuya `PRE-2` no contempla al
+invitado que pasa a cuenta, y `CU-04`, `POST-3`.
+
+---
+
 ## 4. Lo que deliberadamente **no** se convierte en historia de usuario
 
 Tan importante como cubrir lo que falta es no duplicar lo que ya está.
@@ -464,6 +501,7 @@ reproducidos íntegros en el documento de casos de uso, con el detalle de cada c
 | `HU-06` | La prohibición temporal se acaba sola | `S-9` |
 | `HU-07` | El sistema deja rastro de lo que pasa, sin exponer a nadie | `S-12` |
 | `HU-08` | Salir del juego | §4.2 `OB-15` |
+| `HU-09` | Cerrar sesión, y pasar de invitado a cuenta | Decisión del equipo, 1 nov 2026 |
 
 ### 5.4 Información concreta que sigue pendiente de definir
 

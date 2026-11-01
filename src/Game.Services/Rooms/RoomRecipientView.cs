@@ -2,5 +2,5 @@ using Game.Contracts;
 
 namespace Game.Services
 {
-    internal sealed record RoomRecipientView(int PlayerId, Room View);
+    internal sealed record RoomRecipientView(int OwnerId, Room View);
 }

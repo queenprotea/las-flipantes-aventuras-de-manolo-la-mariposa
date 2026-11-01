@@ -15,6 +15,6 @@ namespace Game.Contracts
         public Room? CurrentRoom { get; set; }
 
         [DataMember]
-        public int HeartbeatPeriodSeconds { get; set; }
+        public int ConnectionCheckPeriodSeconds { get; set; }
     }
 }

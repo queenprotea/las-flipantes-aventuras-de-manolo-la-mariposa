@@ -13,6 +13,7 @@ namespace Torres.Client.Screens
     {
         private readonly LocalizedLabel _headerLabel = new LocalizedLabel(TextKeys.MainMenu.HeaderLabel);
         private readonly Label _usernameLabel = new Label();
+        private readonly LocalizedLabel _roleLabel = new LocalizedLabel(TextKeys.Common.RegisteredRole);
         private readonly Label _connectionDot = new Label();
         private readonly LocalizedLabel _connectionLabel = new LocalizedLabel(TextKeys.Common.OfflineStatus);
         private readonly PlayerSession _session;
@@ -76,7 +77,8 @@ namespace Torres.Client.Screens
         {
             _logInButton.Visible = !_session.IsLoggedIn;
             _accountSummary.Visible = _session.IsLoggedIn;
-            _usernameLabel.Text = _session.Player?.Username ?? string.Empty;
+            _usernameLabel.Text = _session.DisplayName;
+            _roleLabel.TextKey = _session.IsGuest ? TextKeys.Common.GuestRole : TextKeys.Common.RegisteredRole;
             _connectionDot.TextColor = _session.IsLoggedIn ? Theme.MintLine : Theme.Blush;
             _connectionLabel.TextKey = _session.IsLoggedIn ? TextKeys.Common.ConnectedStatus : TextKeys.Common.OfflineStatus;
         }
@@ -142,12 +144,10 @@ namespace Torres.Client.Screens
 
             var accountNames = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
             accountNames.Widgets.Add(_usernameLabel);
-            accountNames.Widgets.Add(new LocalizedLabel(TextKeys.Common.RegisteredRole)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                HorizontalAlignment = HorizontalAlignment.Right,
-            });
+            _roleLabel.Font = Fonts.Label;
+            _roleLabel.TextColor = Theme.MutedInk;
+            _roleLabel.HorizontalAlignment = HorizontalAlignment.Right;
+            accountNames.Widgets.Add(_roleLabel);
 
             var accountSummary = new HorizontalStackPanel
             {

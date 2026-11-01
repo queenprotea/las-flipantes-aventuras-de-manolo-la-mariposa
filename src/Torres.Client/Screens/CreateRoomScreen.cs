@@ -45,6 +45,10 @@ namespace Torres.Client.Screens
             {
                 RequestedScreen = ScreenId.Login;
             }
+            else if (_session.CurrentRoom is not null)
+            {
+                RequestedScreen = ScreenId.Room;
+            }
         }
 
         internal override void Update(GameTime gameTime)

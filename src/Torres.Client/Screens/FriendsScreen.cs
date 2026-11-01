@@ -63,7 +63,7 @@ namespace Torres.Client.Screens
             _errorLabel.Visible = false;
             RenderTab();
 
-            if (!_session.IsLoggedIn || !_gameSessionConnection.IsOpen)
+            if (!_session.HasAccount || !_gameSessionConnection.IsOpen)
             {
                 RequestedScreen = ScreenId.Login;
                 return;

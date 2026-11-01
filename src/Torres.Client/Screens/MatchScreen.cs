@@ -42,12 +42,12 @@ namespace Torres.Client.Screens
 
         internal MatchScreen() : base(TextKeys.Match.HeaderLabel, true)
         {
-            HeaderArguments = new object[] { PreviewSamples.MatchRoomCode };
+            HeaderArguments = new[] { PreviewSamples.MatchRoomCode };
         }
 
         internal override void Open()
         {
-            _roundTurnLabel.TextArguments = new object[] { _previewRound, PreviewTurn };
+            _roundTurnLabel.TextArguments = new[] { DisplayFormats.FormatInteger(_previewRound), DisplayFormats.FormatInteger(PreviewTurn) };
         }
 
         protected override Widget Build()
@@ -299,7 +299,7 @@ namespace Torres.Client.Screens
             {
                 Font = Fonts.Small,
                 TextColor = Theme.Ink,
-                TextArguments = new object[] {DrawCost},
+                TextArguments = new[] { DisplayFormats.FormatInteger(DrawCost) },
             };
 
             Button draw = BuildContentButton(drawLabel);

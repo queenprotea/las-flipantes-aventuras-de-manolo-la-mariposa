@@ -26,6 +26,7 @@ namespace Game.Services
         private const string UnknownCreationOutcomeMessage = "Unknown creation outcome {0}.";
         private const string LoginReadFailedMessage = "The database could not be read during a log in.";
         private const string PlayerLoggedInMessage = "Player {0} logged in.";
+        private const string GuestEnteredMessage = "Guest {0} entered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
         private static readonly Regex _usernamePattern = new Regex(UsernameFormat);
@@ -34,14 +35,17 @@ namespace Game.Services
 
         private readonly PlayerRepository _playerRepository;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
+        private readonly GuestIdIssuer _guestIdIssuer;
 
-        public AccountService(PlayerRepository playerRepository, SessionTokenIssuer sessionTokenIssuer)
+        public AccountService(PlayerRepository playerRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
+            ArgumentNullException.ThrowIfNull(guestIdIssuer);
 
             _playerRepository = playerRepository;
             _sessionTokenIssuer = sessionTokenIssuer;
+            _guestIdIssuer = guestIdIssuer;
         }
 
         public async Task<RegistrationResult> RegisterAsync(string username, string email, string password)
@@ -70,6 +74,27 @@ namespace Game.Services
             }
 
             return loginResult;
+        }
+
+        public GuestAccessResult EnterAsGuest(string alias)
+        {
+            string guestAlias = (alias ?? string.Empty).Trim();
+            GuestAccessStatus? invalidAlias = FindInvalidAlias(guestAlias);
+            if (invalidAlias is GuestAccessStatus rejectedStatus)
+            {
+                var rejectedResult = new GuestAccessResult { Status = rejectedStatus };
+                return rejectedResult;
+            }
+
+            int guestId = _guestIdIssuer.Issue();
+            _log.InfoFormat(GuestEnteredMessage, guestId);
+            var enteredResult = new GuestAccessResult
+            {
+                Status = GuestAccessStatus.Entered,
+                SessionToken = _sessionTokenIssuer.IssueForGuest(guestId, guestAlias),
+            };
+
+            return enteredResult;
         }
 
         private async Task<RegistrationResult> CreateAccountAsync(string username, string email, string password)
@@ -149,6 +174,21 @@ namespace Game.Services
             };
 
             return loggedInResult;
+        }
+
+        private static GuestAccessStatus? FindInvalidAlias(string guestAlias)
+        {
+            GuestAccessStatus? invalidAlias = null;
+            if (guestAlias.Length == 0)
+            {
+                invalidAlias = GuestAccessStatus.AliasRequired;
+            }
+            else if (guestAlias.Length > AccountLimits.LongestGuestAlias)
+            {
+                invalidAlias = GuestAccessStatus.AliasTooLong;
+            }
+
+            return invalidAlias;
         }
 
         private static RegistrationResult? FindInvalidField(string username, string email, string password)

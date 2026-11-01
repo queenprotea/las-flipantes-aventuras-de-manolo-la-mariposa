@@ -10,7 +10,7 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly SessionTimings _sessionTimings;
 
-        private PeriodicTimer? _heartbeatTimer;
+        private PeriodicTimer? _connectionCheckTimer;
         private Task _supervisionTask = Task.CompletedTask;
         private TimeSpan _roomInactivityLimit;
 
@@ -30,19 +30,19 @@ namespace Game.Services
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(roomInactivityLimit, TimeSpan.Zero);
 
             _roomInactivityLimit = roomInactivityLimit;
-            _heartbeatTimer = new PeriodicTimer(_sessionTimings.HeartbeatPeriod);
+            _connectionCheckTimer = new PeriodicTimer(_sessionTimings.ConnectionCheckPeriod);
             _supervisionTask = Task.Run(SuperviseAsync);
         }
 
         public async Task StopAsync()
         {
-            _heartbeatTimer?.Dispose();
+            _connectionCheckTimer?.Dispose();
             await _supervisionTask;
         }
 
         private async Task SuperviseAsync()
         {
-            while ((_heartbeatTimer is not null) && await _heartbeatTimer.WaitForNextTickAsync())
+            while ((_connectionCheckTimer is not null) && await _connectionCheckTimer.WaitForNextTickAsync())
             {
                 DropSilentSessions();
                 await _roomService.RemoveExpiredMembersAsync(_roomInactivityLimit);

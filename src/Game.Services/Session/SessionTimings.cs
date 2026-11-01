@@ -4,19 +4,19 @@ namespace Game.Services
 {
     public sealed class SessionTimings
     {
-        public SessionTimings(TimeSpan heartbeatPeriod, int heartbeatMissesToDrop)
+        public SessionTimings(TimeSpan connectionCheckPeriod, int connectionCheckMissesToDrop)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(heartbeatPeriod, TimeSpan.Zero);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(heartbeatMissesToDrop);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(connectionCheckPeriod, TimeSpan.Zero);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(connectionCheckMissesToDrop);
 
-            HeartbeatPeriod = heartbeatPeriod;
-            HeartbeatMissesToDrop = heartbeatMissesToDrop;
+            ConnectionCheckPeriod = connectionCheckPeriod;
+            ConnectionCheckMissesToDrop = connectionCheckMissesToDrop;
         }
 
-        public TimeSpan HeartbeatPeriod { get; }
+        public TimeSpan ConnectionCheckPeriod { get; }
 
-        public int HeartbeatMissesToDrop { get; }
+        public int ConnectionCheckMissesToDrop { get; }
 
-        public TimeSpan SilenceLimit => HeartbeatPeriod * HeartbeatMissesToDrop;
+        public TimeSpan SilenceLimit => ConnectionCheckPeriod * ConnectionCheckMissesToDrop;
     }
 }

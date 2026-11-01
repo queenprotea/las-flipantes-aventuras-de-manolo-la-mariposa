@@ -8,21 +8,21 @@ namespace Game.Server
     {
         private const string SectionName = "Session";
         private const string SigningKeyVariable = "TORRES_SESSION_KEY";
-        private const string InvalidHeartbeatMessage = "The Session section of appsettings.json needs a positive HeartbeatPeriodSeconds and HeartbeatMissesToDrop.";
+        private const string InvalidConnectionCheckMessage = "The Session section of appsettings.json needs a positive ConnectionCheckPeriodSeconds and ConnectionCheckMissesToDrop.";
         private const string MissingKeyMessage = "The environment variable TORRES_SESSION_KEY is not set or is not valid base64.";
 
-        public int HeartbeatPeriodSeconds { get; set; }
+        public int ConnectionCheckPeriodSeconds { get; set; }
 
-        public int HeartbeatMissesToDrop { get; set; }
+        public int ConnectionCheckMissesToDrop { get; set; }
 
         public static SessionSettings Read(IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(configuration);
 
             SessionSettings? settings = configuration.GetSection(SectionName).Get<SessionSettings>();
-            if ((settings is null) || (settings.HeartbeatPeriodSeconds <= 0) || (settings.HeartbeatMissesToDrop <= 0))
+            if ((settings is null) || (settings.ConnectionCheckPeriodSeconds <= 0) || (settings.ConnectionCheckMissesToDrop <= 0))
             {
-                throw new InvalidOperationException(InvalidHeartbeatMessage);
+                throw new InvalidOperationException(InvalidConnectionCheckMessage);
             }
 
             return settings;

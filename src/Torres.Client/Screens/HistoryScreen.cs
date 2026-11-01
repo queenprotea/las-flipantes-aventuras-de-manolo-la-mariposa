@@ -184,7 +184,7 @@ namespace Torres.Client.Screens
 
             string guestPhrase = match.GuestOpponentCount == 1
                 ? LocalizedText.Get(TextKeys.History.GuestOpponentMessage)
-                : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, match.GuestOpponentCount);
+                : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, DisplayFormats.FormatInteger(match.GuestOpponentCount));
 
             string opponentsText = string.IsNullOrEmpty(namedOpponents) ? guestPhrase : $"{namedOpponents} {guestPhrase}";
 

@@ -1,7 +1,7 @@
 # Análisis de funcionalidades y revisión de cobertura de los casos de uso — Juego de Torres
 
-**Documento:** `Analisis-Cobertura-Casos-de-Uso-Torres.md` · **Versión 5.3** · 9 sep 2026
-**Alcance:** Actividad 1, instrucciones 1 y 2. La instrucción 1 —análisis de funcionalidades—
+**Documento:** `Analisis-Cobertura-Casos-de-Uso-Torres.md` · **Versión 5.3** · 9 sep 2026 **Alcance:** Actividad 1,
+instrucciones 1 y 2. La instrucción 1 —análisis de funcionalidades—
 se resuelve en la **Parte 1**; la instrucción 2 —casos de uso— **no se describe aquí**: la
 Parte 2 revisa **cobertura y completitud** de `CU-01`…`CU-19`. La **Parte 3** resuelve las
 cuestiones que STK-02 encargó analizar.
@@ -35,16 +35,16 @@ la ventana de inicio de sesión; «Recuperar acceso» manda un código.
 
 **`OB-18`…`OB-31`** — código de sala **alfanumérico de 4**; **color de jugador** para
 desambiguar alias iguales; el expulsado **puede volver**; **no se expulsa con partida en
-curso**; anfitrión desconectado → **inactivo** y traspaso; **el chat no se guarda**;
-**escribir consume turno**; **el que entra tarde ve lo anterior**; **no se reporta a un
+curso**; anfitrión desconectado → **inactivo** y traspaso; **el chat no se guarda**; **escribir consume turno**; **el
+que entra tarde ve lo anterior**; **no se reporta a un
 invitado**; la sanción temporal **prohíbe entrar a salas y jugar**; reportes y sanciones **se
 borran con la cuenta**.
 
 **`OB-32`…`OB-44`** — carta 7 redefinida; escalera de prohibiciones **5 h / 1 día / 3 días**;
 los 5 reportes se acumulan **en partidas diferentes**; un reporte fuera de partida **cuenta como
 uno**; los umbrales **viven en tablas de parámetros**; el **baneo permanente impide iniciar
-sesión**; la sanción que salta jugando **se aplica al terminar la partida**; el invitado
-**tampoco puede reportar**; el color **se asigna en la sala**; **el inactivo no cuenta ni entra
+sesión**; la sanción que salta jugando **se aplica al terminar la partida**; el invitado **tampoco puede reportar**; el
+color **se asigna en la sala**; **el inactivo no cuenta ni entra
 a la partida**; al expulsado **sí** se le avisa y al eliminado de amigos **no**.
 
 ### 0.2 Cuarta ronda — `OB-45`…`OB-50`
@@ -52,41 +52,41 @@ a la partida**; al expulsado **sí** se le avisa y al eliminado de amigos **no**
 Cinco respuestas. **Dos cierran huecos, una ratifica una propuesta y dos delegan la decisión en
 este análisis.**
 
-| # | Aclaración | Efecto |
-|---|---|---|
-| `OB-45` | **El pase de invitado se queda.** Cómo se resuelve, delegado a este análisis | **Retira `DR-21`.** Los invitados **sí** vuelven tras una caída — §3.4 |
-| `OB-46` | **El jugador inactivo no ocupa plaza en la partida**: **se queda en la sala**, pero no entra a jugar. La sala **nunca contiene más de cuatro personas** | Cierra el hueco 44 — §0.6 |
-| `OB-47` | **Usar la carta 7 no cuesta nada**; lo que cuesta son **sus acciones**, que **siguen las reglas de coste de movimiento** | Cierra el hueco 39 — §0.4 |
-| `OB-48` | **La carta 3 hace lo que dice; nada que ver con la 7** | Cierra el hueco 40 — §0.4 |
-| `OB-49` | **Los baneos, las duraciones y su conteo**, delegados a este análisis; y **§3.3 se mantiene tal como se propuso** | Cierra los huecos 41, 42, 43 y 45 — §0.5 — y **ratifica el latido de `Q-32` y la regla del reloj de `Q-33`** |
-| `OB-50` *(9 sep)* | **Pasado cierto tiempo inactivo, el jugador sí sale de la sala** | Segunda fase de la inactividad. **Cierra el punto de las salas que se quedaban abiertas** — §0.6 |
+| #                 | Aclaración                                                                                                                                              | Efecto                                                                                                       |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `OB-45`           | **El pase de invitado se queda.** Cómo se resuelve, delegado a este análisis                                                                            | **Retira `DR-21`.** Los invitados **sí** vuelven tras una caída — §3.4                                       |
+| `OB-46`           | **El jugador inactivo no ocupa plaza en la partida**: **se queda en la sala**, pero no entra a jugar. La sala **nunca contiene más de cuatro personas** | Cierra el hueco 44 — §0.6                                                                                    |
+| `OB-47`           | **Usar la carta 7 no cuesta nada**; lo que cuesta son **sus acciones**, que **siguen las reglas de coste de movimiento**                                | Cierra el hueco 39 — §0.4                                                                                    |
+| `OB-48`           | **La carta 3 hace lo que dice; nada que ver con la 7**                                                                                                  | Cierra el hueco 40 — §0.4                                                                                    |
+| `OB-49`           | **Los baneos, las duraciones y su conteo**, delegados a este análisis; y **§3.3 se mantiene tal como se propuso**                                       | Cierra los huecos 41, 42, 43 y 45 — §0.5 — y **ratifica el latido de `Q-32` y la regla del reloj de `Q-33`** |
+| `OB-50` *(9 sep)* | **Pasado cierto tiempo inactivo, el jugador sí sale de la sala**                                                                                        | Segunda fase de la inactividad. **Cierra el punto de las salas que se quedaban abiertas** — §0.6             |
 
 ### 0.3 Conclusiones retiradas
 
 Acumulado; la última es de esta versión.
 
-| # | Conclusión retirada | Motivo |
-|---|---|---|
-| `R-1` | «Expulsar no está respaldado; no es un caso de uso que falte» | `OB-01` |
-| `R-2` | «El chat está fuera de alcance y no debe aparecer en ningún caso de uso» | `OB-03` |
-| `R-3` | FC-03 con resultado `[NO DETERMINABLE]` | `OB-17` |
-| `R-4` | «No determinable dónde se guarda el idioma» | `OB-06` |
-| `R-5` | «Eliminar una amistad aceptada: sin definir» | `OB-07` |
-| `R-6` | «Qué significa cada tipo de sala sigue abierto» | `OB-08` |
-| `R-7` | «Quién puede iniciar la partida: `[NO DETERMINABLE]`» | `OB-02` |
-| `R-8` | «Criterio de sucesión del anfitrión: `[NO DETERMINABLE]`» | `OB-10` |
-| `R-9` | «Si un invitado puede invitar: `[NO DETERMINABLE]`» | `OB-11` |
-| `R-10` | CU-04 disparado desde `GUIMainMenu` | `OB-16` |
-| `R-11` | «Lectura de memoria para el chat, a confirmar» | `OB-24` |
-| `R-12` | «Sin decidir qué prohíbe la sanción, CU-01, CU-13 y CU-19 no pueden completarse» | `OB-30` |
-| `R-13` | «Acotar el chat», sin cifra | `OB-26`; §3.2 la propone |
-| `R-14` | «La carta 7 es la última pregunta de reglas abierta» | `OB-19`, `OB-32` |
-| `R-15` | «El umbral de 5 reportes es inalcanzable con 4 jugadores» | `OB-34`: eran **5 partidas diferentes**, no 5 en una |
-| `R-16` | «CU-01 vuelve a los correctos» | `OB-37`: el baneo permanente **sí** bloquea el inicio de sesión |
-| `R-17` | «`R 2.4` y `OB-19` se contradicen sobre el nivel» | `OB-32` |
-| **`R-18`** | **«La carta 3 podría quedar subsumida por la carta 7»** | `OB-48` lo descarta, y §0.4 encuentra **en las propias reglas** qué las separa: **la carta 3 es gratis y la 7 se paga** |
-| **`R-19`** | **«El inactivo sigue en la lista de la sala sin contar para el máximo»** — lectura de la v5.0 | Permitiría una sala de **cinco personas**, y la sala solo contiene cuatro |
-| **`R-20`** | **«Al marcarlo inactivo, el jugador sale de la sala»** — lectura de la v5.1 | **Se queda en la sala** al ser marcado. La plaza que no ocupa es **la de la partida**. Sale, pero **después**, al vencer el plazo de `OB-50` — §0.6 |
+| #          | Conclusión retirada                                                                           | Motivo                                                                                                                                              |
+|------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `R-1`      | «Expulsar no está respaldado; no es un caso de uso que falte»                                 | `OB-01`                                                                                                                                             |
+| `R-2`      | «El chat está fuera de alcance y no debe aparecer en ningún caso de uso»                      | `OB-03`                                                                                                                                             |
+| `R-3`      | FC-03 con resultado `[NO DETERMINABLE]`                                                       | `OB-17`                                                                                                                                             |
+| `R-4`      | «No determinable dónde se guarda el idioma»                                                   | `OB-06`                                                                                                                                             |
+| `R-5`      | «Eliminar una amistad aceptada: sin definir»                                                  | `OB-07`                                                                                                                                             |
+| `R-6`      | «Qué significa cada tipo de sala sigue abierto»                                               | `OB-08`                                                                                                                                             |
+| `R-7`      | «Quién puede iniciar la partida: `[NO DETERMINABLE]`»                                         | `OB-02`                                                                                                                                             |
+| `R-8`      | «Criterio de sucesión del anfitrión: `[NO DETERMINABLE]`»                                     | `OB-10`                                                                                                                                             |
+| `R-9`      | «Si un invitado puede invitar: `[NO DETERMINABLE]`»                                           | `OB-11`                                                                                                                                             |
+| `R-10`     | CU-04 disparado desde `GUIMainMenu`                                                           | `OB-16`                                                                                                                                             |
+| `R-11`     | «Lectura de memoria para el chat, a confirmar»                                                | `OB-24`                                                                                                                                             |
+| `R-12`     | «Sin decidir qué prohíbe la sanción, CU-01, CU-13 y CU-19 no pueden completarse»              | `OB-30`                                                                                                                                             |
+| `R-13`     | «Acotar el chat», sin cifra                                                                   | `OB-26`; §3.2 la propone                                                                                                                            |
+| `R-14`     | «La carta 7 es la última pregunta de reglas abierta»                                          | `OB-19`, `OB-32`                                                                                                                                    |
+| `R-15`     | «El umbral de 5 reportes es inalcanzable con 4 jugadores»                                     | `OB-34`: eran **5 partidas diferentes**, no 5 en una                                                                                                |
+| `R-16`     | «CU-01 vuelve a los correctos»                                                                | `OB-37`: el baneo permanente **sí** bloquea el inicio de sesión                                                                                     |
+| `R-17`     | «`R 2.4` y `OB-19` se contradicen sobre el nivel»                                             | `OB-32`                                                                                                                                             |
+| **`R-18`** | **«La carta 3 podría quedar subsumida por la carta 7»**                                       | `OB-48` lo descarta, y §0.4 encuentra **en las propias reglas** qué las separa: **la carta 3 es gratis y la 7 se paga**                             |
+| **`R-19`** | **«El inactivo sigue en la lista de la sala sin contar para el máximo»** — lectura de la v5.0 | Permitiría una sala de **cinco personas**, y la sala solo contiene cuatro                                                                           |
+| **`R-20`** | **«Al marcarlo inactivo, el jugador sale de la sala»** — lectura de la v5.1                   | **Se queda en la sala** al ser marcado. La plaza que no ocupa es **la de la partida**. Sale, pero **después**, al vencer el plazo de `OB-50` — §0.6 |
 
 ### 0.4 La carta 7 y la carta 3, cerradas — y por qué no se pisan
 
@@ -94,13 +94,13 @@ Acumulado; la última es de esta versión.
 `R 2.4` —«utilizar una carta ya obtenida no tendrá ningún coste»—. Lo que se paga es **el
 movimiento que la carta habilita**, con las tarifas de `R 3.2`:
 
-| Movimiento con la carta 7 | Coste |
-|---|---|
-| Recorrer el castillo hasta otra torre **al mismo nivel** | **1 PA** — mover un caballero |
-| Recorrer y **bajar** cualquier número de niveles | **1 PA** — bajar no se cobra `R 2.1`, `R 3.2` |
-| Recorrer y **subir un nivel** | **2 PA** — 1 por mover, 1 por el nivel |
-| Recorrer y **subir dos niveles** —de 1 a 3, el máximo por `DR-03`— | **3 PA** |
-| **Subirse al castillo desde el tablero** y hacer lo anterior | Lo mismo: el movimiento y los niveles que suba |
+| Movimiento con la carta 7                                          | Coste                                          |
+|--------------------------------------------------------------------|------------------------------------------------|
+| Recorrer el castillo hasta otra torre **al mismo nivel**           | **1 PA** — mover un caballero                  |
+| Recorrer y **bajar** cualquier número de niveles                   | **1 PA** — bajar no se cobra `R 2.1`, `R 3.2`  |
+| Recorrer y **subir un nivel**                                      | **2 PA** — 1 por mover, 1 por el nivel         |
+| Recorrer y **subir dos niveles** —de 1 a 3, el máximo por `DR-03`— | **3 PA**                                       |
+| **Subirse al castillo desde el tablero** y hacer lo anterior       | Lo mismo: el movimiento y los niveles que suba |
 
 **Corrección documental que esto deja en `R 2.4`.** El texto dice que la carta 7 «es la única
 que señala un coste, de 1 punto de acción». Con `OB-47` ese 1 PA **no es un coste plano de la
@@ -111,11 +111,11 @@ esa frase, junto con «subiendo un nivel», que `OB-32` ya había superado.
 supuesta: está escrita en `R 2.4`. **«La acción que permite una carta costará únicamente los
 puntos de acción que la propia carta indique»**, y **la carta 3 no indica ninguno**. Entonces:
 
-| | Carta 3 | Carta 7 |
-|---|---|---|
-| Qué hace | Sube un caballero **del nivel 1 al 3 de una torre** | **Recorre el castillo** de una torre a otra, sin importar las casillas, y permite **subirse al castillo desde el tablero** |
-| Qué regla rompe | La de **subir un solo nivel por movimiento** `R 2.1` | La de **recorrer casillas** para llegar a otra torre |
-| Qué cuesta | **Nada.** No indica coste `R 2.4` | **Su movimiento y sus niveles** `OB-47` |
+|                 | Carta 3                                              | Carta 7                                                                                                                    |
+|-----------------|------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Qué hace        | Sube un caballero **del nivel 1 al 3 de una torre**  | **Recorre el castillo** de una torre a otra, sin importar las casillas, y permite **subirse al castillo desde el tablero** |
+| Qué regla rompe | La de **subir un solo nivel por movimiento** `R 2.1` | La de **recorrer casillas** para llegar a otra torre                                                                       |
+| Qué cuesta      | **Nada.** No indica coste `R 2.4`                    | **Su movimiento y sus niveles** `OB-47`                                                                                    |
 
 **La diferencia es económica y está en las reglas:** la carta 3 regala una subida de dos
 niveles; la carta 7 regala **distancia**, y cobra la altura como cualquier movimiento. Se
@@ -123,8 +123,8 @@ parecen en el efecto y no en el precio, que es exactamente lo que `OB-48` afirma
 
 ### 0.5 `OB-49` · El régimen de baneos, resuelto entero
 
-`OB-49` delegó cuatro decisiones. Se cierran aquí, cada una con el motivo que la sostiene.
-**`[RESUELTO POR ENCARGO]`** — bastan cuatro líneas de STK-02 para ratificarlas.
+`OB-49` delegó cuatro decisiones. Se cierran aquí, cada una con el motivo que la sostiene. **
+`[RESUELTO POR ENCARGO]`** — bastan cuatro líneas de STK-02 para ratificarlas.
 
 **1 · La escalera y el permanente.** `OB-29` habla de **tres** baneos temporales antes del
 permanente y `OB-33` da **tres** duraciones. Se leen como la misma escalera: **1.º → 5 horas ·
@@ -148,8 +148,8 @@ el mismo principio al único otro sitio donde vive el chat da: **la ocasión, fu
 la sala**. Si no fuera así, la sala sería un camino más barato hacia la sanción que la partida,
 y nada justifica esa diferencia.
 
-*Simplificación que se asume y conviene decir en voz alta:* con este criterio, dos reportes en
-**la misma sala** pero en momentos distintos —antes de la primera partida y entre dos partidas—
+*Simplificación que se asume y conviene decir en voz alta:* con este criterio, dos reportes en **la misma sala** pero en
+momentos distintos —antes de la primera partida y entre dos partidas—
 cuentan **una sola** ocasión. Distinguirlos exigiría un concepto de «sesión de sala» que el
 proyecto no tiene.
 
@@ -163,18 +163,18 @@ inicio se guarda aparte**; no es deducible del instante del umbral.
 
 **El régimen queda así, completo**
 
-| Elemento | Valor | Fuente |
-|---|---|---|
-| Qué se cuenta | Ocasiones con reporte: **partidas diferentes**, y **cada sala** para lo dicho fuera de partida | `OB-34`, `OB-35`, §0.5-3 |
-| Umbral | **5 ocasiones** | `OB-29` |
-| Al cruzarlo | Baneo temporal, y **el contador de reportes vuelve a cero** | §0.5-2 |
-| Escalera | **5 h → 1 día → 3 días**, y el **cuarto** es permanente | `OB-33`, §0.5-1 |
-| Inicio de la sanción | Al entrar en vigor: inmediato, o **al terminar la partida** si se cruzó jugando | `OB-38`, §0.5-4 |
-| Qué prohíbe la temporal | **Entrar a salas y jugar**; no iniciar sesión | `OB-30` |
-| Qué prohíbe la permanente | **También iniciar sesión** | `OB-37` |
-| Quién reporta y a quién | **Solo cuentas, y solo contra cuentas** | `OB-28`, `OB-39` |
-| Dónde viven los números | **Tablas de parámetros** | `OB-36` — §3.5 |
-| Al borrar la cuenta | Reportes y sanciones **se eliminan** | `OB-31` |
+| Elemento                  | Valor                                                                                          | Fuente                   |
+|---------------------------|------------------------------------------------------------------------------------------------|--------------------------|
+| Qué se cuenta             | Ocasiones con reporte: **partidas diferentes**, y **cada sala** para lo dicho fuera de partida | `OB-34`, `OB-35`, §0.5-3 |
+| Umbral                    | **5 ocasiones**                                                                                | `OB-29`                  |
+| Al cruzarlo               | Baneo temporal, y **el contador de reportes vuelve a cero**                                    | §0.5-2                   |
+| Escalera                  | **5 h → 1 día → 3 días**, y el **cuarto** es permanente                                        | `OB-33`, §0.5-1          |
+| Inicio de la sanción      | Al entrar en vigor: inmediato, o **al terminar la partida** si se cruzó jugando                | `OB-38`, §0.5-4          |
+| Qué prohíbe la temporal   | **Entrar a salas y jugar**; no iniciar sesión                                                  | `OB-30`                  |
+| Qué prohíbe la permanente | **También iniciar sesión**                                                                     | `OB-37`                  |
+| Quién reporta y a quién   | **Solo cuentas, y solo contra cuentas**                                                        | `OB-28`, `OB-39`         |
+| Dónde viven los números   | **Tablas de parámetros**                                                                       | `OB-36` — §3.5           |
+| Al borrar la cuenta       | Reportes y sanciones **se eliminan**                                                           | `OB-31`                  |
 
 ### 0.6 `OB-46` y `OB-50` · La inactividad tiene dos fases
 
@@ -189,8 +189,8 @@ plazas** `OB-46`, `P-34`; lo que **no** ocupa es **plaza en la partida**, a la q
 `OB-41`. Si era el anfitrión, la condición pasa al siguiente del orden `OB-23`, `OB-10`. Si
 reconecta dentro de esta fase, **vuelve a activo sin nada que recuperar**.
 
-**Fase 2 — pasado el plazo, fuera de la sala** `OB-50`. Si sigue inactivo cuando vence el plazo,
-**se le retira de la sala**: su plaza queda libre, otro puede entrar, y **si era el último la
+**Fase 2 — pasado el plazo, fuera de la sala** `OB-50`. Si sigue inactivo cuando vence el plazo, **se le retira de la
+sala**: su plaza queda libre, otro puede entrar, y **si era el último la
 sala se queda vacía y se cierra** con su fecha de cierre, su código liberado y sus invitaciones
 eliminadas `D-23`, `FC-15`. Para volver, entra como cualquiera.
 
@@ -243,8 +243,8 @@ descubre al volver, cuando ya no está en la sala. Es una deducción, no una reg
 9. **`Q-32` y `Q-33` pasan a cerradas** por `OB-49`, con la salvedad de comprobar `STACK.md`.
 
 **Impacto de seguridad acumulado.** `RES-09` fija `SecurityMode.None` y `C-2` sigue abierto por
-la credencial sin cifrar. Con `OB-03` **los mensajes viajan sin cifrar**; con `OB-04` el sistema
-**guarda texto escrito por personas**; con `OB-27` **quien entra tarde lee lo anterior**; y
+la credencial sin cifrar. Con `OB-03` **los mensajes viajan sin cifrar**; con `OB-04` el sistema **guarda texto escrito
+por personas**; con `OB-27` **quien entra tarde lee lo anterior**; y
 desde `OB-45` **circula un pase que da acceso a un puesto de partida**. Agrava `TEN-I` y toca
 `CON-06`.
 
@@ -265,14 +265,14 @@ prototipos parara en «Iniciar partida» fue una decisión de *esa fase*, no un 
 
 ## 1.2 Cómo se lee «CRUD» en Torres
 
-| Marca | Significado | Fuente |
-|---|---|---|
-| `[BD]` | Datos permanentes | `PER §2` |
-| `[BD-T]` | Datos temporales de la base | `PER §2` |
-| `[MEM]` | Estado en memoria: salas, miembros, anfitrión, ranking de sala, chat, colores, reloj, PA | `D-26`, `D-29`, `OB-24`, `OB-40` |
-| `[DER]` | Dato calculado | vista `player_ranking` |
-| `[CLI]` | Solo cliente | — |
-| `[ARCH]` | Archivo en el disco del servidor | `P-43`, `DEP-E10` |
+| Marca    | Significado                                                                              | Fuente                           |
+|----------|------------------------------------------------------------------------------------------|----------------------------------|
+| `[BD]`   | Datos permanentes                                                                        | `PER §2`                         |
+| `[BD-T]` | Datos temporales de la base                                                              | `PER §2`                         |
+| `[MEM]`  | Estado en memoria: salas, miembros, anfitrión, ranking de sala, chat, colores, reloj, PA | `D-26`, `D-29`, `OB-24`, `OB-40` |
+| `[DER]`  | Dato calculado                                                                           | vista `player_ranking`           |
+| `[CLI]`  | Solo cliente                                                                             | —                                |
+| `[ARCH]` | Archivo en el disco del servidor                                                         | `P-43`, `DEP-E10`                |
 
 ## 1.3 Inventario de funcionalidades
 
@@ -317,16 +317,15 @@ historial, ranking global, amigos ni invitaciones, no invita** `OB-11`, **no rep
 
 ### Bloque B · Amistades
 
-**FC-08 · Buscar por username** `[BD]` · *Read* — **solo por username** `P-16`.
-**FC-09 · Enviar solicitud** `[BD]` · *Create* — una fila por pareja; sin bloqueo `P-15`.
-**FC-10 · Aceptar** · *Update* · **FC-11 · Rechazar** · *Delete*, **sin dejar registro** `P-15`.
-**FC-34 · Eliminar una amistad aceptada** `[BD]` · *Delete* `OB-07` — **borrado simétrico**, y
-**al eliminado no se le avisa** `OB-43`.
+**FC-08 · Buscar por username** `[BD]` · *Read* — **solo por username** `P-16`. **FC-09 · Enviar solicitud** `[BD]` ·
+*Create* — una fila por pareja; sin bloqueo `P-15`. **FC-10 · Aceptar** · *Update* · **FC-11 · Rechazar** · *Delete*,
+**sin dejar registro** `P-15`. **FC-34 · Eliminar una amistad aceptada** `[BD]` · *Delete* `OB-07` — **borrado
+simétrico**, y **al eliminado no se le avisa** `OB-43`.
 
 ### Bloque C · Salas e invitaciones
 
-**FC-12 · Crear una sala** `[BD]` `[MEM]` · *Create* — actor con cuenta **o invitado** `P-41`.
-**Crea** la fila `room` `D-23` y, en memoria, su **lista ordenada** de miembros, anfitrión,
+**FC-12 · Crear una sala** `[BD]` `[MEM]` · *Create* — actor con cuenta **o invitado** `P-41`. **Crea** la fila `room`
+`D-23` y, en memoria, su **lista ordenada** de miembros, anfitrión,
 ranking, **chat** y **colores**. Código **alfanumérico de cuatro** `OB-18`, **único solo entre
 salas abiertas** —con reintento ante colisión—; **máximo cuatro personas, nunca más, contando a
 los inactivos** `P-34`, `OB-46`; una
@@ -341,13 +340,12 @@ memoria `D-26`, **solo las públicas** `OB-08`. Sigue contradiciendo `B §4.1` y
 
 **FC-14 · Entrar a una sala** `[MEM]` · *Update* — agrega a la lista ordenada y avisa. Sala
 abierta, **con menos de cuatro jugadores contando a los inactivos** `P-34`, `OB-46`, y el
-jugador no puede estar en otra `P-33`.
-**Comprueba la sanción temporal** `OB-30`. **Asigna el color** `OB-40`.
+jugador no puede estar en otra `P-33`. **Comprueba la sanción temporal** `OB-30`. **Asigna el color** `OB-40`.
 
 **FC-15 · Salir de una sala** `[MEM]` (+ `[BD]`) — si era el último, **cierra la sala** con su
 fecha `D-23` y elimina sus invitaciones; ranking y chat se descartan `P-24`, `OB-24`. **No se
-sale jugando** `P-35`; el anfitrión pasa **al siguiente del orden** `OB-10`, lo que exige
-**orden explícito**. **La sala vacía se cierra, no se borra.**
+sale jugando** `P-35`; el anfitrión pasa **al siguiente del orden** `OB-10`, lo que exige **orden explícito**. **La sala
+vacía se cierra, no se borra.**
 
 **FC-35 · Expulsar a un jugador** `[MEM]` — actor **el anfitrión** `OB-01`; **no con partida en
 curso** `OB-22`; **se le avisa** `OB-42` y **puede volver con el código** `OB-21`. Nunca vacía
@@ -356,21 +354,19 @@ expulsar y arrancar deja fuera al expulsado de esa partida.
 
 **FC-16 · Invitar dentro del juego** `[BD-T]` · *Create* — actor **con cuenta** `OB-11`;
 siempre **dirigida a una cuenta** `P-22`; una pendiente por sala y destinatario; se conserva
-aunque esté desconectado `P-21`; no caduca `P-39`.
-**FC-17 · Invitar por correo** `[BD-T]` `[DEP-E9]` — uso único porque **se borra al responderse**
-`D-24`; canje resuelto en §3.1.
-**FC-18 · Responder una invitación** `[BD-T]` · *Delete* (+ FC-14 si acepta).
+aunque esté desconectado `P-21`; no caduca `P-39`. **FC-17 · Invitar por correo** `[BD-T]` `[DEP-E9]` — uso único porque
+**se borra al responderse**
+`D-24`; canje resuelto en §3.1. **FC-18 · Responder una invitación** `[BD-T]` · *Delete* (+ FC-14 si acepta).
 
 ### Bloque D · Consultas de resultado
 
 **FC-19 · Historial** `[BD]` — fecha, cuántos jugaron, rivales conservados, puesto y puntos
 `P-05`, motivo de fin; la lista de rivales puede estar incompleta `P-08` y `match.player_count`
-es el único dato fiable `D-25`.
-**FC-20 · Detalle de una partida** `[BD]`. **FC-21 · Ranking global** `[DER]` — vista
-`player_ranking`, victorias → puntos → menos partidas `DR-15`.
-**FC-22 · Ranking de la sala** `[MEM]` — por puntos, con victorias `P-44`, `P-23`; **incluye
-invitados**, por eso ninguna consulta puede producirlo `D-29`.
-**FC-23 · Actualizarlo al terminar una partida** `[MEM]` `D-29`.
+es el único dato fiable `D-25`. **FC-20 · Detalle de una partida** `[BD]`. **FC-21 · Ranking global** `[DER]` — vista
+`player_ranking`, victorias → puntos → menos partidas `DR-15`. **FC-22 · Ranking de la sala** `[MEM]` — por puntos, con
+victorias `P-44`, `P-23`; **incluye
+invitados**, por eso ninguna consulta puede producirlo `D-29`. **FC-23 · Actualizarlo al terminar una partida** `[MEM]`
+`D-29`.
 
 ### Bloque E · La partida
 
@@ -383,25 +379,24 @@ la sanción** `OB-30`; 3 rondas `DR-01`; turnos y construcciones desde `turn_lay
 `build_allowance` `R 1.3`.
 
 **FC-25 · Colocar el caballero inicial** `[MEM]` — uno por jugador sobre una torre `DR-05`, en
-orden de puesto `DR-24`.
-**FC-26 · Colocar el rey** `[MEM]` — ronda 1, el último puesto `R 2.3`; después, **el de menor
+orden de puesto `DR-24`. **FC-26 · Colocar el rey** `[MEM]` — ronda 1, el último puesto `R 2.3`; después, **el de menor
 puntuación**, al azar entre empatados `R 2.3`. Siempre sobre una torre.
 
 **FC-27 · Jugar un turno** `[MEM]` — 5 PA que **se reinician y no se acumulan** `R 3.1`; máximo
 90 s `R 5.1`; como mucho las construcciones de la carta resumen `R 1.3`. **Escribir en el chat
 consume ese tiempo** `OB-25`.
 
-| Acción | Coste | Reglas propias |
-|---|---|---|
-| Colocar un nuevo caballero | 2 PA | Máximo 5 por jugador `R 2.1` |
-| Mover un caballero | 1 PA | Nunca a torre ocupada; **siempre dentro del mismo castillo** `DR-22` |
-| Subir un nivel | 1 PA por nivel | Un nivel por movimiento salvo cartas 3 y 7; bajar no cuesta; altura máxima 3 `DR-03` |
-| Colocar una construcción | 1 PA | Sobre castillo existente, ortogonal; **no se crean ni se unen castillos** `R 2.2`, `DR-08` |
-| Obtener una carta | 1 PA | **Al azar** `DR-06`; mismo mazo de 8 |
+| Acción                      | Coste                     | Reglas propias                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|-----------------------------|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Colocar un nuevo caballero  | 2 PA                      | Máximo 5 por jugador `R 2.1`                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Mover un caballero          | 1 PA                      | Nunca a torre ocupada; **siempre dentro del mismo castillo** `DR-22`                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Subir un nivel              | 1 PA por nivel            | Un nivel por movimiento salvo cartas 3 y 7; bajar no cuesta; altura máxima 3 `DR-03`                                                                                                                                                                                                                                                                                                                                                                                    |
+| Colocar una construcción    | 1 PA                      | Sobre castillo existente, ortogonal; **no se crean ni se unen castillos** `R 2.2`, `DR-08`                                                                                                                                                                                                                                                                                                                                                                              |
+| Obtener una carta           | 1 PA                      | **Al azar** `DR-06`; mismo mazo de 8                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Utilizar una carta obtenida | **0 PA** `R 2.4`, `OB-47` | **Carta 3:** sube del nivel 1 al 3 de una torre, **gratis** `R 2.4`. **Carta 7:** recorre el castillo hasta cualquier torre sin importar las casillas, y permite subirse al castillo desde el tablero, **pagando el movimiento y los niveles** `OB-32`, `OB-47` — §0.4. Cartas 1 y 2 en cualquier momento del turno pero **nunca las dos** `DR-26`. Cartas 5 y 8: no parten el castillo, no retiran el nivel 1 de una torre de altura 1 y **no unen castillos** `DR-07` |
 
-**FC-28 · Cerrar el turno** `[BD-T]` — por decisión o **por agotarse los 90 s** `R 5.1`; se
-**escribe el estado** `P-27`. Reloj, PA restantes y construcciones pendientes **no se guardan**
+**FC-28 · Cerrar el turno** `[BD-T]` — por decisión o **por agotarse los 90 s** `R 5.1`; se **escribe el estado**
+`P-27`. Reloj, PA restantes y construcciones pendientes **no se guardan**
 `P-28`.
 
 **FC-29 · Cerrar la ronda** `[MEM]` — **puntuación parcial**, designación del colocador del rey
@@ -409,19 +404,19 @@ y reparto según las cartas resumen. **No se retira nada del tablero** `DR-23`. 
 superficie × nivel, **solo con un único caballero propio en el castillo** `R 4.1`; más el rey
 —5, 10, 15— para quien comparta castillo **y nivel** `R 4.2`.
 
-**FC-30 · Terminar la partida y registrar el resultado** `[BD]` `[BD-T]` — `match` a
-*terminada*; puntuación y puesto en cada `match_participant`; **elimina** `match_state` `D-21`;
-**actualiza** el ranking de sala `D-29`. Final = castillos + rey + **1 punto por carta no
-usada** `R 4.3`; ganador por puntos → castillos puntuados → puesto `DR-15`; motivos
-*completada*, *abandonada*, *interrumpida* `P-37`; una partida **solo de invitados** se elimina
+**FC-30 · Terminar la partida y registrar el resultado** `[BD]` `[BD-T]` — `match` a *terminada*; puntuación y puesto en
+cada `match_participant`; **elimina** `match_state` `D-21`; **actualiza** el ranking de sala `D-29`. Final = castillos +
+rey + **1 punto por carta no
+usada** `R 4.3`; ganador por puntos → castillos puntuados → puesto `DR-15`; motivos *completada*, *abandonada*,
+*interrumpida* `P-37`; una partida **solo de invitados** se elimina
 al terminar `PER §7.4`. **Aquí entran en vigor las sanciones diferidas** `OB-38`, §0.5-4.
 
 **FC-31 · Perder la conexión y reconectar** `[MEM]` — en su turno, el tiempo restante; en el de
 otro, **90 s** `R 5.2`; **el reloj sigue corriendo** `DR-20`; al volver **retoma su turno en el
 estado exacto** `DR-30`. **La pérdida se detecta por el latido** ratificado en `OB-49`, §3.3.
 
-**FC-32 · Retirar al jugador que agotó la ventana** `[BD]` `[MEM]` — marca `was_withdrawn`;
-**deja de contar** `DR-25`; **sus construcciones se quedan y sus caballeros se retiran**
+**FC-32 · Retirar al jugador que agotó la ventana** `[BD]` `[MEM]` — marca `was_withdrawn`; **deja de contar** `DR-25`;
+**sus construcciones se quedan y sus caballeros se retiran**
 `DR-32`; la partida sigue con la configuración inicial `DR-09` y **cuenta para el ranking**
 `P-07`.
 
@@ -434,10 +429,10 @@ nadie → *interrumpida* `P-37`; **las salas no se reanudan** `P-32` y **se pier
 
 ### Bloque F · Chat, reportes y sanciones
 
-**FC-36 · Enviar un mensaje de chat** `[MEM]` · *Create* — actor: cualquiera dentro de la sala,
-**con cuenta o invitado**. **Un solo chat, el de la sala**, que la partida muestra `OB-03`. **No
-se guarda en la base** `OB-24`; muere con la sala y **una caída se lo lleva** `P-32`.
-**Escribir consume el turno** `OB-25`. Límites en §3.2, guardados en la tabla de parámetros
+**FC-36 · Enviar un mensaje de chat** `[MEM]` · *Create* — actor: cualquiera dentro de la sala, **con cuenta o
+invitado**. **Un solo chat, el de la sala**, que la partida muestra `OB-03`. **No
+se guarda en la base** `OB-24`; muere con la sala y **una caída se lo lleva** `P-32`. **Escribir consume el turno**
+`OB-25`. Límites en §3.2, guardados en la tabla de parámetros
 `OB-36`.
 
 **FC-37 · Consultar el chat** `[MEM]` · *Read* — **el que entra tarde ve lo anterior** `OB-27`,
@@ -447,20 +442,19 @@ hasta donde llegue la ventana de §3.2.
 solo contra una cuenta** `OB-28`; motivo, **mensajes ofensivos** `OB-04`; **se borra con la
 cuenta** `OB-31`. **La entidad no existe en el modelo** — `HC-16`. Guarda **una copia del
 mensaje**, porque `OB-24` no conserva el chat y la ventana de §3.2 descarta lo antiguo, y **la
-ocasión** —la partida, o la sala si fue fuera de partida— porque es lo que se acumula
-(§0.5-3).
+ocasión** —la partida, o la sala si fue fuera de partida— porque es lo que se acumula (§0.5-3).
 
 > **Consecuencia de `OB-28` + `OB-39`:** el régimen **solo funciona entre cuentas**. Un invitado
 > ni reporta ni puede ser reportado, aunque escriba en el mismo chat.
 
 **FC-39 · Aplicar una sanción** `[BD]` · *Create* + *Update* — la dispara el sistema a las **5
-ocasiones** `OB-29`, `OB-34`, `OB-35`. Escalera **5 h → 1 día → 3 días** y, al cuarto cruce,
-**permanente** `OB-33`, §0.5-1. **Al aplicarla, el contador de reportes vuelve a cero**
+ocasiones** `OB-29`, `OB-34`, `OB-35`. Escalera **5 h → 1 día → 3 días** y, al cuarto cruce, **permanente** `OB-33`,
+§0.5-1. **Al aplicarla, el contador de reportes vuelve a cero**
 §0.5-2. **Si se cruzó jugando, entra en vigor al terminar la partida**, y **desde ahí** corre su
 duración `OB-38`, §0.5-4. Los números viven en tablas de parámetros `OB-36` — §3.5.
 
-**FC-40 · Comprobar la sanción vigente** `[BD]` · *Read* — **dos puntos, ambos decididos**: el
-**baneo permanente** al iniciar sesión `OB-37`, y la **sanción temporal** al entrar a la sala y
+**FC-40 · Comprobar la sanción vigente** `[BD]` · *Read* — **dos puntos, ambos decididos**: el **baneo permanente** al
+iniciar sesión `OB-37`, y la **sanción temporal** al entrar a la sala y
 al jugar `OB-30`.
 
 ### Bloque G · Presencia e identidad visible
@@ -488,18 +482,18 @@ parámetros §3.5. Tampoco la pide nadie: la dispara el tiempo.
 
 ## 1.4 Situaciones del sistema que no las pide ningún actor
 
-| # | Situación | Fuente |
-|---|---|---|
-| S-1 | Al arrancar el servidor **se cierran las salas** abiertas | `DR-18a` |
-| S-2 | Fin de turno **por agotarse los 90 s** | `R 5.1` — FC-28 |
-| S-3 | Retiro por agotarse la ventana de reconexión | `R 5.2` — FC-32 |
-| S-4 | Cierre de la partida a la que nadie volvió | `P-31`, `P-37` — FC-33 |
-| S-5 | Actualización del ranking de sala | `D-29` — FC-23 |
-| S-6 | **Registro de eventos**, solo log4net, sin contraseñas, tokens ni datos personales | `RES-06` |
-| S-7 | **Aplicación de la sanción**, **diferida al fin de la partida si se cruza jugando** | `OB-29`, `OB-38` — FC-39 |
-| S-8 | **Caducidad de la prohibición**, a las 5 h, 1 día o 3 días **desde su entrada en vigor** | `OB-33`, §0.5-4 |
-| S-9 | **Marcado de inactividad y traspaso del anfitrión**, disparado por el latido. El inactivo **se queda en la sala** | `OB-23`, `OB-46`, `OB-49` — FC-42 |
-| **S-10** | **Retirada de la sala del inactivo que agota el plazo**, y **cierre de la sala si era el último** | `OB-50`, `D-23` — FC-43 |
+| #        | Situación                                                                                                         | Fuente                            |
+|----------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| S-1      | Al arrancar el servidor **se cierran las salas** abiertas                                                         | `DR-18a`                          |
+| S-2      | Fin de turno **por agotarse los 90 s**                                                                            | `R 5.1` — FC-28                   |
+| S-3      | Retiro por agotarse la ventana de reconexión                                                                      | `R 5.2` — FC-32                   |
+| S-4      | Cierre de la partida a la que nadie volvió                                                                        | `P-31`, `P-37` — FC-33            |
+| S-5      | Actualización del ranking de sala                                                                                 | `D-29` — FC-23                    |
+| S-6      | **Registro de eventos**, solo log4net, sin contraseñas, tokens ni datos personales                                | `RES-06`                          |
+| S-7      | **Aplicación de la sanción**, **diferida al fin de la partida si se cruza jugando**                               | `OB-29`, `OB-38` — FC-39          |
+| S-8      | **Caducidad de la prohibición**, a las 5 h, 1 día o 3 días **desde su entrada en vigor**                          | `OB-33`, §0.5-4                   |
+| S-9      | **Marcado de inactividad y traspaso del anfitrión**, disparado por el latido. El inactivo **se queda en la sala** | `OB-23`, `OB-46`, `OB-49` — FC-42 |
+| **S-10** | **Retirada de la sala del inactivo que agota el plazo**, y **cierre de la sala si era el último**                 | `OB-50`, `D-23` — FC-43           |
 
 ## 1.5 Lo que **no** pertenece al sistema
 
@@ -517,12 +511,12 @@ hay caso de uso de moderación**: las sanciones son automáticas por umbral.
 
 ## 1.6 Lo que no se puede determinar con la información actual
 
-**No queda ninguno.** De los siete de la v4.0, cuatro los resolvió este análisis por encargo
-(§0.5), dos los cerró STK-02 (`OB-47`, `OB-48`) y el último lo cierra `OB-46` (§0.6). **Lo que
+**No queda ninguno.** De los siete de la v4.0, cuatro los resolvió este análisis por encargo (§0.5), dos los cerró
+STK-02 (`OB-47`, `OB-48`) y el último lo cierra `OB-46` (§0.6). **Lo que
 queda no es información: es ratificación y trabajo de escritura.**
 
-| # | Sin determinar | Origen |
-|---|---|---|
+| # | Sin determinar                                                                                                                                       | Origen |
+|---|------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
 | — | **Ninguno.** El hueco 44 se cierra con `OB-46`: el inactivo se queda en la sala, así que al reconectar vuelve a activo sin nada que recuperar (§0.6) |
 
 **Pendientes de ratificación, no de información.** Estas ya tienen respuesta razonada; solo
@@ -546,37 +540,37 @@ el comportamiento de la Parte 1.
 
 ## 2.1 Mapa funcionalidad → caso de uso
 
-| Funcionalidad | Caso de uso | Situación |
-|---|---|---|
-| FC-01 Crear cuenta | CU-02 | Cubierta |
-| FC-02 Iniciar sesión | CU-01 | **Incompleta** — `HC-14` |
-| FC-03 Recuperar acceso | CU-03 | **Incompleta** — `HC-15` |
-| FC-04 Perfil | CU-06 | Cubierta |
-| FC-05 Eliminar cuenta | CU-07 | **Incompleta** — `HC-04` |
-| FC-06 Invitado | CU-04 | **Incompleta** — `HC-13` |
-| FC-07 Idioma | CU-05 | Cubierta y cerrada |
-| FC-08 … FC-11 Amistades | CU-08, CU-09 | Cubiertas |
-| FC-34 Eliminar un amigo | — | **Sin caso de uso** |
-| FC-12 Crear sala | CU-15 | **Incompleta** — `HC-05`, `HC-17` |
-| FC-13 Consultar salas | CU-14 | Cubierta; ver `HC-09` |
-| FC-14 Entrar a la sala | CU-13 | **Incompleta** — `HC-18` |
-| FC-15 Salir de la sala | CU-18 | **Incompleta** — `HC-06` |
-| FC-35 Expulsar | — | **Sin caso de uso** |
-| FC-16 Invitar en el juego | CU-16 | Cubierta |
-| FC-17 Invitar por correo | — | **Sin caso de uso** — `HC-03`; §3.1 |
-| FC-18 Responder invitación | CU-17 | Cubierta |
-| FC-19 / FC-20 / FC-21 Consultas | CU-10, CU-11, CU-12 | Cubiertas |
-| FC-22 Ranking de sala | CU-13 §5 | Cubierta como consulta |
-| FC-23 Actualizar ranking de sala | — | **Sin caso de uso** — `HC-07` |
-| FC-24 Iniciar la partida | CU-19 | **Incompleta** — `HC-01` |
-| FC-25 … FC-33 · La partida entera | — | **Sin caso de uso** (nueve funcionalidades) |
-| FC-36 / FC-37 Chat | — | **Sin caso de uso** |
-| FC-38 Reportar | — | **Sin caso de uso** |
-| FC-39 Aplicar sanción | — | **Sin caso de uso** |
-| FC-40 Comprobar la sanción | — | **Sin caso de uso**; es **inclusión** de CU-01, CU-13 y CU-19 |
-| FC-41 Color del jugador | CU-13, parcialmente | **Obliga a complementar CU-13** — `HC-18` |
-| FC-42 Inactividad y traspaso | — | **Sin caso de uso** |
-| FC-43 Retirada de la sala por inactividad | — | **Sin caso de uso** |
+| Funcionalidad                             | Caso de uso         | Situación                                                     |
+|-------------------------------------------|---------------------|---------------------------------------------------------------|
+| FC-01 Crear cuenta                        | CU-02               | Cubierta                                                      |
+| FC-02 Iniciar sesión                      | CU-01               | **Incompleta** — `HC-14`                                      |
+| FC-03 Recuperar acceso                    | CU-03               | **Incompleta** — `HC-15`                                      |
+| FC-04 Perfil                              | CU-06               | Cubierta                                                      |
+| FC-05 Eliminar cuenta                     | CU-07               | **Incompleta** — `HC-04`                                      |
+| FC-06 Invitado                            | CU-04               | **Incompleta** — `HC-13`                                      |
+| FC-07 Idioma                              | CU-05               | Cubierta y cerrada                                            |
+| FC-08 … FC-11 Amistades                   | CU-08, CU-09        | Cubiertas                                                     |
+| FC-34 Eliminar un amigo                   | —                   | **Sin caso de uso**                                           |
+| FC-12 Crear sala                          | CU-15               | **Incompleta** — `HC-05`, `HC-17`                             |
+| FC-13 Consultar salas                     | CU-14               | Cubierta; ver `HC-09`                                         |
+| FC-14 Entrar a la sala                    | CU-13               | **Incompleta** — `HC-18`                                      |
+| FC-15 Salir de la sala                    | CU-18               | **Incompleta** — `HC-06`                                      |
+| FC-35 Expulsar                            | —                   | **Sin caso de uso**                                           |
+| FC-16 Invitar en el juego                 | CU-16               | Cubierta                                                      |
+| FC-17 Invitar por correo                  | —                   | **Sin caso de uso** — `HC-03`; §3.1                           |
+| FC-18 Responder invitación                | CU-17               | Cubierta                                                      |
+| FC-19 / FC-20 / FC-21 Consultas           | CU-10, CU-11, CU-12 | Cubiertas                                                     |
+| FC-22 Ranking de sala                     | CU-13 §5            | Cubierta como consulta                                        |
+| FC-23 Actualizar ranking de sala          | —                   | **Sin caso de uso** — `HC-07`                                 |
+| FC-24 Iniciar la partida                  | CU-19               | **Incompleta** — `HC-01`                                      |
+| FC-25 … FC-33 · La partida entera         | —                   | **Sin caso de uso** (nueve funcionalidades)                   |
+| FC-36 / FC-37 Chat                        | —                   | **Sin caso de uso**                                           |
+| FC-38 Reportar                            | —                   | **Sin caso de uso**                                           |
+| FC-39 Aplicar sanción                     | —                   | **Sin caso de uso**                                           |
+| FC-40 Comprobar la sanción                | —                   | **Sin caso de uso**; es **inclusión** de CU-01, CU-13 y CU-19 |
+| FC-41 Color del jugador                   | CU-13, parcialmente | **Obliga a complementar CU-13** — `HC-18`                     |
+| FC-42 Inactividad y traspaso              | —                   | **Sin caso de uso**                                           |
+| FC-43 Retirada de la sala por inactividad | —                   | **Sin caso de uso**                                           |
 
 **De 43 funcionalidades, 20 siguen sin caso de uso.** v1.0: 11 de 33 · v2.0: 18 de 40 · v3.0,
 v4.0 y v5.0: 19 de 42; **v5.3: 20 de 43**, por la retirada de sala de `OB-50`.
@@ -586,21 +580,21 @@ a uno.*
 
 ## 2.2 Cobertura por tabla del modelo de datos
 
-| Tabla | C | R | U | D | Hueco |
-|---|---|---|---|---|---|
-| `account` | CU-02 | CU-01, CU-06, CU-08 | CU-06 | CU-07 | CU-03 debe modificar `password_hash` `OB-17`; **nadie comprueba el baneo permanente** `OB-37` |
-| `friendship` | CU-08 | CU-08, CU-09 | CU-09 | CU-09 | **Nadie borra una amistad aceptada** `OB-07` |
-| `room` | CU-15 | CU-14 | CU-18 (cierre) | nunca | La sitúan en memoria; el modelo la persiste `HC-05`, `HC-06`. Falta la **columna de tipo** `OB-08`; el `CHECK` del código está mal `HC-17` |
-| `room_invitation` | CU-16 | CU-17 | — | CU-17, CU-18, CU-07 | El canal `email` no lo crea nadie `HC-03`; §3.1 propone **retirar `invitation_token`** |
-| `match` | CU-19, parcial | CU-10, CU-11 | **nadie** | **nadie** | Nadie la pasa a *terminada* |
-| `match_participant` | **nadie** | CU-10…CU-12 | **nadie** | CU-07 (cascada) | Nadie la crea ni escribe resultado |
-| `match_state` | **nadie** | **nadie** | **nadie** | **nadie** | **Ninguna operación tiene caso de uso.** Su comentario **ya menciona el pase de asiento**: adoptarlo no cambia el esquema `OB-45` |
-| `turn_layout`, `build_allowance`, `action_cost` | — | — | — | — | Correcto: solo lectura `D-30` |
-| **Reporte** *(no existe)* | — | — | — | — | `OB-04`, con **copia del mensaje**, **la ocasión** —partida o sala— `OB-34`, `OB-35`, y cascada `OB-31` — `HC-16` |
-| **Sanción** *(no existe)* | — | — | — | — | `OB-04`, con nivel, **instante de entrada en vigor**, fin y marca de permanente §0.5 — `HC-16` |
-| **Parámetros de sanción, chat y latido** *(no existen)* | — | — | — | — | `OB-36`, `OB-49` — dos tablas, §3.5 |
-| **Código de recuperación** *(no existe)* | — | — | — | — | `OB-17` — `HC-15` |
-| ~~Mensaje de chat~~ | — | — | — | — | **No hace falta**: `OB-24` |
+| Tabla                                                   | C              | R                   | U              | D                   | Hueco                                                                                                                                      |
+|---------------------------------------------------------|----------------|---------------------|----------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `account`                                               | CU-02          | CU-01, CU-06, CU-08 | CU-06          | CU-07               | CU-03 debe modificar `password_hash` `OB-17`; **nadie comprueba el baneo permanente** `OB-37`                                              |
+| `friendship`                                            | CU-08          | CU-08, CU-09        | CU-09          | CU-09               | **Nadie borra una amistad aceptada** `OB-07`                                                                                               |
+| `room`                                                  | CU-15          | CU-14               | CU-18 (cierre) | nunca               | La sitúan en memoria; el modelo la persiste `HC-05`, `HC-06`. Falta la **columna de tipo** `OB-08`; el `CHECK` del código está mal `HC-17` |
+| `room_invitation`                                       | CU-16          | CU-17               | —              | CU-17, CU-18, CU-07 | El canal `email` no lo crea nadie `HC-03`; §3.1 propone **retirar `invitation_token`**                                                     |
+| `match`                                                 | CU-19, parcial | CU-10, CU-11        | **nadie**      | **nadie**           | Nadie la pasa a *terminada*                                                                                                                |
+| `match_participant`                                     | **nadie**      | CU-10…CU-12         | **nadie**      | CU-07 (cascada)     | Nadie la crea ni escribe resultado                                                                                                         |
+| `match_state`                                           | **nadie**      | **nadie**           | **nadie**      | **nadie**           | **Ninguna operación tiene caso de uso.** Su comentario **ya menciona el pase de asiento**: adoptarlo no cambia el esquema `OB-45`          |
+| `turn_layout`, `build_allowance`, `action_cost`         | —              | —                   | —              | —                   | Correcto: solo lectura `D-30`                                                                                                              |
+| **Reporte** *(no existe)*                               | —              | —                   | —              | —                   | `OB-04`, con **copia del mensaje**, **la ocasión** —partida o sala— `OB-34`, `OB-35`, y cascada `OB-31` — `HC-16`                          |
+| **Sanción** *(no existe)*                               | —              | —                   | —              | —                   | `OB-04`, con nivel, **instante de entrada en vigor**, fin y marca de permanente §0.5 — `HC-16`                                             |
+| **Parámetros de sanción, chat y latido** *(no existen)* | —              | —                   | —              | —                   | `OB-36`, `OB-49` — dos tablas, §3.5                                                                                                        |
+| **Código de recuperación** *(no existe)*                | —              | —                   | —              | —                   | `OB-17` — `HC-15`                                                                                                                          |
+| ~~Mensaje de chat~~                                     | —              | —                   | —              | —                   | **No hace falta**: `OB-24`                                                                                                                 |
 
 ## 2.3 Casos de uso correctamente contemplados
 
@@ -633,8 +627,8 @@ desbloquea.
 participaciones** `PER §7.5` y **reportes y sanciones** `OB-31`.
 
 **`HC-05` · CU-15 contradice el modelo:** sitúa la sala «únicamente» en memoria cuando
-`schema.sql` la persiste y `D-23` la **cierra, no la borra**. Le falta dónde vive el tipo y el
-**código de cuatro con reintento**.
+`schema.sql` la persiste y `D-23` la **cierra, no la borra**. Le falta dónde vive el tipo y el **código de cuatro con
+reintento**.
 
 **`HC-06` · CU-18 arrastra el mismo error** y le falta el criterio de sucesión `OB-10`.
 
@@ -667,8 +661,8 @@ uso bloqueado por un hueco, y deja de estarlo.
 el tablero** (FC-25, FC-26). `OB-02` lo refuerza: el arranque lo hace el anfitrión; la
 colocación inicial, todos por turno.
 
-**Complementar sin dividir — `CU-09` y `CU-17`:** cada rama debe decir su operación.
-**`CU-06`:** tolerancia al avatar ausente `P-43`. **`CU-13`:** las tres cosas de `HC-18` más «no
+**Complementar sin dividir — `CU-09` y `CU-17`:** cada rama debe decir su operación. **`CU-06`:** tolerancia al avatar
+ausente `P-43`. **`CU-13`:** las tres cosas de `HC-18` más «no
 se entra a una sala con partida en curso» `R 1.1`, `P-35`. **`CU-03`:** flujo entero por
 `OB-17`. **`CU-01`:** baneo permanente `OB-37`.
 
@@ -681,31 +675,31 @@ actor, disparo, cierre y herencia—, aunque con `OB-42` comparten también **el
 
 **De la partida — sin cambios en cinco versiones**
 
-| # | Falta | Justificación |
-|---|---|---|
-| 1 | **Preparar la partida**: caballero inicial y rey | `DR-05`, `DR-24`, `R 2.3` |
-| 2 | **Jugar un turno** | `R 3.1`, `R 3.2`, `R 5.1` |
-| 3 | **Obtener** y **utilizar** una carta | `R 2.4`, `DR-06`, `DR-26`, `OB-32`, `OB-47`, `OB-48` |
-| 4 | **Cerrar el turno y guardar el estado** | `R 5.1`, `P-27`, `P-28` |
-| 5 | **Cerrar la ronda** | `DR-02`, `DR-23`, `R 4.1`, `R 4.2` |
-| 6 | **Terminar la partida y registrar el resultado** | `DR-15`, `R 4.3`, `D-21`, `P-37`, `OB-38` |
-| 7 | **Reconectar** | `R 5.2`, `DR-20`, `DR-30`, `OB-49` |
-| 8 | **Retirar al jugador que agotó la ventana** | `R 5.2`, `DR-25`, `DR-32` |
-| 9 | **Reanudar tras la caída**, **con los invitados presentando su pase** | `PER §6`, `P-30`, `P-37`, `OB-45` |
-| 10 | **Actualizar el ranking de la sala** | `D-29` |
+| #  | Falta                                                                 | Justificación                                        |
+|----|-----------------------------------------------------------------------|------------------------------------------------------|
+| 1  | **Preparar la partida**: caballero inicial y rey                      | `DR-05`, `DR-24`, `R 2.3`                            |
+| 2  | **Jugar un turno**                                                    | `R 3.1`, `R 3.2`, `R 5.1`                            |
+| 3  | **Obtener** y **utilizar** una carta                                  | `R 2.4`, `DR-06`, `DR-26`, `OB-32`, `OB-47`, `OB-48` |
+| 4  | **Cerrar el turno y guardar el estado**                               | `R 5.1`, `P-27`, `P-28`                              |
+| 5  | **Cerrar la ronda**                                                   | `DR-02`, `DR-23`, `R 4.1`, `R 4.2`                   |
+| 6  | **Terminar la partida y registrar el resultado**                      | `DR-15`, `R 4.3`, `D-21`, `P-37`, `OB-38`            |
+| 7  | **Reconectar**                                                        | `R 5.2`, `DR-20`, `DR-30`, `OB-49`                   |
+| 8  | **Retirar al jugador que agotó la ventana**                           | `R 5.2`, `DR-25`, `DR-32`                            |
+| 9  | **Reanudar tras la caída**, **con los invitados presentando su pase** | `PER §6`, `P-30`, `P-37`, `OB-45`                    |
+| 10 | **Actualizar el ranking de la sala**                                  | `D-29`                                               |
 
 **Traídos por las aclaraciones**
 
-| # | Falta | Justificación |
-|---|---|---|
-| 11 | **Expulsar a un jugador** | `OB-01`, `OB-21`, `OB-22`, `OB-42` |
-| 12 | **Eliminar un amigo** | `OB-07`, `OB-43` |
-| 13 | **Enviar y leer mensajes de chat** | `OB-03`, `OB-25`, `OB-27` |
-| 14 | **Reportar a un jugador** | `OB-04`, `OB-28`, `OB-39` |
-| 15 | **Aplicar la sanción** y **el baneo permanente** | `OB-29`, `OB-33`, `OB-37`, `OB-38`, §0.5 |
-| 16 | **Canjear una invitación recibida por correo** | Requisito 6 de `[N2]`, §3.1 |
-| 17 | **Marcar inactivo y traspasar el anfitrión** — *situación sin actor* | `OB-23`, `OB-41`, `OB-46` |
-| 18 | **Retirar de la sala al inactivo que agota el plazo**, cerrándola si era el último — *situación sin actor* | `OB-50`, `D-23` |
+| #  | Falta                                                                                                      | Justificación                            |
+|----|------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| 11 | **Expulsar a un jugador**                                                                                  | `OB-01`, `OB-21`, `OB-22`, `OB-42`       |
+| 12 | **Eliminar un amigo**                                                                                      | `OB-07`, `OB-43`                         |
+| 13 | **Enviar y leer mensajes de chat**                                                                         | `OB-03`, `OB-25`, `OB-27`                |
+| 14 | **Reportar a un jugador**                                                                                  | `OB-04`, `OB-28`, `OB-39`                |
+| 15 | **Aplicar la sanción** y **el baneo permanente**                                                           | `OB-29`, `OB-33`, `OB-37`, `OB-38`, §0.5 |
+| 16 | **Canjear una invitación recibida por correo**                                                             | Requisito 6 de `[N2]`, §3.1              |
+| 17 | **Marcar inactivo y traspasar el anfitrión** — *situación sin actor*                                       | `OB-23`, `OB-41`, `OB-46`                |
+| 18 | **Retirar de la sala al inactivo que agota el plazo**, cerrándola si era el último — *situación sin actor* | `OB-50`, `D-23`                          |
 
 Como **decisión del equipo**, si `S-1`, `S-7`, `S-8`, `S-9` y `S-10` se modelan como casos de
 uso o quedan como comportamiento del sistema.
@@ -724,34 +718,34 @@ incluyen. Y siguen sin declararse `CU-01` ↔ `CU-03` y **`CU-04` extiende a `CU
 
 **De la partida, si se modela**
 
-| Relación | Tipo | Por qué |
-|---|---|---|
-| Cerrar el turno → Guardar el estado | `include` | En **cada** cierre `P-27` |
-| Terminar la partida → Calcular la puntuación | `include` | Siempre `DR-02` |
-| Jugar un turno → cada acción con coste en PA | `extend` | Todas opcionales `R 3.2` |
-| Jugar un turno → Obtener / Utilizar una carta | `extend` | Opcionales `R 2.4` |
-| Reconectar → Retirar al jugador | `extend` | Solo si vence la ventana `R 5.2` |
-| **Reanudar → Recuperar el puesto con el pase** | `extend` | Solo invitados. **Ya no está en el aire:** `OB-45` lo adopta, §3.4 |
-| Iniciar la partida → Preparar la partida | `include` si se separa | Ocurre siempre `DR-05` |
+| Relación                                       | Tipo                   | Por qué                                                            |
+|------------------------------------------------|------------------------|--------------------------------------------------------------------|
+| Cerrar el turno → Guardar el estado            | `include`              | En **cada** cierre `P-27`                                          |
+| Terminar la partida → Calcular la puntuación   | `include`              | Siempre `DR-02`                                                    |
+| Jugar un turno → cada acción con coste en PA   | `extend`               | Todas opcionales `R 3.2`                                           |
+| Jugar un turno → Obtener / Utilizar una carta  | `extend`               | Opcionales `R 2.4`                                                 |
+| Reconectar → Retirar al jugador                | `extend`               | Solo si vence la ventana `R 5.2`                                   |
+| **Reanudar → Recuperar el puesto con el pase** | `extend`               | Solo invitados. **Ya no está en el aire:** `OB-45` lo adopta, §3.4 |
+| Iniciar la partida → Preparar la partida       | `include` si se separa | Ocurre siempre `DR-05`                                             |
 
 **Traídas por las aclaraciones**
 
-| Relación | Tipo | Por qué |
-|---|---|---|
-| Estar en la sala → **Expulsar** | `extend` | Opcional, solo el anfitrión, **solo sin partida en curso** `OB-22` |
-| Estar en la sala / Jugar → **Enviar un mensaje** | `extend` | Nadie está obligado a escribir |
-| Entrar a la sala → **Mostrar chat y color** | **Ninguna: es parte de CU-13** | Apartados de la ventana, como el ranking |
-| Chat → **Reportar** | `extend` | Opcional, **solo entre cuentas** `OB-28`, `OB-39` |
-| Reportar → **Aplicar la sanción** | `extend` | Solo a la quinta ocasión `OB-29`, `OB-34` |
-| Aplicar la sanción → **Banear permanentemente** | `extend` | Solo al cuarto cruce `OB-33`, §0.5-1 |
-| Terminar la partida → **Aplicar la sanción diferida** | `extend` | Solo si se cruzó el umbral durante esa partida `OB-38` |
-| Iniciar sesión → **Comprobar el baneo permanente** | `include` | Siempre `OB-37` |
-| Entrar a la sala → **Comprobar la sanción temporal** | `include` | Siempre `OB-30` |
-| Iniciar la partida → **Comprobar la sanción temporal** | `include` | `OB-30`, «y jugar» |
-| **Salir de la sala → Traspasar el anfitrión** e **Inactividad → Traspasar el anfitrión** | `include` de un fragmento común | Mismo efecto, **misma regla** `OB-10`, dos disparos `OB-23`. El candidato más claro |
-| **Expulsar** ↔ **Salir de la sala** | `include` de un fragmento común, si el equipo lo decide | Comparten retirar de la lista **y avisar** `OB-42`; difieren en actor, disparo, cierre y herencia. **La inactividad no entra aquí**: el inactivo no deja la sala `OB-46` |
-| Consultar amigos → **Eliminar un amigo** | `extend` | Opcional. **No existe** un caso de uso «consultar amigos» |
-| Recuperar el acceso → el código `OB-17` | Ninguna | Son **pasos** del mismo caso de uso |
+| Relación                                                                                 | Tipo                                                    | Por qué                                                                                                                                                                  |
+|------------------------------------------------------------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Estar en la sala → **Expulsar**                                                          | `extend`                                                | Opcional, solo el anfitrión, **solo sin partida en curso** `OB-22`                                                                                                       |
+| Estar en la sala / Jugar → **Enviar un mensaje**                                         | `extend`                                                | Nadie está obligado a escribir                                                                                                                                           |
+| Entrar a la sala → **Mostrar chat y color**                                              | **Ninguna: es parte de CU-13**                          | Apartados de la ventana, como el ranking                                                                                                                                 |
+| Chat → **Reportar**                                                                      | `extend`                                                | Opcional, **solo entre cuentas** `OB-28`, `OB-39`                                                                                                                        |
+| Reportar → **Aplicar la sanción**                                                        | `extend`                                                | Solo a la quinta ocasión `OB-29`, `OB-34`                                                                                                                                |
+| Aplicar la sanción → **Banear permanentemente**                                          | `extend`                                                | Solo al cuarto cruce `OB-33`, §0.5-1                                                                                                                                     |
+| Terminar la partida → **Aplicar la sanción diferida**                                    | `extend`                                                | Solo si se cruzó el umbral durante esa partida `OB-38`                                                                                                                   |
+| Iniciar sesión → **Comprobar el baneo permanente**                                       | `include`                                               | Siempre `OB-37`                                                                                                                                                          |
+| Entrar a la sala → **Comprobar la sanción temporal**                                     | `include`                                               | Siempre `OB-30`                                                                                                                                                          |
+| Iniciar la partida → **Comprobar la sanción temporal**                                   | `include`                                               | `OB-30`, «y jugar»                                                                                                                                                       |
+| **Salir de la sala → Traspasar el anfitrión** e **Inactividad → Traspasar el anfitrión** | `include` de un fragmento común                         | Mismo efecto, **misma regla** `OB-10`, dos disparos `OB-23`. El candidato más claro                                                                                      |
+| **Expulsar** ↔ **Salir de la sala**                                                      | `include` de un fragmento común, si el equipo lo decide | Comparten retirar de la lista **y avisar** `OB-42`; difieren en actor, disparo, cierre y herencia. **La inactividad no entra aquí**: el inactivo no deja la sala `OB-46` |
+| Consultar amigos → **Eliminar un amigo**                                                 | `extend`                                                | Opcional. **No existe** un caso de uso «consultar amigos»                                                                                                                |
+| Recuperar el acceso → el código `OB-17`                                                  | Ninguna                                                 | Son **pasos** del mismo caso de uso                                                                                                                                      |
 
 **Lo que sigue sin deber declararse:** `CU-07` no incluye el borrado del archivo del avatar;
 FC-06 no incluye la generación del identificador temporal; FC-14 no incluye la asignación del
@@ -759,13 +753,18 @@ color. Son pasos de una operación, no objetivos de un actor.
 
 ## 2.8 Casos de uso mal planteados o apoyados en algo no vigente
 
-**`HC-05` y `HC-06`** siguen siendo los dos errores de fondo: contradicen `schema.sql`.
-**`HC-08`** · el significado del tipo de sala está cerrado `OB-08`; falta **dónde se guarda**
+**`HC-05` y `HC-06`** siguen siendo los dos errores de fondo: contradicen `schema.sql`. **`HC-08`** · el significado del
+tipo de sala está cerrado `OB-08`; falta **dónde se guarda**
 (§3.2). **`HC-09`** · CU-14 contradice `B §4.1` y `PER §12`, que siguen listando «salas públicas
 listadas» como fuera de alcance; `OB-03` obliga a la misma corrección para el chat: **una sola
 pasada**. **`HC-10`** · CU-05 no aporta nada al modelo y ya se sabe que nunca lo hará `OB-06`.
 
 **Ninguno de los diecinueve casos de uso es ajeno al sistema.** No hay que retirar ninguno.
+
+**Observación (1 nov 2026).** La `PRE-2` de `CU-01` —«no debe tener una sesión iniciada»— no
+contempla al **invitado que decide iniciar sesión con una cuenta**. El equipo lo permite desde el
+perfil del invitado, junto con «Cerrar sesión» para las cuentas, y lo cubre con **`HU-09`**. La
+sesión de invitado se cierra solo cuando el inicio de sesión con la cuenta sale bien.
 
 ## 2.9 Veredicto
 
@@ -852,11 +851,11 @@ partidas simultáneas—, ya anotado como **`TEN-G`**.
 
 **El chat es lo único sin cota `[PROPUESTA]`**
 
-| Límite | Valor | Razonamiento |
-|---|---|---|
-| Longitud de un mensaje | **200 caracteres** | **Escribir consume el turno** `OB-25` y un turno son 90 s: el límite acompaña a una regla existente |
+| Límite                        | Valor                          | Razonamiento                                                                                                             |
+|-------------------------------|--------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Longitud de un mensaje        | **200 caracteres**             | **Escribir consume el turno** `OB-25` y un turno son 90 s: el límite acompaña a una regla existente                      |
 | Mensajes conservados por sala | **200, en ventana deslizante** | La partida más larga son **60 min** con 4 jugadores `B §5`; doscientos cubren una entera, que es lo que `OB-27` necesita |
-| Cota resultante | **~100 KB por sala** | Ruido frente al documento del tablero |
+| Cota resultante               | **~100 KB por sala**           | Ruido frente al documento del tablero                                                                                    |
 
 Con ventana deslizante **un mensaje puede desaparecer antes de que su reporte sirva de algo**;
 por eso FC-38 guarda **una copia del texto**.
@@ -919,11 +918,11 @@ exige, y esa propiedad **no se relaja** por reutilizarlo como identidad de sesi�
 tres invitados **nunca podría reanudarse**, porque hacen falta 2 y los invitados no podían
 volver— **queda resuelto**: los invitados cuentan para los 2 de `P-30`.
 
-**Qué hay que retirar, y con qué cuidado.** `DR-21` —«los invitados no vuelven tras una caída»—
-**queda sin efecto**. Por la regla de gobernanza del proyecto, **un identificador que muere no
+**Qué hay que retirar, y con qué cuidado.** `DR-21` —«los invitados no vuelven tras una caída»— **queda sin efecto**.
+Por la regla de gobernanza del proyecto, **un identificador que muere no
 se reutiliza**: `DR-21` se marca retirado y se escribe un `DR-` **nuevo** que diga que el
-invitado recupera su puesto presentando su pase. También hay que reescribir `PER §6.2` y
-**descartar la alternativa de `P-38`** de reclamar el puesto solo por el alias, que dejaba el
+invitado recupera su puesto presentando su pase. También hay que reescribir `PER §6.2` y **descartar la alternativa de
+`P-38`** de reclamar el puesto solo por el alias, que dejaba el
 sitio a quien conociera el nombre.
 
 **El único límite del pase, dicho claro:** no protege de un cliente cerrado, no protege de un
@@ -937,18 +936,18 @@ permanente—. Es exactamente lo que `PER §6.5` describía, ni más ni menos.
 `código → número` con su `CHECK`. Dos tablas con ese patrón bastan y no introducen ningún estilo
 ajeno al esquema.
 
-| Tabla propuesta | Forma | Contenido |
-|---|---|---|
-| **`sanction_level`** | `(level, ban_duration)`, clave `level`, `CHECK level BETWEEN 1 AND 3` | 1 → **5 horas** · 2 → **1 día** · 3 → **3 días** `OB-33`. El cuarto cruce no es una fila: es el **baneo permanente** §0.5-1 |
-| **`system_parameter`** | `(parameter_code, numeric_value)`, misma forma que `action_cost` | Umbral de ocasiones = **5** `OB-29`; longitud de mensaje = **200**; mensajes por sala = **200** §3.2; **periodo `P` del latido** y **número `N` de latidos perdidos** `OB-49`, §3.3; **plazo de inactividad en sala** = **3 minutos** `OB-50`, §0.6 |
+| Tabla propuesta        | Forma                                                                 | Contenido                                                                                                                                                                                                                                           |
+|------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`sanction_level`**   | `(level, ban_duration)`, clave `level`, `CHECK level BETWEEN 1 AND 3` | 1 → **5 horas** · 2 → **1 día** · 3 → **3 días** `OB-33`. El cuarto cruce no es una fila: es el **baneo permanente** §0.5-1                                                                                                                         |
+| **`system_parameter`** | `(parameter_code, numeric_value)`, misma forma que `action_cost`      | Umbral de ocasiones = **5** `OB-29`; longitud de mensaje = **200**; mensajes por sala = **200** §3.2; **periodo `P` del latido** y **número `N` de latidos perdidos** `OB-49`, §3.3; **plazo de inactividad en sala** = **3 minutos** `OB-50`, §0.6 |
 
 **Tres precisiones para no romper decisiones vigentes**
 
 - **Son de solo lectura, como las otras tres.** `D-31` sigue descartando el rol de
   administración: **no hay caso de uso de mantenimiento**; se cargan por script, como
   `seed-configuration.sql`.
-- **`D-27` no cambia.** El plazo de reanudación de 3 minutos está declarado expresamente como
-  **configuración de aplicación y no dato de la base**. `OB-36` habla de sanciones, chat y
+- **`D-27` no cambia.** El plazo de reanudación de 3 minutos está declarado expresamente como **configuración de
+  aplicación y no dato de la base**. `OB-36` habla de sanciones, chat y
   latido, no de aquel; moverlo sería reabrir `D-27` sin que nadie lo pida.
 - **La duración se guarda como duración.** PostgreSQL tiene `interval`, y «5 horas», «1 día» y
   «3 días» son duraciones; guardarlas como enteros obligaría a fijar la unidad en otro sitio.

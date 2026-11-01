@@ -74,7 +74,7 @@ namespace Torres.Client.Screens
                 TextColor = Theme.MutedInk,
                 TextAlign = TextHorizontalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new object[] { _previewSeats.Length },
+                TextArguments = new[] { DisplayFormats.FormatInteger(_previewSeats.Length) },
             };
 
             var screenLayout = new VerticalStackPanel

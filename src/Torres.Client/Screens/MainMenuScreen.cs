@@ -4,6 +4,7 @@ using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -11,6 +12,7 @@ namespace Torres.Client.Screens
     internal sealed class MainMenuScreen : Screen
     {
         private readonly LanguagePreference _languagePreference;
+        private readonly PlayerSession _session;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
@@ -20,12 +22,14 @@ namespace Torres.Client.Screens
         private LocalizedButton? _historyButton;
         private NoticeBox? _noticeBox;
 
-        internal MainMenuScreen(LanguagePreference languagePreference)
+        internal MainMenuScreen(LanguagePreference languagePreference, PlayerSession session)
             : base(TextKeys.MainMenu.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(languagePreference);
+            ArgumentNullException.ThrowIfNull(session);
 
             _languagePreference = languagePreference;
+            _session = session;
         }
 
         internal bool WasExitRequested { get; private set; }
@@ -33,9 +37,10 @@ namespace Torres.Client.Screens
         internal override void Open()
         {
             _noticeBox?.Hide();
+            FollowSession();
         }
 
-        internal void ShowNotice(string titleKey, string bodyKey, object[]? bodyArguments)
+        internal void ShowNotice(string titleKey, string bodyKey, string[]? bodyArguments)
         {
             _noticeBox?.ShowMessage(titleKey, bodyKey, bodyArguments);
         }
@@ -81,6 +86,19 @@ namespace Torres.Client.Screens
             return menuItem;
         }
 
+        private static void ApplyAvailability(LocalizedButton? menuItem, bool isAvailable)
+        {
+            if (menuItem is null)
+            {
+                return;
+            }
+
+            menuItem.Enabled = isAvailable;
+            menuItem.LabelColor = isAvailable ? Theme.Ink : Theme.MutedInk;
+            menuItem.OverBackground = isAvailable ? Theme.MintTintBrush : null;
+            menuItem.PressedBackground = isAvailable ? Theme.MintTintBrush : null;
+        }
+
         private static Panel BuildSeparator()
         {
             var separatorPanel = new Panel
@@ -93,6 +111,14 @@ namespace Torres.Client.Screens
             return separatorPanel;
         }
 
+        private void FollowSession()
+        {
+            bool hasAccountFeatures = !_session.IsGuest;
+            ApplyAvailability(_invitationsButton, hasAccountFeatures);
+            ApplyAvailability(_friendsButton, hasAccountFeatures);
+            ApplyAvailability(_historyButton, hasAccountFeatures);
+        }
+
         private VerticalStackPanel BuildMenuList()
         {
             var menuList = new VerticalStackPanel
@@ -103,6 +129,9 @@ namespace Torres.Client.Screens
             _noticeBox = new NoticeBox();
             menuList.Widgets.Add(_noticeBox);
 
+            _roomsButton = CreateMenuItem(TextKeys.MainMenu.RoomsButton, true);
+            _roomsButton.Click += RoomsButtonOnClick;
+            menuList.Widgets.Add(_roomsButton);
             _invitationsButton = CreateMenuItem(TextKeys.MainMenu.InvitationsButton, true);
             _invitationsButton.Click += InvitationsButtonOnClick;
             menuList.Widgets.Add(_invitationsButton);
@@ -112,7 +141,6 @@ namespace Torres.Client.Screens
             _historyButton = CreateMenuItem(TextKeys.MainMenu.HistoryButton, true);
             _historyButton.Click += HistoryButtonOnClick;
             menuList.Widgets.Add(_historyButton);
-
             _rankingButton = CreateMenuItem(TextKeys.MainMenu.RankingButton, true);
             _rankingButton.Click += RankingButtonOnClick;
             menuList.Widgets.Add(_rankingButton);
@@ -122,10 +150,6 @@ namespace Torres.Client.Screens
             _exitButton = CreateMenuItem(TextKeys.MainMenu.ExitButton, true);
             _exitButton.Click += ExitButtonOnClick;
             menuList.Widgets.Add(_exitButton);
-
-            _roomsButton = CreateMenuItem(TextKeys.MainMenu.RoomsButton, true);
-            _roomsButton.Click += RoomsButtonOnClick;
-            menuList.Widgets.Add(_roomsButton);
 
             menuList.Widgets.Add(BuildLanguageButton());
 

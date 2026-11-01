@@ -32,11 +32,11 @@ namespace Game.Services
             return opening;
         }
 
-        public HeartbeatResponse IsAlive()
+        public ConnectionCheckResponse IsAlive()
         {
-            HeartbeatResponse heartbeat = _sessionService.IsAlive();
+            ConnectionCheckResponse connectionCheck = _sessionService.IsAlive();
 
-            return heartbeat;
+            return connectionCheck;
         }
 
         public Task<CloseSessionResult> CloseSessionAsync()

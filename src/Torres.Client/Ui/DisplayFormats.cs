@@ -18,7 +18,7 @@ namespace Torres.Client.Ui
 
         internal static string FormatRankPosition(int rank)
         {
-            string rankPosition = LocalizedText.Format(TextKeys.Common.RankPosition, rank);
+            string rankPosition = LocalizedText.Format(TextKeys.Common.RankPosition, FormatInteger(rank));
 
             return rankPosition;
         }
@@ -40,7 +40,7 @@ namespace Torres.Client.Ui
         internal static string FormatRemainingTime(TimeSpan remainingTime)
         {
             TimeSpan shownTime = remainingTime < TimeSpan.Zero ? TimeSpan.Zero : remainingTime;
-            string remainingText = LocalizedText.Format(TextKeys.Common.RemainingTime, (int)shownTime.TotalHours, shownTime.Minutes);
+            string remainingText = LocalizedText.Format(TextKeys.Common.RemainingTime, FormatInteger((int)shownTime.TotalHours), FormatInteger(shownTime.Minutes));
 
             return remainingText;
         }

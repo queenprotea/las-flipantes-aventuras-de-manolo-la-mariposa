@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using Game.Contracts;
 
@@ -10,9 +11,12 @@ namespace Game.Services
     {
         internal const int Capacity = 4;
 
-        private static readonly SeatColor[] _seatColorsInOrder = new SeatColor[] { SeatColor.Green, SeatColor.Blue, SeatColor.Red, SeatColor.Yellow };
+        private static readonly SeatColor[] _seatColorsInOrder = new SeatColor[]
+        {
+            SeatColor.Green, SeatColor.Blue, SeatColor.Red, SeatColor.Yellow
+        };
 
-        private readonly object _roomLock = new object();
+        private readonly Lock _roomLock = new Lock();
         private readonly List<LiveRoomMember> _members = new List<LiveRoomMember>();
 
         private int _hostMemberId;
@@ -49,12 +53,12 @@ namespace Game.Services
             return admission;
         }
 
-        internal RoomDeparture Remove(int playerId)
+        internal RoomDeparture Remove(int ownerId)
         {
             RoomDeparture departure;
             lock (_roomLock)
             {
-                LiveRoomMember? leavingMember = FindByPlayer(playerId);
+                LiveRoomMember? leavingMember = FindByOwner(ownerId);
                 departure = leavingMember is null
                     ? new RoomDeparture(false, false, false)
                     : RemoveMember(leavingMember);
@@ -63,12 +67,12 @@ namespace Game.Services
             return departure;
         }
 
-        internal RoomKick Kick(int callerPlayerId, int targetMemberId)
+        internal RoomKick Kick(int callerOwnerId, int targetMemberId)
         {
             RoomKick kick;
             lock (_roomLock)
             {
-                LiveRoomMember? caller = FindByPlayer(callerPlayerId);
+                LiveRoomMember? caller = FindByOwner(callerOwnerId);
                 LiveRoomMember? target = _members.Find(member => member.MemberId == targetMemberId);
                 KickMemberResult kickResult = JudgeKick(caller, target);
                 kick = new RoomKick(kickResult, null, null);
@@ -76,19 +80,19 @@ namespace Game.Services
                 {
                     Room kickedView = BuildView(target.MemberId);
                     RemoveMember(target);
-                    kick = new RoomKick(kickResult, target.PlayerId, kickedView);
+                    kick = new RoomKick(kickResult, target.OwnerId, kickedView);
                 }
             }
 
             return kick;
         }
 
-        internal RoomActivityChange MarkInactive(int playerId, DateTime nowUtc)
+        internal RoomActivityChange MarkInactive(int ownerId, DateTime nowUtc)
         {
             var activityChange = new RoomActivityChange(false, false);
             lock (_roomLock)
             {
-                LiveRoomMember? lostMember = FindByPlayer(playerId);
+                LiveRoomMember? lostMember = FindByOwner(ownerId);
                 if ((lostMember is not null) && lostMember.IsActive)
                 {
                     lostMember.MarkInactive(nowUtc);
@@ -100,12 +104,12 @@ namespace Game.Services
             return activityChange;
         }
 
-        internal bool MarkActive(int playerId)
+        internal bool MarkActive(int ownerId)
         {
             bool wasInactive = false;
             lock (_roomLock)
             {
-                LiveRoomMember? returningMember = FindByPlayer(playerId);
+                LiveRoomMember? returningMember = FindByOwner(ownerId);
                 if ((returningMember is not null) && !returningMember.IsActive)
                 {
                     returningMember.MarkActive();
@@ -118,7 +122,7 @@ namespace Game.Services
 
         internal RoomExpiry RemoveExpired(DateTime limitUtc)
         {
-            var removedPlayerIds = new List<int>();
+            var removedOwnerIds = new List<int>();
             bool hasHostChanged = false;
             bool isRoomEmpty = false;
             lock (_roomLock)
@@ -127,23 +131,23 @@ namespace Game.Services
                 foreach (LiveRoomMember expiredMember in expiredMembers)
                 {
                     RoomDeparture departure = RemoveMember(expiredMember);
-                    removedPlayerIds.Add(expiredMember.PlayerId);
+                    removedOwnerIds.Add(expiredMember.OwnerId);
                     hasHostChanged = hasHostChanged || departure.HasHostChanged;
                     isRoomEmpty = departure.IsRoomEmpty;
                 }
             }
 
-            var expiry = new RoomExpiry(removedPlayerIds, hasHostChanged, isRoomEmpty);
+            var expiry = new RoomExpiry(removedOwnerIds, hasHostChanged, isRoomEmpty);
 
             return expiry;
         }
 
-        internal Room? BuildViewFor(int playerId)
+        internal Room? BuildViewFor(int ownerId)
         {
             Room? view;
             lock (_roomLock)
             {
-                LiveRoomMember? viewer = FindByPlayer(playerId);
+                LiveRoomMember? viewer = FindByOwner(ownerId);
                 view = viewer is null ? null : BuildView(viewer.MemberId);
             }
 
@@ -299,16 +303,16 @@ namespace Game.Services
             return kickResult;
         }
 
-        private LiveRoomMember? FindByPlayer(int playerId)
+        private LiveRoomMember? FindByOwner(int ownerId)
         {
-            LiveRoomMember? member = _members.Find(candidate => candidate.PlayerId == playerId);
+            LiveRoomMember? member = _members.Find(candidate => candidate.OwnerId == ownerId);
 
             return member;
         }
 
         private RoomRecipientView ToRecipientView(LiveRoomMember recipient)
         {
-            var recipientView = new RoomRecipientView(recipient.PlayerId, BuildView(recipient.MemberId));
+            var recipientView = new RoomRecipientView(recipient.OwnerId, BuildView(recipient.MemberId));
 
             return recipientView;
         }

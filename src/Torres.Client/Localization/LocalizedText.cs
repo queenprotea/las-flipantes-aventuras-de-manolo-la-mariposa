@@ -17,7 +17,7 @@ namespace Torres.Client.Localization
             return localizedText;
         }
 
-        internal static string Format(string key, params object[] arguments)
+        internal static string Format(string key, params string[] arguments)
         {
             string textPattern = Get(key);
             string formattedText = string.Format(CultureInfo.CurrentCulture, textPattern, arguments);

@@ -4,11 +4,11 @@ namespace Game.Services
 {
     public sealed class SessionLostEventArgs : EventArgs
     {
-        public SessionLostEventArgs(int playerId)
+        public SessionLostEventArgs(int ownerId)
         {
-            PlayerId = playerId;
+            OwnerId = ownerId;
         }
 
-        public int PlayerId { get; }
+        public int OwnerId { get; }
     }
 }

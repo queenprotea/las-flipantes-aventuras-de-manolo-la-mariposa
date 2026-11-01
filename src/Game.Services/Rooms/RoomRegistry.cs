@@ -1,64 +1,65 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Game.Services
 {
     public sealed class RoomRegistry
     {
-        private readonly object _registryLock = new object();
+        private readonly Lock _registryLock = new Lock();
         private readonly Dictionary<int, LiveRoom> _roomsById = new Dictionary<int, LiveRoom>();
         private readonly Dictionary<string, LiveRoom> _roomsByCode = new Dictionary<string, LiveRoom>(StringComparer.Ordinal);
-        private readonly Dictionary<int, int> _roomIdsByPlayerId = new Dictionary<int, int>();
-        private readonly HashSet<int> _reservedPlayerIds = new HashSet<int>();
+        private readonly Dictionary<int, int> _roomIdsByOwnerId = new Dictionary<int, int>();
+        private readonly HashSet<int> _reservedOwnerIds = new HashSet<int>();
 
-        internal bool Reserve(int playerId)
+        internal bool Reserve(int ownerId)
         {
             bool wasReserved = false;
             lock (_registryLock)
             {
-                if (!_roomIdsByPlayerId.ContainsKey(playerId))
+                if (!_roomIdsByOwnerId.ContainsKey(ownerId))
                 {
-                    wasReserved = _reservedPlayerIds.Add(playerId);
+                    wasReserved = _reservedOwnerIds.Add(ownerId);
                 }
             }
 
             return wasReserved;
         }
 
-        internal void Release(int playerId)
+        internal void Release(int ownerId)
         {
             lock (_registryLock)
             {
-                _reservedPlayerIds.Remove(playerId);
+                _reservedOwnerIds.Remove(ownerId);
             }
         }
 
-        internal void AddRoom(LiveRoom room, int hostPlayerId)
+        internal void AddRoom(LiveRoom room, int hostOwnerId)
         {
             lock (_registryLock)
             {
                 _roomsById.Add(room.RoomId, room);
                 _roomsByCode.Add(room.Code, room);
-                _reservedPlayerIds.Remove(hostPlayerId);
-                _roomIdsByPlayerId[hostPlayerId] = room.RoomId;
+                _reservedOwnerIds.Remove(hostOwnerId);
+                _roomIdsByOwnerId[hostOwnerId] = room.RoomId;
             }
         }
 
-        internal void RecordMembership(int playerId, LiveRoom room)
+        internal void RecordMembership(int ownerId, LiveRoom room)
         {
             lock (_registryLock)
             {
-                _reservedPlayerIds.Remove(playerId);
-                _roomIdsByPlayerId[playerId] = room.RoomId;
+                _reservedOwnerIds.Remove(ownerId);
+                _roomIdsByOwnerId[ownerId] = room.RoomId;
             }
         }
 
-        internal void ForgetMembership(int playerId)
+        internal void ForgetMembership(int ownerId)
         {
             lock (_registryLock)
             {
-                _roomIdsByPlayerId.Remove(playerId);
+                _roomIdsByOwnerId.Remove(ownerId);
             }
         }
 
@@ -93,12 +94,12 @@ namespace Game.Services
             return room;
         }
 
-        internal LiveRoom? FindRoomOf(int playerId)
+        internal LiveRoom? FindRoomOf(int ownerId)
         {
             LiveRoom? room = null;
             lock (_registryLock)
             {
-                if (_roomIdsByPlayerId.TryGetValue(playerId, out int roomId))
+                if (_roomIdsByOwnerId.TryGetValue(ownerId, out int roomId))
                 {
                     _roomsById.TryGetValue(roomId, out room);
                 }

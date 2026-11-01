@@ -44,7 +44,7 @@ namespace Torres.Client.Screens
             Visible = true;
         }
 
-        internal void ShowMessage(string titleKey, string bodyKey, object[]? bodyArguments)
+        internal void ShowMessage(string titleKey, string bodyKey, string[]? bodyArguments)
         {
             _titleLabel.TextArguments = null;
             _titleLabel.TextKey = titleKey;
@@ -54,7 +54,7 @@ namespace Torres.Client.Screens
             Visible = true;
         }
 
-        internal void SetTitleArguments(object[]? titleArguments)
+        internal void SetTitleArguments(string[]? titleArguments)
         {
             _titleLabel.TextArguments = titleArguments;
         }
@@ -64,7 +64,7 @@ namespace Torres.Client.Screens
             if (banEndsAtUtc is DateTime endsAtUtc)
             {
                 string remainingTime = DisplayFormats.FormatRemainingTime(endsAtUtc - DateTime.UtcNow);
-                ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Alerts.SuspensionBody, new object[] { remainingTime });
+                ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Alerts.SuspensionBody, new[] { remainingTime });
             }
             else
             {

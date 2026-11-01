@@ -21,6 +21,8 @@ namespace Game.Persistence
 
         public List<Friendship> ListByPlayer(int playerId)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
 
             List<Friendship> friendships = databaseContext.Friendships
@@ -33,6 +35,9 @@ namespace Game.Persistence
 
         public Friendship? FindBetween(int firstPlayerId, int secondPlayerId)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(firstPlayerId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(secondPlayerId);
+
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
 
             Friendship? friendship = databaseContext.Friendships
@@ -46,6 +51,9 @@ namespace Game.Persistence
 
         public FriendRequestCreationOutcome CreateRequest(int requesterId, int addresseeId)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(requesterId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(addresseeId);
+
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
             var newRequest = new Friendship
             {
@@ -75,6 +83,9 @@ namespace Game.Persistence
 
         public bool AcceptRequest(int requesterId, int addresseeId)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(requesterId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(addresseeId);
+
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
             Friendship? pendingRequest = databaseContext.Friendships
                 .Where(storedFriendship => (storedFriendship.RequesterId == requesterId) && (storedFriendship.AddresseeId == addresseeId))
@@ -101,6 +112,9 @@ namespace Game.Persistence
 
         public bool DeleteRequest(int requesterId, int addresseeId)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(requesterId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(addresseeId);
+
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
 
             int deletedCount = databaseContext.Friendships

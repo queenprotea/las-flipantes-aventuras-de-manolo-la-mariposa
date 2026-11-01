@@ -139,6 +139,11 @@ namespace Torres.Client.Localization
             internal const string EmailLabel = "Profile.EmailLabel";
             internal const string SaveButton = "Profile.SaveButton";
             internal const string AccountSettingsButton = "Profile.AccountSettingsButton";
+            internal const string LogOutButton = "Profile.LogOutButton";
+            internal const string GuestTitle = "Profile.GuestTitle";
+            internal const string GuestHint = "Profile.GuestHint";
+            internal const string GuestLogInButton = "Profile.GuestLogInButton";
+            internal const string GuestCreateAccountButton = "Profile.GuestCreateAccountButton";
         }
 
         internal static class AccountSettings
@@ -337,6 +342,9 @@ namespace Torres.Client.Localization
             internal const string ForfeitConfirmButton = "Alerts.ForfeitConfirmButton";
             internal const string EmailFailedTitle = "Alerts.EmailFailedTitle";
             internal const string EmailFailedBody = "Alerts.EmailFailedBody";
+            internal const string LogOutTitle = "Alerts.LogOutTitle";
+            internal const string LogOutBody = "Alerts.LogOutBody";
+            internal const string LogOutConfirmButton = "Alerts.LogOutConfirmButton";
         }
 
         internal static class MatchPreparation

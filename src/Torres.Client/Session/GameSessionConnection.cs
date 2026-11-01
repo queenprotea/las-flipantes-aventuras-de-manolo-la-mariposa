@@ -18,9 +18,9 @@ namespace Torres.Client.Session
         private readonly DuplexChannelFactory<IGameSessionService> _channelFactory;
 
         private IGameSessionService? _channel;
-        private Task<HeartbeatResponse>? _heartbeat;
-        private TimeSpan _heartbeatPeriod;
-        private TimeSpan _sinceLastHeartbeat;
+        private Task<ConnectionCheckResponse>? _connectionCheck;
+        private TimeSpan _connectionCheckPeriod;
+        private TimeSpan _sinceLastConnectionCheck;
 
         internal GameSessionConnection(ClientSettings clientSettings)
         {
@@ -52,8 +52,8 @@ namespace Torres.Client.Session
         {
             ArgumentNullException.ThrowIfNull(opening);
 
-            _heartbeatPeriod = TimeSpan.FromSeconds(opening.HeartbeatPeriodSeconds);
-            _sinceLastHeartbeat = TimeSpan.Zero;
+            _connectionCheckPeriod = TimeSpan.FromSeconds(opening.ConnectionCheckPeriodSeconds);
+            _sinceLastConnectionCheck = TimeSpan.Zero;
             IsOpen = true;
             WasLost = false;
         }
@@ -65,13 +65,13 @@ namespace Torres.Client.Session
                 return;
             }
 
-            _sinceLastHeartbeat += gameTime.ElapsedGameTime;
-            FollowHeartbeat();
-            bool isHeartbeatDue = (_heartbeat is null) && (_sinceLastHeartbeat >= _heartbeatPeriod);
-            if (isHeartbeatDue)
+            _sinceLastConnectionCheck += gameTime.ElapsedGameTime;
+            FollowConnectionCheck();
+            bool isConnectionCheckDue = (_connectionCheck is null) && (_sinceLastConnectionCheck >= _connectionCheckPeriod);
+            if (isConnectionCheckDue)
             {
-                _sinceLastHeartbeat = TimeSpan.Zero;
-                _heartbeat = Task.Run(_channel.IsAlive);
+                _sinceLastConnectionCheck = TimeSpan.Zero;
+                _connectionCheck = Task.Run(_channel.IsAlive);
             }
 
             if (_channel is ICommunicationObject { State: CommunicationState.Faulted or CommunicationState.Closed })
@@ -164,7 +164,7 @@ namespace Torres.Client.Session
             return acceptance;
         }
 
-        internal void Close()
+        internal void CloseSession()
         {
             if (IsOpen && (_channel is not null))
             {
@@ -173,6 +173,11 @@ namespace Torres.Client.Session
             }
 
             Abandon();
+        }
+
+        internal void Close()
+        {
+            CloseSession();
             _channelFactory.Abort();
         }
 
@@ -184,21 +189,21 @@ namespace Torres.Client.Session
             }
 
             _channel = null;
-            _heartbeat = null;
+            _connectionCheck = null;
             IsOpen = false;
             WasLost = false;
             _noticeQueue.Clear();
         }
 
-        private void FollowHeartbeat()
+        private void FollowConnectionCheck()
         {
-            if ((_heartbeat is null) || !_heartbeat.IsCompleted)
+            if ((_connectionCheck is null) || !_connectionCheck.IsCompleted)
             {
                 return;
             }
 
-            WasLost = !_heartbeat.IsCompletedSuccessfully;
-            _heartbeat = null;
+            WasLost = !_connectionCheck.IsCompletedSuccessfully;
+            _connectionCheck = null;
         }
 
         private FriendRequestResponseResult AcceptFriendRequest(int requesterPlayerId)
