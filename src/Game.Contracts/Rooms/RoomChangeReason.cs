@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Tells what changed in a room.
+    /// </summary>
     [DataContract]
     public enum RoomChangeReason
     {

@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Describes the placement and points of one player in a match.
+    /// </summary>
     [DataContract]
     public sealed class MatchResultEntry
     {

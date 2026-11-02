@@ -194,6 +194,13 @@ namespace Torres.Client
                 ApplyRoomChange(roomChange);
                 roomChange = _gameSessionConnection.TakeRoomChange();
             }
+
+            ChatMessage? chatMessage = _gameSessionConnection.TakeChatMessage();
+            while (chatMessage is not null)
+            {
+                _playerSession.RoomChat.Add(chatMessage);
+                chatMessage = _gameSessionConnection.TakeChatMessage();
+            }
         }
 
         private string? FindSessionEndingNotice()

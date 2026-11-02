@@ -63,6 +63,7 @@ builder.Services.AddSingleton<RoomRegistry>();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<FriendsService>();
+builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSingleton<GameSessionService>();
 builder.Services.AddSingleton<RoomStartup>();
 builder.Services.AddSingleton<ConnectionSupervisor>();
@@ -71,10 +72,12 @@ WebApplication app = builder.Build();
 
 RoomStartup roomStartup = app.Services.GetRequiredService<RoomStartup>();
 TimeSpan roomInactivityLimit;
+ChatLimits chatLimits;
 try
 {
     await roomStartup.CloseLeftoverRoomsAsync();
     roomInactivityLimit = await roomStartup.ReadInactivityLimitAsync();
+    chatLimits = await roomStartup.ReadChatLimitsAsync();
 }
 catch (NpgsqlException exception)
 {
@@ -82,6 +85,7 @@ catch (NpgsqlException exception)
     return;
 }
 
+app.Services.GetRequiredService<ChatService>().Start(chatLimits);
 app.UseServiceModel(AddEndpoints);
 ConnectionSupervisor connectionSupervisor = app.Services.GetRequiredService<ConnectionSupervisor>();
 connectionSupervisor.Start(roomInactivityLimit);

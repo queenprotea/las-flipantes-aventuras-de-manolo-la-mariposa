@@ -13,16 +13,19 @@ namespace Game.Services
         private readonly SessionService _sessionService;
         private readonly RoomService _roomService;
         private readonly FriendsService _friendsService;
+        private readonly ChatService _chatService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(friendsService);
+            ArgumentNullException.ThrowIfNull(chatService);
 
             _sessionService = sessionService;
             _roomService = roomService;
             _friendsService = friendsService;
+            _chatService = chatService;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
@@ -128,6 +131,20 @@ namespace Game.Services
             FriendRemovalResult removalResult = _friendsService.RemoveFriend(friendPlayerId);
 
             return removalResult;
+        }
+
+        public SendChatMessageResult SendChatMessage(string text)
+        {
+            SendChatMessageResult sending = _chatService.SendChatMessage(text);
+
+            return sending;
+        }
+
+        public ChatHistoryResponse GetChatHistory()
+        {
+            ChatHistoryResponse history = _chatService.GetChatHistory();
+
+            return history;
         }
     }
 }

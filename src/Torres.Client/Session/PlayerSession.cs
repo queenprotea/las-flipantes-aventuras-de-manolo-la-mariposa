@@ -12,6 +12,8 @@ namespace Torres.Client.Session
 
         internal Room? CurrentRoom { get; private set; }
 
+        internal RoomChatLog RoomChat { get; } = new RoomChatLog();
+
         internal bool HasAccount => Player is not null;
 
         internal bool IsGuest => GuestAlias is not null;
@@ -41,11 +43,13 @@ namespace Torres.Client.Session
             ArgumentNullException.ThrowIfNull(room);
 
             CurrentRoom = room;
+            RoomChat.Follow(room.RoomId);
         }
 
         internal void LeaveRoom()
         {
             CurrentRoom = null;
+            RoomChat.Clear();
         }
 
         internal void End()
@@ -53,6 +57,7 @@ namespace Torres.Client.Session
             Player = null;
             GuestAlias = null;
             CurrentRoom = null;
+            RoomChat.Clear();
         }
     }
 }

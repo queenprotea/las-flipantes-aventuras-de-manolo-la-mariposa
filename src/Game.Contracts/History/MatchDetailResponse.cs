@@ -4,6 +4,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the result of one match, with the placement and points of each player.
+    /// </summary>
     [DataContract]
     public sealed class MatchDetailResponse
     {

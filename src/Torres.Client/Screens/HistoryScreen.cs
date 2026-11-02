@@ -71,6 +71,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Top,
             };
+            ScrollbarLook.Apply(scrollableTable);
 
             return scrollableTable;
         }

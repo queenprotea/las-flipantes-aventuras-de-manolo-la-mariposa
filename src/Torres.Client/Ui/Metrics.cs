@@ -33,6 +33,10 @@ namespace Torres.Client.Ui
 
         internal const int ChatSpacing = 7;
         internal const int ChatMinHeight = 150;
+        internal const int ChatAuthorSpacing = 4;
+        internal const int ChatScrollbarAllowance = 14;
+
+        internal const int ScrollbarWidth = 6;
 
         internal static Thickness CardPadding { get; } = new Thickness(CardPaddingSize);
 

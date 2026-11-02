@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Describes a player with an account as other players see them in lists.
+    /// </summary>
     [DataContract]
     public sealed class PlayerSummary
     {

@@ -30,6 +30,13 @@ namespace Torres.Client.Ui
             return bonusText;
         }
 
+        internal static string FormatChatAuthor(string displayName)
+        {
+            string authorText = displayName + DisplaySymbols.ChatAuthorSeparator;
+
+            return authorText;
+        }
+
         internal static string FormatInteger(int number)
         {
             string formattedValue = number.ToString(CultureInfo.CurrentCulture);

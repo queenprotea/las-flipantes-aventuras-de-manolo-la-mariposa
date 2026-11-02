@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Tells whether an account was created, or which rule the registration broke.
+    /// </summary>
     [DataContract]
     public enum RegistrationResult
     {

@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the outcome of creating a room and, when it succeeds, the new room.
+    /// </summary>
     [DataContract]
     public sealed class CreateRoomResult
     {

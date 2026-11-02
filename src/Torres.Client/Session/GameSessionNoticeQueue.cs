@@ -10,6 +10,7 @@ namespace Torres.Client.Session
     {
         private readonly ConcurrentQueue<RoomChange> _roomChanges = new ConcurrentQueue<RoomChange>();
         private readonly ConcurrentQueue<SessionTerminationReason> _terminationReasons = new ConcurrentQueue<SessionTerminationReason>();
+        private readonly ConcurrentQueue<ChatMessage> _chatMessages = new ConcurrentQueue<ChatMessage>();
 
         public void ReceiveRoomStateChanged(RoomChangeReason reason, Room room)
         {
@@ -19,6 +20,11 @@ namespace Torres.Client.Session
         public void ReceiveSessionTerminated(SessionTerminationReason reason)
         {
             _terminationReasons.Enqueue(reason);
+        }
+
+        public void ReceiveChatMessage(ChatMessage message)
+        {
+            _chatMessages.Enqueue(message);
         }
 
         internal RoomChange? TakeRoomChange()
@@ -37,10 +43,18 @@ namespace Torres.Client.Session
             return terminationReason;
         }
 
+        internal ChatMessage? TakeChatMessage()
+        {
+            ChatMessage? chatMessage = _chatMessages.TryDequeue(out ChatMessage? pendingMessage) ? pendingMessage : null;
+
+            return chatMessage;
+        }
+
         internal void Clear()
         {
             _roomChanges.Clear();
             _terminationReasons.Clear();
+            _chatMessages.Clear();
         }
     }
 }

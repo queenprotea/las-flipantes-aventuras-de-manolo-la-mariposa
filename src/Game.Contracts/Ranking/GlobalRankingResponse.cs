@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the global ranking, from the first place down.
+    /// </summary>
     [DataContract]
     public sealed class GlobalRankingResponse
     {

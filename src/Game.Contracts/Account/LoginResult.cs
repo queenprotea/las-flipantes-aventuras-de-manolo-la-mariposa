@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the outcome of a login and, when it succeeds, the player's identity and session token.
+    /// </summary>
     [DataContract]
     public sealed class LoginResult
     {

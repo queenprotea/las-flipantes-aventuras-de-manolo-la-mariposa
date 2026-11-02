@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Describes an invitation to a room, with who sent it and when.
+    /// </summary>
     [DataContract]
     public sealed class RoomInvitation
     {

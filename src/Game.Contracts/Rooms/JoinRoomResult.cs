@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the outcome of entering a room and, when it succeeds, the room.
+    /// </summary>
     [DataContract]
     public sealed class JoinRoomResult
     {

@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Summarizes an open room for the room list.
+    /// </summary>
     [DataContract]
     public sealed class RoomSummary
     {

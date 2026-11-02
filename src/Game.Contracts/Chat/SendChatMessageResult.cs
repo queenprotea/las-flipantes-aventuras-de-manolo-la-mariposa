@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Tells whether a chat message was sent, or why it was rejected.
+    /// </summary>
     [DataContract]
     public enum SendChatMessageResult
     {
@@ -18,9 +21,6 @@ namespace Game.Contracts
         NotInRoom,
 
         [EnumMember]
-        PlayerSanctioned,
-
-        [EnumMember]
-        RateLimited,
+        NotIdentified,
     }
 }

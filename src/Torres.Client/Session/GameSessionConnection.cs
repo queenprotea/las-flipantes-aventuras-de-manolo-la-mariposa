@@ -94,6 +94,13 @@ namespace Torres.Client.Session
             return terminationReason;
         }
 
+        internal ChatMessage? TakeChatMessage()
+        {
+            ChatMessage? chatMessage = _noticeQueue.TakeChatMessage();
+
+            return chatMessage;
+        }
+
         internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility visibility)
         {
             Task<CreateRoomResult> creation = RequireChannel().CreateRoomAsync(visibility);
@@ -134,6 +141,20 @@ namespace Torres.Client.Session
             Task<KickMemberResult> kick = new SessionCall<int, KickMemberResult>(RequireChannel().KickMember, targetMemberId).StartAsync();
 
             return kick;
+        }
+
+        internal Task<SendChatMessageResult> SendChatMessageAsync(string text)
+        {
+            Task<SendChatMessageResult> sending = new SessionCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, text).StartAsync();
+
+            return sending;
+        }
+
+        internal Task<ChatHistoryResponse> GetChatHistoryAsync()
+        {
+            Task<ChatHistoryResponse> historyReading = Task.Run(RequireChannel().GetChatHistory);
+
+            return historyReading;
         }
 
         internal Task<FriendsOverviewResponse> GetFriendsOverviewAsync()

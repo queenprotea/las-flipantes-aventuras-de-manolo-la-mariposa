@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries the outcome of opening a game session and, when it succeeds, the player's identity, room and connection check period.
+    /// </summary>
     [DataContract]
     public sealed class OpenSessionResult
     {

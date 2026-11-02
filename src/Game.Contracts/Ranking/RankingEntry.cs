@@ -2,6 +2,9 @@
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Describes one player's place in the global ranking: wins, points and matches played.
+    /// </summary>
     [DataContract]
     public sealed class RankingEntry
     {

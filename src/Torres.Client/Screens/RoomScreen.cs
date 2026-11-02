@@ -21,7 +21,9 @@ namespace Torres.Client.Screens
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _session;
         private readonly NoticeBox _noticeBox = new NoticeBox();
-        private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly VerticalStackPanel _topBarPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly VerticalStackPanel _playersPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly ChatView _chatView;
 
         private Room? _shownRoom;
         private Task<LeaveRoomResult>? _leaveRequest;
@@ -35,6 +37,7 @@ namespace Torres.Client.Screens
 
             _gameSessionConnection = gameSessionConnection;
             _session = session;
+            _chatView = new ChatView(gameSessionConnection, session, Sizes.RoomSideColumnWidth);
         }
 
         internal override void Open()
@@ -46,6 +49,8 @@ namespace Torres.Client.Screens
             {
                 RequestedScreen = ScreenId.MainMenu;
             }
+
+            _chatView.Open();
         }
 
         internal override void Update(GameTime gameTime)
@@ -58,6 +63,7 @@ namespace Torres.Client.Screens
 
             FollowLeaveRequest();
             FollowKickRequest();
+            _chatView.Update();
         }
 
         protected override Widget Build()
@@ -66,27 +72,54 @@ namespace Torres.Client.Screens
             page.Spacing = Metrics.FieldSpacing;
             page.Widgets.Add(_noticeBox);
             page.Widgets.Add(ConfirmationPlaceholder);
-            page.Widgets.Add(_contentPlaceholder);
+            page.Widgets.Add(_topBarPlaceholder);
+
+            HorizontalStackPanel columns = BuildColumns();
+            page.Widgets.Add(columns);
+            StackPanel.SetProportionType(columns, ProportionType.Fill);
 
             return page;
+        }
+
+        private HorizontalStackPanel BuildColumns()
+        {
+            HorizontalStackPanel columns = CreateColumns();
+            columns.Widgets.Add(_playersPlaceholder);
+            StackPanel.SetProportionType(_playersPlaceholder, ProportionType.Fill);
+            columns.Widgets.Add(BuildSideColumn());
+
+            return columns;
+        }
+
+        private VerticalStackPanel BuildSideColumn()
+        {
+            var sideColumn = new VerticalStackPanel
+            {
+                Spacing = Metrics.FieldSpacing,
+                Width = Sizes.RoomSideColumnWidth,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            sideColumn.Widgets.Add(BuildRoomRankingSection());
+            sideColumn.Widgets.Add(_chatView.Root);
+            StackPanel.SetProportionType(_chatView.Root, ProportionType.Fill);
+
+            return sideColumn;
         }
 
         private void Render(Room room)
         {
             _shownRoom = room;
             bool isViewerHost = room.HostMemberId == room.ViewerMemberId;
-            _contentPlaceholder.Widgets.Clear();
-            _contentPlaceholder.Widgets.Add(BuildTopBar(room, isViewerHost));
+            _topBarPlaceholder.Widgets.Clear();
+            _topBarPlaceholder.Widgets.Add(BuildTopBar(room, isViewerHost));
+
+            _playersPlaceholder.Widgets.Clear();
+            _playersPlaceholder.Widgets.Add(BuildPlayersHeader(room));
+            _playersPlaceholder.Widgets.Add(BuildPlayersList(room, isViewerHost));
             if (!isViewerHost)
             {
-                LocalizedLabel hostHint = CreateHint(TextKeys.Room.HostOnlyHint);
-                hostHint.HorizontalAlignment = HorizontalAlignment.Right;
-                _contentPlaceholder.Widgets.Add(hostHint);
+                _playersPlaceholder.Widgets.Add(CreateHint(TextKeys.Room.HostOnlyHint));
             }
-
-            _contentPlaceholder.Widgets.Add(BuildPlayersHeader(room));
-            _contentPlaceholder.Widgets.Add(BuildPlayersList(room, isViewerHost));
-            _contentPlaceholder.Widgets.Add(BuildRoomRankingSection());
         }
 
         private HorizontalStackPanel BuildTopBar(Room room, bool isViewerHost)
@@ -227,7 +260,11 @@ namespace Torres.Client.Screens
         {
             var rankingSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             rankingSection.Widgets.Add(CreateTitle(TextKeys.Room.RoomRankingTitle));
-            rankingSection.Widgets.Add(CreateEmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint));
+
+            VerticalStackPanel emptyRanking = CreateEmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint);
+            emptyRanking.Width = null;
+            emptyRanking.HorizontalAlignment = HorizontalAlignment.Stretch;
+            rankingSection.Widgets.Add(emptyRanking);
 
             return rankingSection;
         }

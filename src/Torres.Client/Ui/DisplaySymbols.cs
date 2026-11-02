@@ -10,5 +10,6 @@ namespace Torres.Client.Ui
         internal const string WaitingClock = "◷";
         internal const string InlineSeparator = "·";
         internal const string ListSeparator = ", ";
+        internal const string ChatAuthorSeparator = ":";
     }
 }

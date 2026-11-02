@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Carries a list of open rooms.
+    /// </summary>
     [DataContract]
     public sealed class RoomListResponse
     {

@@ -18,7 +18,7 @@ namespace Torres.Client.Ui
         internal const int ProfileAccountCardWidth = 360;
         internal const int AccountSettingsCardWidth = 400;
         internal const int CreateRoomCardWidth = 430;
-        internal const int RoomSideColumnWidth = 290;
+        internal const int RoomSideColumnWidth = 340;
         internal const int MatchPreparationWidth = 460;
         internal const int SeatingOrderWidth = 290;
         internal const int PreparationSceneWidth = 170;

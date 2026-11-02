@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Describes the profile of the caller's account.
+    /// </summary>
     [DataContract]
     public sealed class ProfileResponse
     {

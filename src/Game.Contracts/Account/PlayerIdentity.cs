@@ -2,6 +2,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Identifies the account of a player who logged in.
+    /// </summary>
     [DataContract]
     public sealed class PlayerIdentity
     {

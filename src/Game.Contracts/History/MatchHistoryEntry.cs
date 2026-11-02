@@ -4,6 +4,9 @@ using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
+    /// <summary>
+    /// Summarizes one match of the caller's history.
+    /// </summary>
     [DataContract]
     public sealed class MatchHistoryEntry
     {

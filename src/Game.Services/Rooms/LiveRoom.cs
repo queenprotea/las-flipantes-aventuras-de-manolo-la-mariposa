@@ -18,6 +18,7 @@ namespace Game.Services
 
         private readonly Lock _roomLock = new Lock();
         private readonly List<LiveRoomMember> _members = new List<LiveRoomMember>();
+        private readonly RoomChat _chat;
 
         private int _hostMemberId;
         private int _lastMemberId;
@@ -28,6 +29,7 @@ namespace Game.Services
             RoomId = roomId;
             Code = code;
             Visibility = visibility;
+            _chat = new RoomChat(roomId);
         }
 
         internal int RoomId { get; }
@@ -184,6 +186,37 @@ namespace Game.Services
             }
 
             return summary;
+        }
+
+        internal ChatPosting? PostChatMessage(int ownerId, ChatDraft draft, int messagesKept)
+        {
+            ChatPosting? posting = null;
+            lock (_roomLock)
+            {
+                LiveRoomMember? author = FindByOwner(ownerId);
+                if (author is not null)
+                {
+                    ChatMessage message = _chat.Append(author, draft, messagesKept);
+                    List<int> recipientOwnerIds = _members.Select(member => member.OwnerId).ToList();
+                    posting = new ChatPosting(message, recipientOwnerIds);
+                }
+            }
+
+            return posting;
+        }
+
+        internal IReadOnlyList<ChatMessage>? ReadChatHistory(int ownerId)
+        {
+            IReadOnlyList<ChatMessage>? history = null;
+            lock (_roomLock)
+            {
+                if (FindByOwner(ownerId) is not null)
+                {
+                    history = _chat.ListMessages();
+                }
+            }
+
+            return history;
         }
 
         private JoinRoomStatus JudgeAdmission()
