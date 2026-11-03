@@ -14,6 +14,8 @@ namespace Torres.Client.Session
 
         internal RoomChatLog RoomChat { get; } = new RoomChatLog();
 
+        internal MatchHistorySelection MatchHistory { get; } = new MatchHistorySelection();
+
         internal bool HasAccount => Player is not null;
 
         internal bool IsGuest => GuestAlias is not null;
@@ -58,6 +60,7 @@ namespace Torres.Client.Session
             GuestAlias = null;
             CurrentRoom = null;
             RoomChat.Clear();
+            MatchHistory.Clear();
         }
     }
 }

@@ -161,7 +161,7 @@ namespace Torres.Client.Screens
                 TextColor = Theme.Ink,
                 SupportsCommands = false,
             };
-            var textLabel = new Label
+            var messageTextLabel = new Label
             {
                 Text = message.Text,
                 Font = Fonts.Small,
@@ -176,8 +176,8 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             messageRow.Widgets.Add(authorLabel);
-            messageRow.Widgets.Add(textLabel);
-            StackPanel.SetProportionType(textLabel, ProportionType.Fill);
+            messageRow.Widgets.Add(messageTextLabel);
+            StackPanel.SetProportionType(messageTextLabel, ProportionType.Fill);
 
             return messageRow;
         }
@@ -192,8 +192,8 @@ namespace Torres.Client.Screens
         {
             RoomChatLog roomChat = _session.RoomChat;
             int? followedRoomId = roomChat.RoomId;
-            bool canRequest = (_historyRequest is null) && !roomChat.IsLoaded && _gameSessionConnection.IsOpen;
-            if (canRequest && (followedRoomId is not null))
+            bool canRequestHistory = (_historyRequest is null) && !roomChat.IsLoaded && _gameSessionConnection.IsOpen;
+            if (canRequestHistory && (followedRoomId is not null))
             {
                 _historyRoomId = followedRoomId.Value;
                 _historyRequest = _gameSessionConnection.GetChatHistoryAsync();
@@ -221,9 +221,9 @@ namespace Torres.Client.Screens
 
         private void FollowEnterKey()
         {
-            KeyboardState keyboardState = Keyboard.GetState();
-            bool isEnterPressed = keyboardState.IsKeyDown(Keys.Enter) && _previousKeyboardState.IsKeyUp(Keys.Enter);
-            _previousKeyboardState = keyboardState;
+            KeyboardState currentKeyboardState = Keyboard.GetState();
+            bool isEnterPressed = currentKeyboardState.IsKeyDown(Keys.Enter) && _previousKeyboardState.IsKeyUp(Keys.Enter);
+            _previousKeyboardState = currentKeyboardState;
             if (isEnterPressed && HasTypingFocus)
             {
                 StartSend();
@@ -257,17 +257,17 @@ namespace Torres.Client.Screens
             {
                 _noticeBox.ShowTitle(TextKeys.Common.ServerErrorTitle);
             }
-            else if (WasAccepted(completedSend.Result))
+            else if (IsAcceptedSend(completedSend.Result))
             {
                 ClearSentText();
             }
         }
 
-        private static bool WasAccepted(SendChatMessageResult sending)
+        private static bool IsAcceptedSend(SendChatMessageResult sendResult)
         {
-            bool wasAccepted = (sending == SendChatMessageResult.Sent) || (sending == SendChatMessageResult.EmptyMessage);
+            bool isAccepted = (sendResult == SendChatMessageResult.Sent) || (sendResult == SendChatMessageResult.EmptyMessage);
 
-            return wasAccepted;
+            return isAccepted;
         }
 
         private void ClearSentText()

@@ -1,17 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
+
+using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
     internal sealed class HistoryScreen : Screen
     {
+        internal const int SingleGuest = 1;
+
         private const int DateColumnWidth = 140;
         private const int PlayersColumnWidth = 90;
         private const int StatColumnWidth = 90;
@@ -19,6 +28,11 @@ namespace Torres.Client.Screens
 
         private const int NoThickness = 0;
         private const int FirstRankPosition = 1;
+        private const int ResultTagSpacing = 4;
+        private const int SinglePage = 1;
+        private const int PageStep = 1;
+        private const int CallerSeatCount = 1;
+        private const int NoGuests = 0;
 
         private const int ColumnCount = 6;
         private const int ColumnIndexDate = 0;
@@ -29,30 +43,103 @@ namespace Torres.Client.Screens
         private const int ColumnIndexResult = 5;
 
         private const int HeaderRowIndex = 0;
-        private const int DividerRowIndex = 1;
-        private const int FirstMatchRowIndex = 2;
 
         private const string DateFormat = "dd MMM yyyy";
+        private const string OpponentsWithGuestsFormat = "{0} {1}";
 
         private static readonly ChipStyle _neutralChipStyle = new ChipStyle(Theme.SurfaceAltBrush, Theme.LineBrush, Theme.MutedInk);
         private static readonly ChipStyle _blushChipStyle = new ChipStyle(Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
 
-        private readonly List<MatchRecord> _matches = CreateSampleMatches();
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _session;
+        private readonly LocalizedLabel _loadingLabel;
+        private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Visible = false };
+        private readonly VerticalStackPanel _failureNotice;
+        private readonly HorizontalStackPanel _pageBar;
+        private readonly LocalizedButton _previousPageButton;
+        private readonly LocalizedButton _nextPageButton;
+        private readonly ComputedLabel _pageLabel;
+        private readonly Dictionary<Button, int> _matchIdsByRowClickTarget = new Dictionary<Button, int>();
 
-        internal HistoryScreen()
+        private Task<MatchHistoryResponse>? _historyRequest;
+        private int _requestedPageNumber = MatchHistorySelection.FirstPageNumber;
+        private int _shownPageNumber = MatchHistorySelection.FirstPageNumber;
+        private int _pageCount;
+
+        internal HistoryScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.History.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(session);
+
+            _gameSessionConnection = gameSessionConnection;
+            _session = session;
+            _loadingLabel = CreateHint(TextKeys.History.LoadingLabel);
+
+            LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
+            retryButton.Click += RetryButtonOnClick;
+            _failureNotice = CreateFailureNotice(retryButton);
+
+            _pageLabel = new ComputedLabel(FormatPageLabel)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            _previousPageButton = CreateSmallSecondaryButton(TextKeys.History.PreviousPageButton);
+            _previousPageButton.Click += PreviousPageButtonOnClick;
+            _nextPageButton = CreateSmallSecondaryButton(TextKeys.History.NextPageButton);
+            _nextPageButton.Click += NextPageButtonOnClick;
+            _pageBar = BuildPageBar();
+        }
+
+        internal override void Open()
+        {
+            _historyRequest = null;
+            _pageCount = 0;
+            _contentPlaceholder.Widgets.Clear();
+            _contentPlaceholder.Visible = false;
+            _pageBar.Visible = false;
+            _failureNotice.Visible = false;
+
+            int pageToOpen = _session.MatchHistory.TakePageToResume();
+            if (!_session.HasAccount || !_gameSessionConnection.IsOpen)
+            {
+                RequestedScreen = ScreenId.Login;
+                return;
+            }
+
+            StartHistoryRequest(pageToOpen);
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            if ((_historyRequest is null) || !_historyRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<MatchHistoryResponse> completedRequest = _historyRequest;
+            _historyRequest = null;
+            _loadingLabel.Visible = false;
+            if (completedRequest.IsCompletedSuccessfully)
+            {
+                ShowPage(completedRequest.Result);
+            }
+            else
+            {
+                ShowFailure();
+            }
         }
 
         protected override Widget Build()
         {
             VerticalStackPanel page = CreatePage();
-
-            Widget historyContent = _matches.Count == 0
-                ? CreateEmptyState(TextKeys.History.EmptyStateTitle, TextKeys.History.EmptyStateHint)
-                : BuildScrollableTable();
-            page.Widgets.Add(historyContent);
-            StackPanel.SetProportionType(historyContent, ProportionType.Fill);
+            page.Widgets.Add(_loadingLabel);
+            page.Widgets.Add(_contentPlaceholder);
+            StackPanel.SetProportionType(_contentPlaceholder, ProportionType.Fill);
+            page.Widgets.Add(_pageBar);
+            page.Widgets.Add(_failureNotice);
 
             LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
             backButton.Click += BackButtonOnClick;
@@ -61,78 +148,161 @@ namespace Torres.Client.Screens
             return page;
         }
 
-        private ScrollViewer BuildScrollableTable()
+        private void StartHistoryRequest(int pageNumber)
         {
-            var scrollableTable = new ScrollViewer
+            _requestedPageNumber = pageNumber;
+            _failureNotice.Visible = false;
+
+            if (!_gameSessionConnection.IsOpen)
             {
-                Content = BuildTable(),
+                _loadingLabel.Visible = false;
+                ShowFailure();
+                return;
+            }
+
+            _loadingLabel.Visible = true;
+            _historyRequest = _gameSessionConnection.GetMatchHistoryAsync(pageNumber);
+            UpdatePageButtons();
+        }
+
+        private void ShowPage(MatchHistoryResponse historyPage)
+        {
+            _shownPageNumber = historyPage.PageNumber;
+            _pageCount = historyPage.PageCount;
+            _contentPlaceholder.Widgets.Clear();
+            _matchIdsByRowClickTarget.Clear();
+
+            Widget historyContent = historyPage.Entries.Count == 0
+                ? CreateEmptyState(TextKeys.History.EmptyStateTitle, TextKeys.History.EmptyStateHint)
+                : BuildTableSection(historyPage);
+            _contentPlaceholder.Widgets.Add(historyContent);
+            StackPanel.SetProportionType(historyContent, ProportionType.Fill);
+            _contentPlaceholder.Visible = true;
+
+            _pageLabel.RefreshText();
+            _pageBar.Visible = _pageCount > SinglePage;
+            UpdatePageButtons();
+        }
+
+        private void ShowFailure()
+        {
+            _contentPlaceholder.Visible = false;
+            _pageBar.Visible = false;
+            _failureNotice.Visible = true;
+        }
+
+        private void UpdatePageButtons()
+        {
+            bool isIdle = _historyRequest is null;
+            _previousPageButton.Enabled = isIdle && (_shownPageNumber > MatchHistorySelection.FirstPageNumber);
+            _nextPageButton.Enabled = isIdle && (_shownPageNumber < _pageCount);
+        }
+
+        private HorizontalStackPanel BuildPageBar()
+        {
+            HorizontalStackPanel pageBar = CreateButtonRow();
+            pageBar.Visible = false;
+            pageBar.Widgets.Add(_previousPageButton);
+            pageBar.Widgets.Add(_pageLabel);
+            pageBar.Widgets.Add(_nextPageButton);
+
+            return pageBar;
+        }
+
+        private string FormatPageLabel()
+        {
+            string pageText = LocalizedText.Format(
+                TextKeys.History.PageLabel,
+                DisplayFormats.FormatInteger(_shownPageNumber),
+                DisplayFormats.FormatInteger(_pageCount));
+
+            return pageText;
+        }
+
+        private VerticalStackPanel BuildTableSection(MatchHistoryResponse historyPage)
+        {
+            Grid headerGrid = CreateTableGrid();
+            headerGrid.Margin = new Thickness(NoThickness, NoThickness, Metrics.ScrollbarWidth, NoThickness);
+            AddHeaderRow(headerGrid);
+
+            var scrollableBody = new ScrollViewer
+            {
+                Content = BuildBody(historyPage),
                 ShowVerticalScrollBar = true,
                 ShowHorizontalScrollBar = false,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Top,
+                VerticalAlignment = VerticalAlignment.Stretch,
             };
-            ScrollbarLook.Apply(scrollableTable);
+            ScrollbarLook.Apply(scrollableBody);
 
-            return scrollableTable;
+            var tableSection = new VerticalStackPanel
+            {
+                Spacing = Metrics.FieldSpacing,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            tableSection.Widgets.Add(headerGrid);
+            tableSection.Widgets.Add(CreateDivider());
+            tableSection.Widgets.Add(scrollableBody);
+            StackPanel.SetProportionType(scrollableBody, ProportionType.Fill);
+
+            return tableSection;
         }
 
-        private Grid BuildTable()
+        private static Grid CreateTableGrid()
         {
-            var historyGrid = new Grid
+            var tableGrid = new Grid
             {
                 ColumnSpacing = Metrics.ColumnSpacing,
                 RowSpacing = Metrics.FieldSpacing,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Top,
             };
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, DateColumnWidth));
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, PlayersColumnWidth));
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Fill));
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
-            historyGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, ResultColumnWidth));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, DateColumnWidth));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, PlayersColumnWidth));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Fill));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, StatColumnWidth));
+            tableGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, ResultColumnWidth));
 
-            AddHeaderRow(historyGrid);
-            AddDivider(historyGrid, DividerRowIndex);
+            return tableGrid;
+        }
 
-            for (int matchIndex = 0; matchIndex < _matches.Count; matchIndex++)
+        private Grid BuildBody(MatchHistoryResponse historyPage)
+        {
+            Grid bodyGrid = CreateTableGrid();
+            for (var matchIndex = 0; matchIndex < historyPage.Entries.Count; matchIndex++)
             {
-                AddMatchRow(historyGrid, FirstMatchRowIndex + matchIndex, _matches[matchIndex]);
+                bodyGrid.RowsProportions.Add(new Proportion(ProportionType.Auto));
+                AddMatchRow(bodyGrid, matchIndex, historyPage.Entries[matchIndex]);
             }
 
-            return historyGrid;
+            return bodyGrid;
         }
 
-        private static void AddHeaderRow(Grid historyGrid)
+        private static void AddHeaderRow(Grid headerGrid)
         {
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexDate), CreateHint(TextKeys.History.DateColumn));
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayers), CreateHint(TextKeys.History.PlayersColumn));
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexOpponents), CreateHint(TextKeys.History.OpponentsColumn));
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), AlignRight(CreateHint(TextKeys.History.RankColumn)));
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), AlignRight(CreateHint(TextKeys.History.PointsColumn)));
-            AddCell(historyGrid, new CellPosition(HeaderRowIndex, ColumnIndexResult), CreateHint(TextKeys.History.ResultColumn));
+            headerGrid.RowsProportions.Add(new Proportion(ProportionType.Auto));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexDate), CreateHint(TextKeys.History.DateColumn));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayers), CreateHint(TextKeys.History.PlayersColumn));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexOpponents), CreateHint(TextKeys.History.OpponentsColumn));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), AlignRight(CreateHint(TextKeys.History.RankColumn)));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), AlignRight(CreateHint(TextKeys.History.PointsColumn)));
+            AddCell(headerGrid, new CellPosition(HeaderRowIndex, ColumnIndexResult), CreateHint(TextKeys.History.ResultColumn));
         }
 
-        private static void AddDivider(Grid historyGrid, int rowIndex)
-        {
-            Panel dividerLine = CreateDivider();
-            Grid.SetRow(dividerLine, rowIndex);
-            Grid.SetColumnSpan(dividerLine, ColumnCount);
-            historyGrid.Widgets.Add(dividerLine);
-        }
-
-        private void AddMatchRow(Grid historyGrid, int rowIndex, MatchRecord match)
+        private void AddMatchRow(Grid historyGrid, int rowIndex, MatchHistoryEntry match)
         {
             AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexDate), CreateDataLabel(FormatDate(match.PlayedAt)));
             AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexPlayers), CreateDataLabel(DisplayFormats.FormatInteger(match.PlayerCount)));
-            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexOpponents), CreateDataLabel(FormatOpponents(match)));
-            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexRank), AlignRight(CreateDataLabel(FormatRank(match.Rank))));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexOpponents), CreateComputedDataLabel(() => FormatOpponents(match)));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexRank), AlignRight(CreateDataLabel(FormatRank(match.Placement))));
             AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexPoints), AlignRight(CreateDataLabel(FormatPoints(match.Points))));
-            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexResult), BuildResultChip(match));
+            AddCell(historyGrid, new CellPosition(rowIndex, ColumnIndexResult), BuildResultCell(match));
 
-            AddRowClickTarget(historyGrid, rowIndex);
+            AddRowClickTarget(historyGrid, rowIndex, match.MatchId);
         }
 
-        private void AddRowClickTarget(Grid historyGrid, int rowIndex)
+        private void AddRowClickTarget(Grid historyGrid, int rowIndex, int matchId)
         {
             var rowClickTarget = new Button
             {
@@ -145,7 +315,8 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
-            rowClickTarget.Click += MatchRowButtonOnClick;
+            rowClickTarget.Click += RowClickTargetOnClick;
+            _matchIdsByRowClickTarget.Add(rowClickTarget, matchId);
 
             Grid.SetRow(rowClickTarget, rowIndex);
             Grid.SetColumnSpan(rowClickTarget, ColumnCount);
@@ -154,7 +325,7 @@ namespace Torres.Client.Screens
 
         private static string FormatDate(DateTime playedAt)
         {
-            string formattedDate = DisplayFormats.FormatDate(playedAt, DateFormat);
+            string formattedDate = DisplayFormats.FormatDate(playedAt.ToLocalTime(), DateFormat);
             string lowerCaseDate = formattedDate.ToLower(CultureInfo.CurrentCulture);
 
             return lowerCaseDate;
@@ -174,33 +345,53 @@ namespace Torres.Client.Screens
             return pointsText;
         }
 
-        private static string FormatOpponents(MatchRecord match)
+        private static string FormatOpponents(MatchHistoryEntry match)
         {
-            string namedOpponents = string.Join(DisplaySymbols.ListSeparator, match.NamedOpponents);
+            string namedOpponents = string.Join(DisplaySymbols.ListSeparator, match.RivalUsernames);
+            int guestOpponentCount = Math.Max(NoGuests, match.PlayerCount - CallerSeatCount - match.RivalUsernames.Count);
 
-            if (match.GuestOpponentCount <= 0)
+            if (guestOpponentCount == NoGuests)
             {
                 return namedOpponents;
             }
 
-            string guestPhrase = match.GuestOpponentCount == 1
+            string guestPhrase = guestOpponentCount == SingleGuest
                 ? LocalizedText.Get(TextKeys.History.GuestOpponentMessage)
-                : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, DisplayFormats.FormatInteger(match.GuestOpponentCount));
+                : LocalizedText.Format(TextKeys.History.GuestOpponentsMessage, DisplayFormats.FormatInteger(guestOpponentCount));
 
-            string opponentsText = string.IsNullOrEmpty(namedOpponents) ? guestPhrase : $"{namedOpponents} {guestPhrase}";
+            string opponentsText = string.IsNullOrEmpty(namedOpponents)
+                ? guestPhrase
+                : string.Format(CultureInfo.CurrentCulture, OpponentsWithGuestsFormat, namedOpponents, guestPhrase);
 
             return opponentsText;
         }
 
-        private static Widget BuildResultChip(MatchRecord match)
+        private static VerticalStackPanel BuildResultCell(MatchHistoryEntry match)
         {
-            Widget resultChip = match.Status switch
+            var resultCell = new VerticalStackPanel
             {
-                MatchStatus.Finished when match.Rank == FirstRankPosition => BuildWinChip(),
-                MatchStatus.Finished => BuildNeutralChip(TextKeys.History.FinishedStatus),
-                MatchStatus.Forfeited => BuildNeutralChip(TextKeys.History.ForfeitedStatus),
-                MatchStatus.Interrupted => BuildBlushChip(TextKeys.History.InterruptedStatus),
-                _ => BuildNeutralChip(TextKeys.History.FinishedStatus),
+                Spacing = ResultTagSpacing,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            resultCell.Widgets.Add(BuildResultChip(match));
+
+            if (match.WasWithdrawn)
+            {
+                resultCell.Widgets.Add(CreateTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
+            }
+
+            return resultCell;
+        }
+
+        private static Widget BuildResultChip(MatchHistoryEntry match)
+        {
+            Widget resultChip = match.Outcome switch
+            {
+                MatchOutcome.Finished when match.Placement == FirstRankPosition => BuildWinChip(),
+                MatchOutcome.Finished => BuildChip(TextKeys.History.FinishedStatus, _neutralChipStyle),
+                MatchOutcome.Abandoned => BuildChip(TextKeys.History.ForfeitedStatus, _neutralChipStyle),
+                MatchOutcome.Interrupted => BuildChip(TextKeys.History.InterruptedStatus, _blushChipStyle),
+                _ => throw new ArgumentOutOfRangeException(nameof(match)),
             };
 
             return resultChip;
@@ -214,6 +405,7 @@ namespace Torres.Client.Screens
                 Background = Theme.MintTintBrush,
                 Border = Theme.MintLineBrush,
                 BorderThickness = Sizes.Border,
+                HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
@@ -225,20 +417,6 @@ namespace Torres.Client.Screens
             return winChip;
         }
 
-        private static Panel BuildNeutralChip(string statusTextKey)
-        {
-            Panel neutralChip = BuildChip(statusTextKey, _neutralChipStyle);
-
-            return neutralChip;
-        }
-
-        private static Panel BuildBlushChip(string statusTextKey)
-        {
-            Panel blushChip = BuildChip(statusTextKey, _blushChipStyle);
-
-            return blushChip;
-        }
-
         private static Panel BuildChip(string statusTextKey, ChipStyle chipStyle)
         {
             var statusChip = new Panel
@@ -247,6 +425,7 @@ namespace Torres.Client.Screens
                 Background = chipStyle.Background,
                 Border = chipStyle.Border,
                 BorderThickness = Sizes.Border,
+                HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             statusChip.Widgets.Add(new LocalizedLabel(statusTextKey) { Font = Fonts.Small, TextColor = chipStyle.TextColor });
@@ -267,6 +446,20 @@ namespace Torres.Client.Screens
             return dataLabel;
         }
 
+        private static ComputedLabel CreateComputedDataLabel(Func<string> textProvider)
+        {
+            var computedDataLabel = new ComputedLabel(textProvider)
+            {
+                Font = Fonts.Body,
+                TextColor = Theme.Ink,
+                VerticalAlignment = VerticalAlignment.Center,
+                SupportsCommands = false,
+            };
+            computedDataLabel.RefreshText();
+
+            return computedDataLabel;
+        }
+
         private static TLabel AlignRight<TLabel>(TLabel targetLabel)
             where TLabel : Label
         {
@@ -282,63 +475,39 @@ namespace Torres.Client.Screens
             historyGrid.Widgets.Add(cellContent);
         }
 
-        private void MatchRowButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        private void RowClickTargetOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.MatchDetail;
+            if ((sender is Button rowClickTarget) && _matchIdsByRowClickTarget.TryGetValue(rowClickTarget, out int matchId) && (_historyRequest is null))
+            {
+                _session.MatchHistory.Select(matchId, _shownPageNumber);
+                RequestedScreen = ScreenId.MatchDetail;
+            }
         }
 
-        private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        private void PreviousPageButtonOnClick(object sender, MyraEventArgs e)
+        {
+            if (_historyRequest is null)
+            {
+                StartHistoryRequest(_shownPageNumber - PageStep);
+            }
+        }
+
+        private void NextPageButtonOnClick(object sender, MyraEventArgs e)
+        {
+            if (_historyRequest is null)
+            {
+                StartHistoryRequest(_shownPageNumber + PageStep);
+            }
+        }
+
+        private void RetryButtonOnClick(object sender, MyraEventArgs e)
+        {
+            StartHistoryRequest(_requestedPageNumber);
+        }
+
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.MainMenu;
-        }
-
-        private static List<MatchRecord> CreateSampleMatches()
-        {
-            var sampleMatches = new List<MatchRecord>
-            {
-                new MatchRecord(new DateTime(2026, 9, 5), playerCount: 4, namedOpponents: new[] { PreviewSamples.LuisPlayer, PreviewSamples.SofiaPlayer }, guestOpponentCount: 1, rank: 1, points: 148, matchStatus: MatchStatus.Finished),
-                new MatchRecord(new DateTime(2026, 9, 4), playerCount: 3, namedOpponents: new[] { PreviewSamples.DiegoPlayer, PreviewSamples.MarcoPlayer }, guestOpponentCount: 0, rank: 3, points: 61, matchStatus: MatchStatus.Finished),
-                new MatchRecord(new DateTime(2026, 9, 3), playerCount: 2, namedOpponents: new[] { PreviewSamples.LuisPlayer }, guestOpponentCount: 0, rank: 2, points: 44, matchStatus: MatchStatus.Forfeited),
-                new MatchRecord(new DateTime(2026, 9, 2), playerCount: 4, namedOpponents: new[] { PreviewSamples.SofiaPlayer, PreviewSamples.MarcoPlayer, PreviewSamples.DiegoPlayer }, guestOpponentCount: 0, rank: 4, points: 27, matchStatus: MatchStatus.Finished),
-                new MatchRecord(new DateTime(2026, 9, 1), playerCount: 3, namedOpponents: new[] { PreviewSamples.LuisPlayer, PreviewSamples.DiegoPlayer }, guestOpponentCount: 0, rank: null, points: null, matchStatus: MatchStatus.Interrupted),
-            };
-
-            return sampleMatches;
-        }
-
-        private enum MatchStatus
-        {
-            Finished,
-            Forfeited,
-            Interrupted,
-        }
-
-        private sealed class MatchRecord
-        {
-            internal MatchRecord(DateTime playedAt, int playerCount, IReadOnlyList<string> namedOpponents, int guestOpponentCount, int? rank, int? points, MatchStatus matchStatus)
-            {
-                PlayedAt = playedAt;
-                PlayerCount = playerCount;
-                NamedOpponents = namedOpponents;
-                GuestOpponentCount = guestOpponentCount;
-                Rank = rank;
-                Points = points;
-                Status = matchStatus;
-            }
-
-            internal DateTime PlayedAt { get; }
-
-            internal int PlayerCount { get; }
-
-            internal IReadOnlyList<string> NamedOpponents { get; }
-
-            internal int GuestOpponentCount { get; }
-
-            internal int? Rank { get; }
-
-            internal int? Points { get; }
-
-            internal MatchStatus Status { get; }
         }
     }
 }

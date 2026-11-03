@@ -1,14 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
+using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -20,6 +24,7 @@ namespace Torres.Client.Screens
         private const int PointsColumnWidth = 110;
 
         private const int NoSpacing = 0;
+        private const int MinimumShownMinutes = 1;
 
         private const int ColumnCount = 3;
         private const int ColumnIndexRank = 0;
@@ -36,11 +41,66 @@ namespace Torres.Client.Screens
 
         private static readonly Thickness _cellPadding = new Thickness(NoSpacing, Metrics.ListSpacing, NoSpacing, Metrics.ListSpacing);
 
-        private readonly PlayedMatch _playedMatch = CreateSamplePlayedMatch();
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _session;
+        private readonly LocalizedLabel _loadingLabel;
+        private readonly VerticalStackPanel _matchPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
+        private readonly VerticalStackPanel _failureNotice;
 
-        internal MatchDetailScreen()
+        private Task<MatchDetailResponse>? _detailRequest;
+        private int? _requestedMatchId;
+
+        internal MatchDetailScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.MatchDetail.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(session);
+
+            _gameSessionConnection = gameSessionConnection;
+            _session = session;
+            _loadingLabel = CreateHint(TextKeys.MatchDetail.LoadingLabel);
+
+            LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
+            retryButton.Click += RetryButtonOnClick;
+            _failureNotice = CreateFailureNotice(retryButton);
+        }
+
+        internal override void Open()
+        {
+            _detailRequest = null;
+            _matchPlaceholder.Widgets.Clear();
+            _matchPlaceholder.Visible = false;
+            _failureNotice.Visible = false;
+            _requestedMatchId = _session.MatchHistory.SelectedMatchId;
+
+            bool canShowMatch = _session.HasAccount && _gameSessionConnection.IsOpen && _requestedMatchId.HasValue;
+            if (!canShowMatch)
+            {
+                RequestedScreen = ScreenId.History;
+                return;
+            }
+
+            StartDetailRequest(_requestedMatchId.GetValueOrDefault());
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            if ((_detailRequest is null) || !_detailRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<MatchDetailResponse> completedRequest = _detailRequest;
+            _detailRequest = null;
+            _loadingLabel.Visible = false;
+            if (completedRequest.IsCompletedSuccessfully)
+            {
+                ShowDetail(completedRequest.Result);
+            }
+            else
+            {
+                _failureNotice.Visible = true;
+            }
         }
 
         protected override Widget Build()
@@ -49,8 +109,9 @@ namespace Torres.Client.Screens
 
             VerticalStackPanel card = CreateCard(CardWidth);
             card.HorizontalAlignment = HorizontalAlignment.Left;
-            card.Widgets.Add(BuildMatchHeading());
-            card.Widgets.Add(BuildResultsTable());
+            card.Widgets.Add(_loadingLabel);
+            card.Widgets.Add(_matchPlaceholder);
+            card.Widgets.Add(_failureNotice);
             card.Widgets.Add(BuildBackButton());
 
             page.Widgets.Add(card);
@@ -58,19 +119,87 @@ namespace Torres.Client.Screens
             return page;
         }
 
-        private VerticalStackPanel BuildMatchHeading()
+        private void StartDetailRequest(int matchId)
         {
-            int durationInMinutes = (int)_playedMatch.Duration.TotalMinutes;
+            _failureNotice.Visible = false;
+            if (!_gameSessionConnection.IsOpen)
+            {
+                _loadingLabel.Visible = false;
+                _failureNotice.Visible = true;
+                return;
+            }
+
+            _loadingLabel.Visible = true;
+            _detailRequest = _gameSessionConnection.GetMatchDetailAsync(matchId);
+        }
+
+        private void ShowDetail(MatchDetailResponse detail)
+        {
+            if (detail.Status == MatchDetailStatus.Found)
+            {
+                ShowMatch(detail);
+            }
+            else
+            {
+                RequestedScreen = ScreenId.History;
+            }
+        }
+
+        private void ShowMatch(MatchDetailResponse detail)
+        {
+            _matchPlaceholder.Widgets.Clear();
+            _matchPlaceholder.Widgets.Add(BuildMatchHeading(detail));
+
+            if (detail.Outcome == MatchOutcome.Interrupted)
+            {
+                _matchPlaceholder.Widgets.Add(CreateParagraph(TextKeys.MatchDetail.InterruptedHint));
+            }
+            else
+            {
+                _matchPlaceholder.Widgets.Add(BuildResultsTable(detail));
+            }
+
+            if (detail.GuestCount > 0)
+            {
+                _matchPlaceholder.Widgets.Add(BuildGuestNote(detail.GuestCount));
+            }
+
+            _matchPlaceholder.Visible = true;
+        }
+
+        private static ComputedLabel BuildGuestNote(int guestCount)
+        {
+            var guestNote = new ComputedLabel(() => FormatGuestNote(guestCount))
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+                Wrap = true,
+            };
+
+            return guestNote;
+        }
+
+        private static string FormatGuestNote(int guestCount)
+        {
+            string guestNote = guestCount == HistoryScreen.SingleGuest
+                ? LocalizedText.Get(TextKeys.MatchDetail.GuestNote)
+                : LocalizedText.Format(TextKeys.MatchDetail.GuestsNote, DisplayFormats.FormatInteger(guestCount));
+
+            return guestNote;
+        }
+
+        private static VerticalStackPanel BuildMatchHeading(MatchDetailResponse detail)
+        {
+            DateTime localPlayedAt = detail.PlayedAt.ToLocalTime();
 
             var heading = new VerticalStackPanel { Spacing = Metrics.CardHeaderSpacing };
-            heading.Widgets.Add(new ComputedLabel(() => FormatLongDate(_playedMatch.PlayedAt))
+            heading.Widgets.Add(new ComputedLabel(() => FormatLongDate(localPlayedAt))
             {
                 Font = Fonts.Title,
                 TextColor = Theme.Ink,
                 Wrap = true,
             });
-            heading.Widgets.Add(new ComputedLabel(
-                () => LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, DisplayFormats.FormatInteger(_playedMatch.PlayerCount), DisplayFormats.FormatInteger(durationInMinutes)))
+            heading.Widgets.Add(new ComputedLabel(() => FormatSummary(detail))
             {
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
@@ -80,7 +209,24 @@ namespace Torres.Client.Screens
             return heading;
         }
 
-        private Grid BuildResultsTable()
+        private static string FormatSummary(MatchDetailResponse detail)
+        {
+            string playerCount = DisplayFormats.FormatInteger(detail.PlayerCount);
+            if (!detail.DurationSeconds.HasValue)
+            {
+                string playersOnly = LocalizedText.Format(TextKeys.MatchDetail.PlayersOnlyLabel, playerCount);
+
+                return playersOnly;
+            }
+
+            double durationInMinutes = TimeSpan.FromSeconds(detail.DurationSeconds.Value).TotalMinutes;
+            int shownMinutes = Math.Max(MinimumShownMinutes, (int)Math.Round(durationInMinutes, MidpointRounding.AwayFromZero));
+            string summary = LocalizedText.Format(TextKeys.MatchDetail.SummaryLabel, playerCount, DisplayFormats.FormatInteger(shownMinutes));
+
+            return summary;
+        }
+
+        private static Grid BuildResultsTable(MatchDetailResponse detail)
         {
             var resultsGrid = new Grid
             {
@@ -95,10 +241,10 @@ namespace Torres.Client.Screens
             AddHeaderRow(resultsGrid);
             AddDivider(resultsGrid, HeaderDividerRowIndex);
 
-            for (int participantIndex = 0; participantIndex < _playedMatch.Participants.Count; participantIndex++)
+            for (var participantIndex = 0; participantIndex < detail.Results.Count; participantIndex++)
             {
                 int participantRowIndex = FirstParticipantRowIndex + (participantIndex * RowsPerParticipant);
-                AddParticipantRow(resultsGrid, participantRowIndex, _playedMatch.Participants[participantIndex]);
+                AddParticipantRow(resultsGrid, participantRowIndex, detail.Results[participantIndex]);
                 AddDivider(resultsGrid, participantRowIndex + DividerRowOffset);
             }
 
@@ -112,18 +258,35 @@ namespace Torres.Client.Screens
             AddCell(resultsGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), CreateHint(TextKeys.MatchDetail.PointsColumn));
         }
 
-        private static void AddParticipantRow(Grid resultsGrid, int rowIndex, MatchParticipantResult participant)
+        private static void AddParticipantRow(Grid resultsGrid, int rowIndex, MatchResultEntry participant)
         {
             if (participant.IsCurrentPlayer)
             {
                 AddCurrentPlayerHighlight(resultsGrid, rowIndex);
             }
 
-            Color playerColor = participant.IsCurrentPlayer ? Theme.MintInk : Theme.Ink;
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexRank), CreateComputedDataLabel(() => DisplayFormats.FormatRankPosition(participant.Placement)));
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPlayer), BuildPlayerCell(participant));
+            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPoints), CreateComputedDataLabel(() => DisplayFormats.FormatThousands(participant.Points)));
+        }
 
-            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexRank), CreateComputedDataLabel(() => DisplayFormats.FormatRankPosition(participant.Rank), Theme.Ink));
-            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPlayer), CreateDataLabel(participant.Username, playerColor));
-            AddCell(resultsGrid, new CellPosition(rowIndex, ColumnIndexPoints), CreateComputedDataLabel(() => DisplayFormats.FormatThousands(participant.Points), Theme.Ink));
+        private static Widget BuildPlayerCell(MatchResultEntry participant)
+        {
+            Color playerColor = participant.IsCurrentPlayer ? Theme.MintInk : Theme.Ink;
+            Label playerLabel = CreateDataLabel(participant.Username, playerColor);
+            if (!participant.WasWithdrawn)
+            {
+                return playerLabel;
+            }
+
+            HorizontalStackPanel playerCell = CreateButtonRow();
+            playerCell.VerticalAlignment = VerticalAlignment.Center;
+            playerCell.Widgets.Add(playerLabel);
+            LocalizedLabel withdrawnTag = CreateTag(TextKeys.Common.WithdrewTag, Theme.BlushInk);
+            withdrawnTag.VerticalAlignment = VerticalAlignment.Center;
+            playerCell.Widgets.Add(withdrawnTag);
+
+            return playerCell;
         }
 
         private static void AddCurrentPlayerHighlight(Grid resultsGrid, int rowIndex)
@@ -163,17 +326,18 @@ namespace Torres.Client.Screens
                 Font = Fonts.Body,
                 TextColor = labelColor,
                 VerticalAlignment = VerticalAlignment.Center,
+                SupportsCommands = false,
             };
 
             return dataLabel;
         }
 
-        private static ComputedLabel CreateComputedDataLabel(Func<string> textProvider, Color labelColor)
+        private static ComputedLabel CreateComputedDataLabel(Func<string> textProvider)
         {
             var computedDataLabel = new ComputedLabel(textProvider)
             {
                 Font = Fonts.Body,
-                TextColor = labelColor,
+                TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
@@ -189,7 +353,15 @@ namespace Torres.Client.Screens
             return backToHistoryButton;
         }
 
-        private void BackToHistoryButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        private void RetryButtonOnClick(object sender, MyraEventArgs e)
+        {
+            if (_requestedMatchId.HasValue)
+            {
+                StartDetailRequest(_requestedMatchId.GetValueOrDefault());
+            }
+        }
+
+        private void BackToHistoryButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestedScreen = ScreenId.History;
         }
@@ -206,62 +378,5 @@ namespace Torres.Client.Screens
 
             return longDate;
         }
-
-        private static PlayedMatch CreateSamplePlayedMatch()
-        {
-            const int SampleDurationInMinutes = 38;
-
-            var sampleParticipants = new List<MatchParticipantResult>
-            {
-                new MatchParticipantResult(rank: 1, username: PreviewSamples.AnaPlayer, points: 148, isCurrentPlayer: true),
-                new MatchParticipantResult(rank: 2, username: PreviewSamples.LuisPlayer, points: 131, isCurrentPlayer: false),
-                new MatchParticipantResult(rank: 3, username: PreviewSamples.SofiaPlayer, points: 96, isCurrentPlayer: false),
-                new MatchParticipantResult(rank: 4, username: PreviewSamples.OrugaPlayer, points: 72, isCurrentPlayer: false),
-            };
-
-            var samplePlayedMatch = new PlayedMatch(
-                playedAt: new DateTime(2026, 9, 5),
-                duration: TimeSpan.FromMinutes(SampleDurationInMinutes),
-                participants: sampleParticipants);
-
-            return samplePlayedMatch;
-        }
-    }
-
-    internal sealed class PlayedMatch
-    {
-        internal PlayedMatch(DateTime playedAt, TimeSpan duration, IReadOnlyList<MatchParticipantResult> participants)
-        {
-            PlayedAt = playedAt;
-            Duration = duration;
-            Participants = participants;
-        }
-
-        internal DateTime PlayedAt { get; }
-
-        internal TimeSpan Duration { get; }
-
-        internal IReadOnlyList<MatchParticipantResult> Participants { get; }
-
-        internal int PlayerCount => Participants.Count;
-    }
-
-    internal sealed class MatchParticipantResult
-    {
-        internal MatchParticipantResult(int rank, string username, int points, bool isCurrentPlayer)
-        {
-            Rank = rank;
-            Username = username;
-            Points = points;
-            IsCurrentPlayer = isCurrentPlayer;
-        }
-
-        internal int Rank { get; }
-
-        internal string Username { get; }
-
-        internal int Points { get; }
-
-        internal bool IsCurrentPlayer { get; }
     }
 }

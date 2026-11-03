@@ -225,6 +225,10 @@ namespace Torres.Client.Localization
             internal const string InterruptedStatus = "History.InterruptedStatus";
             internal const string GuestOpponentMessage = "History.GuestOpponentMessage";
             internal const string GuestOpponentsMessage = "History.GuestOpponentsMessage";
+            internal const string LoadingLabel = "History.LoadingLabel";
+            internal const string PreviousPageButton = "History.PreviousPageButton";
+            internal const string NextPageButton = "History.NextPageButton";
+            internal const string PageLabel = "History.PageLabel";
         }
 
         internal static class MatchDetail
@@ -235,6 +239,11 @@ namespace Torres.Client.Localization
             internal const string PlayerColumn = "MatchDetail.PlayerColumn";
             internal const string PointsColumn = "MatchDetail.PointsColumn";
             internal const string BackToHistoryButton = "MatchDetail.BackToHistoryButton";
+            internal const string LoadingLabel = "MatchDetail.LoadingLabel";
+            internal const string PlayersOnlyLabel = "MatchDetail.PlayersOnlyLabel";
+            internal const string InterruptedHint = "MatchDetail.InterruptedHint";
+            internal const string GuestNote = "MatchDetail.GuestNote";
+            internal const string GuestsNote = "MatchDetail.GuestsNote";
         }
 
         internal static class GlobalRanking

@@ -31,9 +31,9 @@ namespace Game.Contracts
         /// <summary>
         /// Identifies a player without an account under a free alias, without storing anything about them.
         /// </summary>
-        /// <param name="alias">Alias the guest chose; surrounding spaces are ignored.</param>
+        /// <param name="guestAlias">Alias the guest chose; surrounding spaces are ignored.</param>
         /// <returns>The session token of the guest, or why the alias was rejected.</returns>
         [OperationContract(Name = "EnterAsGuest")]
-        GuestAccessResult EnterAsGuest(string alias);
+        GuestAccessResult EnterAsGuest(string guestAlias);
     }
 }

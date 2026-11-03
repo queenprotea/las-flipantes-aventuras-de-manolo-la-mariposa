@@ -261,10 +261,10 @@ namespace Torres.Client.Screens
             var rankingSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             rankingSection.Widgets.Add(CreateTitle(TextKeys.Room.RoomRankingTitle));
 
-            VerticalStackPanel emptyRanking = CreateEmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint);
-            emptyRanking.Width = null;
-            emptyRanking.HorizontalAlignment = HorizontalAlignment.Stretch;
-            rankingSection.Widgets.Add(emptyRanking);
+            VerticalStackPanel emptyRankingState = CreateEmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint);
+            emptyRankingState.Width = null;
+            emptyRankingState.HorizontalAlignment = HorizontalAlignment.Stretch;
+            rankingSection.Widgets.Add(emptyRankingState);
 
             return rankingSection;
         }

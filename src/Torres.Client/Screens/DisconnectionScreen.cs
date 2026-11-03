@@ -1,7 +1,5 @@
 using FontStashSharp.RichText;
 
-using Microsoft.Xna.Framework;
-
 using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
@@ -164,36 +162,25 @@ namespace Torres.Client.Screens
 
             if (player.IsYou)
             {
-                playerTags.Widgets.Add(BuildTag(TextKeys.Common.YouTag, Theme.MutedInk));
+                playerTags.Widgets.Add(CreateTag(TextKeys.Common.YouTag, Theme.MutedInk));
             }
 
             if (player.IsGuest)
             {
-                playerTags.Widgets.Add(BuildTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
+                playerTags.Widgets.Add(CreateTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
             }
 
             if (!player.IsConnected)
             {
-                playerTags.Widgets.Add(BuildTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
+                playerTags.Widgets.Add(CreateTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
             }
 
             if (player.HasWithdrawn)
             {
-                playerTags.Widgets.Add(BuildTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
+                playerTags.Widgets.Add(CreateTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
             }
 
             return playerTags;
-        }
-
-        private static LocalizedLabel BuildTag(string textKey, Color textColor)
-        {
-            var playerTag = new LocalizedLabel(textKey)
-            {
-                Font = Fonts.Label,
-                TextColor = textColor,
-            };
-
-            return playerTag;
         }
 
         private void RetryButtonOnClick(object sender, MyraEventArgs e)

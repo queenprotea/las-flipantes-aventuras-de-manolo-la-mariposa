@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes the placement and points of one player in a match.
+    /// Describes the placement and points of one player with an account in a match.
     /// </summary>
     [DataContract]
     public sealed class MatchResultEntry
@@ -19,5 +19,8 @@ namespace Game.Contracts
 
         [DataMember]
         public bool IsCurrentPlayer { get; set; }
+
+        [DataMember]
+        public bool WasWithdrawn { get; set; }
     }
 }

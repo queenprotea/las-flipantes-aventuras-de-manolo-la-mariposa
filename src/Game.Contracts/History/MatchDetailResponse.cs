@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Carries the result of one match, with the placement and points of each player.
+    /// Carries the result of one match, with the placement and points of each player with an account. PlayedAt is when the match finished, in UTC; an interrupted match has no duration and no results. GuestCount is how many players left no result row: guests, or accounts deleted afterwards.
     /// </summary>
     [DataContract]
     public sealed class MatchDetailResponse
@@ -27,5 +27,8 @@ namespace Game.Contracts
 
         [DataMember]
         public List<MatchResultEntry> Results { get; set; } = new List<MatchResultEntry>();
+
+        [DataMember]
+        public int GuestCount { get; set; }
     }
 }

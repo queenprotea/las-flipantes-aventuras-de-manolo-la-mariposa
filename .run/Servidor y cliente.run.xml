@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Servidor y cliente" type="CompoundRunConfigurationType">
-    <toRun name="Servidor" type="DotNetProject" />
     <toRun name="Cliente" type="DotNetProject" />
+    <toRun name="Servidor" type="DotNetProject" />
     <method v="2" />
   </configuration>
 </component>

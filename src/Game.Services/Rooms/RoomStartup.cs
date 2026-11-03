@@ -47,26 +47,26 @@ namespace Game.Services
             return inactivityLimit;
         }
 
-        public async Task<ChatLimits> ReadChatLimitsAsync()
+        public async Task<ChatCapacity> ReadChatCapacityAsync()
         {
             int messageMaxLength = await ReadPositiveParameterAsync(MessageMaxLengthParameterCode);
             int messagesKeptPerRoom = await ReadPositiveParameterAsync(MessagesKeptParameterCode);
-            var chatLimits = new ChatLimits(messageMaxLength, messagesKeptPerRoom);
+            var chatCapacity = new ChatCapacity(messageMaxLength, messagesKeptPerRoom);
 
-            return chatLimits;
+            return chatCapacity;
         }
 
         private async Task<int> ReadPositiveParameterAsync(string parameterCode)
         {
             string? parameterValue = await _systemParameterRepository.FindValueAsync(parameterCode);
-            bool isValidValue = int.TryParse(parameterValue, NumberStyles.None, CultureInfo.InvariantCulture, out int positiveValue)
-                && (positiveValue > 0);
-            if (!isValidValue)
+            bool isPositiveNumber = int.TryParse(parameterValue, NumberStyles.None, CultureInfo.InvariantCulture, out int parameterNumber)
+                && (parameterNumber > 0);
+            if (!isPositiveNumber)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, MissingParameterMessage, parameterCode));
             }
 
-            return positiveValue;
+            return parameterNumber;
         }
     }
 }

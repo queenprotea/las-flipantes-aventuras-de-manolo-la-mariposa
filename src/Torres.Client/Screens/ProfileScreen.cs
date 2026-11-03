@@ -52,9 +52,9 @@ namespace Torres.Client.Screens
         {
             HideConfirmation();
             bool isGuest = _session.IsGuest;
-            HorizontalStackPanel shownColumns = isGuest ? _guestColumns : _accountColumns;
+            HorizontalStackPanel visibleColumns = isGuest ? _guestColumns : _accountColumns;
             _contentPlaceholder.Widgets.Clear();
-            _contentPlaceholder.Widgets.Add(shownColumns);
+            _contentPlaceholder.Widgets.Add(visibleColumns);
             _logOutButton.Visible = !isGuest;
             bool isInRoom = _session.CurrentRoom is not null;
             _backToMenuButton.Visible = !isInRoom;

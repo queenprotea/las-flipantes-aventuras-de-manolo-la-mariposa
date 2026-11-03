@@ -21,7 +21,7 @@ namespace Torres.Client.Screens
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _session;
         private readonly LabeledTextBox _aliasField = new LabeledTextBox(TextKeys.GuestAccess.MatchNameLabel, false);
-        private readonly LocalizedLabel _errorLabel;
+        private readonly LocalizedLabel _aliasErrorLabel;
         private readonly LocalizedButton _enterButton;
 
         private IAccountService? _accountChannel;
@@ -39,7 +39,7 @@ namespace Torres.Client.Screens
             _accountChannelFactory = accountChannelFactory;
             _gameSessionConnection = gameSessionConnection;
             _session = session;
-            _errorLabel = CreateErrorMessage(TextKeys.Common.RequiredField);
+            _aliasErrorLabel = CreateErrorMessage(TextKeys.Common.RequiredField);
             _enterButton = CreatePrimaryButton(TextKeys.GuestAccess.EnterButton);
             _aliasField.Box.ValueChanging += AliasBoxOnValueChanging;
         }
@@ -48,7 +48,7 @@ namespace Torres.Client.Screens
 
         internal override void Open()
         {
-            _errorLabel.Visible = false;
+            _aliasErrorLabel.Visible = false;
         }
 
         internal override void Update(GameTime gameTime)
@@ -80,7 +80,7 @@ namespace Torres.Client.Screens
 
             var nameField = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
             nameField.Widgets.Add(_aliasField);
-            nameField.Widgets.Add(_errorLabel);
+            nameField.Widgets.Add(_aliasErrorLabel);
             nameField.Widgets.Add(CreateSuccessMessage(TextKeys.GuestAccess.RepeatableName));
             card.Widgets.Add(nameField);
 
@@ -104,10 +104,10 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            Task<GuestAccessResult> completedAccess = _guestAccessRequest;
+            Task<GuestAccessResult> completedGuestAccess = _guestAccessRequest;
             _guestAccessRequest = null;
             AbortChannel();
-            ShowOutcome(completedAccess);
+            ShowOutcome(completedGuestAccess);
         }
 
         private void FollowSessionOpening()
@@ -137,7 +137,7 @@ namespace Torres.Client.Screens
 
         private void EnterButtonOnClick(object sender, MyraEventArgs e)
         {
-            _errorLabel.Visible = false;
+            _aliasErrorLabel.Visible = false;
             string guestAlias = _aliasField.Value.Trim();
             if (guestAlias.Length == 0)
             {
@@ -152,19 +152,19 @@ namespace Torres.Client.Screens
             _guestAccessRequest = new SessionCall<string, GuestAccessResult>(accountChannel.EnterAsGuest, guestAlias).StartAsync();
         }
 
-        private void ShowOutcome(Task<GuestAccessResult> completedAccess)
+        private void ShowOutcome(Task<GuestAccessResult> completedGuestAccess)
         {
-            if (!completedAccess.IsCompletedSuccessfully)
+            if (!completedGuestAccess.IsCompletedSuccessfully)
             {
                 ReportServerUnreachable();
                 return;
             }
 
-            GuestAccessResult accessResult = completedAccess.Result;
-            switch (accessResult.Status)
+            GuestAccessResult guestAccessResult = completedGuestAccess.Result;
+            switch (guestAccessResult.Status)
             {
                 case GuestAccessStatus.Entered:
-                    OpenSession(accessResult.SessionToken);
+                    OpenSession(guestAccessResult.SessionToken);
                     break;
 
                 case GuestAccessStatus.AliasRequired:
@@ -175,7 +175,7 @@ namespace Torres.Client.Screens
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(completedAccess), accessResult.Status, null);
+                    throw new ArgumentOutOfRangeException(nameof(completedGuestAccess), guestAccessResult.Status, null);
             }
         }
 
@@ -190,18 +190,18 @@ namespace Torres.Client.Screens
             _sessionOpening = _gameSessionConnection.OpenAsync(sessionToken);
         }
 
-        private void EnterAs(string guestAlias, OpenSessionResult opening)
+        private void EnterAs(string guestAlias, OpenSessionResult openingResult)
         {
-            _gameSessionConnection.Start(opening);
-            _session.StartAsGuest(opening.Identity?.DisplayName ?? guestAlias);
+            _gameSessionConnection.Start(openingResult);
+            _session.StartAsGuest(openingResult.Identity?.DisplayName ?? guestAlias);
             _aliasField.Box.Text = string.Empty;
-            if (opening.CurrentRoom is null)
+            if (openingResult.CurrentRoom is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
             }
             else
             {
-                _session.EnterRoom(opening.CurrentRoom);
+                _session.EnterRoom(openingResult.CurrentRoom);
                 RequestedScreen = ScreenId.Room;
             }
         }
@@ -215,8 +215,8 @@ namespace Torres.Client.Screens
 
         private void ShowError(string textKey)
         {
-            _errorLabel.TextKey = textKey;
-            _errorLabel.Visible = true;
+            _aliasErrorLabel.TextKey = textKey;
+            _aliasErrorLabel.Visible = true;
         }
 
         private void AbortChannel()

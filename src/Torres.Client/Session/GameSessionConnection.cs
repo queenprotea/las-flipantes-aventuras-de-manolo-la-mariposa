@@ -145,9 +145,9 @@ namespace Torres.Client.Session
 
         internal Task<SendChatMessageResult> SendChatMessageAsync(string text)
         {
-            Task<SendChatMessageResult> sending = new SessionCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, text).StartAsync();
+            Task<SendChatMessageResult> messageSending = new SessionCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, text).StartAsync();
 
-            return sending;
+            return messageSending;
         }
 
         internal Task<ChatHistoryResponse> GetChatHistoryAsync()
@@ -155,6 +155,20 @@ namespace Torres.Client.Session
             Task<ChatHistoryResponse> historyReading = Task.Run(RequireChannel().GetChatHistory);
 
             return historyReading;
+        }
+
+        internal Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
+        {
+            Task<MatchHistoryResponse> historyReading = RequireChannel().GetMatchHistoryAsync(pageNumber);
+
+            return historyReading;
+        }
+
+        internal Task<MatchDetailResponse> GetMatchDetailAsync(int matchId)
+        {
+            Task<MatchDetailResponse> detailReading = RequireChannel().GetMatchDetailAsync(matchId);
+
+            return detailReading;
         }
 
         internal Task<FriendsOverviewResponse> GetFriendsOverviewAsync()

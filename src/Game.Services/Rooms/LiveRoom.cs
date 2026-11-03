@@ -188,35 +188,35 @@ namespace Game.Services
             return summary;
         }
 
-        internal ChatPosting? PostChatMessage(int ownerId, ChatDraft draft, int messagesKept)
+        internal ChatPosting? PostChatMessage(int authorOwnerId, ChatDraft messageDraft, int messagesKeptPerRoom)
         {
             ChatPosting? posting = null;
             lock (_roomLock)
             {
-                LiveRoomMember? author = FindByOwner(ownerId);
+                LiveRoomMember? author = FindByOwner(authorOwnerId);
                 if (author is not null)
                 {
-                    ChatMessage message = _chat.Append(author, draft, messagesKept);
+                    ChatMessage postedMessage = _chat.Append(author, messageDraft, messagesKeptPerRoom);
                     List<int> recipientOwnerIds = _members.Select(member => member.OwnerId).ToList();
-                    posting = new ChatPosting(message, recipientOwnerIds);
+                    posting = new ChatPosting(postedMessage, recipientOwnerIds);
                 }
             }
 
             return posting;
         }
 
-        internal IReadOnlyList<ChatMessage>? ReadChatHistory(int ownerId)
+        internal IReadOnlyList<ChatMessage>? ReadChatHistory(int readerOwnerId)
         {
-            IReadOnlyList<ChatMessage>? history = null;
+            IReadOnlyList<ChatMessage>? keptMessages = null;
             lock (_roomLock)
             {
-                if (FindByOwner(ownerId) is not null)
+                if (FindByOwner(readerOwnerId) is not null)
                 {
-                    history = _chat.ListMessages();
+                    keptMessages = _chat.ListMessages();
                 }
             }
 
-            return history;
+            return keptMessages;
         }
 
         private JoinRoomStatus JudgeAdmission()

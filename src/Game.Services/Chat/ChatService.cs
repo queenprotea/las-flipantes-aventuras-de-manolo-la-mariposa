@@ -9,7 +9,7 @@ namespace Game.Services
 {
     public sealed class ChatService : IChatService
     {
-        private const string NotStartedMessage = "The chat limits were not set; Start must run before the chat is served.";
+        private const string NotStartedMessage = "The chat capacity was not set; Start must run before the chat is served.";
         private const string MessagePostedMessage = "Member {0} posted a chat message in room {1}.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(ChatService));
@@ -18,7 +18,7 @@ namespace Game.Services
         private readonly SessionRegistry _sessionRegistry;
         private readonly TimeProvider _timeProvider;
 
-        private ChatLimits? _chatLimits;
+        private ChatCapacity? _chatCapacity;
 
         public ChatService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, TimeProvider timeProvider)
         {
@@ -31,89 +31,89 @@ namespace Game.Services
             _timeProvider = timeProvider;
         }
 
-        public void Start(ChatLimits chatLimits)
+        public void Start(ChatCapacity chatCapacity)
         {
-            ArgumentNullException.ThrowIfNull(chatLimits);
+            ArgumentNullException.ThrowIfNull(chatCapacity);
 
-            _chatLimits = chatLimits;
+            _chatCapacity = chatCapacity;
         }
 
         public SendChatMessageResult SendChatMessage(string text)
         {
-            ChatLimits chatLimits = RequireLimits();
+            ChatCapacity chatCapacity = RequireCapacity();
             PlayerSession? caller = _sessionRegistry.FindCaller();
             string normalizedText = ChatTextNormalizer.Normalize(text);
-            SendChatMessageResult sending;
+            SendChatMessageResult sendResult;
             if (caller is null)
             {
-                sending = SendChatMessageResult.NotIdentified;
+                sendResult = SendChatMessageResult.NotIdentified;
             }
             else if (normalizedText.Length == 0)
             {
-                sending = SendChatMessageResult.EmptyMessage;
+                sendResult = SendChatMessageResult.EmptyMessage;
             }
-            else if (normalizedText.Length > chatLimits.MessageMaxLength)
+            else if (normalizedText.Length > chatCapacity.MessageMaxLength)
             {
-                sending = SendChatMessageResult.MessageTooLong;
+                sendResult = SendChatMessageResult.MessageTooLong;
             }
             else
             {
-                sending = Post(caller.Owner.OwnerId, normalizedText, chatLimits);
+                sendResult = Post(caller.Owner.OwnerId, normalizedText, chatCapacity);
             }
 
-            return sending;
+            return sendResult;
         }
 
         public ChatHistoryResponse GetChatHistory()
         {
-            ChatLimits chatLimits = RequireLimits();
+            ChatCapacity chatCapacity = RequireCapacity();
             PlayerSession? caller = _sessionRegistry.FindCaller();
-            IReadOnlyList<ChatMessage>? messages = caller is null ? null : ReadHistoryOf(caller.Owner.OwnerId);
+            IReadOnlyList<ChatMessage>? keptMessages = caller is null ? null : ReadHistoryOf(caller.Owner.OwnerId);
             var history = new ChatHistoryResponse
             {
-                MessageMaxLength = chatLimits.MessageMaxLength,
-                MessagesKeptPerRoom = chatLimits.MessagesKeptPerRoom,
+                MessageMaxLength = chatCapacity.MessageMaxLength,
+                MessagesKeptPerRoom = chatCapacity.MessagesKeptPerRoom,
             };
-            if (messages is not null)
+            if (keptMessages is not null)
             {
-                history.Messages.AddRange(messages);
+                history.Messages.AddRange(keptMessages);
             }
 
             return history;
         }
 
-        private SendChatMessageResult Post(int authorOwnerId, string text, ChatLimits chatLimits)
+        private SendChatMessageResult Post(int authorOwnerId, string messageText, ChatCapacity chatCapacity)
         {
-            var draft = new ChatDraft(text, _timeProvider.GetUtcNow().UtcDateTime);
-            LiveRoom? room = _roomRegistry.FindRoomOf(authorOwnerId);
-            ChatPosting? posting = room?.PostChatMessage(authorOwnerId, draft, chatLimits.MessagesKeptPerRoom);
-            if ((room is null) || (posting is null))
+            var messageDraft = new ChatDraft(messageText, _timeProvider.GetUtcNow().UtcDateTime);
+            LiveRoom? authorRoom = _roomRegistry.FindRoomOf(authorOwnerId);
+            ChatPosting? posting = authorRoom?.PostChatMessage(authorOwnerId, messageDraft, chatCapacity.MessagesKeptPerRoom);
+            if ((authorRoom is null) || (posting is null))
             {
                 return SendChatMessageResult.NotInRoom;
             }
 
-            _log.DebugFormat(MessagePostedMessage, posting.Message.SenderMemberId, room.RoomId);
-            var notice = new ChatMessageNotice(posting.Message);
+            _log.DebugFormat(MessagePostedMessage, posting.Message.SenderMemberId, authorRoom.RoomId);
+            var messageNotice = new ChatMessageNotice(posting.Message);
             foreach (int recipientOwnerId in posting.RecipientOwnerIds)
             {
-                _sessionRegistry.Deliver(recipientOwnerId, notice);
+                _sessionRegistry.Deliver(recipientOwnerId, messageNotice);
             }
 
             return SendChatMessageResult.Sent;
         }
 
-        private IReadOnlyList<ChatMessage>? ReadHistoryOf(int ownerId)
+        private IReadOnlyList<ChatMessage>? ReadHistoryOf(int readerOwnerId)
         {
-            IReadOnlyList<ChatMessage>? messages = _roomRegistry.FindRoomOf(ownerId)?.ReadChatHistory(ownerId);
+            IReadOnlyList<ChatMessage>? keptMessages = _roomRegistry.FindRoomOf(readerOwnerId)?.ReadChatHistory(readerOwnerId);
 
-            return messages;
+            return keptMessages;
         }
 
-        private ChatLimits RequireLimits()
+        private ChatCapacity RequireCapacity()
         {
-            ChatLimits chatLimits = _chatLimits ?? throw new InvalidOperationException(NotStartedMessage);
+            ChatCapacity chatCapacity = _chatCapacity ?? throw new InvalidOperationException(NotStartedMessage);
 
-            return chatLimits;
+            return chatCapacity;
         }
     }
 }

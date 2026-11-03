@@ -83,8 +83,8 @@ namespace Torres.Client.Session
                 insertIndex--;
             }
 
-            bool isRepeated = (insertIndex > 0) && (_messages[insertIndex - 1].MessageId == message.MessageId);
-            bool wasInserted = !isRepeated;
+            bool isAlreadyKept = (insertIndex > 0) && (_messages[insertIndex - 1].MessageId == message.MessageId);
+            bool wasInserted = !isAlreadyKept;
             if (wasInserted)
             {
                 _messages.Insert(insertIndex, message);
@@ -95,10 +95,10 @@ namespace Torres.Client.Session
 
         private void DiscardBeyondWindow()
         {
-            int excessCount = _messagesKeptPerRoom > 0 ? _messages.Count - _messagesKeptPerRoom : 0;
-            if (excessCount > 0)
+            int excessMessageCount = _messagesKeptPerRoom > 0 ? _messages.Count - _messagesKeptPerRoom : 0;
+            if (excessMessageCount > 0)
             {
-                _messages.RemoveRange(0, excessCount);
+                _messages.RemoveRange(0, excessMessageCount);
             }
         }
     }

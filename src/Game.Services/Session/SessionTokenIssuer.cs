@@ -17,8 +17,8 @@ namespace Game.Services
         private const int OwnerIdField = 1;
         private const int ExpiryField = 2;
         private const int DisplayNameField = 3;
-        private const string PlayerKind = "P";
-        private const string GuestKind = "G";
+        private const string PlayerOwnerKind = "P";
+        private const string GuestOwnerKind = "G";
         private const string PayloadFormat = "{0}|{1}|{2}|{3}";
 
         private static readonly TimeSpan _tokenLifetime = TimeSpan.FromMinutes(5);
@@ -43,7 +43,7 @@ namespace Game.Services
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
             ArgumentException.ThrowIfNullOrWhiteSpace(username);
 
-            string sessionToken = IssueFor(PlayerKind, playerId, username);
+            string sessionToken = IssueFor(PlayerOwnerKind, playerId, username);
 
             return sessionToken;
         }
@@ -53,7 +53,7 @@ namespace Game.Services
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(guestId, 0);
             ArgumentException.ThrowIfNullOrWhiteSpace(guestAlias);
 
-            string sessionToken = IssueFor(GuestKind, guestId, guestAlias);
+            string sessionToken = IssueFor(GuestOwnerKind, guestId, guestAlias);
 
             return sessionToken;
         }
@@ -71,14 +71,14 @@ namespace Game.Services
 
         private static int? ReadOwnerId(string ownerKind, string ownerIdText)
         {
-            bool isPlayer = string.Equals(ownerKind, PlayerKind, StringComparison.Ordinal);
-            bool isGuest = string.Equals(ownerKind, GuestKind, StringComparison.Ordinal);
-            NumberStyles ownerIdStyle = isGuest ? NumberStyles.AllowLeadingSign : NumberStyles.None;
-            bool isNumber = int.TryParse(ownerIdText, ownerIdStyle, CultureInfo.InvariantCulture, out int parsedOwnerId);
-            bool isPlayerId = isPlayer && (parsedOwnerId > 0);
-            bool isGuestId = isGuest && (parsedOwnerId < 0);
+            bool isPlayerOwner = string.Equals(ownerKind, PlayerOwnerKind, StringComparison.Ordinal);
+            bool isGuestOwner = string.Equals(ownerKind, GuestOwnerKind, StringComparison.Ordinal);
+            NumberStyles ownerIdStyle = isGuestOwner ? NumberStyles.AllowLeadingSign : NumberStyles.None;
+            bool isNumericOwnerId = int.TryParse(ownerIdText, ownerIdStyle, CultureInfo.InvariantCulture, out int parsedOwnerId);
+            bool isValidPlayerId = isPlayerOwner && (parsedOwnerId > 0);
+            bool isValidGuestId = isGuestOwner && (parsedOwnerId < 0);
             int? ownerId = null;
-            if (isNumber && (isPlayerId || isGuestId))
+            if (isNumericOwnerId && (isValidPlayerId || isValidGuestId))
             {
                 ownerId = parsedOwnerId;
             }
@@ -122,16 +122,16 @@ namespace Game.Services
         private SessionTokenReading ReadFields(string[] payloadFields)
         {
             int? ownerId = ReadOwnerId(payloadFields[OwnerKindField], payloadFields[OwnerIdField]);
-            bool hasExpiry = long.TryParse(payloadFields[ExpiryField], NumberStyles.None, CultureInfo.InvariantCulture, out long expiresAtSeconds);
+            bool hasValidExpiry = long.TryParse(payloadFields[ExpiryField], NumberStyles.None, CultureInfo.InvariantCulture, out long expiresAtSeconds);
             string displayName = payloadFields[DisplayNameField];
-            bool isReadable = (ownerId is not null) && hasExpiry && !string.IsNullOrWhiteSpace(displayName);
+            bool hasValidFields = (ownerId is not null) && hasValidExpiry && !string.IsNullOrWhiteSpace(displayName);
             SessionTokenReading tokenReading = _invalidReading;
-            if (isReadable)
+            if (hasValidFields)
             {
-                bool isGuest = string.Equals(payloadFields[OwnerKindField], GuestKind, StringComparison.Ordinal);
+                bool isGuestOwner = string.Equals(payloadFields[OwnerKindField], GuestOwnerKind, StringComparison.Ordinal);
                 bool hasExpired = _timeProvider.GetUtcNow().ToUnixTimeSeconds() > expiresAtSeconds;
                 SessionTokenStatus tokenStatus = hasExpired ? SessionTokenStatus.Expired : SessionTokenStatus.Valid;
-                tokenReading = new SessionTokenReading(tokenStatus, ownerId.GetValueOrDefault(), displayName, isGuest);
+                tokenReading = new SessionTokenReading(tokenStatus, ownerId.GetValueOrDefault(), displayName, isGuestOwner);
             }
 
             return tokenReading;

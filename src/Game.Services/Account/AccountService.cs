@@ -76,11 +76,11 @@ namespace Game.Services
             return loginResult;
         }
 
-        public GuestAccessResult EnterAsGuest(string alias)
+        public GuestAccessResult EnterAsGuest(string guestAlias)
         {
-            string guestAlias = (alias ?? string.Empty).Trim();
-            GuestAccessStatus? invalidAlias = FindInvalidAlias(guestAlias);
-            if (invalidAlias is GuestAccessStatus rejectedStatus)
+            string trimmedGuestAlias = (guestAlias ?? string.Empty).Trim();
+            GuestAccessStatus? aliasRejection = FindAliasRejection(trimmedGuestAlias);
+            if (aliasRejection is GuestAccessStatus rejectedStatus)
             {
                 var rejectedResult = new GuestAccessResult { Status = rejectedStatus };
                 return rejectedResult;
@@ -91,7 +91,7 @@ namespace Game.Services
             var enteredResult = new GuestAccessResult
             {
                 Status = GuestAccessStatus.Entered,
-                SessionToken = _sessionTokenIssuer.IssueForGuest(guestId, guestAlias),
+                SessionToken = _sessionTokenIssuer.IssueForGuest(guestId, trimmedGuestAlias),
             };
 
             return enteredResult;
@@ -176,19 +176,19 @@ namespace Game.Services
             return loggedInResult;
         }
 
-        private static GuestAccessStatus? FindInvalidAlias(string guestAlias)
+        private static GuestAccessStatus? FindAliasRejection(string trimmedGuestAlias)
         {
-            GuestAccessStatus? invalidAlias = null;
-            if (guestAlias.Length == 0)
+            GuestAccessStatus? aliasRejection = null;
+            if (trimmedGuestAlias.Length == 0)
             {
-                invalidAlias = GuestAccessStatus.AliasRequired;
+                aliasRejection = GuestAccessStatus.AliasRequired;
             }
-            else if (guestAlias.Length > AccountLimits.LongestGuestAlias)
+            else if (trimmedGuestAlias.Length > AccountLimits.LongestGuestAlias)
             {
-                invalidAlias = GuestAccessStatus.AliasTooLong;
+                aliasRejection = GuestAccessStatus.AliasTooLong;
             }
 
-            return invalidAlias;
+            return aliasRejection;
         }
 
         private static RegistrationResult? FindInvalidField(string username, string email, string password)

@@ -10,7 +10,6 @@ using Game.Contracts;
 using Microsoft.Xna.Framework;
 
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -21,8 +20,6 @@ namespace Torres.Client.Screens
 {
     internal sealed class GlobalRankingScreen : Screen
     {
-        private const int NoticeSpacing = 14;
-
         private const int HeaderRowIndex = 0;
         private const int DividerRowIndex = 1;
         private const int FirstEntryRowIndex = 2;
@@ -137,32 +134,10 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildFailureNotice()
         {
-            var failureMessage = new VerticalStackPanel
-            {
-                Padding = Metrics.CardPadding,
-                Background = Theme.BlushTintBrush,
-                Border = Theme.BlushBrush,
-                BorderThickness = Sizes.Border,
-            };
-            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
-            {
-                Font = Fonts.Body,
-                TextColor = Theme.BlushInk,
-                Wrap = true,
-            });
-            failureMessage.Widgets.Add(CreateParagraph(TextKeys.Common.ServerErrorDetail));
-
             LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
             retryButton.Click += RetryButtonOnClick;
 
-            var failureNotice = new VerticalStackPanel
-            {
-                Spacing = Metrics.FieldSpacing,
-                Margin = new Thickness(0, NoticeSpacing, 0, 0),
-                Visible = false,
-            };
-            failureNotice.Widgets.Add(failureMessage);
-            failureNotice.Widgets.Add(retryButton);
+            VerticalStackPanel failureNotice = CreateFailureNotice(retryButton);
 
             return failureNotice;
         }

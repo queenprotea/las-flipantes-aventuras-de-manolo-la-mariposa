@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Summarizes one match of the caller's history.
+    /// Summarizes one match of the caller's history. PlayedAt is when the match finished, in UTC; the rivals are the players with an account, ordered by final placement.
     /// </summary>
     [DataContract]
     public sealed class MatchHistoryEntry
@@ -30,5 +30,8 @@ namespace Game.Contracts
 
         [DataMember]
         public int? Points { get; set; }
+
+        [DataMember]
+        public bool WasWithdrawn { get; set; }
     }
 }

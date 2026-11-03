@@ -547,6 +547,18 @@
   <data name="History.GuestOpponentsMessage" xml:space="preserve">
     <value>and {0} guests</value>
   </data>
+  <data name="History.LoadingLabel" xml:space="preserve">
+    <value>Loading history...</value>
+  </data>
+  <data name="History.PreviousPageButton" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="History.NextPageButton" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="History.PageLabel" xml:space="preserve">
+    <value>Page {0} of {1}</value>
+  </data>
   <data name="MatchDetail.HeaderLabel" xml:space="preserve">
     <value>match details</value>
   </data>
@@ -564,6 +576,21 @@
   </data>
   <data name="MatchDetail.BackToHistoryButton" xml:space="preserve">
     <value>Back to history</value>
+  </data>
+  <data name="MatchDetail.LoadingLabel" xml:space="preserve">
+    <value>Loading match...</value>
+  </data>
+  <data name="MatchDetail.PlayersOnlyLabel" xml:space="preserve">
+    <value>{0} players</value>
+  </data>
+  <data name="MatchDetail.InterruptedHint" xml:space="preserve">
+    <value>This match was interrupted and has no results.</value>
+  </data>
+  <data name="MatchDetail.GuestNote" xml:space="preserve">
+    <value>1 guest also played; guests are not kept in the history.</value>
+  </data>
+  <data name="MatchDetail.GuestsNote" xml:space="preserve">
+    <value>{0} guests also played; guests are not kept in the history.</value>
   </data>
   <data name="GlobalRanking.HeaderLabel" xml:space="preserve">
     <value>ranking</value>

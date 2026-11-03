@@ -12,7 +12,7 @@ namespace Torres.Client.Ui
 {
     internal static class ScrollbarLook
     {
-        private const int TextureHeight = 1;
+        private const int FlatTextureHeight = 1;
 
         private static IImage? _trackImage;
         private static IImage? _knobImage;
@@ -25,13 +25,13 @@ namespace Torres.Client.Ui
             scrollViewer.VerticalScrollKnob = _knobImage;
         }
 
-        private static IImage CreateFlatImage(Color color)
+        private static IImage CreateFlatImage(Color imageColor)
         {
-            var whiteTexture = new Texture2D(MyraEnvironment.GraphicsDevice, Metrics.ScrollbarWidth, TextureHeight);
-            var whitePixels = new Color[Metrics.ScrollbarWidth * TextureHeight];
+            var whiteTexture = new Texture2D(MyraEnvironment.GraphicsDevice, Metrics.ScrollbarWidth, FlatTextureHeight);
+            var whitePixels = new Color[Metrics.ScrollbarWidth * FlatTextureHeight];
             Array.Fill(whitePixels, Color.White);
             whiteTexture.SetData(whitePixels);
-            var flatImage = new ColoredRegion(new TextureRegion(whiteTexture), color);
+            var flatImage = new ColoredRegion(new TextureRegion(whiteTexture), imageColor);
 
             return flatImage;
         }

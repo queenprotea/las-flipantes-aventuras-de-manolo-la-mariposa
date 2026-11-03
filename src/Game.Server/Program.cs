@@ -41,6 +41,7 @@ var hostOptions = new WebApplicationOptions
 WebApplicationBuilder builder = WebApplication.CreateBuilder(hostOptions);
 ServerSettings serverSettings = ServerSettings.Read(builder.Configuration);
 SessionSettings sessionSettings = SessionSettings.Read(builder.Configuration);
+HistorySettings historySettings = HistorySettings.Read(builder.Configuration);
 
 builder.WebHost.UseNetTcp(serverSettings.NetTcpPort);
 builder.Services.AddServiceModelServices();
@@ -48,6 +49,7 @@ builder.Services.AddDbContextFactory<TorresDbContext>(databaseSettings.Configure
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new SessionTimings(TimeSpan.FromSeconds(sessionSettings.ConnectionCheckPeriodSeconds), sessionSettings.ConnectionCheckMissesToDrop));
 builder.Services.AddSingleton(new SessionTokenIssuer(sessionSigningKey, TimeProvider.System));
+builder.Services.AddSingleton(new HistoryPaging(historySettings.MatchesPerPage));
 builder.Services.AddSingleton<GuestIdIssuer>();
 builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<RankingRepository>();
@@ -55,6 +57,8 @@ builder.Services.AddSingleton<RoomRecordRepository>();
 builder.Services.AddSingleton<SanctionRepository>();
 builder.Services.AddSingleton<SystemParameterRepository>();
 builder.Services.AddSingleton<FriendshipRepository>();
+builder.Services.AddSingleton<MatchRecordRepository>();
+builder.Services.AddSingleton<MatchParticipantRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
 builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<RankingService>();
@@ -64,6 +68,7 @@ builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<FriendsService>();
 builder.Services.AddSingleton<ChatService>();
+builder.Services.AddSingleton<HistoryService>();
 builder.Services.AddSingleton<GameSessionService>();
 builder.Services.AddSingleton<RoomStartup>();
 builder.Services.AddSingleton<ConnectionSupervisor>();
@@ -72,12 +77,12 @@ WebApplication app = builder.Build();
 
 RoomStartup roomStartup = app.Services.GetRequiredService<RoomStartup>();
 TimeSpan roomInactivityLimit;
-ChatLimits chatLimits;
+ChatCapacity chatCapacity;
 try
 {
     await roomStartup.CloseLeftoverRoomsAsync();
     roomInactivityLimit = await roomStartup.ReadInactivityLimitAsync();
-    chatLimits = await roomStartup.ReadChatLimitsAsync();
+    chatCapacity = await roomStartup.ReadChatCapacityAsync();
 }
 catch (NpgsqlException exception)
 {
@@ -85,7 +90,7 @@ catch (NpgsqlException exception)
     return;
 }
 
-app.Services.GetRequiredService<ChatService>().Start(chatLimits);
+app.Services.GetRequiredService<ChatService>().Start(chatCapacity);
 app.UseServiceModel(AddEndpoints);
 ConnectionSupervisor connectionSupervisor = app.Services.GetRequiredService<ConnectionSupervisor>();
 connectionSupervisor.Start(roomInactivityLimit);

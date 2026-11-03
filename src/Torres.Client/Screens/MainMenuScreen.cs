@@ -113,10 +113,10 @@ namespace Torres.Client.Screens
 
         private void FollowSession()
         {
-            bool hasAccountFeatures = !_session.IsGuest;
-            ApplyAvailability(_invitationsButton, hasAccountFeatures);
-            ApplyAvailability(_friendsButton, hasAccountFeatures);
-            ApplyAvailability(_historyButton, hasAccountFeatures);
+            bool canUseAccountFeatures = !_session.IsGuest;
+            ApplyAvailability(_invitationsButton, canUseAccountFeatures);
+            ApplyAvailability(_friendsButton, canUseAccountFeatures);
+            ApplyAvailability(_historyButton, canUseAccountFeatures);
         }
 
         private VerticalStackPanel BuildMenuList()

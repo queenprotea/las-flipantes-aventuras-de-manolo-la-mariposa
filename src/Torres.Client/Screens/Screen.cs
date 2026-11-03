@@ -12,6 +12,8 @@ namespace Torres.Client.Screens
 {
     internal abstract class Screen
     {
+        private const int FailureNoticeTopSpacing = 14;
+
         private Widget? _rootWidget;
         private VerticalStackPanel? _confirmationPlaceholder;
 
@@ -495,15 +497,55 @@ namespace Torres.Client.Screens
             return emptyState;
         }
 
+        protected static LocalizedLabel CreateTag(string textKey, Color textColor)
+        {
+            var tagLabel = new LocalizedLabel(textKey)
+            {
+                Font = Fonts.Label,
+                TextColor = textColor,
+            };
+
+            return tagLabel;
+        }
+
+        protected static VerticalStackPanel CreateFailureNotice(LocalizedButton retryButton)
+        {
+            var failureMessage = new VerticalStackPanel
+            {
+                Padding = Metrics.CardPadding,
+                Background = Theme.BlushTintBrush,
+                Border = Theme.BlushBrush,
+                BorderThickness = Sizes.Border,
+            };
+            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
+            {
+                Font = Fonts.Body,
+                TextColor = Theme.BlushInk,
+                Wrap = true,
+            });
+            failureMessage.Widgets.Add(CreateParagraph(TextKeys.Common.ServerErrorDetail));
+
+            var failureNotice = new VerticalStackPanel
+            {
+                Spacing = Metrics.FieldSpacing,
+                Margin = new Thickness(0, FailureNoticeTopSpacing, 0, 0),
+                Visible = false,
+            };
+            failureNotice.Widgets.Add(failureMessage);
+            failureNotice.Widgets.Add(retryButton);
+
+            return failureNotice;
+        }
+
         protected NoticeBox ShowConfirmation(string titleKey, string bodyKey)
         {
             ConfirmationPlaceholder.Widgets.Clear();
-            var question = new NoticeBox();
-            question.ShowMessage(titleKey, bodyKey, null);
-            ConfirmationPlaceholder.Widgets.Add(question);
+            var confirmationNotice = new NoticeBox();
+            confirmationNotice.ShowMessage(titleKey, bodyKey, null);
+            ConfirmationPlaceholder.Widgets.Add(confirmationNotice);
             ConfirmationPlaceholder.Visible = true;
 
-            return question;
+            return confirmationNotice;
         }
 
         protected void AddConfirmationButtons(LocalizedButton confirmButton, LocalizedButton cancelButton)

@@ -100,6 +100,27 @@ namespace Game.Persistence
             return players;
         }
 
+        public Task<List<Player>> ListByIdsAsync(IReadOnlyCollection<int> playerIds)
+        {
+            ArgumentNullException.ThrowIfNull(playerIds);
+
+            Task<List<Player>> playersReading = ReadByIdsAsync(playerIds);
+
+            return playersReading;
+        }
+
+        private async Task<List<Player>> ReadByIdsAsync(IReadOnlyCollection<int> playerIds)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            List<Player> players = await databaseContext.Players
+                .AsNoTracking()
+                .Where(storedPlayer => playerIds.Contains(storedPlayer.PlayerId))
+                .ToListAsync();
+
+            return players;
+        }
+
         private static PlayerCreationOutcome ToTakenOutcome(string? violatedIndex)
         {
             PlayerCreationOutcome takenOutcome = violatedIndex == UsernameIndex

@@ -16,12 +16,10 @@ namespace Game.Services
 {
     public sealed class FriendsService : IFriendsService
     {
-        private const string SessionNotOpenReason = "The session has not been opened with a valid session token.";
+        private const string FriendsFeatureName = "the friends features";
         private const string FriendsUnavailableReason = "The friends of the player are not available right now.";
         private const string PlayerSearchUnavailableReason = "The player search is not available right now.";
         private const string FriendRemovalUnavailableReason = "Removing a friend is not available yet.";
-        private const string GuestNotAllowedReason = "Guests cannot use the friends features.";
-        private const string GuestRejectedMessage = "Guest {0} tried to use the friends features and was rejected.";
         private const string FriendsReadFailedMessage = "The database could not be read while listing the friends of player {0}.";
         private const string PlayerSearchReadFailedMessage = "The database could not be read during a player search by player {0}.";
         private const string FriendRequestWriteFailedMessage = "The database could not be written while player {0} sent a friend request.";
@@ -133,19 +131,7 @@ namespace Game.Services
 
         private SessionOwner RequireAccountOwner()
         {
-            PlayerSession? caller = _sessionRegistry.FindCaller();
-            if (caller is null)
-            {
-                throw new FaultException(SessionNotOpenReason);
-            }
-
-            if (caller.Owner.IsGuest)
-            {
-                _log.WarnFormat(GuestRejectedMessage, caller.Owner.OwnerId);
-                throw new FaultException(GuestNotAllowedReason);
-            }
-
-            SessionOwner accountOwner = caller.Owner;
+            SessionOwner accountOwner = AccountOwnerGuard.RequireAccountOwner(_sessionRegistry, _log, FriendsFeatureName);
 
             return accountOwner;
         }

@@ -125,8 +125,8 @@ namespace Torres.Client
             _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen());
             _screensById.Add(ScreenId.Room, new RoomScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
-            _screensById.Add(ScreenId.History, new HistoryScreen());
-            _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen());
+            _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
+            _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen());
             _screensById.Add(ScreenId.InitialPlacement, new InitialPlacementScreen());
             _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen());

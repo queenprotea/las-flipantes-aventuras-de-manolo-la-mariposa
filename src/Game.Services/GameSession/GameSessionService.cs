@@ -14,18 +14,21 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly FriendsService _friendsService;
         private readonly ChatService _chatService;
+        private readonly HistoryService _historyService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(friendsService);
             ArgumentNullException.ThrowIfNull(chatService);
+            ArgumentNullException.ThrowIfNull(historyService);
 
             _sessionService = sessionService;
             _roomService = roomService;
             _friendsService = friendsService;
             _chatService = chatService;
+            _historyService = historyService;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
@@ -135,9 +138,9 @@ namespace Game.Services
 
         public SendChatMessageResult SendChatMessage(string text)
         {
-            SendChatMessageResult sending = _chatService.SendChatMessage(text);
+            SendChatMessageResult sendResult = _chatService.SendChatMessage(text);
 
-            return sending;
+            return sendResult;
         }
 
         public ChatHistoryResponse GetChatHistory()
@@ -145,6 +148,20 @@ namespace Game.Services
             ChatHistoryResponse history = _chatService.GetChatHistory();
 
             return history;
+        }
+
+        public Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
+        {
+            Task<MatchHistoryResponse> historyReading = _historyService.GetMatchHistoryAsync(pageNumber);
+
+            return historyReading;
+        }
+
+        public Task<MatchDetailResponse> GetMatchDetailAsync(int matchId)
+        {
+            Task<MatchDetailResponse> detailReading = _historyService.GetMatchDetailAsync(matchId);
+
+            return detailReading;
         }
     }
 }

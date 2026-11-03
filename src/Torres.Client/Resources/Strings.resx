@@ -547,6 +547,18 @@
   <data name="History.GuestOpponentsMessage" xml:space="preserve">
     <value>y {0} invitados</value>
   </data>
+  <data name="History.LoadingLabel" xml:space="preserve">
+    <value>Cargando historial...</value>
+  </data>
+  <data name="History.PreviousPageButton" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="History.NextPageButton" xml:space="preserve">
+    <value>Siguiente</value>
+  </data>
+  <data name="History.PageLabel" xml:space="preserve">
+    <value>Página {0} de {1}</value>
+  </data>
   <data name="MatchDetail.HeaderLabel" xml:space="preserve">
     <value>detalle de partida</value>
   </data>
@@ -564,6 +576,21 @@
   </data>
   <data name="MatchDetail.BackToHistoryButton" xml:space="preserve">
     <value>Volver al historial</value>
+  </data>
+  <data name="MatchDetail.LoadingLabel" xml:space="preserve">
+    <value>Cargando partida...</value>
+  </data>
+  <data name="MatchDetail.PlayersOnlyLabel" xml:space="preserve">
+    <value>{0} jugadores</value>
+  </data>
+  <data name="MatchDetail.InterruptedHint" xml:space="preserve">
+    <value>Esta partida se interrumpió y no tiene resultados.</value>
+  </data>
+  <data name="MatchDetail.GuestNote" xml:space="preserve">
+    <value>Además jugó 1 invitado; los invitados no quedan en el historial.</value>
+  </data>
+  <data name="MatchDetail.GuestsNote" xml:space="preserve">
+    <value>Además jugaron {0} invitados; los invitados no quedan en el historial.</value>
   </data>
   <data name="GlobalRanking.HeaderLabel" xml:space="preserve">
     <value>ranking</value>
