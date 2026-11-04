@@ -199,6 +199,20 @@ namespace Torres.Client.Session
             return acceptance;
         }
 
+        internal Task<FriendRequestResponseResult> RejectFriendRequestAsync(int requesterPlayerId)
+        {
+            Task<FriendRequestResponseResult> rejection = new SessionCall<int, FriendRequestResponseResult>(RejectFriendRequest, requesterPlayerId).StartAsync();
+
+            return rejection;
+        }
+
+        internal Task<FriendRemovalResult> RemoveFriendAsync(int friendPlayerId)
+        {
+            Task<FriendRemovalResult> removal = new SessionCall<int, FriendRemovalResult>(RequireChannel().RemoveFriend, friendPlayerId).StartAsync();
+
+            return removal;
+        }
+
         internal void CloseSession()
         {
             if (IsOpen && (_channel is not null))
@@ -244,6 +258,13 @@ namespace Torres.Client.Session
         private FriendRequestResponseResult AcceptFriendRequest(int requesterPlayerId)
         {
             FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, true);
+
+            return responseResult;
+        }
+
+        private FriendRequestResponseResult RejectFriendRequest(int requesterPlayerId)
+        {
+            FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, false);
 
             return responseResult;
         }

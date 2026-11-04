@@ -125,5 +125,19 @@ namespace Game.Persistence
 
             return wasDeleted;
         }
+
+        public bool DeleteFriendship(int firstPlayerId, int secondPlayerId)
+        {
+            using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
+
+            int deletedCount = databaseContext.Friendships
+                .Where(storedFriendship => (storedFriendship.RequesterId == firstPlayerId) || (storedFriendship.RequesterId == secondPlayerId))
+                .Where(storedFriendship => (storedFriendship.AddresseeId == firstPlayerId) || (storedFriendship.AddresseeId == secondPlayerId))
+                .Where(storedFriendship => storedFriendship.Status == FriendshipStatuses.Accepted)
+                .ExecuteDelete();
+            bool wasDeleted = deletedCount > 0;
+
+            return wasDeleted;
+        }
     }
 }

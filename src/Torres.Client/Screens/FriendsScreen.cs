@@ -31,7 +31,8 @@ namespace Torres.Client.Screens
         private Task<FriendsOverviewResponse>? _overviewRequest;
         private Task<PlayerSearchResponse>? _searchRequest;
         private Task<FriendRequestResult>? _friendRequest;
-        private Task<FriendRequestResponseResult>? _acceptRequest;
+        private Task<FriendRequestResponseResult>? _responseRequest;
+        private Task<FriendRemovalResult>? _removalRequest;
         private FriendsOverviewResponse _overview = new FriendsOverviewResponse();
         private PlayerSearchResponse? _searchResult;
         private string _searchedUsername = string.Empty;
@@ -61,6 +62,7 @@ namespace Torres.Client.Screens
             _overview = new FriendsOverviewResponse();
             _searchResult = null;
             _errorLabel.Visible = false;
+            HideConfirmation();
             RenderTab();
 
             if (!_session.HasAccount || !_gameSessionConnection.IsOpen)
@@ -78,7 +80,8 @@ namespace Torres.Client.Screens
             FollowOverview();
             FollowSearch();
             FollowFriendRequest();
-            FollowAccept();
+            FollowResponse();
+            FollowRemoval();
         }
 
         protected override Widget Build()
@@ -87,6 +90,7 @@ namespace Torres.Client.Screens
             page.Spacing = Metrics.FieldSpacing;
             page.Widgets.Add(BuildSearchRow());
             page.Widgets.Add(_errorLabel);
+            page.Widgets.Add(ConfirmationPlaceholder);
             page.Widgets.Add(_tabContentPlaceholder);
             StackPanel.SetProportionType(_tabContentPlaceholder, ProportionType.Fill);
             RenderTab();
@@ -172,18 +176,40 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void FollowAccept()
+        private void FollowResponse()
         {
-            if ((_acceptRequest is null) || !_acceptRequest.IsCompleted)
+            if ((_responseRequest is null) || !_responseRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<FriendRequestResponseResult> completedAcceptance = _acceptRequest;
-            _acceptRequest = null;
-            bool isAnswered = completedAcceptance.IsCompletedSuccessfully
-                && (completedAcceptance.Result != FriendRequestResponseResult.DatabaseUnavailable);
+            Task<FriendRequestResponseResult> completedResponse = _responseRequest;
+            _responseRequest = null;
+            bool isAnswered = completedResponse.IsCompletedSuccessfully
+                && (completedResponse.Result != FriendRequestResponseResult.DatabaseUnavailable);
             if (isAnswered)
+            {
+                StartOverviewRequest();
+            }
+            else
+            {
+                ShowFailure();
+            }
+        }
+
+        private void FollowRemoval()
+        {
+            if ((_removalRequest is null) || !_removalRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<FriendRemovalResult> completedRemoval = _removalRequest;
+            _removalRequest = null;
+            bool isRemoved = completedRemoval.IsCompletedSuccessfully
+                && (completedRemoval.Result != FriendRemovalResult.DatabaseUnavailable);
+
+            if (isRemoved)
             {
                 StartOverviewRequest();
             }
@@ -271,11 +297,42 @@ namespace Torres.Client.Screens
 
         private void AcceptFriendRequest(int requesterPlayerId)
         {
-            bool canAccept = _gameSessionConnection.IsOpen && (_acceptRequest is null);
+            bool canAccept = _gameSessionConnection.IsOpen && (_responseRequest is null);
             if (canAccept)
             {
-                _acceptRequest = _gameSessionConnection.AcceptFriendRequestAsync(requesterPlayerId);
+                _responseRequest = _gameSessionConnection.AcceptFriendRequestAsync(requesterPlayerId);
             }
+        }
+
+        private void RejectFriendRequest(int requesterPlayerId)
+        {
+            bool canReject = _gameSessionConnection.IsOpen && (_responseRequest is null);
+            if (canReject)
+            {
+                _responseRequest = _gameSessionConnection.RejectFriendRequestAsync(requesterPlayerId);
+            }
+        }
+
+        private void RemoveFriend(int friendPlayerId)
+        {
+            HideConfirmation();
+            bool canRemove = _gameSessionConnection.IsOpen && (_removalRequest is null);
+            if (canRemove)
+            {
+                _removalRequest = _gameSessionConnection.RemoveFriendAsync(friendPlayerId);
+            }
+        }
+
+        private void AskRemovalConfirmation(PlayerSummary friend)
+        {
+            _errorLabel.Visible = false;
+            ShowConfirmation(TextKeys.Alerts.RemoveFriendTitle, TextKeys.Alerts.RemoveFriendBody);
+
+            LocalizedButton removeConfirmButton = CreateDestructiveButton(TextKeys.Friends.RemoveFriendButton);
+            removeConfirmButton.Click += (sender, e) => RemoveFriend(friend.PlayerId);
+            LocalizedButton cancelButton = CreateSecondaryButton(TextKeys.Common.CancelButton);
+            cancelButton.Click += CancelButtonOnClick;
+            AddConfirmationButtons(removeConfirmButton, cancelButton);
         }
 
         private void ShowFailure()
@@ -290,7 +347,8 @@ namespace Torres.Client.Screens
             _overviewRequest = null;
             _searchRequest = null;
             _friendRequest = null;
-            _acceptRequest = null;
+            _responseRequest = null;
+            _removalRequest = null;
         }
 
         private HorizontalStackPanel BuildSearchRow()
@@ -368,10 +426,8 @@ namespace Torres.Client.Screens
                 StackPanel.SetProportionType(spacer, ProportionType.Part);
                 itemRow.Widgets.Add(spacer);
 
-                LocalizedButton inviteToRoomButton = CreateSecondaryButton(TextKeys.Friends.InviteToRoomButton);
-                itemRow.Widgets.Add(inviteToRoomButton);
-
                 LocalizedButton removeButton = CreateDestructiveButton(TextKeys.Friends.RemoveFriendButton);
+                removeButton.Click += (sender, e) => AskRemovalConfirmation(friend);
                 itemRow.Widgets.Add(removeButton);
 
                 friendsList.Widgets.Add(CreateItemCard(itemRow));
@@ -420,6 +476,7 @@ namespace Torres.Client.Screens
             itemRow.Widgets.Add(acceptButton);
 
             LocalizedButton rejectButton = CreateSecondaryButton(TextKeys.Friends.RejectButton);
+            rejectButton.Click += (sender, e) => RejectFriendRequest(requester.PlayerId);
             itemRow.Widgets.Add(rejectButton);
 
             Panel requestCard = CreateItemCard(itemRow);
@@ -518,6 +575,7 @@ namespace Torres.Client.Screens
 
         private void SelectTab(FriendsTab tab)
         {
+            HideConfirmation();
             _activeTab = tab;
             _searchResult = null;
             RenderTab();
@@ -542,8 +600,14 @@ namespace Torres.Client.Screens
             SelectTab(FriendsTab.Sent);
         }
 
+        private void CancelButtonOnClick(object sender, MyraEventArgs e)
+        {
+            HideConfirmation();
+        }
+
         private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
+            HideConfirmation();
             ForgetRequests();
             RequestedScreen = ScreenId.MainMenu;
         }

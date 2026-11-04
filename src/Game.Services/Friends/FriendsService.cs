@@ -19,14 +19,15 @@ namespace Game.Services
         private const string FriendsFeatureName = "the friends features";
         private const string FriendsUnavailableReason = "The friends of the player are not available right now.";
         private const string PlayerSearchUnavailableReason = "The player search is not available right now.";
-        private const string FriendRemovalUnavailableReason = "Removing a friend is not available yet.";
         private const string FriendsReadFailedMessage = "The database could not be read while listing the friends of player {0}.";
         private const string PlayerSearchReadFailedMessage = "The database could not be read during a player search by player {0}.";
         private const string FriendRequestWriteFailedMessage = "The database could not be written while player {0} sent a friend request.";
         private const string FriendResponseWriteFailedMessage = "The database could not be written while player {0} answered a friend request.";
+        private const string FriendRemovalWriteFailedMessage = "The database could not be written while player {0} removed a friend.";
         private const string FriendRequestSentMessage = "Player {0} sent a friend request to player {1}.";
         private const string FriendRequestAcceptedMessage = "Player {0} accepted the friend request of player {1}.";
         private const string FriendRequestRejectedMessage = "Player {0} rejected the friend request of player {1}.";
+        private const string FriendRemovedMessage = "Player {0} removed player {1} from their friends.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(FriendsService));
 
@@ -66,15 +67,21 @@ namespace Game.Services
         public PlayerSearchResponse FindPlayerByUsername(string username)
         {
             int callerPlayerId = RequireAccountOwner().OwnerId;
-            var searchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                return searchResult;
-            }
+            bool isBlankUsername = string.IsNullOrWhiteSpace(username);
+            PlayerSearchResponse searchResult = isBlankUsername
+                ? new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound }
+                : ReadPlayerSearch(username.Trim(), callerPlayerId);
 
+            return searchResult;
+        }
+
+        private PlayerSearchResponse ReadPlayerSearch(string username, int callerPlayerId)
+        {
             try
             {
-                searchResult = SearchPlayer(username.Trim(), callerPlayerId);
+                PlayerSearchResponse storedSearchResult = SearchPlayer(username, callerPlayerId);
+
+                return storedSearchResult;
             }
             catch (NpgsqlException exception)
             {
@@ -82,8 +89,6 @@ namespace Game.Services
                 _log.Error(failureMessage, exception);
                 throw new FaultException(PlayerSearchUnavailableReason);
             }
-
-            return searchResult;
         }
 
         public FriendRequestResult SendFriendRequest(int targetPlayerId)
@@ -126,7 +131,20 @@ namespace Game.Services
 
         public FriendRemovalResult RemoveFriend(int friendPlayerId)
         {
-            throw new FaultException(FriendRemovalUnavailableReason);
+            int callerPlayerId = RequireAccountOwner().OwnerId;
+            FriendRemovalResult removalResult;
+            try
+            {
+                removalResult = DeleteFriendship(callerPlayerId, friendPlayerId);
+            }
+            catch (NpgsqlException exception)
+            {
+                string failureMessage = string.Format(CultureInfo.InvariantCulture, FriendRemovalWriteFailedMessage, callerPlayerId);
+                _log.Error(failureMessage, exception);
+                removalResult = FriendRemovalResult.DatabaseUnavailable;
+            }
+
+            return removalResult;
         }
 
         private SessionOwner RequireAccountOwner()
@@ -156,19 +174,18 @@ namespace Game.Services
         private PlayerSearchResponse SearchPlayer(string username, int callerPlayerId)
         {
             Player? foundPlayer = _playerRepository.FindByUsername(username);
-            var searchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
-
             if ((foundPlayer is null) || (foundPlayer.PlayerId == callerPlayerId))
             {
-                return searchResult;
+                var notFoundResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
+                return notFoundResult;
             }
 
             Friendship? friendship = _friendshipRepository.FindBetween(callerPlayerId, foundPlayer.PlayerId);
-            searchResult.Status = PlayerSearchStatus.Found;
-            searchResult.Player = ToPlayerSummary(foundPlayer);
-            searchResult.Relationship = ToRelationship(friendship, callerPlayerId);
+            PlayerSummary foundSummary = ToPlayerSummary(foundPlayer);
+            FriendRelationship foundRelationship = ToRelationship(friendship, callerPlayerId);
+            var foundResult = new PlayerSearchResponse { Status = PlayerSearchStatus.Found, Player = foundSummary, Relationship = foundRelationship };
 
-            return searchResult;
+            return foundResult;
         }
 
         private FriendRequestResult CreateFriendRequest(int callerPlayerId, int targetPlayerId)
@@ -230,6 +247,19 @@ namespace Game.Services
             }
 
             return responseResult;
+        }
+
+        private FriendRemovalResult DeleteFriendship(int callerPlayerId, int friendPlayerId)
+        {
+            bool wasRemoved = _friendshipRepository.DeleteFriendship(callerPlayerId, friendPlayerId);
+            FriendRemovalResult removalResult = FriendRemovalResult.NotFriends;
+            if (wasRemoved)
+            {
+                removalResult = FriendRemovalResult.Removed;
+                _log.InfoFormat(FriendRemovedMessage, callerPlayerId, friendPlayerId);
+            }
+
+            return removalResult;
         }
 
         private static int FindOtherPlayerId(Friendship friendship, int callerPlayerId)
