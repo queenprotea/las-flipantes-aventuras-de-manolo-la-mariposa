@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 
+using Game.Contracts;
+
+using Torres.Client.Scene;
+
 namespace Torres.Client.Screens
 {
     internal static class PreviewSamples
@@ -26,5 +30,12 @@ namespace Torres.Client.Screens
         internal const string ResumeClock = "2:14";
 
         internal static IReadOnlyList<string> SeatPlayers { get; } = new[] { SeatOnePlayer, SeatTwoPlayer, SeatThreePlayer, SeatFourPlayer };
+
+        // The five single-cell planters decided on 4 November 2026; they stand in for the state the server will send.
+        internal static IReadOnlyList<string> BoardPlanterRows { get; } = new string[] { "........", ".A....B.", "........", "...C....", "........", "........", ".D....E.", "........" };
+
+        internal static IReadOnlyList<string> BoardLevelRows { get; } = new string[] { "........", ".1....1.", "........", "...1....", "........", "........", ".1....1.", "........" };
+
+        internal static IReadOnlyList<BoardCaterpillar> BoardCaterpillars { get; } = new BoardCaterpillar[] { new BoardCaterpillar(SeatColor.Green, new BoardCell(1, 1), 200f), new BoardCaterpillar(SeatColor.Blue, new BoardCell(1, 6), 20f), new BoardCaterpillar(SeatColor.Red, new BoardCell(3, 3), 150f), new BoardCaterpillar(SeatColor.Yellow, new BoardCell(5, 4), 250f) };
     }
 }

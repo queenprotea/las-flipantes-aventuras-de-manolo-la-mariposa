@@ -43,6 +43,10 @@ namespace Torres.Client.Screens
         {
         }
 
+        internal virtual void RenderScene()
+        {
+        }
+
         protected VerticalStackPanel ConfirmationPlaceholder => _confirmationPlaceholder ??= new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
 
         protected abstract Widget Build();

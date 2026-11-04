@@ -32,6 +32,7 @@ namespace Torres.Client
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
+        private MatchScreen? _matchScreen;
         private Panel? _screenContainer;
         private Desktop? _desktop;
         private TopBarView? _topBarView;
@@ -49,6 +50,9 @@ namespace Torres.Client
             _graphicsDeviceManager.PreferredBackBufferWidth = Sizes.WindowWidth;
             _graphicsDeviceManager.PreferredBackBufferHeight = Sizes.WindowHeight;
             _graphicsDeviceManager.HardwareModeSwitch = false;
+
+            // The board mesh uses 32-bit indices, which Reach does not allow: it already has about 37 000 vertices and grows with every flower level.
+            _graphicsDeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += WindowOnClientSizeChanged;
@@ -118,7 +122,8 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Profile, _profileScreen);
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.Match, new MatchScreen());
+            _matchScreen = new MatchScreen(GraphicsDevice);
+            _screensById.Add(ScreenId.Match, _matchScreen);
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.Friends, new FriendsScreen(_gameSessionConnection, _playerSession));
@@ -154,6 +159,7 @@ namespace Torres.Client
 
         protected override void Draw(GameTime gameTime)
         {
+            _screensById[_openScreen].RenderScene();
             GraphicsDevice.Clear(Theme.Surface);
             _desktop?.Render();
             base.Draw(gameTime);
@@ -163,6 +169,7 @@ namespace Torres.Client
         {
             Window.TextInput -= WindowOnTextInput;
             Window.ClientSizeChanged -= WindowOnClientSizeChanged;
+            _matchScreen?.Dispose();
             base.UnloadContent();
         }
 

@@ -1,16 +1,19 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Scene;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    internal sealed class MatchScreen : Screen
+    internal sealed class MatchScreen : Screen, IDisposable
     {
         private const int CaterpillarsPerPlayer = 5;
         private const int NewCaterpillarCost = 2;
@@ -38,16 +41,35 @@ namespace Torres.Client.Screens
             TextColor = Theme.MutedInk,
         };
 
+        private readonly BoardWidget _boardWidget;
+
         private int _previewRound = PreviewRound;
 
-        internal MatchScreen() : base(TextKeys.Match.HeaderLabel, true)
+        internal MatchScreen(GraphicsDevice graphicsDevice) : base(TextKeys.Match.HeaderLabel, true)
         {
             HeaderArguments = new[] { PreviewSamples.MatchRoomCode };
+            var previewLayout = new BoardLayout(PreviewSamples.BoardPlanterRows, PreviewSamples.BoardLevelRows, PreviewSamples.BoardCaterpillars);
+            _boardWidget = new BoardWidget(graphicsDevice, previewLayout);
         }
 
         internal override void Open()
         {
             _roundTurnLabel.TextArguments = new[] { DisplayFormats.FormatInteger(_previewRound), DisplayFormats.FormatInteger(PreviewTurn) };
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            _boardWidget.UpdateInput();
+        }
+
+        internal override void RenderScene()
+        {
+            _boardWidget.RenderScene();
+        }
+
+        public void Dispose()
+        {
+            _boardWidget.Dispose();
         }
 
         protected override Widget Build()
@@ -189,16 +211,12 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
-            Panel boardPlaceholder = CreatePlaceholder();
-            boardPlaceholder.HorizontalAlignment = HorizontalAlignment.Stretch;
-            boardPlaceholder.VerticalAlignment = VerticalAlignment.Stretch;
-
             centerPanel.Widgets.Add(turnClock);
             centerPanel.Widgets.Add(BuildTurnStatus());
-            centerPanel.Widgets.Add(boardPlaceholder);
+            centerPanel.Widgets.Add(_boardWidget);
             centerPanel.Widgets.Add(BuildAction());
 
-            StackPanel.SetProportionType(boardPlaceholder, ProportionType.Fill);
+            StackPanel.SetProportionType(_boardWidget, ProportionType.Fill);
 
             return centerPanel;
         }
