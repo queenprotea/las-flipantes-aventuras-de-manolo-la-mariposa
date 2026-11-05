@@ -37,5 +37,8 @@ namespace Game.Contracts
 
         [EnumMember]
         MemberTimedOut,
+
+        [EnumMember]
+        MatchEnded,
     }
 }

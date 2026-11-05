@@ -33,6 +33,7 @@ namespace Torres.Client
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
 
         private MatchScreen? _matchScreen;
+        private InitialPlacementScreen? _initialPlacementScreen;
         private Panel? _screenContainer;
         private Desktop? _desktop;
         private TopBarView? _topBarView;
@@ -51,7 +52,6 @@ namespace Torres.Client
             _graphicsDeviceManager.PreferredBackBufferHeight = Sizes.WindowHeight;
             _graphicsDeviceManager.HardwareModeSwitch = false;
 
-            // The board mesh uses 32-bit indices, which Reach does not allow: it already has about 37 000 vertices and grows with every flower level.
             _graphicsDeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
@@ -132,8 +132,9 @@ namespace Torres.Client
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
             _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen());
-            _screensById.Add(ScreenId.InitialPlacement, new InitialPlacementScreen());
+            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession));
+            _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, _gameSessionConnection, _playerSession);
+            _screensById.Add(ScreenId.InitialPlacement, _initialPlacementScreen);
             _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen());
             _screensById.Add(ScreenId.Result, new ResultScreen());
             _screensById.Add(ScreenId.Disconnection, new DisconnectionScreen());
@@ -170,6 +171,7 @@ namespace Torres.Client
             Window.TextInput -= WindowOnTextInput;
             Window.ClientSizeChanged -= WindowOnClientSizeChanged;
             _matchScreen?.Dispose();
+            _initialPlacementScreen?.Dispose();
             base.UnloadContent();
         }
 
@@ -200,6 +202,13 @@ namespace Torres.Client
             {
                 ApplyRoomChange(roomChange);
                 roomChange = _gameSessionConnection.TakeRoomChange();
+            }
+
+            MatchChange? matchChange = _gameSessionConnection.TakeMatchChange();
+            while (matchChange is not null)
+            {
+                ApplyMatchChange(matchChange);
+                matchChange = _gameSessionConnection.TakeMatchChange();
             }
 
             ChatMessage? chatMessage = _gameSessionConnection.TakeChatMessage();
@@ -248,9 +257,24 @@ namespace Torres.Client
                 ShowScreen(ScreenId.MainMenu);
                 _mainMenuScreen.ShowNotice(TextKeys.Alerts.RemovedFromRoomTitle, TextKeys.Alerts.RemovedFromRoomBody, null);
             }
+            else if ((roomChange.Reason == RoomChangeReason.MatchEnded) && (_playerSession.CurrentRoom is not null))
+            {
+                _playerSession.EnterRoom(roomChange.Room);
+                _playerSession.LeaveMatch();
+                ShowScreen(ScreenId.Room);
+            }
             else if (_playerSession.CurrentRoom is not null)
             {
                 _playerSession.EnterRoom(roomChange.Room);
+            }
+        }
+
+        private void ApplyMatchChange(MatchChange matchChange)
+        {
+            _playerSession.FollowMatch(matchChange);
+            if (matchChange.Kind == MatchChangeKind.Started)
+            {
+                ShowScreen(ScreenId.MatchPreparation);
             }
         }
 

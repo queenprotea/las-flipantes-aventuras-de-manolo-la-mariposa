@@ -63,7 +63,7 @@ namespace Game.Services
             if (caller is not null)
             {
                 _sessionRegistry.Close(caller);
-                await _roomService.LeaveForAsync(caller.Owner.OwnerId);
+                await _roomService.LeaveForClosedSessionAsync(caller.Owner.OwnerId);
             }
 
             return CloseSessionResult.SessionClosed;

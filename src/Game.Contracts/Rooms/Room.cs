@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes a room as one of its members sees it, with its members, its host and the member who is looking.
+    /// Describes a room as one of its members sees it, with its members, its host, the member who is looking and whether that member can start a match now.
     /// </summary>
     [DataContract]
     public sealed class Room
@@ -29,6 +29,9 @@ namespace Game.Contracts
 
         [DataMember]
         public int ViewerMemberId { get; set; }
+
+        [DataMember]
+        public bool CanViewerStartMatch { get; set; }
 
         [DataMember]
         public List<RoomMember> Members { get; set; } = new List<RoomMember>();

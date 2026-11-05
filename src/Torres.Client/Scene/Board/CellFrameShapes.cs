@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
 {
-    // The frame is built around the origin and placed on a cell with the World matrix, so moving it never rebuilds a mesh.
     internal static class CellFrameShapes
     {
         private const float FrameHalfSpan = 0.44f;

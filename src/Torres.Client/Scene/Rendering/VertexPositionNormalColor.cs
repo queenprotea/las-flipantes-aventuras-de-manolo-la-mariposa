@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Torres.Client.Scene
 {
-    // MonoGame has no vertex with position, normal and color, which BasicEffect needs to light colored geometry without textures.
     [StructLayout(LayoutKind.Sequential)]
     internal readonly struct VertexPositionNormalColor : IVertexType
     {

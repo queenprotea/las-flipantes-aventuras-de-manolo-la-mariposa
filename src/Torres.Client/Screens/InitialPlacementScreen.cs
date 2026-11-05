@@ -1,48 +1,95 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+
+using Game.Contracts;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
+using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Scene;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
-    internal sealed class InitialPlacementScreen : Screen
+    internal sealed class InitialPlacementScreen : Screen, IDisposable
     {
-        private const double PreviewSecondsBeforeMatch = 3;
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _session;
+        private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
+        private readonly BoardWidget _boardWidget;
+        private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
+        private readonly VerticalStackPanel _turnOrderPanel = new VerticalStackPanel();
+        private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.MintInk, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly LocalizedLabel _instructionLabel = new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction) { Font = Fonts.Title, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly LocalizedLabel _turnLabel = new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction) { Font = Fonts.Small, TextColor = Theme.MutedInk, HorizontalAlignment = HorizontalAlignment.Center };
 
-        private static readonly PlacementPlayer[] _previewPlayers =
-        {
-            new PlacementPlayer(PreviewSamples.SeatOnePlayer, true, true, false, Theme.MintBrush),
-            new PlacementPlayer(PreviewSamples.SeatTwoPlayer, false, false, true, Theme.LavenderBrush),
-            new PlacementPlayer(PreviewSamples.SeatThreePlayer, false, false, false, Theme.ButterBrush),
-            new PlacementPlayer(PreviewSamples.SeatFourPlayer, false, false, false, Theme.SkyBrush),
-        };
+        private MatchView? _shownMatchView;
+        private Task<PlacementResult>? _placementRequest;
+        private Task<EndMatchResult>? _endRequest;
 
-        private double _secondsShown;
-
-        internal InitialPlacementScreen()
+        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(session);
+
+            _gameSessionConnection = gameSessionConnection;
+            _session = session;
+            _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }
 
         internal override void Open()
         {
-            _secondsShown = 0;
+            _noticeBox.Hide();
+            _shownMatchView = null;
+            if (_session.CurrentMatchView is null)
+            {
+                RequestedScreen = ScreenId.MainMenu;
+            }
         }
 
         internal override void Update(GameTime gameTime)
         {
-            _secondsShown += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_secondsShown < PreviewSecondsBeforeMatch)
+            MatchView? matchView = _session.CurrentMatchView;
+            if (matchView is null)
             {
                 return;
             }
 
-            RequestedScreen = ScreenId.Match;
+            if (!ReferenceEquals(matchView, _shownMatchView))
+            {
+                ShowMatch(matchView);
+            }
+
+            _clockLabel.Text = FormatPlacementTimeLeft();
+            _boardWidget.UpdateInput();
+            FollowBoardClick(matchView);
+            FollowPlacementRequest();
+            FollowEndRequest();
+            if (matchView.Phase == MatchPhase.PlayerTurn)
+            {
+                RequestedScreen = ScreenId.Match;
+            }
+        }
+
+        internal override void RenderScene()
+        {
+            _boardWidget.RenderScene();
+        }
+
+        public void Dispose()
+        {
+            _boardWidget.Dispose();
         }
 
         protected override Widget Build()
@@ -57,39 +104,46 @@ namespace Torres.Client.Screens
             return columns;
         }
 
-        private static VerticalStackPanel BuildSideBar()
+        private static bool IsViewerPlacing(MatchView matchView)
         {
-            var playersPanel = new VerticalStackPanel();
-            var turnOrder = new VerticalStackPanel();
-            for (var i = 0; i < _previewPlayers.Length; i++)
-            {
-                playersPanel.Widgets.Add(BuildPlayerRow(_previewPlayers[i]));
-                turnOrder.Widgets.Add(BuildTurnOrderRow(_previewPlayers[i], i + 1));
-            }
+            bool isViewerPlacing = (matchView.Phase != MatchPhase.PlayerTurn) && (matchView.ActiveSeatNumber == matchView.ViewerSeatNumber);
 
-            var sideBar = new VerticalStackPanel
-            {
-                Spacing = Metrics.ColumnSpacing,
-                Width = MatchLayout.SidebarWidth,
-                VerticalAlignment = VerticalAlignment.Top,
-            };
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.PlayersLabel, playersPanel));
-            sideBar.Widgets.Add(CreateDivider());
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.TurnOrderLabel, turnOrder));
-
-            return sideBar;
+            return isViewerPlacing;
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(PlacementPlayer player)
+        private static string GetPlacingName(MatchView matchView)
+        {
+            string placingName = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber).DisplayName;
+
+            return placingName;
+        }
+
+        private static string ToRejectionKey(PlacementResult rejection)
+        {
+            string rejectionKey = rejection switch
+            {
+                PlacementResult.FlowerOccupied => TextKeys.InitialPlacement.FlowerOccupiedNotice,
+                PlacementResult.NotAFlower or PlacementResult.OutsideBoard => TextKeys.InitialPlacement.NotAFlowerNotice,
+                PlacementResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
+                PlacementResult.NotYourPlacement or PlacementResult.WrongPhase => TextKeys.InitialPlacement.NotYourPlacementNotice,
+                PlacementResult.NotInMatch or PlacementResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
+                PlacementResult.Placed => throw new ArgumentOutOfRangeException(nameof(rejection)),
+                _ => throw new ArgumentOutOfRangeException(nameof(rejection)),
+            };
+
+            return rejectionKey;
+        }
+
+        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer, bool isPlacing)
         {
             var playerIdentity = new VerticalStackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Color nameColor = player.IsPlacing ? Theme.MintInk : Theme.Ink;
-            playerIdentity.Widgets.Add(CreatePlayerNameLabel(player.Name, nameColor));
+            Color nameColor = isPlacing ? Theme.MintInk : Theme.Ink;
+            playerIdentity.Widgets.Add(CreatePlayerNameLabel(seat.DisplayName, nameColor));
 
-            if (player.IsYou)
+            if (isViewer)
             {
                 playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
                 {
@@ -98,10 +152,10 @@ namespace Torres.Client.Screens
                 });
             }
 
-            HorizontalStackPanel playerRow = BuildColorRow(player.ColorBrush, MatchLayout.PlayerIconSize);
+            HorizontalStackPanel playerRow = BuildColorRow(SeatColors.BrushFor(seat.Color), MatchLayout.PlayerIconSize);
             playerRow.Widgets.Add(playerIdentity);
             StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
-            if (player.IsPlacing)
+            if (isPlacing)
             {
                 playerRow.Background = Theme.MintTintBrush;
             }
@@ -109,14 +163,14 @@ namespace Torres.Client.Screens
             return playerRow;
         }
 
-        private static HorizontalStackPanel BuildTurnOrderRow(PlacementPlayer player, int seatNumber)
+        private static HorizontalStackPanel BuildTurnOrderRow(MatchSeat seat, bool hasPlaced)
         {
-            Label nameLabel = CreatePlayerNameLabel(player.Name, Theme.Ink);
-            HorizontalStackPanel turnOrderRow = BuildColorRow(player.ColorBrush, MatchLayout.TurnOrderIconSize);
+            Label nameLabel = CreatePlayerNameLabel(seat.DisplayName, Theme.Ink);
+            HorizontalStackPanel turnOrderRow = BuildColorRow(SeatColors.BrushFor(seat.Color), MatchLayout.TurnOrderIconSize);
             turnOrderRow.Widgets.Add(nameLabel);
             turnOrderRow.Widgets.Add(new Label
             {
-                Text = player.HasPlaced ? DisplaySymbols.CheckMark : seatNumber.ToString(CultureInfo.CurrentCulture),
+                Text = hasPlaced ? DisplaySymbols.CheckMark : seat.SeatNumber.ToString(CultureInfo.CurrentCulture),
                 Font = Fonts.Small,
                 TextColor = Theme.SoftInk,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -144,76 +198,169 @@ namespace Torres.Client.Screens
             return colorRow;
         }
 
-        private static VerticalStackPanel BuildCenter()
-        {
-            var boardPlaceholder = new Panel
-            {
-                Background = Theme.SurfaceAltBrush,
-                Border = Theme.StrongLineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-
-            var centerPanel = new VerticalStackPanel
-            {
-                Spacing = MatchLayout.CenterSpacing,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            centerPanel.Widgets.Add(new Label
-            {
-                Text = PreviewSamples.PlacementClock,
-                Font = Fonts.Clock,
-                TextColor = Theme.MintInk,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction)
-            {
-                Font = Fonts.Title,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MutedInk,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new[] { FindPlacingPlayerName() },
-            });
-            centerPanel.Widgets.Add(boardPlaceholder);
-            StackPanel.SetProportionType(boardPlaceholder, ProportionType.Fill);
-
-            return centerPanel;
-        }
-
-        private static string FindPlacingPlayerName()
-        {
-            string placingName = string.Empty;
-            foreach (PlacementPlayer player in _previewPlayers)
-            {
-                if (player.IsPlacing)
-                {
-                    placingName = player.Name;
-                }
-            }
-
-            return placingName;
-        }
-
         private static VerticalStackPanel BuildSideColumn()
         {
             VerticalStackPanel chat = CreateChatPanel();
-            var sideColumn = new VerticalStackPanel
-            {
-                Width = MatchLayout.SideColumnWidth,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
+            var sideColumn = new VerticalStackPanel { Width = MatchLayout.SideColumnWidth, VerticalAlignment = VerticalAlignment.Stretch };
             sideColumn.Widgets.Add(chat);
             StackPanel.SetProportionType(chat, ProportionType.Fill);
 
             return sideColumn;
         }
 
-        private sealed record PlacementPlayer(string Name, bool IsYou, bool HasPlaced, bool IsPlacing, IBrush ColorBrush);
+        private VerticalStackPanel BuildSideBar()
+        {
+            var sideBar = new VerticalStackPanel { Spacing = Metrics.ColumnSpacing, Width = MatchLayout.SidebarWidth, VerticalAlignment = VerticalAlignment.Top };
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.PlayersLabel, _playersPanel));
+            sideBar.Widgets.Add(CreateDivider());
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.TurnOrderLabel, _turnOrderPanel));
+            sideBar.Widgets.Add(CreateDivider());
+            sideBar.Widgets.Add(BuildEndMatchButton());
+
+            return sideBar;
+        }
+
+        private LocalizedButton BuildEndMatchButton()
+        {
+            LocalizedButton endMatchButton = CreateDestructiveButton(TextKeys.Common.EndMatchButton);
+            endMatchButton.LabelFont = Fonts.Small;
+            endMatchButton.Padding = Metrics.SmallButtonPadding;
+            endMatchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
+            endMatchButton.Click += EndMatchButtonOnClick;
+
+            return endMatchButton;
+        }
+
+        private VerticalStackPanel BuildCenter()
+        {
+            var centerPanel = new VerticalStackPanel
+            {
+                Spacing = MatchLayout.CenterSpacing,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            centerPanel.Widgets.Add(_noticeBox);
+            centerPanel.Widgets.Add(_clockLabel);
+            centerPanel.Widgets.Add(_instructionLabel);
+            centerPanel.Widgets.Add(_turnLabel);
+            centerPanel.Widgets.Add(_boardWidget);
+            StackPanel.SetProportionType(_boardWidget, ProportionType.Fill);
+
+            return centerPanel;
+        }
+
+        private string FormatPlacementTimeLeft()
+        {
+            TimeSpan placementTimeLeft = TimeSpan.Zero;
+            if (_session.PlacementEndsAtUtc is DateTime placementEndsAtUtc)
+            {
+                placementTimeLeft = placementEndsAtUtc - DateTime.UtcNow;
+            }
+
+            string clockText = DisplayFormats.FormatClock(placementTimeLeft);
+
+            return clockText;
+        }
+
+        private void ShowMatch(MatchView matchView)
+        {
+            _shownMatchView = matchView;
+            bool isViewerPlacing = IsViewerPlacing(matchView);
+            bool isButterflyPlacement = matchView.Phase == MatchPhase.ButterflyPlacement;
+            _instructionLabel.Visible = isViewerPlacing;
+            _instructionLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.PlaceButterflyInstruction : TextKeys.InitialPlacement.PlaceCaterpillarInstruction;
+            _turnLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.ButterflyTurnInstruction : TextKeys.InitialPlacement.CurrentTurnInstruction;
+            _turnLabel.TextArguments = new string[] { GetPlacingName(matchView) };
+
+            _boardWidget.ShowLayout(_layoutFactory.Create(matchView));
+            IReadOnlyList<BoardCell> targetCells = Array.Empty<BoardCell>();
+            if (isViewerPlacing)
+            {
+                targetCells = MatchCellConversion.ToBoardCells(matchView.PlacementTargets);
+            }
+
+            BoardCell? butterflyCell = null;
+            if (matchView.HasButterfly)
+            {
+                butterflyCell = MatchCellConversion.ToBoardCell(matchView.ButterflyCell);
+            }
+
+            _boardWidget.ShowTargets(targetCells);
+            _boardWidget.ShowButterfly(butterflyCell);
+            ShowSeats(matchView);
+        }
+
+        private void ShowSeats(MatchView matchView)
+        {
+            _playersPanel.Widgets.Clear();
+            _turnOrderPanel.Widgets.Clear();
+            foreach (MatchSeat seat in matchView.Seats)
+            {
+                bool isViewer = seat.SeatNumber == matchView.ViewerSeatNumber;
+                bool isPlacing = seat.SeatNumber == matchView.ActiveSeatNumber;
+                bool hasPlaced = matchView.Caterpillars.Exists(caterpillar => caterpillar.SeatNumber == seat.SeatNumber);
+                _playersPanel.Widgets.Add(BuildPlayerRow(seat, isViewer, isPlacing));
+                _turnOrderPanel.Widgets.Add(BuildTurnOrderRow(seat, hasPlaced));
+            }
+        }
+
+        private void FollowBoardClick(MatchView matchView)
+        {
+            BoardCell? clickedCell = _boardWidget.TakeClickedCell();
+            bool canPlace = (_placementRequest is null) && IsViewerPlacing(matchView);
+            if (!canPlace || (clickedCell is not BoardCell placementCell))
+            {
+                return;
+            }
+
+            _noticeBox.Hide();
+            MatchCell cell = MatchCellConversion.ToMatchCell(placementCell);
+            _placementRequest = matchView.Phase == MatchPhase.ButterflyPlacement ? _gameSessionConnection.PlaceButterflyAsync(cell) : _gameSessionConnection.PlaceCaterpillarAsync(cell);
+        }
+
+        private void FollowPlacementRequest()
+        {
+            if ((_placementRequest is null) || !_placementRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<PlacementResult> completedPlacement = _placementRequest;
+            _placementRequest = null;
+            if (!completedPlacement.IsCompletedSuccessfully)
+            {
+                ShowServerError();
+            }
+            else if (completedPlacement.Result != PlacementResult.Placed)
+            {
+                _noticeBox.ShowTitle(ToRejectionKey(completedPlacement.Result));
+            }
+        }
+
+        private void FollowEndRequest()
+        {
+            if ((_endRequest is null) || !_endRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<EndMatchResult> completedEnd = _endRequest;
+            _endRequest = null;
+            if (!completedEnd.IsCompletedSuccessfully || (completedEnd.Result == EndMatchResult.NotIdentified))
+            {
+                ShowServerError();
+            }
+        }
+
+        private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
+        {
+            _noticeBox.Hide();
+            _endRequest ??= _gameSessionConnection.EndMatchAsync();
+        }
+
+        private void ShowServerError()
+        {
+            string[]? noDetailArguments = null;
+            _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
+        }
     }
 }

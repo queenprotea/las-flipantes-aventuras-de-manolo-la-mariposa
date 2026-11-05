@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,8 +9,6 @@ using Myra.Graphics2D.UI;
 
 namespace Torres.Client.Scene
 {
-    // The scene is drawn into its own surface before Myra draws the interface, and the widget only places that surface in
-    // its slot of the layout: the render target cannot be switched while Myra is drawing.
     internal sealed class BoardWidget : Widget, IDisposable
     {
         private const int MultiSampleCount = 4;
@@ -17,22 +16,26 @@ namespace Torres.Client.Scene
         private const float NearPlaneDepth = 0f;
         private const float FarPlaneDepth = 1f;
 
-        // Lifted so the frame does not share a plane with the surface of the cell and flicker.
         private const float FrameLift = 0.012f;
 
         private readonly GraphicsDevice _graphicsDevice;
-        private readonly BoardLayout _layout;
         private readonly OrbitCamera _orbitCamera = new OrbitCamera();
-        private readonly CellPicker _cellPicker;
         private readonly BasicEffect _sceneEffect;
-        private readonly StaticMesh _gardenMesh;
-        private readonly StaticMesh _shadowMesh;
         private readonly StaticMesh _hoverFrameMesh;
         private readonly StaticMesh _selectionFrameMesh;
+        private readonly StaticMesh _targetFrameMesh;
+        private readonly StaticMesh _butterflyFrameMesh;
 
+        private BoardLayout _layout;
+        private CellPicker _cellPicker;
+        private StaticMesh _gardenMesh;
+        private StaticMesh _shadowMesh;
+        private IReadOnlyList<BoardCell> _targetCells = Array.Empty<BoardCell>();
+        private BoardCell? _butterflyCell;
         private RenderTarget2D? _sceneTarget;
         private BoardCell? _hoveredCell;
         private BoardCell? _selectedCell;
+        private BoardCell? _clickedCell;
         private bool _isPressing;
         private bool _hasDragged;
         private Point _pressPosition;
@@ -48,6 +51,8 @@ namespace Torres.Client.Scene
             _shadowMesh = BuildShadowMesh(graphicsDevice, layout);
             _hoverFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Hover);
             _selectionFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Selection);
+            _targetFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Target);
+            _butterflyFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Butterfly);
 
             ClipToBounds = true;
             HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -55,6 +60,35 @@ namespace Torres.Client.Scene
         }
 
         protected override bool AcceptsMouseWheel => true;
+
+        internal void ShowLayout(BoardLayout layout)
+        {
+            _gardenMesh.Dispose();
+            _shadowMesh.Dispose();
+            _layout = layout;
+            _cellPicker = new CellPicker(layout);
+            _gardenMesh = BuildGardenMesh(_graphicsDevice, layout);
+            _shadowMesh = BuildShadowMesh(_graphicsDevice, layout);
+            _selectedCell = null;
+        }
+
+        internal void ShowTargets(IReadOnlyList<BoardCell> targetCells)
+        {
+            _targetCells = targetCells;
+        }
+
+        internal void ShowButterfly(BoardCell? butterflyCell)
+        {
+            _butterflyCell = butterflyCell;
+        }
+
+        internal BoardCell? TakeClickedCell()
+        {
+            BoardCell? clickedCell = _clickedCell;
+            _clickedCell = null;
+
+            return clickedCell;
+        }
 
         internal void UpdateInput()
         {
@@ -75,7 +109,6 @@ namespace Torres.Client.Scene
             }
         }
 
-        // Myra leaves blending on and the depth buffer off; without resetting them the pieces show through each other.
         internal void RenderScene()
         {
             EnsureSceneTarget();
@@ -138,6 +171,8 @@ namespace Torres.Client.Scene
             _shadowMesh.Dispose();
             _hoverFrameMesh.Dispose();
             _selectionFrameMesh.Dispose();
+            _targetFrameMesh.Dispose();
+            _butterflyFrameMesh.Dispose();
             _sceneEffect.Dispose();
         }
 
@@ -191,6 +226,16 @@ namespace Torres.Client.Scene
 
         private void DrawFrames()
         {
+            foreach (BoardCell targetCell in _targetCells)
+            {
+                DrawFrame(_targetFrameMesh, targetCell);
+            }
+
+            if (_butterflyCell is BoardCell butterflyCell)
+            {
+                DrawFrame(_butterflyFrameMesh, butterflyCell);
+            }
+
             if ((_hoveredCell is BoardCell hoveredCell) && (hoveredCell != _selectedCell))
             {
                 DrawFrame(_hoverFrameMesh, hoveredCell);
@@ -235,6 +280,7 @@ namespace Torres.Client.Scene
             if (!_hasDragged)
             {
                 _selectedCell = PickAt(mousePosition);
+                _clickedCell = _selectedCell;
             }
 
             _isPressing = false;

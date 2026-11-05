@@ -8,6 +8,9 @@ namespace Torres.Client.Ui
     internal static class DisplayFormats
     {
         private const string ThousandsSeparatedPattern = "N0";
+        private const string ClockPattern = "{0}:{1:00}";
+        private const int SecondsPerMinute = 60;
+        private const int ExpiredClockSeconds = 0;
 
         internal static string FormatThousands(int number)
         {
@@ -50,6 +53,14 @@ namespace Torres.Client.Ui
             string remainingText = LocalizedText.Format(TextKeys.Common.RemainingTime, FormatInteger((int)shownTime.TotalHours), FormatInteger(shownTime.Minutes));
 
             return remainingText;
+        }
+
+        internal static string FormatClock(TimeSpan remainingTime)
+        {
+            int remainingSeconds = Math.Max(ExpiredClockSeconds, (int)Math.Ceiling(remainingTime.TotalSeconds));
+            string clockText = string.Format(CultureInfo.CurrentCulture, ClockPattern, remainingSeconds / SecondsPerMinute, remainingSeconds % SecondsPerMinute);
+
+            return clockText;
         }
 
         internal static string FormatDate(DateTime dateValue, string datePattern)

@@ -28,6 +28,8 @@ namespace Torres.Client.Screens
         private Room? _shownRoom;
         private Task<LeaveRoomResult>? _leaveRequest;
         private Task<KickMemberResult>? _kickRequest;
+        private Task<StartMatchResult>? _startRequest;
+        private Task<EndMatchResult>? _endRequest;
 
         internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
             : base(TextKeys.Room.HeaderLabel, true)
@@ -63,6 +65,8 @@ namespace Torres.Client.Screens
 
             FollowLeaveRequest();
             FollowKickRequest();
+            FollowStartRequest();
+            FollowEndRequest();
             _chatView.Update();
         }
 
@@ -154,12 +158,19 @@ namespace Torres.Client.Screens
             roomActionsBar.Widgets.Add(inviteButton);
 
             LocalizedButton leaveButton = CreateDestructiveButton(TextKeys.Room.LeaveButton);
+            leaveButton.Visible = room.State != RoomState.InMatch;
             leaveButton.Click += LeaveButtonOnClick;
             roomActionsBar.Widgets.Add(leaveButton);
 
+            LocalizedButton endMatchButton = CreateDestructiveButton(TextKeys.Common.EndMatchButton);
+            endMatchButton.Visible = room.State == RoomState.InMatch;
+            endMatchButton.Click += EndMatchButtonOnClick;
+            roomActionsBar.Widgets.Add(endMatchButton);
+
             LocalizedButton startButton = CreatePrimaryButton(TextKeys.Room.StartMatchButton);
             startButton.Visible = isViewerHost;
-            startButton.Enabled = false;
+            startButton.Enabled = room.CanViewerStartMatch;
+            startButton.Click += StartButtonOnClick;
             roomActionsBar.Widgets.Add(startButton);
 
             return roomActionsBar;
@@ -328,7 +339,11 @@ namespace Torres.Client.Screens
 
             Task<LeaveRoomResult> completedLeave = _leaveRequest;
             _leaveRequest = null;
-            if (completedLeave.IsCompletedSuccessfully)
+            if (completedLeave.IsCompletedSuccessfully && (completedLeave.Result == LeaveRoomResult.RoomInMatch))
+            {
+                _noticeBox.ShowTitle(TextKeys.Room.LeaveDuringMatchNotice);
+            }
+            else if (completedLeave.IsCompletedSuccessfully)
             {
                 _session.LeaveRoom();
                 RequestedScreen = ScreenId.MainMenu;
@@ -356,6 +371,101 @@ namespace Torres.Client.Screens
             {
                 _noticeBox.ShowTitle(TextKeys.Room.HostOnlyHint);
             }
+        }
+
+        private void FollowStartRequest()
+        {
+            if ((_startRequest is null) || !_startRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<StartMatchResult> completedStart = _startRequest;
+            _startRequest = null;
+            if (completedStart.IsCompletedSuccessfully)
+            {
+                ShowStartResult(completedStart.Result);
+            }
+            else
+            {
+                ShowServerError();
+            }
+        }
+
+        private void FollowEndRequest()
+        {
+            if ((_endRequest is null) || !_endRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<EndMatchResult> completedEnd = _endRequest;
+            _endRequest = null;
+            if (!completedEnd.IsCompletedSuccessfully || (completedEnd.Result == EndMatchResult.NotIdentified))
+            {
+                ShowServerError();
+            }
+        }
+
+        private void ShowStartResult(StartMatchResult startResult)
+        {
+            switch (startResult.Status)
+            {
+                case StartMatchStatus.Started:
+                case StartMatchStatus.RoomInMatch:
+                    break;
+
+                case StartMatchStatus.PlayerBanned:
+                    ShowBannedPlayer(startResult);
+                    break;
+
+                case StartMatchStatus.NotEnoughPlayers:
+                    _noticeBox.ShowTitle(TextKeys.Room.NotEnoughPlayersNotice);
+                    break;
+
+                case StartMatchStatus.NotHost:
+                    _noticeBox.ShowTitle(TextKeys.Room.HostOnlyHint);
+                    break;
+
+                case StartMatchStatus.NotInRoom:
+                case StartMatchStatus.NotIdentified:
+                case StartMatchStatus.DatabaseUnavailable:
+                    ShowServerError();
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(startResult));
+            }
+        }
+
+        private void ShowBannedPlayer(StartMatchResult bannedResult)
+        {
+            if (bannedResult.IsBanPermanent)
+            {
+                _noticeBox.ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Room.PlayerPermanentlyBannedNotice, new string[] { bannedResult.BannedDisplayName });
+            }
+            else
+            {
+                _noticeBox.ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Room.PlayerBannedNotice, new string[] { bannedResult.BannedDisplayName, DisplayFormats.FormatRemainingTime(bannedResult.BanTimeLeft) });
+            }
+        }
+
+        private void ShowServerError()
+        {
+            string[]? noDetailArguments = null;
+            _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
+        }
+
+        private void StartButtonOnClick(object sender, MyraEventArgs e)
+        {
+            _noticeBox.Hide();
+            _startRequest ??= _gameSessionConnection.StartMatchAsync();
+        }
+
+        private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
+        {
+            _noticeBox.Hide();
+            _endRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void CopyButtonOnClick(object sender, MyraEventArgs e)

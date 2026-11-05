@@ -22,5 +22,8 @@ namespace Game.Contracts
 
         [EnumMember]
         CannotKickSelf,
+
+        [EnumMember]
+        RoomInMatch,
     }
 }

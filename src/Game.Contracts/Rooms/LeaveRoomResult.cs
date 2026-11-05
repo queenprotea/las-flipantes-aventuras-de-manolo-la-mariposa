@@ -13,5 +13,8 @@ namespace Game.Contracts
 
         [EnumMember]
         NotInRoom,
+
+        [EnumMember]
+        RoomInMatch,
     }
 }

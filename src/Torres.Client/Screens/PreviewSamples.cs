@@ -24,14 +24,12 @@ namespace Torres.Client.Screens
         internal const string OrugaPlayer = "Oruga_23";
         internal const string LobbyRoomCode = "TR-8492";
         internal const string MatchRoomCode = "K7QM";
-        internal const string PlacementClock = "1:30";
         internal const string MatchClock = "1:12";
         internal const string DisconnectionClock = "0:41";
         internal const string ResumeClock = "2:14";
 
         internal static IReadOnlyList<string> SeatPlayers { get; } = new[] { SeatOnePlayer, SeatTwoPlayer, SeatThreePlayer, SeatFourPlayer };
 
-        // The five single-cell planters decided on 4 November 2026; they stand in for the state the server will send.
         internal static IReadOnlyList<string> BoardPlanterRows { get; } = new string[] { "........", ".A....B.", "........", "...C....", "........", "........", ".D....E.", "........" };
 
         internal static IReadOnlyList<string> BoardLevelRows { get; } = new string[] { "........", ".1....1.", "........", "...1....", "........", "........", ".1....1.", "........" };

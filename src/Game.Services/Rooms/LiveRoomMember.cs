@@ -1,6 +1,7 @@
 using System;
 
 using Game.Contracts;
+using Game.Match;
 
 namespace Game.Services
 {
@@ -46,6 +47,13 @@ namespace Game.Services
             bool hasExpired = !IsActive && (InactiveSinceUtc < limitUtc);
 
             return hasExpired;
+        }
+
+        internal MatchEntrant ToEntrant()
+        {
+            var entrant = new MatchEntrant(OwnerId, MemberId, DisplayName, IsGuest, IsActive, Color);
+
+            return entrant;
         }
 
         internal RoomMember ToContract()

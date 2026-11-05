@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
 {
-    // The pitch has limits so the board is never seen edge-on or from below.
     internal sealed class OrbitCamera
     {
         private const float FieldOfViewDegrees = 35f;

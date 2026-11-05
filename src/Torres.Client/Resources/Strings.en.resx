@@ -91,6 +91,9 @@
   <data name="Common.CancelButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="Common.EndMatchButton" xml:space="preserve">
+    <value>End match</value>
+  </data>
   <data name="Common.GotItButton" xml:space="preserve">
     <value>Got it</value>
   </data>
@@ -748,6 +751,18 @@
   <data name="Room.EmptyRankingHint" xml:space="preserve">
     <value>Once games finish in this room, you'll see each player's points here.</value>
   </data>
+  <data name="Room.NotEnoughPlayersNotice" xml:space="preserve">
+    <value>At least two active players are needed to start the game.</value>
+  </data>
+  <data name="Room.PlayerBannedNotice" xml:space="preserve">
+    <value>{0} has a temporary suspension and can't play. They'll be able to play again in {1}.</value>
+  </data>
+  <data name="Room.PlayerPermanentlyBannedNotice" xml:space="preserve">
+    <value>{0} has a permanent ban and can't play.</value>
+  </data>
+  <data name="Room.LeaveDuringMatchNotice" xml:space="preserve">
+    <value>You can't leave the room while the game is on.</value>
+  </data>
   <data name="Chat.NoMessages" xml:space="preserve">
     <value>No one has written yet.</value>
   </data>
@@ -876,6 +891,24 @@
   </data>
   <data name="InitialPlacement.CurrentTurnInstruction" xml:space="preserve">
     <value>It's {0}'s turn · the last seat will place the butterfly</value>
+  </data>
+  <data name="InitialPlacement.PlaceButterflyInstruction" xml:space="preserve">
+    <value>Place the butterfly on a flower</value>
+  </data>
+  <data name="InitialPlacement.ButterflyTurnInstruction" xml:space="preserve">
+    <value>{0} is placing the butterfly</value>
+  </data>
+  <data name="InitialPlacement.FlowerOccupiedNotice" xml:space="preserve">
+    <value>That flower already has a caterpillar.</value>
+  </data>
+  <data name="InitialPlacement.NotAFlowerNotice" xml:space="preserve">
+    <value>Pieces always go on a flower.</value>
+  </data>
+  <data name="InitialPlacement.NotYourPlacementNotice" xml:space="preserve">
+    <value>It's not your turn to place yet.</value>
+  </data>
+  <data name="InitialPlacement.TimeExpiredNotice" xml:space="preserve">
+    <value>Your time to place ran out.</value>
   </data>
   <data name="Match.HeaderLabel" xml:space="preserve">
     <value>match · room {0}</value>

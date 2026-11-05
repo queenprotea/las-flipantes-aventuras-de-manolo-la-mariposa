@@ -91,6 +91,9 @@
   <data name="Common.CancelButton" xml:space="preserve">
     <value>Cancelar</value>
   </data>
+  <data name="Common.EndMatchButton" xml:space="preserve">
+    <value>Terminar partida</value>
+  </data>
   <data name="Common.GotItButton" xml:space="preserve">
     <value>Entendido</value>
   </data>
@@ -748,6 +751,18 @@
   <data name="Room.EmptyRankingHint" xml:space="preserve">
     <value>Cuando terminen partidas en esta sala, verás aquí los puntos de cada jugador.</value>
   </data>
+  <data name="Room.NotEnoughPlayersNotice" xml:space="preserve">
+    <value>Se necesitan al menos dos jugadores activos para iniciar la partida.</value>
+  </data>
+  <data name="Room.PlayerBannedNotice" xml:space="preserve">
+    <value>{0} tiene una prohibición temporal y no puede jugar. Podrá volver a jugar dentro de {1}.</value>
+  </data>
+  <data name="Room.PlayerPermanentlyBannedNotice" xml:space="preserve">
+    <value>{0} tiene una prohibición permanente y no puede jugar.</value>
+  </data>
+  <data name="Room.LeaveDuringMatchNotice" xml:space="preserve">
+    <value>No puedes salir de la sala mientras dura la partida.</value>
+  </data>
   <data name="Chat.NoMessages" xml:space="preserve">
     <value>Todavía nadie ha escrito.</value>
   </data>
@@ -876,6 +891,24 @@
   </data>
   <data name="InitialPlacement.CurrentTurnInstruction" xml:space="preserve">
     <value>Le toca a {0} · el último puesto colocará la mariposa</value>
+  </data>
+  <data name="InitialPlacement.PlaceButterflyInstruction" xml:space="preserve">
+    <value>Coloca la mariposa sobre una flor</value>
+  </data>
+  <data name="InitialPlacement.ButterflyTurnInstruction" xml:space="preserve">
+    <value>{0} coloca la mariposa</value>
+  </data>
+  <data name="InitialPlacement.FlowerOccupiedNotice" xml:space="preserve">
+    <value>Esa flor ya tiene una oruga.</value>
+  </data>
+  <data name="InitialPlacement.NotAFlowerNotice" xml:space="preserve">
+    <value>Las piezas se colocan siempre sobre una flor.</value>
+  </data>
+  <data name="InitialPlacement.NotYourPlacementNotice" xml:space="preserve">
+    <value>Todavía no te toca colocar.</value>
+  </data>
+  <data name="InitialPlacement.TimeExpiredNotice" xml:space="preserve">
+    <value>Se acabó tu tiempo para colocar.</value>
   </data>
   <data name="Match.HeaderLabel" xml:space="preserve">
     <value>partida · sala {0}</value>

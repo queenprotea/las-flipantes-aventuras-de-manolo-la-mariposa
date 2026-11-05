@@ -46,7 +46,6 @@ namespace Torres.Client.Scene
             AddBlossom(meshBuilder, cellCenter + new Vector3(0f, flowerTop, 0f));
         }
 
-        // One pair of leaves per level, so the level of a flower can be counted on its stem.
         private static void AddLeafPair(MeshBuilder meshBuilder, Vector3 cellCenter, int levelIndex)
         {
             float leafHeight = BoardGeometry.PlanterTop + LeafHeightOffset + (BoardGeometry.LevelStep * levelIndex);

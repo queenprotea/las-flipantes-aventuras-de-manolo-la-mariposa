@@ -2,10 +2,8 @@ using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
 {
-    // BasicEffect cannot cast shadows, so each piece leaves a translucent disc on the surface below it, offset away from the light.
     internal static class ShadowShapes
     {
-        // Lifted so the shadow does not share a plane with the soil and flicker.
         private const float ShadowLift = 0.004f;
         private const float FlowerShadowRadius = 0.2f;
         private const float FlowerShadowHeightShare = 0.5f;

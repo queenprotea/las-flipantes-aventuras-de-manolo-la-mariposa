@@ -8,12 +8,17 @@ namespace Torres.Client.Scene
     {
         private const int TriangleCornerCount = 3;
 
-        private readonly VertexBuffer _vertexBuffer;
-        private readonly IndexBuffer _indexBuffer;
+        private readonly VertexBuffer? _vertexBuffer;
+        private readonly IndexBuffer? _indexBuffer;
         private readonly int _triangleCount;
 
         internal StaticMesh(GraphicsDevice graphicsDevice, VertexPositionNormalColor[] vertices, int[] indices)
         {
+            if (vertices.Length == 0)
+            {
+                return;
+            }
+
             _vertexBuffer = new VertexBuffer(graphicsDevice, VertexPositionNormalColor.Declaration, vertices.Length, BufferUsage.WriteOnly);
             _vertexBuffer.SetData(vertices);
             _indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
@@ -23,6 +28,11 @@ namespace Torres.Client.Scene
 
         internal void Draw(GraphicsDevice graphicsDevice, Effect effect)
         {
+            if ((_vertexBuffer is null) || (_indexBuffer is null))
+            {
+                return;
+            }
+
             graphicsDevice.SetVertexBuffer(_vertexBuffer);
             graphicsDevice.Indices = _indexBuffer;
             foreach (EffectPass effectPass in effect.CurrentTechnique.Passes)
@@ -34,8 +44,8 @@ namespace Torres.Client.Scene
 
         public void Dispose()
         {
-            _vertexBuffer.Dispose();
-            _indexBuffer.Dispose();
+            _vertexBuffer?.Dispose();
+            _indexBuffer?.Dispose();
         }
     }
 }

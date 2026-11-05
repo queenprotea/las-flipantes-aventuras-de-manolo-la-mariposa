@@ -25,7 +25,6 @@ namespace Torres.Client.Scene
         private readonly List<VertexPositionNormalColor> _vertices = new List<VertexPositionNormalColor>();
         private readonly List<int> _indices = new List<int>();
 
-        // Unit box standing on Y = 0, like the cylinder, so a slab or a rim is placed by its base and not by its center.
         internal void AddBox(Matrix transform, Color color)
         {
             var placement = new Placement(transform, color);
@@ -153,7 +152,6 @@ namespace Torres.Client.Scene
             return vertexIndex;
         }
 
-        // MonoGame culls counterclockwise triangles; the winding is decided here from the normal instead of in every shape.
         private void AddTriangle(int first, int second, int third)
         {
             Vector3 firstPosition = _vertices[first].Position;

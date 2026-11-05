@@ -12,6 +12,10 @@ namespace Torres.Client.Session
 
         internal Room? CurrentRoom { get; private set; }
 
+        internal MatchView? CurrentMatchView { get; private set; }
+
+        internal DateTime? PlacementEndsAtUtc { get; private set; }
+
         internal RoomChatLog RoomChat { get; } = new RoomChatLog();
 
         internal MatchHistorySelection MatchHistory { get; } = new MatchHistorySelection();
@@ -48,9 +52,29 @@ namespace Torres.Client.Session
             RoomChat.Follow(room.RoomId);
         }
 
+        internal void FollowMatch(MatchChange matchChange)
+        {
+            ArgumentNullException.ThrowIfNull(matchChange);
+
+            CurrentMatchView = matchChange.View;
+            PlacementEndsAtUtc = null;
+            if (matchChange.View.PlacementTimeLeft is TimeSpan placementTimeLeft)
+            {
+                PlacementEndsAtUtc = matchChange.ReceivedAtUtc + placementTimeLeft;
+            }
+        }
+
+        internal void LeaveMatch()
+        {
+            CurrentMatchView = null;
+            PlacementEndsAtUtc = null;
+        }
+
         internal void LeaveRoom()
         {
             CurrentRoom = null;
+            CurrentMatchView = null;
+            PlacementEndsAtUtc = null;
             RoomChat.Clear();
         }
 
@@ -59,6 +83,8 @@ namespace Torres.Client.Session
             Player = null;
             GuestAlias = null;
             CurrentRoom = null;
+            CurrentMatchView = null;
+            PlacementEndsAtUtc = null;
             RoomChat.Clear();
             MatchHistory.Clear();
         }

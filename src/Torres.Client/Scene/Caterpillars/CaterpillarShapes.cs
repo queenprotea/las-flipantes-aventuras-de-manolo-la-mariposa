@@ -35,7 +35,6 @@ namespace Torres.Client.Scene
             }
         }
 
-        // A caterpillar on a cell with a flower stands on top of it; otherwise it stands on the grass.
         private static void AddCaterpillar(MeshBuilder meshBuilder, BoardLayout layout, BoardCaterpillar caterpillar)
         {
             int flowerLevel = layout.GetFlowerLevel(caterpillar.Cell);

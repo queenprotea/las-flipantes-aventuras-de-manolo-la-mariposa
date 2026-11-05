@@ -4,8 +4,6 @@ using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
 {
-    // Each cell gives one box for its ground and more for what stands on it. The nearest hit wins, so a click on a tall
-    // flower picks its own cell and not the one behind; the stem box is narrow so it does not cover the cell behind it.
     internal sealed class CellPicker
     {
         private const float BlossomHalfWidth = 0.2f;

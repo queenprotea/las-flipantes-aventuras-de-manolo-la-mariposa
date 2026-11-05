@@ -20,5 +20,7 @@ namespace Torres.Client.Scene
         internal static Color Shadow { get; } = new Color(0x37, 0x47, 0x3C) * ShadowOpacity;
         internal static Color Selection { get; } = new Color(0x5E, 0x9A, 0x78);
         internal static Color Hover { get; } = new Color(0xFF, 0xFF, 0xFF);
+        internal static Color Target { get; } = new Color(0xF2, 0xB8, 0x4B);
+        internal static Color Butterfly { get; } = new Color(0xB4, 0x9C, 0xE0);
     }
 }

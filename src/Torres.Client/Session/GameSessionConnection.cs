@@ -101,6 +101,13 @@ namespace Torres.Client.Session
             return chatMessage;
         }
 
+        internal MatchChange? TakeMatchChange()
+        {
+            MatchChange? matchChange = _noticeQueue.TakeMatchChange();
+
+            return matchChange;
+        }
+
         internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility visibility)
         {
             Task<CreateRoomResult> creation = RequireChannel().CreateRoomAsync(visibility);
@@ -213,6 +220,34 @@ namespace Torres.Client.Session
             return removal;
         }
 
+        internal Task<StartMatchResult> StartMatchAsync()
+        {
+            Task<StartMatchResult> startTask = RequireChannel().StartMatchAsync();
+
+            return startTask;
+        }
+
+        internal Task<EndMatchResult> EndMatchAsync()
+        {
+            Task<EndMatchResult> endTask = Task.Run(RequireChannel().EndMatch);
+
+            return endTask;
+        }
+
+        internal Task<PlacementResult> PlaceCaterpillarAsync(MatchCell cell)
+        {
+            Task<PlacementResult> placementTask = new SessionCall<MatchCell, PlacementResult>(PlaceCaterpillar, cell).StartAsync();
+
+            return placementTask;
+        }
+
+        internal Task<PlacementResult> PlaceButterflyAsync(MatchCell cell)
+        {
+            Task<PlacementResult> placementTask = new SessionCall<MatchCell, PlacementResult>(PlaceButterfly, cell).StartAsync();
+
+            return placementTask;
+        }
+
         internal void CloseSession()
         {
             if (IsOpen && (_channel is not null))
@@ -267,6 +302,20 @@ namespace Torres.Client.Session
             FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, false);
 
             return responseResult;
+        }
+
+        private PlacementResult PlaceCaterpillar(MatchCell cell)
+        {
+            PlacementResult placementResult = RequireChannel().PlaceCaterpillar(cell.Row, cell.Column);
+
+            return placementResult;
+        }
+
+        private PlacementResult PlaceButterfly(MatchCell cell)
+        {
+            PlacementResult placementResult = RequireChannel().PlaceButterfly(cell.Row, cell.Column);
+
+            return placementResult;
         }
 
         private IGameSessionService RequireChannel()

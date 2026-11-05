@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Threading.Tasks;
 
 using Game.Persistence;
@@ -14,22 +13,21 @@ namespace Game.Services
         private const string MessageMaxLengthParameterCode = "chat_message_max_length";
         private const string MessagesKeptParameterCode = "chat_messages_kept_per_room";
         private const string LeftoverRoomsClosedMessage = "{0} rooms left open by the previous run were closed.";
-        private const string MissingParameterMessage = "The system parameter {0} is missing or is not a positive whole number.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RoomStartup));
 
         private readonly RoomRecordRepository _roomRecordRepository;
-        private readonly SystemParameterRepository _systemParameterRepository;
+        private readonly SystemParameterReader _systemParameterReader;
         private readonly TimeProvider _timeProvider;
 
-        public RoomStartup(RoomRecordRepository roomRecordRepository, SystemParameterRepository systemParameterRepository, TimeProvider timeProvider)
+        public RoomStartup(RoomRecordRepository roomRecordRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(roomRecordRepository);
-            ArgumentNullException.ThrowIfNull(systemParameterRepository);
+            ArgumentNullException.ThrowIfNull(systemParameterReader);
             ArgumentNullException.ThrowIfNull(timeProvider);
 
             _roomRecordRepository = roomRecordRepository;
-            _systemParameterRepository = systemParameterRepository;
+            _systemParameterReader = systemParameterReader;
             _timeProvider = timeProvider;
         }
 
@@ -41,7 +39,7 @@ namespace Game.Services
 
         public async Task<TimeSpan> ReadInactivityLimitAsync()
         {
-            int inactivityMinutes = await ReadPositiveParameterAsync(InactivityParameterCode);
+            int inactivityMinutes = await _systemParameterReader.ReadPositiveAsync(InactivityParameterCode);
             TimeSpan inactivityLimit = TimeSpan.FromMinutes(inactivityMinutes);
 
             return inactivityLimit;
@@ -49,24 +47,11 @@ namespace Game.Services
 
         public async Task<ChatCapacity> ReadChatCapacityAsync()
         {
-            int messageMaxLength = await ReadPositiveParameterAsync(MessageMaxLengthParameterCode);
-            int messagesKeptPerRoom = await ReadPositiveParameterAsync(MessagesKeptParameterCode);
+            int messageMaxLength = await _systemParameterReader.ReadPositiveAsync(MessageMaxLengthParameterCode);
+            int messagesKeptPerRoom = await _systemParameterReader.ReadPositiveAsync(MessagesKeptParameterCode);
             var chatCapacity = new ChatCapacity(messageMaxLength, messagesKeptPerRoom);
 
             return chatCapacity;
-        }
-
-        private async Task<int> ReadPositiveParameterAsync(string parameterCode)
-        {
-            string? parameterValue = await _systemParameterRepository.FindValueAsync(parameterCode);
-            bool isPositiveNumber = int.TryParse(parameterValue, NumberStyles.None, CultureInfo.InvariantCulture, out int parameterNumber)
-                && (parameterNumber > 0);
-            if (!isPositiveNumber)
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, MissingParameterMessage, parameterCode));
-            }
-
-            return parameterNumber;
         }
     }
 }

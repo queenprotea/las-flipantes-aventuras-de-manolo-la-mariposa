@@ -10,7 +10,6 @@ namespace Torres.Client.Scene
         private const float BoardBaseSpan = (BoardLayout.Size * BoardGeometry.CellSize) + BoardBaseMargin;
         private const float RimThickness = 0.12f;
 
-        // The rim sticks out a little so it does not share a plane with the soil and flicker.
         private const float RimOverhang = 0.005f;
         private const float RimLength = BoardGeometry.CellSize + (RimOverhang * 2f);
         private const float RimEdgeDistance = BoardGeometry.HalfCell + RimOverhang - (RimThickness / 2f);
@@ -62,7 +61,6 @@ namespace Torres.Client.Scene
             return slabTransform;
         }
 
-        // The rim rises only where the neighbor is not part of the same planter, so an L-shaped planter reads as one piece.
         private static void AddPlanterRims(MeshBuilder meshBuilder, BoardLayout layout, BoardCell cell)
         {
             Vector3 cellCenter = BoardGeometry.GetCellCenter(cell);

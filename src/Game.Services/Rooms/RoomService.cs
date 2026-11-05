@@ -114,8 +114,7 @@ namespace Game.Services
         public async Task<LeaveRoomResult> LeaveRoomAsync()
         {
             PlayerSession? caller = _sessionRegistry.FindCaller();
-            bool hasLeft = (caller is not null) && await LeaveForAsync(caller.Owner.OwnerId);
-            LeaveRoomResult leaving = hasLeft ? LeaveRoomResult.Left : LeaveRoomResult.NotInRoom;
+            LeaveRoomResult leaving = caller is null ? LeaveRoomResult.NotInRoom : await LeaveForAsync(caller.Owner.OwnerId);
 
             return leaving;
         }
@@ -161,20 +160,49 @@ namespace Game.Services
             return currentRoom;
         }
 
-        internal async Task<bool> LeaveForAsync(int ownerId)
+        internal async Task<LeaveRoomResult> LeaveForAsync(int ownerId)
         {
             LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
+            LeaveRoomResult leaving = LeaveRoomResult.NotInRoom;
             if (room is null)
             {
-                return false;
+                return leaving;
             }
 
-            RoomDeparture departure = room.Remove(ownerId);
-            _roomRegistry.ForgetMembership(ownerId);
-            _log.InfoFormat(MemberLeftMessage, ownerId, room.RoomId);
-            await FollowDepartureAsync(room, departure, RoomChangeReason.MemberLeft);
+            RoomDeparture? departure = room.RemoveUnlessInMatch(ownerId);
+            if (departure is RoomDeparture completedDeparture)
+            {
+                _roomRegistry.ForgetMembership(ownerId);
+                _log.InfoFormat(MemberLeftMessage, ownerId, room.RoomId);
+                await FollowDepartureAsync(room, completedDeparture, RoomChangeReason.MemberLeft);
+                leaving = completedDeparture.WasMember ? LeaveRoomResult.Left : LeaveRoomResult.NotInRoom;
+            }
+            else
+            {
+                leaving = LeaveRoomResult.RoomInMatch;
+            }
 
-            return departure.WasMember;
+            return leaving;
+        }
+
+        internal async Task LeaveForClosedSessionAsync(int ownerId)
+        {
+            LeaveRoomResult leaving = await LeaveForAsync(ownerId);
+            if (leaving == LeaveRoomResult.RoomInMatch)
+            {
+                MarkMemberInactive(ownerId);
+            }
+        }
+
+        internal async Task<Sanction?> FindBanAsync(int ownerId, bool isGuest)
+        {
+            Sanction? ban = null;
+            if (!isGuest)
+            {
+                ban = await _sanctionRepository.FindInForceAsync(ownerId, NowUtc());
+            }
+
+            return ban;
         }
 
         internal async Task RemoveExpiredMembersAsync(TimeSpan inactivityLimit)
@@ -183,6 +211,19 @@ namespace Game.Services
             foreach (LiveRoom room in _roomRegistry.ListRooms())
             {
                 await ExpireMembersOfAsync(room, limitUtc);
+            }
+        }
+
+        internal void NotifyMembers(LiveRoom room, RoomChangeReason reason, int? excludedOwnerId)
+        {
+            foreach (RoomRecipientView recipient in room.BuildViewsForMembers())
+            {
+                if (recipient.OwnerId == excludedOwnerId)
+                {
+                    continue;
+                }
+
+                _sessionRegistry.Deliver(recipient.OwnerId, new RoomChangeNotice(reason, recipient.View));
             }
         }
 
@@ -217,7 +258,7 @@ namespace Game.Services
             CreateRoomResult creation;
             try
             {
-                Sanction? ban = await FindBanAsync(owner);
+                Sanction? ban = await FindBanAsync(owner.OwnerId, owner.IsGuest);
                 if (ban is null)
                 {
                     creation = await OpenRoomAsync(owner, visibility);
@@ -315,7 +356,7 @@ namespace Game.Services
             JoinRoomResult joining;
             try
             {
-                Sanction? ban = await FindBanAsync(owner);
+                Sanction? ban = await FindBanAsync(owner.OwnerId, owner.IsGuest);
                 if (ban is null)
                 {
                     joining = Seat(owner, roomId);
@@ -423,39 +464,20 @@ namespace Game.Services
             }
         }
 
-        private void NotifyMembers(LiveRoom room, RoomChangeReason reason, int? excludedOwnerId)
-        {
-            foreach (RoomRecipientView recipient in room.BuildViewsForMembers())
-            {
-                if (recipient.OwnerId == excludedOwnerId)
-                {
-                    continue;
-                }
-
-                _sessionRegistry.Deliver(recipient.OwnerId, new RoomChangeNotice(reason, recipient.View));
-            }
-        }
-
         private void SessionRegistryOnSessionLost(object? sender, SessionLostEventArgs e)
         {
-            LiveRoom? room = _roomRegistry.FindRoomOf(e.OwnerId);
-            RoomActivityChange activityChange = room?.MarkInactive(e.OwnerId, NowUtc()) ?? new RoomActivityChange(false, false);
+            MarkMemberInactive(e.OwnerId);
+        }
+
+        private void MarkMemberInactive(int ownerId)
+        {
+            LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
+            RoomActivityChange activityChange = room?.MarkInactive(ownerId, NowUtc()) ?? new RoomActivityChange(false, false);
             if ((room is not null) && activityChange.HasChanged)
             {
                 RoomChangeReason noticeReason = activityChange.HasHostChanged ? RoomChangeReason.HostChanged : RoomChangeReason.MemberWentInactive;
-                NotifyMembers(room, noticeReason, e.OwnerId);
+                NotifyMembers(room, noticeReason, ownerId);
             }
-        }
-
-        private async Task<Sanction?> FindBanAsync(SessionOwner owner)
-        {
-            Sanction? ban = null;
-            if (!owner.IsGuest)
-            {
-                ban = await _sanctionRepository.FindInForceAsync(owner.OwnerId, NowUtc());
-            }
-
-            return ban;
         }
 
         private DateTime NowUtc()

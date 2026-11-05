@@ -4,13 +4,12 @@ using System.Linq;
 using System.Threading;
 
 using Game.Contracts;
+using Game.Match;
 
 namespace Game.Services
 {
     internal sealed class LiveRoom
     {
-        internal const int Capacity = 4;
-
         private static readonly SeatColor[] _seatColorsInOrder = new SeatColor[]
         {
             SeatColor.Green, SeatColor.Blue, SeatColor.Red, SeatColor.Yellow
@@ -23,6 +22,7 @@ namespace Game.Services
         private int _hostMemberId;
         private int _lastMemberId;
         private bool _isClosed;
+        private bool _isInMatch;
 
         internal LiveRoom(int roomId, string code, RoomVisibility visibility)
         {
@@ -55,15 +55,16 @@ namespace Game.Services
             return admission;
         }
 
-        internal RoomDeparture Remove(int ownerId)
+        internal RoomDeparture? RemoveUnlessInMatch(int ownerId)
         {
-            RoomDeparture departure;
+            RoomDeparture? departure = null;
             lock (_roomLock)
             {
                 LiveRoomMember? leavingMember = FindByOwner(ownerId);
-                departure = leavingMember is null
-                    ? new RoomDeparture(false, false, false)
-                    : RemoveMember(leavingMember);
+                if (!_isInMatch)
+                {
+                    departure = leavingMember is null ? new RoomDeparture(false, false, false) : RemoveMember(leavingMember);
+                }
             }
 
             return departure;
@@ -129,7 +130,7 @@ namespace Game.Services
             bool isRoomEmpty = false;
             lock (_roomLock)
             {
-                List<LiveRoomMember> expiredMembers = _members.Where(member => member.HasExpiredBefore(limitUtc)).ToList();
+                List<LiveRoomMember> expiredMembers = _isInMatch ? new List<LiveRoomMember>() : _members.Where(member => member.HasExpiredBefore(limitUtc)).ToList();
                 foreach (LiveRoomMember expiredMember in expiredMembers)
                 {
                     RoomDeparture departure = RemoveMember(expiredMember);
@@ -142,6 +143,42 @@ namespace Game.Services
             var expiry = new RoomExpiry(removedOwnerIds, hasHostChanged, isRoomEmpty);
 
             return expiry;
+        }
+
+        internal MatchStartCheck CheckMatchStart(int callerOwnerId)
+        {
+            MatchStartCheck startCheck;
+            lock (_roomLock)
+            {
+                startCheck = new MatchStartCheck(JudgeMatchStartStatus(callerOwnerId), ListMatchEntrants());
+            }
+
+            return startCheck;
+        }
+
+        internal MatchStartCheck StartMatch(int callerOwnerId)
+        {
+            MatchStartCheck startCheck;
+            lock (_roomLock)
+            {
+                StartMatchStatus status = JudgeMatchStartStatus(callerOwnerId);
+                _isInMatch = status == StartMatchStatus.Started;
+                startCheck = new MatchStartCheck(status, ListMatchEntrants());
+            }
+
+            return startCheck;
+        }
+
+        internal bool EndMatch()
+        {
+            bool wasInMatch;
+            lock (_roomLock)
+            {
+                wasInMatch = _isInMatch;
+                _isInMatch = false;
+            }
+
+            return wasInMatch;
         }
 
         internal Room? BuildViewFor(int ownerId)
@@ -180,8 +217,8 @@ namespace Game.Services
                     Visibility = Visibility,
                     HostDisplayName = host?.DisplayName ?? string.Empty,
                     PlayerCount = _members.Count,
-                    MaxPlayers = Capacity,
-                    State = _isClosed ? RoomState.Closed : RoomState.Waiting,
+                    MaxPlayers = MatchCoordinator.MaximumEntrantCount,
+                    State = GetState(),
                 };
             }
 
@@ -226,7 +263,11 @@ namespace Game.Services
             {
                 admission = JoinRoomStatus.RoomNotFound;
             }
-            else if (_members.Count >= Capacity)
+            else if (_isInMatch)
+            {
+                admission = JoinRoomStatus.RoomInMatch;
+            }
+            else if (_members.Count >= MatchCoordinator.MaximumEntrantCount)
             {
                 admission = JoinRoomStatus.RoomFull;
             }
@@ -320,6 +361,10 @@ namespace Game.Services
             {
                 kickResult = KickMemberResult.NotHost;
             }
+            else if (_isInMatch)
+            {
+                kickResult = KickMemberResult.RoomInMatch;
+            }
             else if (target is null)
             {
                 kickResult = KickMemberResult.TargetNotInRoom;
@@ -334,6 +379,71 @@ namespace Game.Services
             }
 
             return kickResult;
+        }
+
+        private StartMatchStatus JudgeMatchStartStatus(int callerOwnerId)
+        {
+            LiveRoomMember? caller = FindByOwner(callerOwnerId);
+            StartMatchStatus status;
+            if (caller is null)
+            {
+                status = StartMatchStatus.NotInRoom;
+            }
+            else if (caller.MemberId != _hostMemberId)
+            {
+                status = StartMatchStatus.NotHost;
+            }
+            else if (_isInMatch)
+            {
+                status = StartMatchStatus.RoomInMatch;
+            }
+            else if (!HasEnoughActiveMembers())
+            {
+                status = StartMatchStatus.NotEnoughPlayers;
+            }
+            else
+            {
+                status = StartMatchStatus.Started;
+            }
+
+            return status;
+        }
+
+        private List<MatchEntrant> ListMatchEntrants()
+        {
+            List<MatchEntrant> entrants = _members.Select(ToEntrant).ToList();
+
+            return entrants;
+        }
+
+        private bool HasEnoughActiveMembers()
+        {
+            int activeMemberCount = _members.Count(member => member.IsActive);
+            bool hasEnoughActiveMembers = activeMemberCount >= MatchCoordinator.MinimumEntrantCount;
+
+            return hasEnoughActiveMembers;
+        }
+
+        private bool CanStartMatch()
+        {
+            bool canStartMatch = !_isClosed && !_isInMatch && HasEnoughActiveMembers();
+
+            return canStartMatch;
+        }
+
+        private RoomState GetState()
+        {
+            RoomState state = RoomState.Waiting;
+            if (_isClosed)
+            {
+                state = RoomState.Closed;
+            }
+            else if (_isInMatch)
+            {
+                state = RoomState.InMatch;
+            }
+
+            return state;
         }
 
         private LiveRoomMember? FindByOwner(int ownerId)
@@ -358,14 +468,22 @@ namespace Game.Services
                 RoomId = RoomId,
                 Code = Code,
                 Visibility = Visibility,
-                State = _isClosed ? RoomState.Closed : RoomState.Waiting,
-                MaxPlayers = Capacity,
+                State = GetState(),
+                MaxPlayers = MatchCoordinator.MaximumEntrantCount,
                 HostMemberId = _hostMemberId,
                 ViewerMemberId = viewerMemberId,
+                CanViewerStartMatch = (viewerMemberId == _hostMemberId) && CanStartMatch(),
                 Members = members,
             };
 
             return view;
+        }
+
+        private static MatchEntrant ToEntrant(LiveRoomMember member)
+        {
+            MatchEntrant entrant = member.ToEntrant();
+
+            return entrant;
         }
 
         private static RoomMember ToMemberContract(LiveRoomMember member)

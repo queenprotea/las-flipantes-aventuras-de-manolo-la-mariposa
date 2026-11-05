@@ -21,6 +21,7 @@ namespace Torres.Client.Localization
             internal const string BackToMenuButton = "Common.BackToMenuButton";
             internal const string BackToRoomButton = "Common.BackToRoomButton";
             internal const string CancelButton = "Common.CancelButton";
+            internal const string EndMatchButton = "Common.EndMatchButton";
             internal const string GotItButton = "Common.GotItButton";
             internal const string YouTag = "Common.YouTag";
             internal const string GuestTag = "Common.GuestTag";
@@ -312,6 +313,10 @@ namespace Torres.Client.Localization
             internal const string RoomRankingTitle = "Room.RoomRankingTitle";
             internal const string EmptyRankingTitle = "Room.EmptyRankingTitle";
             internal const string EmptyRankingHint = "Room.EmptyRankingHint";
+            internal const string NotEnoughPlayersNotice = "Room.NotEnoughPlayersNotice";
+            internal const string PlayerBannedNotice = "Room.PlayerBannedNotice";
+            internal const string PlayerPermanentlyBannedNotice = "Room.PlayerPermanentlyBannedNotice";
+            internal const string LeaveDuringMatchNotice = "Room.LeaveDuringMatchNotice";
         }
 
         internal static class Chat
@@ -371,6 +376,12 @@ namespace Torres.Client.Localization
             internal const string TurnOrderLabel = "InitialPlacement.TurnOrderLabel";
             internal const string PlaceCaterpillarInstruction = "InitialPlacement.PlaceCaterpillarInstruction";
             internal const string CurrentTurnInstruction = "InitialPlacement.CurrentTurnInstruction";
+            internal const string PlaceButterflyInstruction = "InitialPlacement.PlaceButterflyInstruction";
+            internal const string ButterflyTurnInstruction = "InitialPlacement.ButterflyTurnInstruction";
+            internal const string FlowerOccupiedNotice = "InitialPlacement.FlowerOccupiedNotice";
+            internal const string NotAFlowerNotice = "InitialPlacement.NotAFlowerNotice";
+            internal const string NotYourPlacementNotice = "InitialPlacement.NotYourPlacementNotice";
+            internal const string TimeExpiredNotice = "InitialPlacement.TimeExpiredNotice";
         }
 
         internal static class Match

@@ -1,15 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Torres.Client.Scene
 {
-    // Each row is written with one character per cell: a letter names the planter, a digit is the flower level and a dot is ground.
     internal sealed class BoardLayout
     {
         internal const int Size = 8;
 
-        private const char GroundSymbol = '.';
-        private const char LevelZeroSymbol = '0';
+        internal const char GroundSymbol = '.';
+        internal const char LevelZeroSymbol = '0';
+
+        private static readonly string _groundRow = new string(GroundSymbol, Size);
 
         private readonly IReadOnlyList<string> _planterRows;
         private readonly IReadOnlyList<string> _levelRows;
@@ -20,6 +22,8 @@ namespace Torres.Client.Scene
             _levelRows = levelRows;
             Caterpillars = caterpillars;
         }
+
+        internal static BoardLayout Empty { get; } = new BoardLayout(Enumerable.Repeat(_groundRow, Size).ToList(), Enumerable.Repeat(_groundRow, Size).ToList(), Array.Empty<BoardCaterpillar>());
 
         internal IReadOnlyList<BoardCaterpillar> Caterpillars { get; }
 

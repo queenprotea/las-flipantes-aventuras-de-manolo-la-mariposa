@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
+
 using FontStashSharp.RichText;
+
+using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
@@ -6,6 +11,7 @@ using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -16,35 +22,43 @@ namespace Torres.Client.Screens
         private const int SeatingLabelSpacing = 8;
         private const int SeatRowSpacing = 8;
         private const int SeatColorSize = 20;
-        private const double PreviewSecondsBeforePlacement = 3;
+        private const double SecondsBeforePlacement = 3;
 
         private static readonly Thickness _titleMargin = new Thickness(0, 6, 0, 2);
         private static readonly Thickness _seatRowPadding = new Thickness(0, 4);
 
-        private static readonly Seat[] _previewSeats =
-        {
-            new Seat(PreviewSamples.SeatOnePlayer, Theme.MintBrush),
-            new Seat(PreviewSamples.SeatTwoPlayer, Theme.LavenderBrush),
-            new Seat(PreviewSamples.SeatThreePlayer, Theme.ButterBrush),
-            new Seat(PreviewSamples.SeatFourPlayer, Theme.SkyBrush),
-        };
+        private readonly PlayerSession _session;
+        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.MatchPreparation.SummaryLabel) { Font = Fonts.Body, TextColor = Theme.MutedInk, TextAlign = TextHorizontalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly VerticalStackPanel _seatsPanel = new VerticalStackPanel();
 
         private double _secondsShown;
 
-        internal MatchPreparationScreen()
+        internal MatchPreparationScreen(PlayerSession session)
             : base(TextKeys.MatchPreparation.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(session);
+
+            _session = session;
         }
 
         internal override void Open()
         {
             _secondsShown = 0;
+            MatchView? matchView = _session.CurrentMatchView;
+            if (matchView is null)
+            {
+                RequestedScreen = ScreenId.MainMenu;
+            }
+            else
+            {
+                ShowSeats(matchView.Seats);
+            }
         }
 
         internal override void Update(GameTime gameTime)
         {
             _secondsShown += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_secondsShown < PreviewSecondsBeforePlacement)
+            if (_secondsShown < SecondsBeforePlacement)
             {
                 return;
             }
@@ -68,15 +82,6 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
-            var summary = new LocalizedLabel(TextKeys.MatchPreparation.SummaryLabel)
-            {
-                Font = Fonts.Body,
-                TextColor = Theme.MutedInk,
-                TextAlign = TextHorizontalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new[] { DisplayFormats.FormatInteger(_previewSeats.Length) },
-            };
-
             var screenLayout = new VerticalStackPanel
             {
                 Width = Sizes.MatchPreparationWidth,
@@ -85,13 +90,13 @@ namespace Torres.Client.Screens
             };
             screenLayout.Widgets.Add(scene);
             screenLayout.Widgets.Add(title);
-            screenLayout.Widgets.Add(summary);
+            screenLayout.Widgets.Add(_summaryLabel);
             screenLayout.Widgets.Add(BuildSeatingOrder());
 
             return screenLayout;
         }
 
-        private static VerticalStackPanel BuildSeatingOrder()
+        private VerticalStackPanel BuildSeatingOrder()
         {
             var seating = new VerticalStackPanel
             {
@@ -105,13 +110,7 @@ namespace Torres.Client.Screens
                 TextColor = Theme.MutedInk,
             });
 
-            var seats = new VerticalStackPanel();
-            foreach (Seat seat in _previewSeats)
-            {
-                seats.Widgets.Add(BuildSeatRow(seat));
-            }
-
-            seating.Widgets.Add(seats);
+            seating.Widgets.Add(_seatsPanel);
 
             var seatingOrder = new VerticalStackPanel
             {
@@ -125,7 +124,7 @@ namespace Torres.Client.Screens
             return seatingOrder;
         }
 
-        private static HorizontalStackPanel BuildSeatRow(Seat seat)
+        private static HorizontalStackPanel BuildSeatRow(MatchSeat seat)
         {
             var seatRow = new HorizontalStackPanel
             {
@@ -136,12 +135,12 @@ namespace Torres.Client.Screens
             {
                 Width = SeatColorSize,
                 Height = SeatColorSize,
-                Background = seat.ColorBrush,
+                Background = SeatColors.BrushFor(seat.Color),
                 VerticalAlignment = VerticalAlignment.Center,
             });
             seatRow.Widgets.Add(new Label
             {
-                Text = seat.PlayerName,
+                Text = seat.DisplayName,
                 Font = Fonts.Control,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -150,6 +149,14 @@ namespace Torres.Client.Screens
             return seatRow;
         }
 
-        private sealed record Seat(string PlayerName, IBrush ColorBrush);
+        private void ShowSeats(IReadOnlyList<MatchSeat> seats)
+        {
+            _summaryLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(seats.Count) };
+            _seatsPanel.Widgets.Clear();
+            foreach (MatchSeat seat in seats)
+            {
+                _seatsPanel.Widgets.Add(BuildSeatRow(seat));
+            }
+        }
     }
 }

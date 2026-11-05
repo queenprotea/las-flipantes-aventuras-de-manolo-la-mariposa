@@ -15,20 +15,23 @@ namespace Game.Services
         private readonly FriendsService _friendsService;
         private readonly ChatService _chatService;
         private readonly HistoryService _historyService;
+        private readonly MatchService _matchService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService, MatchService matchService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(friendsService);
             ArgumentNullException.ThrowIfNull(chatService);
             ArgumentNullException.ThrowIfNull(historyService);
+            ArgumentNullException.ThrowIfNull(matchService);
 
             _sessionService = sessionService;
             _roomService = roomService;
             _friendsService = friendsService;
             _chatService = chatService;
             _historyService = historyService;
+            _matchService = matchService;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
@@ -162,6 +165,38 @@ namespace Game.Services
             Task<MatchDetailResponse> detailReading = _historyService.GetMatchDetailAsync(matchId);
 
             return detailReading;
+        }
+
+        /// <inheritdoc/>
+        public Task<StartMatchResult> StartMatchAsync()
+        {
+            Task<StartMatchResult> startTask = _matchService.StartMatchAsync();
+
+            return startTask;
+        }
+
+        /// <inheritdoc/>
+        public PlacementResult PlaceCaterpillar(int row, int column)
+        {
+            PlacementResult placementResult = _matchService.PlaceCaterpillar(row, column);
+
+            return placementResult;
+        }
+
+        /// <inheritdoc/>
+        public PlacementResult PlaceButterfly(int row, int column)
+        {
+            PlacementResult placementResult = _matchService.PlaceButterfly(row, column);
+
+            return placementResult;
+        }
+
+        /// <inheritdoc/>
+        public EndMatchResult EndMatch()
+        {
+            EndMatchResult endResult = _matchService.EndMatch();
+
+            return endResult;
         }
     }
 }
