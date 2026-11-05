@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Game.Domain\Game.Domain.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Game.Domain\Game.Domain.csproj" PrivateAssets="compile" />
     <ProjectReference Include="..\Game.Persistence\Game.Persistence.csproj" />
     <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
   </ItemGroup>
