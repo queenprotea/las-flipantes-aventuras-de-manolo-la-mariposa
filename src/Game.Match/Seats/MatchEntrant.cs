@@ -6,7 +6,7 @@ namespace Game.Match
 {
     public sealed record MatchEntrant
     {
-        public MatchEntrant(int entrantId, int memberId, string displayName, bool isGuest, bool isActive, SeatColor color)
+        public MatchEntrant(int entrantId, int memberId, string displayName, bool isGuest, bool isActive, SeatColor seatColor)
         {
             ArgumentNullException.ThrowIfNull(displayName);
 
@@ -15,7 +15,7 @@ namespace Game.Match
             DisplayName = displayName;
             IsGuest = isGuest;
             IsActive = isActive;
-            Color = color;
+            SeatColor = seatColor;
         }
 
         public int EntrantId { get; }
@@ -28,6 +28,6 @@ namespace Game.Match
 
         public bool IsActive { get; }
 
-        public SeatColor Color { get; }
+        public SeatColor SeatColor { get; }
     }
 }

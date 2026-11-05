@@ -57,17 +57,17 @@ namespace Game.Services
 
         internal RoomDeparture? RemoveUnlessInMatch(int ownerId)
         {
-            RoomDeparture? departure = null;
+            RoomDeparture? roomDeparture = null;
             lock (_roomLock)
             {
                 LiveRoomMember? leavingMember = FindByOwner(ownerId);
                 if (!_isInMatch)
                 {
-                    departure = leavingMember is null ? new RoomDeparture(false, false, false) : RemoveMember(leavingMember);
+                    roomDeparture = leavingMember is null ? new RoomDeparture(false, false, false) : RemoveMember(leavingMember);
                 }
             }
 
-            return departure;
+            return roomDeparture;
         }
 
         internal RoomKick Kick(int callerOwnerId, int targetMemberId)
@@ -161,9 +161,9 @@ namespace Game.Services
             MatchStartCheck startCheck;
             lock (_roomLock)
             {
-                StartMatchStatus status = JudgeMatchStartStatus(callerOwnerId);
-                _isInMatch = status == StartMatchStatus.Started;
-                startCheck = new MatchStartCheck(status, ListMatchEntrants());
+                StartMatchStatus startStatus = JudgeMatchStartStatus(callerOwnerId);
+                _isInMatch = startStatus == StartMatchStatus.Started;
+                startCheck = new MatchStartCheck(startStatus, ListMatchEntrants());
             }
 
             return startCheck;
@@ -218,7 +218,7 @@ namespace Game.Services
                     HostDisplayName = host?.DisplayName ?? string.Empty,
                     PlayerCount = _members.Count,
                     MaxPlayers = MatchCoordinator.MaximumEntrantCount,
-                    State = GetState(),
+                    State = GetRoomState(),
                 };
             }
 
@@ -383,35 +383,35 @@ namespace Game.Services
 
         private StartMatchStatus JudgeMatchStartStatus(int callerOwnerId)
         {
-            LiveRoomMember? caller = FindByOwner(callerOwnerId);
-            StartMatchStatus status;
-            if (caller is null)
+            LiveRoomMember? callerMember = FindByOwner(callerOwnerId);
+            StartMatchStatus startStatus;
+            if (callerMember is null)
             {
-                status = StartMatchStatus.NotInRoom;
+                startStatus = StartMatchStatus.NotInRoom;
             }
-            else if (caller.MemberId != _hostMemberId)
+            else if (callerMember.MemberId != _hostMemberId)
             {
-                status = StartMatchStatus.NotHost;
+                startStatus = StartMatchStatus.NotHost;
             }
             else if (_isInMatch)
             {
-                status = StartMatchStatus.RoomInMatch;
+                startStatus = StartMatchStatus.RoomInMatch;
             }
             else if (!HasEnoughActiveMembers())
             {
-                status = StartMatchStatus.NotEnoughPlayers;
+                startStatus = StartMatchStatus.NotEnoughPlayers;
             }
             else
             {
-                status = StartMatchStatus.Started;
+                startStatus = StartMatchStatus.Started;
             }
 
-            return status;
+            return startStatus;
         }
 
         private List<MatchEntrant> ListMatchEntrants()
         {
-            List<MatchEntrant> entrants = _members.Select(ToEntrant).ToList();
+            List<MatchEntrant> entrants = _members.Select(ToMatchEntrant).ToList();
 
             return entrants;
         }
@@ -431,19 +431,19 @@ namespace Game.Services
             return canStartMatch;
         }
 
-        private RoomState GetState()
+        private RoomState GetRoomState()
         {
-            RoomState state = RoomState.Waiting;
+            RoomState roomState = RoomState.Waiting;
             if (_isClosed)
             {
-                state = RoomState.Closed;
+                roomState = RoomState.Closed;
             }
             else if (_isInMatch)
             {
-                state = RoomState.InMatch;
+                roomState = RoomState.InMatch;
             }
 
-            return state;
+            return roomState;
         }
 
         private LiveRoomMember? FindByOwner(int ownerId)
@@ -468,7 +468,7 @@ namespace Game.Services
                 RoomId = RoomId,
                 Code = Code,
                 Visibility = Visibility,
-                State = GetState(),
+                State = GetRoomState(),
                 MaxPlayers = MatchCoordinator.MaximumEntrantCount,
                 HostMemberId = _hostMemberId,
                 ViewerMemberId = viewerMemberId,
@@ -479,9 +479,9 @@ namespace Game.Services
             return view;
         }
 
-        private static MatchEntrant ToEntrant(LiveRoomMember member)
+        private static MatchEntrant ToMatchEntrant(LiveRoomMember member)
         {
-            MatchEntrant entrant = member.ToEntrant();
+            MatchEntrant entrant = member.ToMatchEntrant();
 
             return entrant;
         }

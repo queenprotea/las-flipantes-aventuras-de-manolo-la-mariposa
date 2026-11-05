@@ -49,7 +49,7 @@ namespace Game.Services
             return hasExpired;
         }
 
-        internal MatchEntrant ToEntrant()
+        internal MatchEntrant ToMatchEntrant()
         {
             var entrant = new MatchEntrant(OwnerId, MemberId, DisplayName, IsGuest, IsActive, Color);
 

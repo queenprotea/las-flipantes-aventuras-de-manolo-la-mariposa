@@ -7,12 +7,12 @@ namespace Torres.Client.Scene
         private const int CheckerPeriod = 2;
         private const float BoardBaseThickness = 0.16f;
         private const float BoardBaseMargin = 0.3f;
-        private const float BoardBaseSpan = (BoardLayout.Size * BoardGeometry.CellSize) + BoardBaseMargin;
+        private const float BoardBaseSpan = (BoardLayout.CellsPerSide * BoardGeometry.CellSideLength) + BoardBaseMargin;
         private const float RimThickness = 0.12f;
 
         private const float RimOverhang = 0.005f;
-        private const float RimLength = BoardGeometry.CellSize + (RimOverhang * 2f);
-        private const float RimEdgeDistance = BoardGeometry.HalfCell + RimOverhang - (RimThickness / 2f);
+        private const float RimLength = BoardGeometry.CellSideLength + (RimOverhang * 2f);
+        private const float RimEdgeDistance = BoardGeometry.HalfCellSideLength + RimOverhang - (RimThickness / 2f);
 
         private static readonly Vector3 _rowRimSize = new Vector3(RimLength, BoardGeometry.PlanterTop, RimThickness);
         private static readonly Vector3 _columnRimSize = new Vector3(RimThickness, BoardGeometry.PlanterTop, RimLength);
@@ -24,9 +24,9 @@ namespace Torres.Client.Scene
         internal static void AddBoard(MeshBuilder meshBuilder, BoardLayout layout)
         {
             AddBoardBase(meshBuilder);
-            foreach (BoardCell cell in BoardLayout.EnumerateCells())
+            foreach (BoardCell drawnCell in BoardLayout.EnumerateCells())
             {
-                AddCellGround(meshBuilder, layout, cell);
+                AddCellGround(meshBuilder, layout, drawnCell);
             }
         }
 
@@ -37,17 +37,17 @@ namespace Torres.Client.Scene
             meshBuilder.AddBox(baseTransform, GardenPalette.BoardBase);
         }
 
-        private static void AddCellGround(MeshBuilder meshBuilder, BoardLayout layout, BoardCell cell)
+        private static void AddCellGround(MeshBuilder meshBuilder, BoardLayout layout, BoardCell drawnCell)
         {
-            Vector3 cellCenter = BoardGeometry.GetCellCenter(cell);
-            if (layout.IsPlanter(cell))
+            Vector3 cellCenter = BoardGeometry.GetCellCenter(drawnCell);
+            if (layout.IsPlanter(drawnCell))
             {
-                meshBuilder.AddBox(CreateSlab(cellCenter, BoardGeometry.SoilTop), GardenPalette.Soil);
-                AddPlanterRims(meshBuilder, layout, cell);
+                meshBuilder.AddBox(CreateSlab(cellCenter, BoardGeometry.SoilTop), GardenPalette.PlanterSoil);
+                AddPlanterRims(meshBuilder, layout, drawnCell);
             }
             else
             {
-                bool isDarkSquare = ((cell.Row + cell.Column) % CheckerPeriod) == 0;
+                bool isDarkSquare = ((drawnCell.Row + drawnCell.Column) % CheckerPeriod) == 0;
                 Color grassColor = isDarkSquare ? GardenPalette.GrassDark : GardenPalette.GrassLight;
                 meshBuilder.AddBox(CreateSlab(cellCenter, BoardGeometry.GrassTop), grassColor);
             }
@@ -55,31 +55,31 @@ namespace Torres.Client.Scene
 
         private static Matrix CreateSlab(Vector3 cellCenter, float slabHeight)
         {
-            Matrix slabTransform = Matrix.CreateScale(BoardGeometry.CellSize, slabHeight, BoardGeometry.CellSize)
+            Matrix slabTransform = Matrix.CreateScale(BoardGeometry.CellSideLength, slabHeight, BoardGeometry.CellSideLength)
                 * Matrix.CreateTranslation(cellCenter);
 
             return slabTransform;
         }
 
-        private static void AddPlanterRims(MeshBuilder meshBuilder, BoardLayout layout, BoardCell cell)
+        private static void AddPlanterRims(MeshBuilder meshBuilder, BoardLayout layout, BoardCell planterCell)
         {
-            Vector3 cellCenter = BoardGeometry.GetCellCenter(cell);
-            foreach (BoardCell offset in _neighborOffsets)
+            Vector3 cellCenter = BoardGeometry.GetCellCenter(planterCell);
+            foreach (BoardCell neighborOffset in _neighborOffsets)
             {
-                var neighbor = new BoardCell(cell.Row + offset.Row, cell.Column + offset.Column);
-                if (!layout.IsSamePlanter(cell, neighbor))
+                var neighborCell = new BoardCell(planterCell.Row + neighborOffset.Row, planterCell.Column + neighborOffset.Column);
+                if (!layout.IsSamePlanter(planterCell, neighborCell))
                 {
-                    AddRim(meshBuilder, cellCenter, offset);
+                    AddRim(meshBuilder, cellCenter, neighborOffset);
                 }
             }
         }
 
-        private static void AddRim(MeshBuilder meshBuilder, Vector3 cellCenter, BoardCell offset)
+        private static void AddRim(MeshBuilder meshBuilder, Vector3 cellCenter, BoardCell neighborOffset)
         {
-            var rimOffset = new Vector3(offset.Column * RimEdgeDistance, 0f, offset.Row * RimEdgeDistance);
-            Vector3 rimSize = offset.Row != 0 ? _rowRimSize : _columnRimSize;
+            var rimOffset = new Vector3(neighborOffset.Column * RimEdgeDistance, 0f, neighborOffset.Row * RimEdgeDistance);
+            Vector3 rimSize = neighborOffset.Row != 0 ? _rowRimSize : _columnRimSize;
             Matrix rimTransform = Matrix.CreateScale(rimSize) * Matrix.CreateTranslation(cellCenter + rimOffset);
-            meshBuilder.AddBox(rimTransform, GardenPalette.Brick);
+            meshBuilder.AddBox(rimTransform, GardenPalette.PlanterRim);
         }
     }
 }

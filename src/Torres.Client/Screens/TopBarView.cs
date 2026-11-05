@@ -16,15 +16,15 @@ namespace Torres.Client.Screens
         private readonly LocalizedLabel _roleLabel = new LocalizedLabel(TextKeys.Common.RegisteredRole);
         private readonly Label _connectionDot = new Label();
         private readonly LocalizedLabel _connectionLabel = new LocalizedLabel(TextKeys.Common.OfflineStatus);
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LocalizedButton _logInButton;
         private readonly HorizontalStackPanel _accountSummary;
 
-        internal TopBarView(PlayerSession session)
+        internal TopBarView(PlayerSession playerSession)
         {
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
-            _session = session;
+            _playerSession = playerSession;
             _logInButton = BuildLogInButton();
             _accountSummary = BuildAccountSummary();
 
@@ -75,12 +75,12 @@ namespace Torres.Client.Screens
 
         private void FollowSession()
         {
-            _logInButton.Visible = !_session.IsLoggedIn;
-            _accountSummary.Visible = _session.IsLoggedIn;
-            _usernameLabel.Text = _session.DisplayName;
-            _roleLabel.TextKey = _session.IsGuest ? TextKeys.Common.GuestRole : TextKeys.Common.RegisteredRole;
-            _connectionDot.TextColor = _session.IsLoggedIn ? Theme.MintLine : Theme.Blush;
-            _connectionLabel.TextKey = _session.IsLoggedIn ? TextKeys.Common.ConnectedStatus : TextKeys.Common.OfflineStatus;
+            _logInButton.Visible = !_playerSession.IsLoggedIn;
+            _accountSummary.Visible = _playerSession.IsLoggedIn;
+            _usernameLabel.Text = _playerSession.DisplayName;
+            _roleLabel.TextKey = _playerSession.IsGuest ? TextKeys.Common.GuestRole : TextKeys.Common.RegisteredRole;
+            _connectionDot.TextColor = _playerSession.IsLoggedIn ? Theme.MintLine : Theme.Blush;
+            _connectionLabel.TextKey = _playerSession.IsLoggedIn ? TextKeys.Common.ConnectedStatus : TextKeys.Common.OfflineStatus;
         }
 
         private VerticalStackPanel BuildLogo()

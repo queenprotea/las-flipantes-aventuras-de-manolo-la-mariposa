@@ -6,14 +6,14 @@ namespace Game.Domain
 {
     public sealed class Board
     {
-        public const int Size = 8;
-        public const int MaximumFlowerHeight = 3;
+        public const int CellsPerSide = 8;
+        public const int MaximumFlowerLevel = 3;
 
-        private const int GroundHeight = 0;
-        private const int LowestFlowerHeight = 1;
+        private const int GroundLevel = 0;
+        private const int LowestFlowerLevel = 1;
         private const string RepeatedFlowerMessage = "Two flowers cannot stand on the same cell.";
 
-        private readonly int[,] _heights = new int[Size, Size];
+        private readonly int[,] _flowerLevels = new int[CellsPerSide, CellsPerSide];
 
         public Board(IReadOnlyList<Flower> flowers)
         {
@@ -25,27 +25,27 @@ namespace Game.Domain
             }
         }
 
-        public static bool Contains(BoardCell cell)
+        public static bool Contains(BoardCell examinedCell)
         {
-            bool isRowInside = (cell.Row >= 0) && (cell.Row < Size);
-            bool isColumnInside = (cell.Column >= 0) && (cell.Column < Size);
+            bool isRowInside = (examinedCell.Row >= 0) && (examinedCell.Row < CellsPerSide);
+            bool isColumnInside = (examinedCell.Column >= 0) && (examinedCell.Column < CellsPerSide);
             bool isInside = isRowInside && isColumnInside;
 
             return isInside;
         }
 
-        public int GetHeight(BoardCell cell)
+        public int GetFlowerLevel(BoardCell examinedCell)
         {
-            ThrowIfOutside(cell, nameof(cell));
+            ThrowIfOutside(examinedCell, nameof(examinedCell));
 
-            int height = _heights[cell.Row, cell.Column];
+            int flowerLevel = _flowerLevels[examinedCell.Row, examinedCell.Column];
 
-            return height;
+            return flowerLevel;
         }
 
-        public bool HasFlower(BoardCell cell)
+        public bool HasFlower(BoardCell examinedCell)
         {
-            bool hasFlower = GetHeight(cell) > GroundHeight;
+            bool hasFlower = GetFlowerLevel(examinedCell) > GroundLevel;
 
             return hasFlower;
         }
@@ -60,7 +60,7 @@ namespace Game.Domain
         public IReadOnlyList<BoardCell> FindFlowerCells()
         {
             var flowerCells = new List<BoardCell>();
-            for (var row = 0; row < Size; row++)
+            for (var row = 0; row < CellsPerSide; row++)
             {
                 AddFlowerCellsOfRow(row, flowerCells);
             }
@@ -85,17 +85,17 @@ namespace Game.Domain
             return planters;
         }
 
-        internal static void ThrowIfOutside(BoardCell cell, string parameterName)
+        internal static void ThrowIfOutside(BoardCell examinedCell, string parameterName)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(cell.Row, parameterName);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(cell.Row, Size, parameterName);
-            ArgumentOutOfRangeException.ThrowIfNegative(cell.Column, parameterName);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(cell.Column, Size, parameterName);
+            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Row, parameterName);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Row, CellsPerSide, parameterName);
+            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Column, parameterName);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Column, CellsPerSide, parameterName);
         }
 
-        private static List<BoardCell> FindNeighborCells(BoardCell cell)
+        private static List<BoardCell> FindNeighborCells(BoardCell centerCell)
         {
-            var sideCells = new BoardCell[] { new BoardCell(cell.Row - 1, cell.Column), new BoardCell(cell.Row + 1, cell.Column), new BoardCell(cell.Row, cell.Column - 1), new BoardCell(cell.Row, cell.Column + 1) };
+            var sideCells = new BoardCell[] { new BoardCell(centerCell.Row - 1, centerCell.Column), new BoardCell(centerCell.Row + 1, centerCell.Column), new BoardCell(centerCell.Row, centerCell.Column - 1), new BoardCell(centerCell.Row, centerCell.Column + 1) };
             List<BoardCell> neighborCells = sideCells.Where(Contains).ToList();
 
             return neighborCells;
@@ -104,31 +104,31 @@ namespace Game.Domain
         private void PlantFlower(Flower flower, string parameterName)
         {
             ThrowIfOutside(flower.Cell, parameterName);
-            ArgumentOutOfRangeException.ThrowIfLessThan(flower.Height, LowestFlowerHeight, parameterName);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(flower.Height, MaximumFlowerHeight, parameterName);
+            ArgumentOutOfRangeException.ThrowIfLessThan(flower.Level, LowestFlowerLevel, parameterName);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(flower.Level, MaximumFlowerLevel, parameterName);
             if (HasFlower(flower.Cell))
             {
                 throw new ArgumentException(RepeatedFlowerMessage, parameterName);
             }
 
-            _heights[flower.Cell.Row, flower.Cell.Column] = flower.Height;
+            _flowerLevels[flower.Cell.Row, flower.Cell.Column] = flower.Level;
         }
 
         private Flower ToFlower(BoardCell flowerCell)
         {
-            var flower = new Flower(flowerCell, GetHeight(flowerCell));
+            var flower = new Flower(flowerCell, GetFlowerLevel(flowerCell));
 
             return flower;
         }
 
         private void AddFlowerCellsOfRow(int row, List<BoardCell> flowerCells)
         {
-            for (var column = 0; column < Size; column++)
+            for (var column = 0; column < CellsPerSide; column++)
             {
-                var cell = new BoardCell(row, column);
-                if (HasFlower(cell))
+                var examinedCell = new BoardCell(row, column);
+                if (HasFlower(examinedCell))
                 {
-                    flowerCells.Add(cell);
+                    flowerCells.Add(examinedCell);
                 }
             }
         }
@@ -141,9 +141,9 @@ namespace Game.Domain
             pendingCells.Enqueue(firstCell);
             while (pendingCells.Count > 0)
             {
-                BoardCell cell = pendingCells.Dequeue();
-                planterFlowers.Add(ToFlower(cell));
-                EnqueueFlowerNeighbors(cell, visitedCells, pendingCells);
+                BoardCell currentCell = pendingCells.Dequeue();
+                planterFlowers.Add(ToFlower(currentCell));
+                EnqueueFlowerNeighbors(currentCell, visitedCells, pendingCells);
             }
 
             var planter = new Planter(planterFlowers);
@@ -151,9 +151,9 @@ namespace Game.Domain
             return planter;
         }
 
-        private void EnqueueFlowerNeighbors(BoardCell cell, HashSet<BoardCell> visitedCells, Queue<BoardCell> pendingCells)
+        private void EnqueueFlowerNeighbors(BoardCell centerCell, HashSet<BoardCell> visitedCells, Queue<BoardCell> pendingCells)
         {
-            foreach (BoardCell neighborCell in FindNeighborCells(cell))
+            foreach (BoardCell neighborCell in FindNeighborCells(centerCell))
             {
                 bool isUnvisitedFlower = HasFlower(neighborCell) && !visitedCells.Contains(neighborCell);
                 if (isUnvisitedFlower)

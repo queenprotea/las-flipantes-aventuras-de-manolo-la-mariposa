@@ -23,7 +23,7 @@ namespace Torres.Client.Screens
     internal sealed class InitialPlacementScreen : Screen, IDisposable
     {
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly NoticeBox _noticeBox = new NoticeBox();
@@ -35,16 +35,16 @@ namespace Torres.Client.Screens
 
         private MatchView? _shownMatchView;
         private Task<PlacementResult>? _placementRequest;
-        private Task<EndMatchResult>? _endRequest;
+        private Task<EndMatchResult>? _endMatchRequest;
 
-        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }
 
@@ -52,7 +52,7 @@ namespace Torres.Client.Screens
         {
             _noticeBox.Hide();
             _shownMatchView = null;
-            if (_session.CurrentMatchView is null)
+            if (_playerSession.CurrentMatchView is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
             }
@@ -60,7 +60,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
-            MatchView? matchView = _session.CurrentMatchView;
+            MatchView? matchView = _playerSession.CurrentMatchView;
             if (matchView is null)
             {
                 return;
@@ -68,14 +68,14 @@ namespace Torres.Client.Screens
 
             if (!ReferenceEquals(matchView, _shownMatchView))
             {
-                ShowMatch(matchView);
+                ShowMatchView(matchView);
             }
 
             _clockLabel.Text = FormatPlacementTimeLeft();
             _boardWidget.UpdateInput();
             FollowBoardClick(matchView);
             FollowPlacementRequest();
-            FollowEndRequest();
+            FollowEndMatchRequest();
             if (matchView.Phase == MatchPhase.PlayerTurn)
             {
                 RequestedScreen = ScreenId.Match;
@@ -94,14 +94,14 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel centerPanel = BuildCenter();
-            HorizontalStackPanel columns = CreateColumns();
-            columns.Widgets.Add(BuildSideBar());
-            columns.Widgets.Add(centerPanel);
-            columns.Widgets.Add(BuildSideColumn());
+            VerticalStackPanel centerPanel = BuildCenterPanel();
+            HorizontalStackPanel screenColumns = CreateColumns();
+            screenColumns.Widgets.Add(BuildSideBar());
+            screenColumns.Widgets.Add(centerPanel);
+            screenColumns.Widgets.Add(BuildSideColumn());
             StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
 
-            return columns;
+            return screenColumns;
         }
 
         private static bool IsViewerPlacing(MatchView matchView)
@@ -111,24 +111,24 @@ namespace Torres.Client.Screens
             return isViewerPlacing;
         }
 
-        private static string GetPlacingName(MatchView matchView)
+        private static string GetPlacingPlayerName(MatchView matchView)
         {
             string placingName = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber).DisplayName;
 
             return placingName;
         }
 
-        private static string ToRejectionKey(PlacementResult rejection)
+        private static string ToPlacementRejectionKey(PlacementResult placementRejection)
         {
-            string rejectionKey = rejection switch
+            string rejectionKey = placementRejection switch
             {
                 PlacementResult.FlowerOccupied => TextKeys.InitialPlacement.FlowerOccupiedNotice,
                 PlacementResult.NotAFlower or PlacementResult.OutsideBoard => TextKeys.InitialPlacement.NotAFlowerNotice,
                 PlacementResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
                 PlacementResult.NotYourPlacement or PlacementResult.WrongPhase => TextKeys.InitialPlacement.NotYourPlacementNotice,
                 PlacementResult.NotInMatch or PlacementResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
-                PlacementResult.Placed => throw new ArgumentOutOfRangeException(nameof(rejection)),
-                _ => throw new ArgumentOutOfRangeException(nameof(rejection)),
+                PlacementResult.Placed => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                _ => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
             };
 
             return rejectionKey;
@@ -200,10 +200,10 @@ namespace Torres.Client.Screens
 
         private static VerticalStackPanel BuildSideColumn()
         {
-            VerticalStackPanel chat = CreateChatPanel();
+            VerticalStackPanel chatPanel = CreateChatPanel();
             var sideColumn = new VerticalStackPanel { Width = MatchLayout.SideColumnWidth, VerticalAlignment = VerticalAlignment.Stretch };
-            sideColumn.Widgets.Add(chat);
-            StackPanel.SetProportionType(chat, ProportionType.Fill);
+            sideColumn.Widgets.Add(chatPanel);
+            StackPanel.SetProportionType(chatPanel, ProportionType.Fill);
 
             return sideColumn;
         }
@@ -231,7 +231,7 @@ namespace Torres.Client.Screens
             return endMatchButton;
         }
 
-        private VerticalStackPanel BuildCenter()
+        private VerticalStackPanel BuildCenterPanel()
         {
             var centerPanel = new VerticalStackPanel
             {
@@ -251,17 +251,17 @@ namespace Torres.Client.Screens
         private string FormatPlacementTimeLeft()
         {
             TimeSpan placementTimeLeft = TimeSpan.Zero;
-            if (_session.PlacementEndsAtUtc is DateTime placementEndsAtUtc)
+            if (_playerSession.PlacementEndsAtUtc is DateTime placementEndsAtUtc)
             {
                 placementTimeLeft = placementEndsAtUtc - DateTime.UtcNow;
             }
 
-            string clockText = DisplayFormats.FormatClock(placementTimeLeft);
+            string clockText = DisplayFormats.FormatCountdown(placementTimeLeft);
 
             return clockText;
         }
 
-        private void ShowMatch(MatchView matchView)
+        private void ShowMatchView(MatchView matchView)
         {
             _shownMatchView = matchView;
             bool isViewerPlacing = IsViewerPlacing(matchView);
@@ -269,7 +269,7 @@ namespace Torres.Client.Screens
             _instructionLabel.Visible = isViewerPlacing;
             _instructionLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.PlaceButterflyInstruction : TextKeys.InitialPlacement.PlaceCaterpillarInstruction;
             _turnLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.ButterflyTurnInstruction : TextKeys.InitialPlacement.CurrentTurnInstruction;
-            _turnLabel.TextArguments = new string[] { GetPlacingName(matchView) };
+            _turnLabel.TextArguments = new string[] { GetPlacingPlayerName(matchView) };
 
             _boardWidget.ShowLayout(_layoutFactory.Create(matchView));
             IReadOnlyList<BoardCell> targetCells = Array.Empty<BoardCell>();
@@ -284,8 +284,8 @@ namespace Torres.Client.Screens
                 butterflyCell = MatchCellConversion.ToBoardCell(matchView.ButterflyCell);
             }
 
-            _boardWidget.ShowTargets(targetCells);
-            _boardWidget.ShowButterfly(butterflyCell);
+            _boardWidget.ShowPlacementTargets(targetCells);
+            _boardWidget.ShowButterflyCell(butterflyCell);
             ShowSeats(matchView);
         }
 
@@ -313,8 +313,8 @@ namespace Torres.Client.Screens
             }
 
             _noticeBox.Hide();
-            MatchCell cell = MatchCellConversion.ToMatchCell(placementCell);
-            _placementRequest = matchView.Phase == MatchPhase.ButterflyPlacement ? _gameSessionConnection.PlaceButterflyAsync(cell) : _gameSessionConnection.PlaceCaterpillarAsync(cell);
+            MatchCell destinationCell = MatchCellConversion.ToMatchCell(placementCell);
+            _placementRequest = matchView.Phase == MatchPhase.ButterflyPlacement ? _gameSessionConnection.PlaceButterflyAsync(destinationCell) : _gameSessionConnection.PlaceCaterpillarAsync(destinationCell);
         }
 
         private void FollowPlacementRequest()
@@ -332,20 +332,20 @@ namespace Torres.Client.Screens
             }
             else if (completedPlacement.Result != PlacementResult.Placed)
             {
-                _noticeBox.ShowTitle(ToRejectionKey(completedPlacement.Result));
+                _noticeBox.ShowTitle(ToPlacementRejectionKey(completedPlacement.Result));
             }
         }
 
-        private void FollowEndRequest()
+        private void FollowEndMatchRequest()
         {
-            if ((_endRequest is null) || !_endRequest.IsCompleted)
+            if ((_endMatchRequest is null) || !_endMatchRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<EndMatchResult> completedEnd = _endRequest;
-            _endRequest = null;
-            if (!completedEnd.IsCompletedSuccessfully || (completedEnd.Result == EndMatchResult.NotIdentified))
+            Task<EndMatchResult> completedEndMatch = _endMatchRequest;
+            _endMatchRequest = null;
+            if (!completedEndMatch.IsCompletedSuccessfully || (completedEndMatch.Result == EndMatchResult.NotIdentified))
             {
                 ShowServerError();
             }
@@ -354,7 +354,7 @@ namespace Torres.Client.Screens
         private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
         {
             _noticeBox.Hide();
-            _endRequest ??= _gameSessionConnection.EndMatchAsync();
+            _endMatchRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void ShowServerError()

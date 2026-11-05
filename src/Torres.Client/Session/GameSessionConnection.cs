@@ -12,13 +12,13 @@ namespace Torres.Client.Session
     {
         private const string ClosedConnectionMessage = "The game session is not open.";
 
-        private static readonly TimeSpan _closeWaitTime = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan _sessionCloseTimeout = TimeSpan.FromSeconds(2);
 
         private readonly GameSessionNoticeQueue _noticeQueue = new GameSessionNoticeQueue();
         private readonly DuplexChannelFactory<IGameSessionService> _channelFactory;
 
-        private IGameSessionService? _channel;
-        private Task<ConnectionCheckResponse>? _connectionCheck;
+        private IGameSessionService? _sessionChannel;
+        private Task<ConnectionCheckResponse>? _pendingConnectionCheck;
         private TimeSpan _connectionCheckPeriod;
         private TimeSpan _sinceLastConnectionCheck;
 
@@ -32,51 +32,51 @@ namespace Torres.Client.Session
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.GameSession));
         }
 
-        internal bool IsOpen { get; private set; }
+        internal bool IsSessionOpen { get; private set; }
 
-        internal bool WasLost { get; private set; }
+        internal bool WasConnectionLost { get; private set; }
 
         internal Task<OpenSessionResult> OpenAsync(string sessionToken)
         {
             ArgumentNullException.ThrowIfNull(sessionToken);
 
-            Abandon();
+            AbortSessionChannel();
             IGameSessionService openingChannel = _channelFactory.CreateChannel();
-            _channel = openingChannel;
-            Task<OpenSessionResult> opening = new SessionCall<string, OpenSessionResult>(openingChannel.OpenSession, sessionToken).StartAsync();
+            _sessionChannel = openingChannel;
+            Task<OpenSessionResult> sessionOpening = new SessionCall<string, OpenSessionResult>(openingChannel.OpenSession, sessionToken).StartAsync();
 
-            return opening;
+            return sessionOpening;
         }
 
-        internal void Start(OpenSessionResult opening)
+        internal void BeginConnectionChecks(OpenSessionResult openedSession)
         {
-            ArgumentNullException.ThrowIfNull(opening);
+            ArgumentNullException.ThrowIfNull(openedSession);
 
-            _connectionCheckPeriod = TimeSpan.FromSeconds(opening.ConnectionCheckPeriodSeconds);
+            _connectionCheckPeriod = TimeSpan.FromSeconds(openedSession.ConnectionCheckPeriodSeconds);
             _sinceLastConnectionCheck = TimeSpan.Zero;
-            IsOpen = true;
-            WasLost = false;
+            IsSessionOpen = true;
+            WasConnectionLost = false;
         }
 
-        internal void Update(GameTime gameTime)
+        internal void CheckConnection(GameTime gameTime)
         {
-            if (!IsOpen || (_channel is null))
+            if (!IsSessionOpen || (_sessionChannel is null))
             {
                 return;
             }
 
             _sinceLastConnectionCheck += gameTime.ElapsedGameTime;
             FollowConnectionCheck();
-            bool isConnectionCheckDue = (_connectionCheck is null) && (_sinceLastConnectionCheck >= _connectionCheckPeriod);
+            bool isConnectionCheckDue = (_pendingConnectionCheck is null) && (_sinceLastConnectionCheck >= _connectionCheckPeriod);
             if (isConnectionCheckDue)
             {
                 _sinceLastConnectionCheck = TimeSpan.Zero;
-                _connectionCheck = Task.Run(_channel.IsAlive);
+                _pendingConnectionCheck = Task.Run(_sessionChannel.IsAlive);
             }
 
-            if (_channel is ICommunicationObject { State: CommunicationState.Faulted or CommunicationState.Closed })
+            if (_sessionChannel is ICommunicationObject { State: CommunicationState.Faulted or CommunicationState.Closed })
             {
-                WasLost = true;
+                WasConnectionLost = true;
             }
         }
 
@@ -108,224 +108,224 @@ namespace Torres.Client.Session
             return matchChange;
         }
 
-        internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility visibility)
+        internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility roomVisibility)
         {
-            Task<CreateRoomResult> creation = RequireChannel().CreateRoomAsync(visibility);
+            Task<CreateRoomResult> roomCreation = RequireChannel().CreateRoomAsync(roomVisibility);
 
-            return creation;
+            return roomCreation;
         }
 
         internal Task<RoomListResponse> GetRoomsAsync()
         {
-            Task<RoomListResponse> listing = Task.Run(RequireChannel().GetRooms);
+            Task<RoomListResponse> roomListing = Task.Run(RequireChannel().GetRooms);
 
-            return listing;
+            return roomListing;
         }
 
         internal Task<RoomListResponse> FindRoomAsync(string roomCode)
         {
-            Task<RoomListResponse> search = new SessionCall<string, RoomListResponse>(RequireChannel().FindRoom, roomCode).StartAsync();
+            Task<RoomListResponse> roomSearch = new SessionCall<string, RoomListResponse>(RequireChannel().FindRoom, roomCode).StartAsync();
 
-            return search;
+            return roomSearch;
         }
 
         internal Task<JoinRoomResult> JoinRoomAsync(int roomId)
         {
-            Task<JoinRoomResult> joining = RequireChannel().JoinRoomAsync(roomId);
+            Task<JoinRoomResult> roomJoining = RequireChannel().JoinRoomAsync(roomId);
 
-            return joining;
+            return roomJoining;
         }
 
         internal Task<LeaveRoomResult> LeaveRoomAsync()
         {
-            Task<LeaveRoomResult> leaving = RequireChannel().LeaveRoomAsync();
+            Task<LeaveRoomResult> roomLeaving = RequireChannel().LeaveRoomAsync();
 
-            return leaving;
+            return roomLeaving;
         }
 
         internal Task<KickMemberResult> KickMemberAsync(int targetMemberId)
         {
-            Task<KickMemberResult> kick = new SessionCall<int, KickMemberResult>(RequireChannel().KickMember, targetMemberId).StartAsync();
+            Task<KickMemberResult> memberKick = new SessionCall<int, KickMemberResult>(RequireChannel().KickMember, targetMemberId).StartAsync();
 
-            return kick;
+            return memberKick;
         }
 
-        internal Task<SendChatMessageResult> SendChatMessageAsync(string text)
+        internal Task<SendChatMessageResult> SendChatMessageAsync(string messageText)
         {
-            Task<SendChatMessageResult> messageSending = new SessionCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, text).StartAsync();
+            Task<SendChatMessageResult> messageSending = new SessionCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, messageText).StartAsync();
 
             return messageSending;
         }
 
         internal Task<ChatHistoryResponse> GetChatHistoryAsync()
         {
-            Task<ChatHistoryResponse> historyReading = Task.Run(RequireChannel().GetChatHistory);
+            Task<ChatHistoryResponse> chatHistoryReading = Task.Run(RequireChannel().GetChatHistory);
 
-            return historyReading;
+            return chatHistoryReading;
         }
 
         internal Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
         {
-            Task<MatchHistoryResponse> historyReading = RequireChannel().GetMatchHistoryAsync(pageNumber);
+            Task<MatchHistoryResponse> matchHistoryReading = RequireChannel().GetMatchHistoryAsync(pageNumber);
 
-            return historyReading;
+            return matchHistoryReading;
         }
 
         internal Task<MatchDetailResponse> GetMatchDetailAsync(int matchId)
         {
-            Task<MatchDetailResponse> detailReading = RequireChannel().GetMatchDetailAsync(matchId);
+            Task<MatchDetailResponse> matchDetailReading = RequireChannel().GetMatchDetailAsync(matchId);
 
-            return detailReading;
+            return matchDetailReading;
         }
 
-        internal Task<FriendsOverviewResponse> GetFriendsOverviewAsync()
+        internal Task<FriendshipListResponse> GetFriendshipListAsync()
         {
-            Task<FriendsOverviewResponse> overviewReading = Task.Run(RequireChannel().GetFriendsOverview);
+            Task<FriendshipListResponse> friendshipListReading = Task.Run(RequireChannel().GetFriendshipList);
 
-            return overviewReading;
+            return friendshipListReading;
         }
 
         internal Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username)
         {
-            Task<PlayerSearchResponse> search = new SessionCall<string, PlayerSearchResponse>(RequireChannel().FindPlayerByUsername, username).StartAsync();
+            Task<PlayerSearchResponse> playerSearch = new SessionCall<string, PlayerSearchResponse>(RequireChannel().FindPlayerByUsername, username).StartAsync();
 
-            return search;
+            return playerSearch;
         }
 
         internal Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId)
         {
-            Task<FriendRequestResult> sending = new SessionCall<int, FriendRequestResult>(RequireChannel().SendFriendRequest, targetPlayerId).StartAsync();
+            Task<FriendRequestResult> friendRequestSending = new SessionCall<int, FriendRequestResult>(RequireChannel().SendFriendRequest, targetPlayerId).StartAsync();
 
-            return sending;
+            return friendRequestSending;
         }
 
         internal Task<FriendRequestResponseResult> AcceptFriendRequestAsync(int requesterPlayerId)
         {
-            Task<FriendRequestResponseResult> acceptance = new SessionCall<int, FriendRequestResponseResult>(AcceptFriendRequest, requesterPlayerId).StartAsync();
+            Task<FriendRequestResponseResult> friendRequestAcceptance = new SessionCall<int, FriendRequestResponseResult>(AcceptFriendRequest, requesterPlayerId).StartAsync();
 
-            return acceptance;
+            return friendRequestAcceptance;
         }
 
         internal Task<FriendRequestResponseResult> RejectFriendRequestAsync(int requesterPlayerId)
         {
-            Task<FriendRequestResponseResult> rejection = new SessionCall<int, FriendRequestResponseResult>(RejectFriendRequest, requesterPlayerId).StartAsync();
+            Task<FriendRequestResponseResult> friendRequestRejection = new SessionCall<int, FriendRequestResponseResult>(RejectFriendRequest, requesterPlayerId).StartAsync();
 
-            return rejection;
+            return friendRequestRejection;
         }
 
         internal Task<FriendRemovalResult> RemoveFriendAsync(int friendPlayerId)
         {
-            Task<FriendRemovalResult> removal = new SessionCall<int, FriendRemovalResult>(RequireChannel().RemoveFriend, friendPlayerId).StartAsync();
+            Task<FriendRemovalResult> friendRemoval = new SessionCall<int, FriendRemovalResult>(RequireChannel().RemoveFriend, friendPlayerId).StartAsync();
 
-            return removal;
+            return friendRemoval;
         }
 
         internal Task<StartMatchResult> StartMatchAsync()
         {
-            Task<StartMatchResult> startTask = RequireChannel().StartMatchAsync();
+            Task<StartMatchResult> matchStart = RequireChannel().StartMatchAsync();
 
-            return startTask;
+            return matchStart;
         }
 
         internal Task<EndMatchResult> EndMatchAsync()
         {
-            Task<EndMatchResult> endTask = Task.Run(RequireChannel().EndMatch);
+            Task<EndMatchResult> matchEnding = Task.Run(RequireChannel().EndMatch);
 
-            return endTask;
+            return matchEnding;
         }
 
-        internal Task<PlacementResult> PlaceCaterpillarAsync(MatchCell cell)
+        internal Task<PlacementResult> PlaceCaterpillarAsync(MatchCell destinationCell)
         {
-            Task<PlacementResult> placementTask = new SessionCall<MatchCell, PlacementResult>(PlaceCaterpillar, cell).StartAsync();
+            Task<PlacementResult> caterpillarPlacement = new SessionCall<MatchCell, PlacementResult>(PlaceCaterpillar, destinationCell).StartAsync();
 
-            return placementTask;
+            return caterpillarPlacement;
         }
 
-        internal Task<PlacementResult> PlaceButterflyAsync(MatchCell cell)
+        internal Task<PlacementResult> PlaceButterflyAsync(MatchCell destinationCell)
         {
-            Task<PlacementResult> placementTask = new SessionCall<MatchCell, PlacementResult>(PlaceButterfly, cell).StartAsync();
+            Task<PlacementResult> butterflyPlacement = new SessionCall<MatchCell, PlacementResult>(PlaceButterfly, destinationCell).StartAsync();
 
-            return placementTask;
+            return butterflyPlacement;
         }
 
         internal void CloseSession()
         {
-            if (IsOpen && (_channel is not null))
+            if (IsSessionOpen && (_sessionChannel is not null))
             {
-                Task<CloseSessionResult> closing = _channel.CloseSessionAsync();
-                Task.WaitAny(new Task[] { closing }, _closeWaitTime);
+                Task<CloseSessionResult> sessionClosing = _sessionChannel.CloseSessionAsync();
+                Task.WaitAny(new Task[] { sessionClosing }, _sessionCloseTimeout);
             }
 
-            Abandon();
+            AbortSessionChannel();
         }
 
-        internal void Close()
+        internal void CloseSessionAndFactory()
         {
             CloseSession();
             _channelFactory.Abort();
         }
 
-        internal void Abandon()
+        internal void AbortSessionChannel()
         {
-            if (_channel is ICommunicationObject abandonedChannel)
+            if (_sessionChannel is ICommunicationObject abandonedChannel)
             {
                 abandonedChannel.Abort();
             }
 
-            _channel = null;
-            _connectionCheck = null;
-            IsOpen = false;
-            WasLost = false;
+            _sessionChannel = null;
+            _pendingConnectionCheck = null;
+            IsSessionOpen = false;
+            WasConnectionLost = false;
             _noticeQueue.Clear();
         }
 
         private void FollowConnectionCheck()
         {
-            if ((_connectionCheck is null) || !_connectionCheck.IsCompleted)
+            if ((_pendingConnectionCheck is null) || !_pendingConnectionCheck.IsCompleted)
             {
                 return;
             }
 
-            WasLost = !_connectionCheck.IsCompletedSuccessfully;
-            _connectionCheck = null;
+            WasConnectionLost = !_pendingConnectionCheck.IsCompletedSuccessfully;
+            _pendingConnectionCheck = null;
         }
 
         private FriendRequestResponseResult AcceptFriendRequest(int requesterPlayerId)
         {
-            FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, true);
+            FriendRequestResponseResult acceptanceResult = RequireChannel().RespondFriendRequest(requesterPlayerId, true);
 
-            return responseResult;
+            return acceptanceResult;
         }
 
         private FriendRequestResponseResult RejectFriendRequest(int requesterPlayerId)
         {
-            FriendRequestResponseResult responseResult = RequireChannel().RespondFriendRequest(requesterPlayerId, false);
+            FriendRequestResponseResult rejectionResult = RequireChannel().RespondFriendRequest(requesterPlayerId, false);
 
-            return responseResult;
+            return rejectionResult;
         }
 
-        private PlacementResult PlaceCaterpillar(MatchCell cell)
+        private PlacementResult PlaceCaterpillar(MatchCell destinationCell)
         {
-            PlacementResult placementResult = RequireChannel().PlaceCaterpillar(cell.Row, cell.Column);
+            PlacementResult caterpillarPlacementResult = RequireChannel().PlaceCaterpillar(destinationCell.Row, destinationCell.Column);
 
-            return placementResult;
+            return caterpillarPlacementResult;
         }
 
-        private PlacementResult PlaceButterfly(MatchCell cell)
+        private PlacementResult PlaceButterfly(MatchCell destinationCell)
         {
-            PlacementResult placementResult = RequireChannel().PlaceButterfly(cell.Row, cell.Column);
+            PlacementResult butterflyPlacementResult = RequireChannel().PlaceButterfly(destinationCell.Row, destinationCell.Column);
 
-            return placementResult;
+            return butterflyPlacementResult;
         }
 
         private IGameSessionService RequireChannel()
         {
-            if (!IsOpen || (_channel is null))
+            if (!IsSessionOpen || (_sessionChannel is null))
             {
                 throw new InvalidOperationException(ClosedConnectionMessage);
             }
 
-            return _channel;
+            return _sessionChannel;
         }
     }
 }

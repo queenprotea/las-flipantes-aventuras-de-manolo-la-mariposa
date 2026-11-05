@@ -21,12 +21,12 @@ namespace Torres.Client.Scene
 
         internal static void AddFlowers(MeshBuilder meshBuilder, BoardLayout layout)
         {
-            foreach (BoardCell cell in BoardLayout.EnumerateCells())
+            foreach (BoardCell drawnCell in BoardLayout.EnumerateCells())
             {
-                int flowerLevel = layout.GetFlowerLevel(cell);
+                int flowerLevel = layout.GetFlowerLevel(drawnCell);
                 if (flowerLevel > 0)
                 {
-                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(cell), flowerLevel);
+                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(drawnCell), flowerLevel);
                 }
             }
         }
@@ -48,16 +48,16 @@ namespace Torres.Client.Scene
 
         private static void AddLeafPair(MeshBuilder meshBuilder, Vector3 cellCenter, int levelIndex)
         {
-            float leafHeight = BoardGeometry.PlanterTop + LeafHeightOffset + (BoardGeometry.LevelStep * levelIndex);
+            float leafHeight = BoardGeometry.PlanterTop + LeafHeightOffset + (BoardGeometry.FlowerLevelHeight * levelIndex);
             float leafHeadingDegrees = FirstLeafHeadingDegrees + (LeafHeadingStepDegrees * levelIndex);
-            Matrix leafHeading = BoardGeometry.CreateHeadingRotation(leafHeadingDegrees);
+            Matrix leafHeadingRotation = BoardGeometry.CreateHeadingRotation(leafHeadingDegrees);
             Vector3 leafDirection = BoardGeometry.GetHeadingDirection(leafHeadingDegrees);
-            foreach (float side in BoardGeometry.MirroredSides)
+            foreach (float sideSign in BoardGeometry.MirroredSideSigns)
             {
-                Vector3 leafCenter = cellCenter + (leafDirection * LeafDistance * side) + new Vector3(0f, leafHeight, 0f);
+                Vector3 leafCenter = cellCenter + (leafDirection * LeafDistance * sideSign) + new Vector3(0f, leafHeight, 0f);
                 Matrix leafTransform = Matrix.CreateScale(_leafScale)
-                    * Matrix.CreateRotationZ(MathHelper.ToRadians(LeafTiltDegrees * side))
-                    * leafHeading
+                    * Matrix.CreateRotationZ(MathHelper.ToRadians(LeafTiltDegrees * sideSign))
+                    * leafHeadingRotation
                     * Matrix.CreateTranslation(leafCenter);
                 meshBuilder.AddSphere(leafTransform, GardenPalette.Leaf);
             }
@@ -76,7 +76,7 @@ namespace Torres.Client.Scene
             }
 
             Matrix heartTransform = Matrix.CreateScale(_heartScale) * Matrix.CreateTranslation(blossomCenter + new Vector3(0f, HeartLift, 0f));
-            meshBuilder.AddSphere(heartTransform, GardenPalette.Heart);
+            meshBuilder.AddSphere(heartTransform, GardenPalette.BlossomHeart);
         }
     }
 }

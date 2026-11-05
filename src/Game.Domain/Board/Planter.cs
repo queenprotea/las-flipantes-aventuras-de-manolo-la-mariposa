@@ -4,6 +4,6 @@ namespace Game.Domain
 {
     public sealed record Planter(IReadOnlyList<Flower> Flowers)
     {
-        public int Area => Flowers.Count;
+        public int CellCount => Flowers.Count;
     }
 }

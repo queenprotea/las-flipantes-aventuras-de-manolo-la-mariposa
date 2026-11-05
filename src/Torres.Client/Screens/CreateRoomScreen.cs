@@ -23,29 +23,29 @@ namespace Torres.Client.Screens
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly LocalizedButton _createButton = CreatePrimaryButton(TextKeys.CreateRoom.CreateRoomButton);
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
 
         private bool _isPublic = true;
         private Task<CreateRoomResult>? _creationRequest;
 
-        internal CreateRoomScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal CreateRoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.CreateRoom.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
         }
 
         internal override void Open()
         {
             _noticeBox.Hide();
-            if (!_session.IsLoggedIn || !_gameSessionConnection.IsOpen)
+            if (!_playerSession.IsLoggedIn || !_gameSessionConnection.IsSessionOpen)
             {
                 RequestedScreen = ScreenId.Login;
             }
-            else if (_session.CurrentRoom is not null)
+            else if (_playerSession.CurrentRoom is not null)
             {
                 RequestedScreen = ScreenId.Room;
             }
@@ -203,7 +203,7 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            _session.EnterRoom(createdRoom);
+            _playerSession.EnterRoom(createdRoom);
             RequestedScreen = ScreenId.Room;
         }
 

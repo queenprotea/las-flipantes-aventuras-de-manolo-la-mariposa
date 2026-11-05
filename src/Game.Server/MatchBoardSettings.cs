@@ -11,7 +11,7 @@ namespace Game.Server
 
         public List<StartingFlowerSetting> StartingFlowers { get; set; } = new List<StartingFlowerSetting>();
 
-        public static MatchBoardSettings Read(IConfiguration configuration)
+        public static MatchBoardSettings ReadFromConfiguration(IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(configuration);
 

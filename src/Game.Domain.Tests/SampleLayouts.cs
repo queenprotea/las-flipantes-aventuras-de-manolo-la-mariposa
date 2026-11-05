@@ -18,7 +18,7 @@ namespace Game.Domain.Tests
 
         internal static BoardCell OutsideCell { get; } = new BoardCell(8, 0);
 
-        internal static IReadOnlyList<Flower> FiveStartingFlowers { get; } = new Flower[] { new Flower(NorthWestFlower, StartingLayout.StartingFlowerHeight), new Flower(NorthEastFlower, StartingLayout.StartingFlowerHeight), new Flower(CenterFlower, StartingLayout.StartingFlowerHeight), new Flower(SouthWestFlower, StartingLayout.StartingFlowerHeight), new Flower(SouthEastFlower, StartingLayout.StartingFlowerHeight) };
+        internal static IReadOnlyList<Flower> FiveStartingFlowers { get; } = new Flower[] { new Flower(NorthWestFlower, StartingLayout.StartingFlowerLevel), new Flower(NorthEastFlower, StartingLayout.StartingFlowerLevel), new Flower(CenterFlower, StartingLayout.StartingFlowerLevel), new Flower(SouthWestFlower, StartingLayout.StartingFlowerLevel), new Flower(SouthEastFlower, StartingLayout.StartingFlowerLevel) };
 
         internal static StartingLayout FiveSingleCellPlanters { get; } = new StartingLayout(FiveStartingFlowers);
     }

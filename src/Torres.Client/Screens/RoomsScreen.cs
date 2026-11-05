@@ -20,7 +20,7 @@ namespace Torres.Client.Screens
         private const int EmptyStateSpacing = 4;
 
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Rooms.SearchPlaceholder, false);
         private readonly VerticalStackPanel _roomsPlaceholder = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
         private readonly NoticeBox _noticeBox = new NoticeBox();
@@ -29,24 +29,24 @@ namespace Torres.Client.Screens
         private Task<JoinRoomResult>? _joinRequest;
         private bool _isShowingSearch;
 
-        internal RoomsScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal RoomsScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Rooms.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
         }
 
         internal override void Open()
         {
             _noticeBox.Hide();
-            if (!_session.IsLoggedIn || !_gameSessionConnection.IsOpen)
+            if (!_playerSession.IsLoggedIn || !_gameSessionConnection.IsSessionOpen)
             {
                 RequestedScreen = ScreenId.Login;
             }
-            else if (_session.CurrentRoom is not null)
+            else if (_playerSession.CurrentRoom is not null)
             {
                 RequestedScreen = ScreenId.Room;
             }
@@ -224,7 +224,7 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            _session.EnterRoom(joinedRoom);
+            _playerSession.EnterRoom(joinedRoom);
             RequestedScreen = ScreenId.Room;
         }
 

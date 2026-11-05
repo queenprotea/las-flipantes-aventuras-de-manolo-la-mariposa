@@ -2,5 +2,5 @@ using System;
 
 namespace Game.Services
 {
-    internal sealed record MatchBan(string DisplayName, bool IsPermanent, TimeSpan TimeLeft);
+    internal sealed record MatchBan(string DisplayName, bool IsPermanent, TimeSpan BanTimeLeft);
 }

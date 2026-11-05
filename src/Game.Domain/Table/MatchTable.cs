@@ -17,13 +17,13 @@ namespace Game.Domain
         private readonly Board _board;
         private readonly List<Caterpillar> _caterpillars;
 
-        public MatchTable(StartingLayout layout, int seatCount)
+        public MatchTable(StartingLayout startingLayout, int seatCount)
         {
-            ArgumentNullException.ThrowIfNull(layout);
+            ArgumentNullException.ThrowIfNull(startingLayout);
             ArgumentOutOfRangeException.ThrowIfLessThan(seatCount, MinimumSeatCount);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(seatCount, MaximumSeatCount);
 
-            _board = new Board(layout.Flowers);
+            _board = new Board(startingLayout.Flowers);
             _caterpillars = new List<Caterpillar>();
             SeatCount = seatCount;
             RoundNumber = FirstRoundNumber;
@@ -58,7 +58,7 @@ namespace Game.Domain
 
         public IReadOnlyList<Caterpillar> Caterpillars => _caterpillars;
 
-        public static MatchTable Restore(MatchSnapshot snapshot)
+        public static MatchTable RestoreFromSnapshot(MatchSnapshot snapshot)
         {
             ArgumentNullException.ThrowIfNull(snapshot);
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.SeatCount, MinimumSeatCount, nameof(snapshot));
@@ -66,9 +66,9 @@ namespace Game.Domain
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.ActiveSeatNumber, FirstSeatNumber, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfGreaterThan(snapshot.ActiveSeatNumber, snapshot.SeatCount, nameof(snapshot));
 
-            var table = new MatchTable(snapshot);
+            var restoredTable = new MatchTable(snapshot);
 
-            return table;
+            return restoredTable;
         }
 
         public MatchSnapshot TakeSnapshot()
@@ -106,39 +106,39 @@ namespace Game.Domain
             return placementTargets;
         }
 
-        public PlacementOutcome PlaceInitialCaterpillar(int seatNumber, BoardCell cell)
+        public PlacementOutcome PlaceInitialCaterpillar(int seatNumber, BoardCell destinationCell)
         {
             ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(cell, nameof(cell));
+            Board.ThrowIfOutside(destinationCell, nameof(destinationCell));
 
-            PlacementOutcome outcome = JudgeFlowerPlacement(TablePhase.CaterpillarPlacement, seatNumber, cell);
-            if ((outcome == PlacementOutcome.Placed) && !IsFreeOfCaterpillars(cell))
+            PlacementOutcome placementOutcome = JudgeFlowerPlacement(TablePhase.CaterpillarPlacement, seatNumber, destinationCell);
+            if ((placementOutcome == PlacementOutcome.Placed) && !IsFreeOfCaterpillars(destinationCell))
             {
-                outcome = PlacementOutcome.FlowerOccupied;
+                placementOutcome = PlacementOutcome.FlowerOccupied;
             }
 
-            if (outcome == PlacementOutcome.Placed)
+            if (placementOutcome == PlacementOutcome.Placed)
             {
-                _caterpillars.Add(new Caterpillar(seatNumber, cell));
+                _caterpillars.Add(new Caterpillar(seatNumber, destinationCell));
                 PassCaterpillarPlacement();
             }
 
-            return outcome;
+            return placementOutcome;
         }
 
-        public PlacementOutcome PlaceButterfly(int seatNumber, BoardCell cell)
+        public PlacementOutcome PlaceButterfly(int seatNumber, BoardCell destinationCell)
         {
             ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(cell, nameof(cell));
+            Board.ThrowIfOutside(destinationCell, nameof(destinationCell));
 
-            PlacementOutcome outcome = JudgeFlowerPlacement(TablePhase.ButterflyPlacement, seatNumber, cell);
-            if (outcome == PlacementOutcome.Placed)
+            PlacementOutcome placementOutcome = JudgeFlowerPlacement(TablePhase.ButterflyPlacement, seatNumber, destinationCell);
+            if (placementOutcome == PlacementOutcome.Placed)
             {
-                ButterflyCell = cell;
+                ButterflyCell = destinationCell;
                 StartFirstTurn();
             }
 
-            return outcome;
+            return placementOutcome;
         }
 
         public void ExpirePlacement()
@@ -167,28 +167,28 @@ namespace Game.Domain
             ArgumentOutOfRangeException.ThrowIfGreaterThan(seatNumber, SeatCount);
         }
 
-        private PlacementOutcome JudgeFlowerPlacement(TablePhase expectedPhase, int seatNumber, BoardCell cell)
+        private PlacementOutcome JudgeFlowerPlacement(TablePhase expectedPhase, int seatNumber, BoardCell destinationCell)
         {
-            PlacementOutcome outcome = PlacementOutcome.Placed;
+            PlacementOutcome placementOutcome = PlacementOutcome.Placed;
             if (Phase != expectedPhase)
             {
-                outcome = PlacementOutcome.WrongPhase;
+                placementOutcome = PlacementOutcome.WrongPhase;
             }
             else if (seatNumber != ActiveSeatNumber)
             {
-                outcome = PlacementOutcome.NotYourPlacement;
+                placementOutcome = PlacementOutcome.NotYourPlacement;
             }
-            else if (!_board.HasFlower(cell))
+            else if (!_board.HasFlower(destinationCell))
             {
-                outcome = PlacementOutcome.NotAFlower;
+                placementOutcome = PlacementOutcome.NotAFlower;
             }
 
-            return outcome;
+            return placementOutcome;
         }
 
-        private bool IsFreeOfCaterpillars(BoardCell cell)
+        private bool IsFreeOfCaterpillars(BoardCell flowerCell)
         {
-            bool isFree = _caterpillars.All(caterpillar => caterpillar.Cell != cell);
+            bool isFree = _caterpillars.All(caterpillar => caterpillar.Cell != flowerCell);
 
             return isFree;
         }

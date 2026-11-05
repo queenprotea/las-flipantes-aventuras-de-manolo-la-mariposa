@@ -16,19 +16,19 @@ namespace Game.Match
         private readonly Lock _coordinatorLock = new Lock();
         private readonly Dictionary<int, LiveMatch> _matchesByEntrantId = new Dictionary<int, LiveMatch>();
         private readonly TimeProvider _timeProvider;
-        private readonly IMatchListener _listener;
+        private readonly IMatchListener _matchListener;
         private readonly StartingLayout _startingLayout;
 
         private int _lastMatchId;
 
-        public MatchCoordinator(TimeProvider timeProvider, IMatchListener listener, IReadOnlyList<MatchCell> startingFlowerCells)
+        public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, IReadOnlyList<MatchCell> startingFlowerCells)
         {
             ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentNullException.ThrowIfNull(listener);
+            ArgumentNullException.ThrowIfNull(matchListener);
             ArgumentNullException.ThrowIfNull(startingFlowerCells);
 
             _timeProvider = timeProvider;
-            _listener = listener;
+            _matchListener = matchListener;
             _startingLayout = new StartingLayout(startingFlowerCells.Select(ToStartingFlower).ToList());
         }
 
@@ -36,11 +36,11 @@ namespace Game.Match
 
         public static int MaximumEntrantCount => MatchTable.MaximumSeatCount;
 
-        public static bool BoardContains(MatchCell cell)
+        public static bool BoardContains(MatchCell examinedCell)
         {
-            ArgumentNullException.ThrowIfNull(cell);
+            ArgumentNullException.ThrowIfNull(examinedCell);
 
-            bool isOnBoard = Board.Contains(MatchCellConversion.ToBoardCell(cell));
+            bool isOnBoard = Board.Contains(MatchCellConversion.ToBoardCell(examinedCell));
 
             return isOnBoard;
         }
@@ -52,8 +52,8 @@ namespace Game.Match
 
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(entrants);
             List<int> entrantIds = seatedEntrants.Select(seatedEntrant => seatedEntrant.Entrant.EntrantId).ToList();
-            var table = new MatchTable(_startingLayout, seatedEntrants.Count);
-            LiveMatch match;
+            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count);
+            LiveMatch liveMatch;
             lock (_coordinatorLock)
             {
                 bool isAnyEntrantSeated = (entrantIds.Distinct().Count() != entrantIds.Count) || entrantIds.Any(_matchesByEntrantId.ContainsKey);
@@ -63,36 +63,36 @@ namespace Game.Match
                 }
 
                 _lastMatchId++;
-                match = new LiveMatch(_lastMatchId, table, seatedEntrants, _timeProvider, _listener, placementTime);
+                liveMatch = new LiveMatch(_lastMatchId, matchTable, seatedEntrants, _timeProvider, _matchListener, placementTime);
                 foreach (int entrantId in entrantIds)
                 {
-                    _matchesByEntrantId.Add(entrantId, match);
+                    _matchesByEntrantId.Add(entrantId, liveMatch);
                 }
 
-                match.Start();
+                liveMatch.StartPlacement();
             }
 
-            Task<int> matchIdTask = Task.FromResult(match.MatchId);
+            Task<int> startedMatchId = Task.FromResult(liveMatch.MatchId);
 
-            return matchIdTask;
+            return startedMatchId;
         }
 
-        public PlacementResult PlaceCaterpillar(int entrantId, MatchCell cell)
+        public PlacementResult PlaceCaterpillar(int entrantId, MatchCell destinationCell)
         {
-            ThrowIfOffBoard(cell);
+            ThrowIfOffBoard(destinationCell);
 
-            LiveMatch? match = FindMatchOf(entrantId);
-            PlacementResult placementResult = match is null ? PlacementResult.NotInMatch : match.PlaceCaterpillar(entrantId, MatchCellConversion.ToBoardCell(cell));
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceCaterpillar(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
 
             return placementResult;
         }
 
-        public PlacementResult PlaceButterfly(int entrantId, MatchCell cell)
+        public PlacementResult PlaceButterfly(int entrantId, MatchCell destinationCell)
         {
-            ThrowIfOffBoard(cell);
+            ThrowIfOffBoard(destinationCell);
 
-            LiveMatch? match = FindMatchOf(entrantId);
-            PlacementResult placementResult = match is null ? PlacementResult.NotInMatch : match.PlaceButterfly(entrantId, MatchCellConversion.ToBoardCell(cell));
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceButterfly(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
 
             return placementResult;
         }
@@ -102,10 +102,10 @@ namespace Game.Match
             EndMatchResult endResult = EndMatchResult.NotInMatch;
             lock (_coordinatorLock)
             {
-                if (_matchesByEntrantId.TryGetValue(entrantId, out LiveMatch? match))
+                if (_matchesByEntrantId.TryGetValue(entrantId, out LiveMatch? liveMatch))
                 {
-                    match.End();
-                    List<int> seatedEntrantIds = _matchesByEntrantId.Where(seat => seat.Value == match).Select(seat => seat.Key).ToList();
+                    liveMatch.EndMatch();
+                    List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
                     foreach (int seatedEntrantId in seatedEntrantIds)
                     {
                         _matchesByEntrantId.Remove(seatedEntrantId);
@@ -118,13 +118,13 @@ namespace Game.Match
             return endResult;
         }
 
-        private static void ThrowIfOffBoard(MatchCell cell)
+        private static void ThrowIfOffBoard(MatchCell examinedCell)
         {
-            ArgumentNullException.ThrowIfNull(cell);
-            ArgumentOutOfRangeException.ThrowIfNegative(cell.Row, nameof(cell));
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(cell.Row, Board.Size, nameof(cell));
-            ArgumentOutOfRangeException.ThrowIfNegative(cell.Column, nameof(cell));
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(cell.Column, Board.Size, nameof(cell));
+            ArgumentNullException.ThrowIfNull(examinedCell);
+            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Row, nameof(examinedCell));
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Row, Board.CellsPerSide, nameof(examinedCell));
+            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Column, nameof(examinedCell));
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Column, Board.CellsPerSide, nameof(examinedCell));
         }
 
         private static List<SeatedEntrant> SeatActiveEntrants(IReadOnlyList<MatchEntrant> entrants)
@@ -141,22 +141,22 @@ namespace Game.Match
             return seatedEntrant;
         }
 
-        private static Flower ToStartingFlower(MatchCell cell)
+        private static Flower ToStartingFlower(MatchCell flowerCell)
         {
-            var flower = new Flower(MatchCellConversion.ToBoardCell(cell), StartingLayout.StartingFlowerHeight);
+            var flower = new Flower(MatchCellConversion.ToBoardCell(flowerCell), StartingLayout.StartingFlowerLevel);
 
             return flower;
         }
 
-        private LiveMatch? FindMatchOf(int entrantId)
+        private LiveMatch? FindMatchOfEntrant(int entrantId)
         {
-            LiveMatch? match;
+            LiveMatch? liveMatch;
             lock (_coordinatorLock)
             {
-                _matchesByEntrantId.TryGetValue(entrantId, out match);
+                _matchesByEntrantId.TryGetValue(entrantId, out liveMatch);
             }
 
-            return match;
+            return liveMatch;
         }
     }
 }

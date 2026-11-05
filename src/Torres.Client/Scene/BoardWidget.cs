@@ -23,16 +23,16 @@ namespace Torres.Client.Scene
         private readonly BasicEffect _sceneEffect;
         private readonly StaticMesh _hoverFrameMesh;
         private readonly StaticMesh _selectionFrameMesh;
-        private readonly StaticMesh _targetFrameMesh;
-        private readonly StaticMesh _butterflyFrameMesh;
+        private readonly StaticMesh _placementTargetFrameMesh;
+        private readonly StaticMesh _butterflyCellFrameMesh;
 
-        private BoardLayout _layout;
+        private BoardLayout _shownLayout;
         private CellPicker _cellPicker;
         private StaticMesh _gardenMesh;
         private StaticMesh _shadowMesh;
-        private IReadOnlyList<BoardCell> _targetCells = Array.Empty<BoardCell>();
+        private IReadOnlyList<BoardCell> _placementTargetCells = Array.Empty<BoardCell>();
         private BoardCell? _butterflyCell;
-        private RenderTarget2D? _sceneTarget;
+        private RenderTarget2D? _sceneRenderTarget;
         private BoardCell? _hoveredCell;
         private BoardCell? _selectedCell;
         private BoardCell? _clickedCell;
@@ -44,15 +44,15 @@ namespace Torres.Client.Scene
         internal BoardWidget(GraphicsDevice graphicsDevice, BoardLayout layout)
         {
             _graphicsDevice = graphicsDevice;
-            _layout = layout;
+            _shownLayout = layout;
             _cellPicker = new CellPicker(layout);
             _sceneEffect = CreateSceneEffect(graphicsDevice);
             _gardenMesh = BuildGardenMesh(graphicsDevice, layout);
             _shadowMesh = BuildShadowMesh(graphicsDevice, layout);
-            _hoverFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Hover);
-            _selectionFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Selection);
-            _targetFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Target);
-            _butterflyFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.Butterfly);
+            _hoverFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.HoveredCellFrame);
+            _selectionFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.SelectedCellFrame);
+            _placementTargetFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.PlacementTargetFrame);
+            _butterflyCellFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.ButterflyCellFrame);
 
             ClipToBounds = true;
             HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -65,19 +65,19 @@ namespace Torres.Client.Scene
         {
             _gardenMesh.Dispose();
             _shadowMesh.Dispose();
-            _layout = layout;
+            _shownLayout = layout;
             _cellPicker = new CellPicker(layout);
             _gardenMesh = BuildGardenMesh(_graphicsDevice, layout);
             _shadowMesh = BuildShadowMesh(_graphicsDevice, layout);
             _selectedCell = null;
         }
 
-        internal void ShowTargets(IReadOnlyList<BoardCell> targetCells)
+        internal void ShowPlacementTargets(IReadOnlyList<BoardCell> placementTargetCells)
         {
-            _targetCells = targetCells;
+            _placementTargetCells = placementTargetCells;
         }
 
-        internal void ShowButterfly(BoardCell? butterflyCell)
+        internal void ShowButterflyCell(BoardCell? butterflyCell)
         {
             _butterflyCell = butterflyCell;
         }
@@ -98,7 +98,7 @@ namespace Torres.Client.Scene
                 return;
             }
 
-            _hoveredCell = IsMouseInside ? PickAt(desktop.MousePosition) : null;
+            _hoveredCell = IsMouseInside ? PickCellAt(desktop.MousePosition) : null;
             if (_isPressing && desktop.IsTouchDown)
             {
                 ContinueDrag(desktop.MousePosition);
@@ -111,13 +111,13 @@ namespace Torres.Client.Scene
 
         internal void RenderScene()
         {
-            EnsureSceneTarget();
-            if (_sceneTarget is null)
+            EnsureSceneRenderTarget();
+            if (_sceneRenderTarget is null)
             {
                 return;
             }
 
-            _graphicsDevice.SetRenderTarget(_sceneTarget);
+            _graphicsDevice.SetRenderTarget(_sceneRenderTarget);
             _graphicsDevice.Clear(GardenPalette.Background);
             _graphicsDevice.BlendState = BlendState.Opaque;
             _graphicsDevice.DepthStencilState = DepthStencilState.Default;
@@ -158,21 +158,21 @@ namespace Torres.Client.Scene
 
         public override void InternalRender(RenderContext context)
         {
-            if (_sceneTarget is not null)
+            if (_sceneRenderTarget is not null)
             {
-                context.Draw(_sceneTarget, ActualBounds, Color.White);
+                context.Draw(_sceneRenderTarget, ActualBounds, Color.White);
             }
         }
 
         public void Dispose()
         {
-            _sceneTarget?.Dispose();
+            _sceneRenderTarget?.Dispose();
             _gardenMesh.Dispose();
             _shadowMesh.Dispose();
             _hoverFrameMesh.Dispose();
             _selectionFrameMesh.Dispose();
-            _targetFrameMesh.Dispose();
-            _butterflyFrameMesh.Dispose();
+            _placementTargetFrameMesh.Dispose();
+            _butterflyCellFrameMesh.Dispose();
             _sceneEffect.Dispose();
         }
 
@@ -186,7 +186,7 @@ namespace Torres.Client.Scene
                 SpecularColor = Vector3.Zero,
             };
             sceneEffect.DirectionalLight0.Enabled = true;
-            sceneEffect.DirectionalLight0.Direction = SceneLighting.Direction;
+            sceneEffect.DirectionalLight0.Direction = SceneLighting.LightDirection;
             sceneEffect.DirectionalLight0.DiffuseColor = SceneLighting.DiffuseColor;
             sceneEffect.DirectionalLight0.SpecularColor = Vector3.Zero;
             sceneEffect.DirectionalLight1.Enabled = false;
@@ -201,7 +201,7 @@ namespace Torres.Client.Scene
             BoardShapes.AddBoard(gardenBuilder, layout);
             FlowerShapes.AddFlowers(gardenBuilder, layout);
             CaterpillarShapes.AddCaterpillars(gardenBuilder, layout);
-            StaticMesh gardenMesh = gardenBuilder.Build(graphicsDevice);
+            StaticMesh gardenMesh = gardenBuilder.BuildMesh(graphicsDevice);
 
             return gardenMesh;
         }
@@ -210,7 +210,7 @@ namespace Torres.Client.Scene
         {
             var shadowBuilder = new MeshBuilder();
             ShadowShapes.AddShadows(shadowBuilder, layout);
-            StaticMesh shadowMesh = shadowBuilder.Build(graphicsDevice);
+            StaticMesh shadowMesh = shadowBuilder.BuildMesh(graphicsDevice);
 
             return shadowMesh;
         }
@@ -219,21 +219,21 @@ namespace Torres.Client.Scene
         {
             var frameBuilder = new MeshBuilder();
             CellFrameShapes.AddCellFrame(frameBuilder, frameColor);
-            StaticMesh frameMesh = frameBuilder.Build(graphicsDevice);
+            StaticMesh frameMesh = frameBuilder.BuildMesh(graphicsDevice);
 
             return frameMesh;
         }
 
         private void DrawFrames()
         {
-            foreach (BoardCell targetCell in _targetCells)
+            foreach (BoardCell placementTargetCell in _placementTargetCells)
             {
-                DrawFrame(_targetFrameMesh, targetCell);
+                DrawFrame(_placementTargetFrameMesh, placementTargetCell);
             }
 
             if (_butterflyCell is BoardCell butterflyCell)
             {
-                DrawFrame(_butterflyFrameMesh, butterflyCell);
+                DrawFrame(_butterflyCellFrameMesh, butterflyCell);
             }
 
             if ((_hoveredCell is BoardCell hoveredCell) && (hoveredCell != _selectedCell))
@@ -249,10 +249,10 @@ namespace Torres.Client.Scene
             _sceneEffect.World = Matrix.Identity;
         }
 
-        private void DrawFrame(StaticMesh frameMesh, BoardCell cell)
+        private void DrawFrame(StaticMesh frameMesh, BoardCell framedCell)
         {
-            float frameHeight = BoardGeometry.GetSurfaceHeight(_layout, cell) + FrameLift;
-            Vector3 frameCenter = BoardGeometry.GetCellCenter(cell) + new Vector3(0f, frameHeight, 0f);
+            float frameHeight = BoardGeometry.GetSurfaceHeight(_shownLayout, framedCell) + FrameLift;
+            Vector3 frameCenter = BoardGeometry.GetCellCenter(framedCell) + new Vector3(0f, frameHeight, 0f);
             _sceneEffect.World = Matrix.CreateTranslation(frameCenter);
             frameMesh.Draw(_graphicsDevice, _sceneEffect);
         }
@@ -279,37 +279,37 @@ namespace Torres.Client.Scene
         {
             if (!_hasDragged)
             {
-                _selectedCell = PickAt(mousePosition);
+                _selectedCell = PickCellAt(mousePosition);
                 _clickedCell = _selectedCell;
             }
 
             _isPressing = false;
         }
 
-        private BoardCell? PickAt(Point windowPosition)
+        private BoardCell? PickCellAt(Point windowPosition)
         {
             BoardCell? pickedCell = null;
-            if (_sceneTarget is not null)
+            if (_sceneRenderTarget is not null)
             {
                 Point localPosition = ToLocal(windowPosition);
                 var surfacePosition = new Vector2(localPosition.X - ActualBounds.X, localPosition.Y - ActualBounds.Y);
-                pickedCell = _cellPicker.Pick(CreatePickRay(surfacePosition));
+                pickedCell = _cellPicker.PickCell(CreatePickRay(surfacePosition));
             }
 
             return pickedCell;
         }
 
-        private void EnsureSceneTarget()
+        private void EnsureSceneRenderTarget()
         {
             Rectangle viewBounds = ActualBounds;
             bool hasArea = (viewBounds.Width > 0) && (viewBounds.Height > 0);
-            bool hasSizeChanged = (_sceneTarget is null)
-                || (_sceneTarget.Width != viewBounds.Width)
-                || (_sceneTarget.Height != viewBounds.Height);
+            bool hasSizeChanged = (_sceneRenderTarget is null)
+                || (_sceneRenderTarget.Width != viewBounds.Width)
+                || (_sceneRenderTarget.Height != viewBounds.Height);
             if (hasArea && hasSizeChanged)
             {
-                _sceneTarget?.Dispose();
-                _sceneTarget = new RenderTarget2D(
+                _sceneRenderTarget?.Dispose();
+                _sceneRenderTarget = new RenderTarget2D(
                     _graphicsDevice,
                     viewBounds.Width,
                     viewBounds.Height,

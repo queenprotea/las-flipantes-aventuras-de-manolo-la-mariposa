@@ -12,7 +12,7 @@ namespace Torres.Client.Screens
     internal sealed class MainMenuScreen : Screen
     {
         private readonly LanguagePreference _languagePreference;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
         private LocalizedButton? _roomsButton;
@@ -22,14 +22,14 @@ namespace Torres.Client.Screens
         private LocalizedButton? _historyButton;
         private NoticeBox? _noticeBox;
 
-        internal MainMenuScreen(LanguagePreference languagePreference, PlayerSession session)
+        internal MainMenuScreen(LanguagePreference languagePreference, PlayerSession playerSession)
             : base(TextKeys.MainMenu.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(languagePreference);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _languagePreference = languagePreference;
-            _session = session;
+            _playerSession = playerSession;
         }
 
         internal bool WasExitRequested { get; private set; }
@@ -113,7 +113,7 @@ namespace Torres.Client.Screens
 
         private void FollowSession()
         {
-            bool canUseAccountFeatures = !_session.IsGuest;
+            bool canUseAccountFeatures = !_playerSession.IsGuest;
             ApplyAvailability(_invitationsButton, canUseAccountFeatures);
             ApplyAvailability(_friendsButton, canUseAccountFeatures);
             ApplyAvailability(_historyButton, canUseAccountFeatures);

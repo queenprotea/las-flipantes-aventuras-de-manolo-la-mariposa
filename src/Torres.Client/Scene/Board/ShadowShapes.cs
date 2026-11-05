@@ -12,12 +12,12 @@ namespace Torres.Client.Scene
 
         internal static void AddShadows(MeshBuilder meshBuilder, BoardLayout layout)
         {
-            foreach (BoardCell cell in BoardLayout.EnumerateCells())
+            foreach (BoardCell drawnCell in BoardLayout.EnumerateCells())
             {
-                int flowerLevel = layout.GetFlowerLevel(cell);
+                int flowerLevel = layout.GetFlowerLevel(drawnCell);
                 if (flowerLevel > 0)
                 {
-                    AddFlowerShadow(meshBuilder, cell, flowerLevel);
+                    AddFlowerShadow(meshBuilder, drawnCell, flowerLevel);
                 }
             }
 
@@ -30,10 +30,10 @@ namespace Torres.Client.Scene
             }
         }
 
-        private static void AddFlowerShadow(MeshBuilder meshBuilder, BoardCell cell, int flowerLevel)
+        private static void AddFlowerShadow(MeshBuilder meshBuilder, BoardCell flowerCell, int flowerLevel)
         {
             float shadowHeight = (BoardGeometry.GetFlowerTop(flowerLevel) - BoardGeometry.SoilTop) * FlowerShadowHeightShare;
-            Vector3 shadowCenter = BoardGeometry.GetCellCenter(cell)
+            Vector3 shadowCenter = BoardGeometry.GetCellCenter(flowerCell)
                 + SceneLighting.GetShadowOffset(shadowHeight)
                 + new Vector3(0f, BoardGeometry.SoilTop + ShadowLift, 0f);
             Matrix shadowTransform = Matrix.CreateScale(FlowerShadowRadius, 1f, FlowerShadowRadius) * Matrix.CreateTranslation(shadowCenter);

@@ -18,34 +18,34 @@ namespace Torres.Client.Screens
 {
     internal sealed class FriendsScreen : Screen
     {
-        private const double OverviewRefreshSeconds = 5;
+        private const double FriendshipListRefreshSeconds = 5;
 
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly VerticalStackPanel _tabContentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
         private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
         private readonly LocalizedButton _searchButton = CreatePrimaryButton(TextKeys.Friends.SearchButton);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Common.ServerErrorTitle);
 
         private FriendsTab _activeTab = FriendsTab.Friends;
-        private Task<FriendsOverviewResponse>? _overviewRequest;
+        private Task<FriendshipListResponse>? _friendshipListRequest;
         private Task<PlayerSearchResponse>? _searchRequest;
         private Task<FriendRequestResult>? _friendRequest;
         private Task<FriendRequestResponseResult>? _responseRequest;
         private Task<FriendRemovalResult>? _removalRequest;
-        private FriendsOverviewResponse _overview = new FriendsOverviewResponse();
+        private FriendshipListResponse _friendshipList = new FriendshipListResponse();
         private PlayerSearchResponse? _searchResult;
         private string _searchedUsername = string.Empty;
-        private double _secondsSinceOverview;
+        private double _secondsSinceFriendshipList;
 
-        internal FriendsScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal FriendsScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Friends.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
         }
 
         private enum FriendsTab
@@ -59,25 +59,25 @@ namespace Torres.Client.Screens
         {
             ForgetRequests();
             _activeTab = FriendsTab.Friends;
-            _overview = new FriendsOverviewResponse();
+            _friendshipList = new FriendshipListResponse();
             _searchResult = null;
             _errorLabel.Visible = false;
             HideConfirmation();
             RenderTab();
 
-            if (!_session.HasAccount || !_gameSessionConnection.IsOpen)
+            if (!_playerSession.HasAccount || !_gameSessionConnection.IsSessionOpen)
             {
                 RequestedScreen = ScreenId.Login;
                 return;
             }
 
-            StartOverviewRequest();
+            StartFriendshipListRequest();
         }
 
         internal override void Update(GameTime gameTime)
         {
-            RefreshOverviewPeriodically(gameTime);
-            FollowOverview();
+            RefreshFriendshipListPeriodically(gameTime);
+            FollowFriendshipListRequest();
             FollowSearch();
             FollowFriendRequest();
             FollowResponse();
@@ -102,30 +102,30 @@ namespace Torres.Client.Screens
             return page;
         }
 
-        private void RefreshOverviewPeriodically(GameTime gameTime)
+        private void RefreshFriendshipListPeriodically(GameTime gameTime)
         {
-            _secondsSinceOverview += gameTime.ElapsedGameTime.TotalSeconds;
-            bool isRefreshDue = (_secondsSinceOverview >= OverviewRefreshSeconds) && (_overviewRequest is null);
+            _secondsSinceFriendshipList += gameTime.ElapsedGameTime.TotalSeconds;
+            bool isRefreshDue = (_secondsSinceFriendshipList >= FriendshipListRefreshSeconds) && (_friendshipListRequest is null);
             if (isRefreshDue)
             {
-                StartOverviewRequest();
+                StartFriendshipListRequest();
             }
         }
 
-        private void FollowOverview()
+        private void FollowFriendshipListRequest()
         {
-            if ((_overviewRequest is null) || !_overviewRequest.IsCompleted)
+            if ((_friendshipListRequest is null) || !_friendshipListRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<FriendsOverviewResponse> completedOverview = _overviewRequest;
-            _overviewRequest = null;
-            if (completedOverview.IsCompletedSuccessfully)
+            Task<FriendshipListResponse> completedFriendshipList = _friendshipListRequest;
+            _friendshipListRequest = null;
+            if (completedFriendshipList.IsCompletedSuccessfully)
             {
-                FriendsOverviewResponse receivedOverview = completedOverview.Result;
-                bool hasChanged = !HasSamePlayers(_overview, receivedOverview);
-                _overview = receivedOverview;
+                FriendshipListResponse receivedFriendshipList = completedFriendshipList.Result;
+                bool hasChanged = !HasSamePlayers(_friendshipList, receivedFriendshipList);
+                _friendshipList = receivedFriendshipList;
                 if (hasChanged)
                 {
                     RenderTab();
@@ -189,7 +189,7 @@ namespace Torres.Client.Screens
                 && (completedResponse.Result != FriendRequestResponseResult.DatabaseUnavailable);
             if (isAnswered)
             {
-                StartOverviewRequest();
+                StartFriendshipListRequest();
             }
             else
             {
@@ -211,7 +211,7 @@ namespace Torres.Client.Screens
 
             if (isRemoved)
             {
-                StartOverviewRequest();
+                StartFriendshipListRequest();
             }
             else
             {
@@ -228,13 +228,13 @@ namespace Torres.Client.Screens
                     _searchField.Box.Text = string.Empty;
                     _activeTab = FriendsTab.Sent;
                     RenderTab();
-                    StartOverviewRequest();
+                    StartFriendshipListRequest();
                     break;
 
                 case FriendRequestResult.AlreadyFriends:
                 case FriendRequestResult.RequestAlreadyPending:
                     StartSearchRequest(_searchedUsername);
-                    StartOverviewRequest();
+                    StartFriendshipListRequest();
                     break;
 
                 case FriendRequestResult.PlayerNotFound:
@@ -251,11 +251,11 @@ namespace Torres.Client.Screens
             }
         }
 
-        private static bool HasSamePlayers(FriendsOverviewResponse shownOverview, FriendsOverviewResponse receivedOverview)
+        private static bool HasSamePlayers(FriendshipListResponse shownFriendshipList, FriendshipListResponse receivedFriendshipList)
         {
-            bool hasSamePlayers = HasSamePlayers(shownOverview.Friends, receivedOverview.Friends)
-                && HasSamePlayers(shownOverview.ReceivedRequests, receivedOverview.ReceivedRequests)
-                && HasSamePlayers(shownOverview.SentRequests, receivedOverview.SentRequests);
+            bool hasSamePlayers = HasSamePlayers(shownFriendshipList.Friends, receivedFriendshipList.Friends)
+                && HasSamePlayers(shownFriendshipList.ReceivedRequests, receivedFriendshipList.ReceivedRequests)
+                && HasSamePlayers(shownFriendshipList.SentRequests, receivedFriendshipList.SentRequests);
 
             return hasSamePlayers;
         }
@@ -268,18 +268,18 @@ namespace Torres.Client.Screens
             return hasSamePlayers;
         }
 
-        private void StartOverviewRequest()
+        private void StartFriendshipListRequest()
         {
-            _secondsSinceOverview = 0;
-            if (_gameSessionConnection.IsOpen)
+            _secondsSinceFriendshipList = 0;
+            if (_gameSessionConnection.IsSessionOpen)
             {
-                _overviewRequest = _gameSessionConnection.GetFriendsOverviewAsync();
+                _friendshipListRequest = _gameSessionConnection.GetFriendshipListAsync();
             }
         }
 
         private void StartSearchRequest(string username)
         {
-            if (_gameSessionConnection.IsOpen)
+            if (_gameSessionConnection.IsSessionOpen)
             {
                 _searchedUsername = username;
                 _searchRequest = _gameSessionConnection.FindPlayerByUsernameAsync(username);
@@ -288,7 +288,7 @@ namespace Torres.Client.Screens
 
         private void SendFriendRequest(int targetPlayerId)
         {
-            bool canSend = _gameSessionConnection.IsOpen && (_friendRequest is null);
+            bool canSend = _gameSessionConnection.IsSessionOpen && (_friendRequest is null);
             if (canSend)
             {
                 _friendRequest = _gameSessionConnection.SendFriendRequestAsync(targetPlayerId);
@@ -297,7 +297,7 @@ namespace Torres.Client.Screens
 
         private void AcceptFriendRequest(int requesterPlayerId)
         {
-            bool canAccept = _gameSessionConnection.IsOpen && (_responseRequest is null);
+            bool canAccept = _gameSessionConnection.IsSessionOpen && (_responseRequest is null);
             if (canAccept)
             {
                 _responseRequest = _gameSessionConnection.AcceptFriendRequestAsync(requesterPlayerId);
@@ -306,7 +306,7 @@ namespace Torres.Client.Screens
 
         private void RejectFriendRequest(int requesterPlayerId)
         {
-            bool canReject = _gameSessionConnection.IsOpen && (_responseRequest is null);
+            bool canReject = _gameSessionConnection.IsSessionOpen && (_responseRequest is null);
             if (canReject)
             {
                 _responseRequest = _gameSessionConnection.RejectFriendRequestAsync(requesterPlayerId);
@@ -316,7 +316,7 @@ namespace Torres.Client.Screens
         private void RemoveFriend(int friendPlayerId)
         {
             HideConfirmation();
-            bool canRemove = _gameSessionConnection.IsOpen && (_removalRequest is null);
+            bool canRemove = _gameSessionConnection.IsSessionOpen && (_removalRequest is null);
             if (canRemove)
             {
                 _removalRequest = _gameSessionConnection.RemoveFriendAsync(friendPlayerId);
@@ -344,7 +344,7 @@ namespace Torres.Client.Screens
 
         private void ForgetRequests()
         {
-            _overviewRequest = null;
+            _friendshipListRequest = null;
             _searchRequest = null;
             _friendRequest = null;
             _responseRequest = null;
@@ -410,14 +410,14 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildFriendsList()
         {
-            if (_overview.Friends.Count == 0)
+            if (_friendshipList.Friends.Count == 0)
             {
                 VerticalStackPanel noFriendsState = CreateEmptyState(TextKeys.Friends.EmptyStateTitle, TextKeys.Friends.EmptyStateHint);
                 return noFriendsState;
             }
 
             var friendsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (PlayerSummary friend in _overview.Friends)
+            foreach (PlayerSummary friend in _friendshipList.Friends)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
                 itemRow.Widgets.Add(CreateUsernameLabel(friend.Username));
@@ -440,14 +440,14 @@ namespace Torres.Client.Screens
         {
             var receivedSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             receivedSection.Widgets.Add(CreateTitle(TextKeys.Friends.RequestsTitle));
-            if (_overview.ReceivedRequests.Count == 0)
+            if (_friendshipList.ReceivedRequests.Count == 0)
             {
                 receivedSection.Widgets.Add(CreateEmptyState(TextKeys.Friends.NoReceivedTitle, TextKeys.Friends.NoReceivedHint));
                 return receivedSection;
             }
 
             var requestsList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (PlayerSummary requester in _overview.ReceivedRequests)
+            foreach (PlayerSummary requester in _friendshipList.ReceivedRequests)
             {
                 requestsList.Widgets.Add(BuildReceivedRequestCard(requester));
             }
@@ -486,14 +486,14 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildSentList()
         {
-            if (_overview.SentRequests.Count == 0)
+            if (_friendshipList.SentRequests.Count == 0)
             {
                 VerticalStackPanel noSentState = CreateEmptyState(TextKeys.Friends.NoSentTitle, TextKeys.Friends.NoSentHint);
                 return noSentState;
             }
 
             var sentList = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
-            foreach (PlayerSummary addressee in _overview.SentRequests)
+            foreach (PlayerSummary addressee in _friendshipList.SentRequests)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
 
@@ -561,7 +561,7 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            bool isOwnUsername = string.Equals(username, _session.Player?.Username, StringComparison.OrdinalIgnoreCase);
+            bool isOwnUsername = string.Equals(username, _playerSession.Player?.Username, StringComparison.OrdinalIgnoreCase);
             if (isOwnUsername)
             {
                 _searchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
@@ -579,9 +579,9 @@ namespace Torres.Client.Screens
             _activeTab = tab;
             _searchResult = null;
             RenderTab();
-            if (_overviewRequest is null)
+            if (_friendshipListRequest is null)
             {
-                StartOverviewRequest();
+                StartFriendshipListRequest();
             }
         }
 

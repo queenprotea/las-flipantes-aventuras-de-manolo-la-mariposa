@@ -13,8 +13,8 @@ namespace Game.Contracts
         /// </summary>
         /// <returns>The caller's friends, received requests and sent requests.</returns>
         /// <exception cref="FaultException">The friendships could not be read.</exception>
-        [OperationContract(Name = "GetFriendsOverview", IsInitiating = false)]
-        FriendsOverviewResponse GetFriendsOverview();
+        [OperationContract(Name = "GetFriendshipList", IsInitiating = false)]
+        FriendshipListResponse GetFriendshipList();
 
         /// <summary>
         /// Looks for the account with the given username and tells how it relates to the caller.

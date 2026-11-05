@@ -44,7 +44,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(hostOptions);
 ServerSettings serverSettings = ServerSettings.Read(builder.Configuration);
 SessionSettings sessionSettings = SessionSettings.Read(builder.Configuration);
 HistorySettings historySettings = HistorySettings.Read(builder.Configuration);
-MatchBoardSettings matchBoardSettings = MatchBoardSettings.Read(builder.Configuration);
+MatchBoardSettings matchBoardSettings = MatchBoardSettings.ReadFromConfiguration(builder.Configuration);
 List<MatchCell> startingFlowerCells = matchBoardSettings.StartingFlowers.Select(startingFlower => new MatchCell { Row = startingFlower.Row, Column = startingFlower.Column }).ToList();
 
 builder.WebHost.UseNetTcp(serverSettings.NetTcpPort);

@@ -20,13 +20,13 @@ namespace Game.Match.Tests
         private const int StartNoticeOnly = 1;
         private const int StartAndChangeNotices = 2;
 
-        private readonly FakeTimeProvider _clock = new FakeTimeProvider();
+        private readonly FakeTimeProvider _fakeTimeProvider = new FakeTimeProvider();
         private readonly RecordingMatchListener _listener = new RecordingMatchListener();
         private readonly MatchCoordinator _coordinator;
 
         public MatchCoordinatorTests()
         {
-            _coordinator = new MatchCoordinator(_clock, _listener, SampleMatches.FiveFlowerCells);
+            _coordinator = new MatchCoordinator(_fakeTimeProvider, _listener, SampleMatches.FiveFlowerCells);
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace Game.Match.Tests
         public async Task Test_PlaceCaterpillar_AfterDeadlineBeforeCountdownFires_ReturnsTimeExpired()
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime);
-            _clock.AdjustTime(_clock.GetUtcNow() + SampleMatches.PlacementTime);
+            _fakeTimeProvider.AdjustTime(_fakeTimeProvider.GetUtcNow() + SampleMatches.PlacementTime);
 
             PlacementResult placementResult = _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
 
@@ -166,7 +166,7 @@ namespace Game.Match.Tests
         public async Task Test_PlaceCaterpillar_OnActiveSeat_GivesNextSeatFullPlacementTime()
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime);
-            _clock.Advance(SampleMatches.FirstPlacementTaken);
+            _fakeTimeProvider.Advance(SampleMatches.FirstPlacementTaken);
 
             _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
 
@@ -201,7 +201,7 @@ namespace Game.Match.Tests
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime);
 
-            _clock.Advance(SampleMatches.PlacementTime);
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(StartAndChangeNotices, _listener.NoticeCount);
@@ -214,7 +214,7 @@ namespace Game.Match.Tests
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime);
 
-            _clock.Advance(SampleMatches.JustBeforeDeadline);
+            _fakeTimeProvider.Advance(SampleMatches.JustBeforeDeadline);
 
             Assert.Equal(StartNoticeOnly, _listener.NoticeCount);
         }
@@ -223,10 +223,10 @@ namespace Game.Match.Tests
         public async Task Test_ExpirePlacement_AtFirstDeadlineAfterPlacing_KeepsNextSeatPlacing()
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaBetoAndDani, SampleMatches.PlacementTime);
-            _clock.Advance(SampleMatches.FirstPlacementTaken);
+            _fakeTimeProvider.Advance(SampleMatches.FirstPlacementTaken);
             _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
 
-            _clock.Advance(SampleMatches.RestOfFirstPlacement);
+            _fakeTimeProvider.Advance(SampleMatches.RestOfFirstPlacement);
 
             Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ActiveSeatNumber);
         }
@@ -238,7 +238,7 @@ namespace Game.Match.Tests
             _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
             _coordinator.PlaceCaterpillar(SampleMatches.Beto.EntrantId, SampleMatches.NorthEastFlower);
 
-            _clock.Advance(SampleMatches.PlacementTime);
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Dani.EntrantId);
             Assert.Equal(MatchPhase.ButterflyPlacement, view.Phase);
@@ -254,7 +254,7 @@ namespace Game.Match.Tests
             _coordinator.PlaceButterfly(SampleMatches.Beto.EntrantId, SampleMatches.CenterFlower);
             int noticeCountAtFirstTurn = _listener.NoticeCount;
 
-            _clock.Advance(SampleMatches.PlacementTime);
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
 
             Assert.Equal(noticeCountAtFirstTurn, _listener.NoticeCount);
         }
@@ -308,7 +308,7 @@ namespace Game.Match.Tests
             _coordinator.EndMatch(SampleMatches.Ana.EntrantId);
             int noticeCountAtEnd = _listener.NoticeCount;
 
-            _clock.Advance(SampleMatches.PlacementTime);
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
 
             Assert.Equal(noticeCountAtEnd, _listener.NoticeCount);
         }

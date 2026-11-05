@@ -16,21 +16,21 @@ namespace Torres.Client.Scene
         {
             var planterRows = new List<string>();
             var levelRows = new List<string>();
-            for (var row = 0; row < BoardLayout.Size; row++)
+            for (var row = 0; row < BoardLayout.CellsPerSide; row++)
             {
                 planterRows.Add(BuildPlanterRow(matchView.Flowers, row));
                 levelRows.Add(BuildLevelRow(matchView.Flowers, row));
             }
 
             List<BoardCaterpillar> caterpillars = matchView.Caterpillars.Select(caterpillar => ToBoardCaterpillar(matchView.Seats, caterpillar)).ToList();
-            var layout = new BoardLayout(planterRows, levelRows, caterpillars);
+            var boardLayout = new BoardLayout(planterRows, levelRows, caterpillars);
 
-            return layout;
+            return boardLayout;
         }
 
         private static string BuildPlanterRow(IReadOnlyList<MatchFlower> flowers, int row)
         {
-            var planterRow = new StringBuilder(new string(BoardLayout.GroundSymbol, BoardLayout.Size));
+            var planterRow = new StringBuilder(new string(BoardLayout.GroundSymbol, BoardLayout.CellsPerSide));
             foreach (MatchFlower flower in flowers.Where(flower => flower.Cell.Row == row))
             {
                 planterRow[flower.Cell.Column] = (char)(FirstPlanterSymbol + flower.PlanterNumber - 1);
@@ -43,10 +43,10 @@ namespace Torres.Client.Scene
 
         private static string BuildLevelRow(IReadOnlyList<MatchFlower> flowers, int row)
         {
-            var levelRow = new StringBuilder(new string(BoardLayout.GroundSymbol, BoardLayout.Size));
+            var levelRow = new StringBuilder(new string(BoardLayout.GroundSymbol, BoardLayout.CellsPerSide));
             foreach (MatchFlower flower in flowers.Where(flower => flower.Cell.Row == row))
             {
-                levelRow[flower.Cell.Column] = (char)(BoardLayout.LevelZeroSymbol + flower.Height);
+                levelRow[flower.Cell.Column] = (char)(BoardLayout.LevelZeroSymbol + flower.Level);
             }
 
             string levelText = levelRow.ToString();
@@ -56,9 +56,9 @@ namespace Torres.Client.Scene
 
         private static BoardCaterpillar ToBoardCaterpillar(IReadOnlyList<MatchSeat> seats, MatchCaterpillar caterpillar)
         {
-            SeatColor color = seats.First(seat => seat.SeatNumber == caterpillar.SeatNumber).Color;
+            SeatColor seatColor = seats.First(seat => seat.SeatNumber == caterpillar.SeatNumber).Color;
             float headingDegrees = FirstSeatHeadingDegrees + (SeatHeadingStepDegrees * (caterpillar.SeatNumber - 1));
-            var boardCaterpillar = new BoardCaterpillar(color, MatchCellConversion.ToBoardCell(caterpillar.Cell), headingDegrees);
+            var boardCaterpillar = new BoardCaterpillar(seatColor, MatchCellConversion.ToBoardCell(caterpillar.Cell), headingDegrees);
 
             return boardCaterpillar;
         }

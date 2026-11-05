@@ -46,13 +46,13 @@ namespace Game.Services
             _friendshipRepository = friendshipRepository;
         }
 
-        public FriendsOverviewResponse GetFriendsOverview()
+        public FriendshipListResponse GetFriendshipList()
         {
             int callerPlayerId = RequireAccountOwner().OwnerId;
-            FriendsOverviewResponse overview;
+            FriendshipListResponse friendshipList;
             try
             {
-                overview = ReadFriendsOverview(callerPlayerId);
+                friendshipList = ReadFriendshipList(callerPlayerId);
             }
             catch (NpgsqlException exception)
             {
@@ -61,7 +61,7 @@ namespace Game.Services
                 throw new FaultException(FriendsUnavailableReason);
             }
 
-            return overview;
+            return friendshipList;
         }
 
         public PlayerSearchResponse FindPlayerByUsername(string username)
@@ -154,21 +154,21 @@ namespace Game.Services
             return accountOwner;
         }
 
-        private FriendsOverviewResponse ReadFriendsOverview(int callerPlayerId)
+        private FriendshipListResponse ReadFriendshipList(int callerPlayerId)
         {
             List<Friendship> friendships = _friendshipRepository.ListByPlayer(callerPlayerId);
             Dictionary<int, Friendship> friendshipsByOtherPlayer = friendships.ToDictionary(friendship => FindOtherPlayerId(friendship, callerPlayerId));
             List<Player> otherPlayers = _playerRepository.ListByIds(friendshipsByOtherPlayer.Keys);
 
-            var overview = new FriendsOverviewResponse();
+            var friendshipList = new FriendshipListResponse();
             foreach (Player otherPlayer in otherPlayers)
             {
                 FriendRelationship relationship = ToRelationship(friendshipsByOtherPlayer[otherPlayer.PlayerId], callerPlayerId);
-                List<PlayerSummary> overviewSection = SelectOverviewSection(overview, relationship);
-                overviewSection.Add(ToPlayerSummary(otherPlayer));
+                List<PlayerSummary> relationshipPlayers = SelectRelationshipPlayers(friendshipList, relationship);
+                relationshipPlayers.Add(ToPlayerSummary(otherPlayer));
             }
 
-            return overview;
+            return friendshipList;
         }
 
         private PlayerSearchResponse SearchPlayer(string username, int callerPlayerId)
@@ -297,17 +297,17 @@ namespace Game.Services
             return takenPairResult;
         }
 
-        private static List<PlayerSummary> SelectOverviewSection(FriendsOverviewResponse overview, FriendRelationship relationship)
+        private static List<PlayerSummary> SelectRelationshipPlayers(FriendshipListResponse friendshipList, FriendRelationship relationship)
         {
-            List<PlayerSummary> overviewSection = relationship switch
+            List<PlayerSummary> relationshipPlayers = relationship switch
             {
-                FriendRelationship.Friend => overview.Friends,
-                FriendRelationship.RequestSent => overview.SentRequests,
-                FriendRelationship.RequestReceived => overview.ReceivedRequests,
+                FriendRelationship.Friend => friendshipList.Friends,
+                FriendRelationship.RequestSent => friendshipList.SentRequests,
+                FriendRelationship.RequestReceived => friendshipList.ReceivedRequests,
                 _ => throw new ArgumentOutOfRangeException(nameof(relationship), relationship, null),
             };
 
-            return overviewSection;
+            return relationshipPlayers;
         }
 
         private static PlayerSummary ToPlayerSummary(Player player)

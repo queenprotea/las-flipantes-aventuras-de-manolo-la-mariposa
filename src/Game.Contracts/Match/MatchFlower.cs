@@ -12,7 +12,7 @@ namespace Game.Contracts
         public MatchCell Cell { get; set; } = new MatchCell();
 
         [DataMember]
-        public int Height { get; set; }
+        public int Level { get; set; }
 
         [DataMember]
         public int PlanterNumber { get; set; }

@@ -32,7 +32,7 @@ namespace Torres.Client.Screens
         private const int ColumnIndexMatches = 4;
 
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Visible = false };
         private readonly LocalizedLabel _loadingLabel = CreateHint(TextKeys.GlobalRanking.LoadingLabel);
         private readonly VerticalStackPanel _failureNotice;
@@ -41,14 +41,14 @@ namespace Torres.Client.Screens
         private Task<GlobalRankingResponse>? _rankingRequest;
         private List<RankingEntry>? _rankingEntries;
 
-        internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory, PlayerSession session)
+        internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory, PlayerSession playerSession)
             : base(TextKeys.GlobalRanking.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(rankingChannelFactory);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _rankingChannelFactory = rankingChannelFactory;
-            _session = session;
+            _playerSession = playerSession;
             _failureNotice = BuildFailureNotice();
         }
 
@@ -213,7 +213,7 @@ namespace Torres.Client.Screens
 
         private bool IsCurrentPlayer(RankingEntry entry)
         {
-            bool isCurrentPlayer = (_session.Player is PlayerIdentity player)
+            bool isCurrentPlayer = (_playerSession.Player is PlayerIdentity player)
                 && string.Equals(player.Username, entry.PlayerName, StringComparison.Ordinal);
 
             return isCurrentPlayer;

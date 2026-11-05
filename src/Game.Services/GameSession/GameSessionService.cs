@@ -104,11 +104,11 @@ namespace Game.Services
             return kickResult;
         }
 
-        public FriendsOverviewResponse GetFriendsOverview()
+        public FriendshipListResponse GetFriendshipList()
         {
-            FriendsOverviewResponse overview = _friendsService.GetFriendsOverview();
+            FriendshipListResponse friendshipList = _friendsService.GetFriendshipList();
 
-            return overview;
+            return friendshipList;
         }
 
         public PlayerSearchResponse FindPlayerByUsername(string username)
@@ -170,9 +170,9 @@ namespace Game.Services
         /// <inheritdoc/>
         public Task<StartMatchResult> StartMatchAsync()
         {
-            Task<StartMatchResult> startTask = _matchService.StartMatchAsync();
+            Task<StartMatchResult> matchStart = _matchService.StartMatchAsync();
 
-            return startTask;
+            return matchStart;
         }
 
         /// <inheritdoc/>

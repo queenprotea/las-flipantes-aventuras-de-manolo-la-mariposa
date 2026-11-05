@@ -6,12 +6,12 @@ namespace Torres.Client.Scene
 {
     internal sealed class BoardLayout
     {
-        internal const int Size = 8;
+        internal const int CellsPerSide = 8;
 
         internal const char GroundSymbol = '.';
         internal const char LevelZeroSymbol = '0';
 
-        private static readonly string _groundRow = new string(GroundSymbol, Size);
+        private static readonly string _groundRow = new string(GroundSymbol, CellsPerSide);
 
         private readonly IReadOnlyList<string> _planterRows;
         private readonly IReadOnlyList<string> _levelRows;
@@ -23,40 +23,40 @@ namespace Torres.Client.Scene
             Caterpillars = caterpillars;
         }
 
-        internal static BoardLayout Empty { get; } = new BoardLayout(Enumerable.Repeat(_groundRow, Size).ToList(), Enumerable.Repeat(_groundRow, Size).ToList(), Array.Empty<BoardCaterpillar>());
+        internal static BoardLayout Empty { get; } = new BoardLayout(Enumerable.Repeat(_groundRow, CellsPerSide).ToList(), Enumerable.Repeat(_groundRow, CellsPerSide).ToList(), Array.Empty<BoardCaterpillar>());
 
         internal IReadOnlyList<BoardCaterpillar> Caterpillars { get; }
 
         internal static IEnumerable<BoardCell> EnumerateCells()
         {
-            for (var row = 0; row < Size; row++)
+            for (var row = 0; row < CellsPerSide; row++)
             {
-                for (var column = 0; column < Size; column++)
+                for (var column = 0; column < CellsPerSide; column++)
                 {
-                    var cell = new BoardCell(row, column);
-                    yield return cell;
+                    var enumeratedCell = new BoardCell(row, column);
+                    yield return enumeratedCell;
                 }
             }
         }
 
-        internal bool IsPlanter(BoardCell cell)
+        internal bool IsPlanter(BoardCell examinedCell)
         {
-            bool isPlanter = GetPlanterSymbol(cell) != GroundSymbol;
+            bool isPlanter = GetPlanterSymbol(examinedCell) != GroundSymbol;
 
             return isPlanter;
         }
 
-        internal bool IsSamePlanter(BoardCell cell, BoardCell otherCell)
+        internal bool IsSamePlanter(BoardCell firstCell, BoardCell secondCell)
         {
-            bool isSamePlanter = GetPlanterSymbol(cell) == GetPlanterSymbol(otherCell);
+            bool isSamePlanter = GetPlanterSymbol(firstCell) == GetPlanterSymbol(secondCell);
 
             return isSamePlanter;
         }
 
-        internal int GetFlowerLevel(BoardCell cell)
+        internal int GetFlowerLevel(BoardCell examinedCell)
         {
             int flowerLevel = 0;
-            char levelSymbol = _levelRows[cell.Row][cell.Column];
+            char levelSymbol = _levelRows[examinedCell.Row][examinedCell.Column];
             if (levelSymbol != GroundSymbol)
             {
                 flowerLevel = levelSymbol - LevelZeroSymbol;
@@ -65,28 +65,28 @@ namespace Torres.Client.Scene
             return flowerLevel;
         }
 
-        internal bool HasCaterpillar(BoardCell cell)
+        internal bool HasCaterpillar(BoardCell examinedCell)
         {
-            bool hasCaterpillar = Caterpillars.Any(caterpillar => caterpillar.Cell == cell);
+            bool hasCaterpillar = Caterpillars.Any(caterpillar => caterpillar.Cell == examinedCell);
 
             return hasCaterpillar;
         }
 
-        private static bool Contains(BoardCell cell)
+        private static bool Contains(BoardCell examinedCell)
         {
-            bool isRowInside = (cell.Row >= 0) && (cell.Row < Size);
-            bool isColumnInside = (cell.Column >= 0) && (cell.Column < Size);
+            bool isRowInside = (examinedCell.Row >= 0) && (examinedCell.Row < CellsPerSide);
+            bool isColumnInside = (examinedCell.Column >= 0) && (examinedCell.Column < CellsPerSide);
             bool isInside = isRowInside && isColumnInside;
 
             return isInside;
         }
 
-        private char GetPlanterSymbol(BoardCell cell)
+        private char GetPlanterSymbol(BoardCell examinedCell)
         {
             char planterSymbol = GroundSymbol;
-            if (Contains(cell))
+            if (Contains(examinedCell))
             {
-                planterSymbol = _planterRows[cell.Row][cell.Column];
+                planterSymbol = _planterRows[examinedCell.Row][examinedCell.Column];
             }
 
             return planterSymbol;

@@ -144,7 +144,7 @@ namespace Torres.Client
 
         protected override void Update(GameTime gameTime)
         {
-            _gameSessionConnection.Update(gameTime);
+            _gameSessionConnection.CheckConnection(gameTime);
             FollowGameSession();
             Screen openScreen = _screensById[_openScreen];
             openScreen.Update(gameTime);
@@ -179,7 +179,7 @@ namespace Torres.Client
         {
             if (disposing)
             {
-                _gameSessionConnection.Close();
+                _gameSessionConnection.CloseSessionAndFactory();
                 _statusChannelFactory.Abort();
                 _accountChannelFactory.Abort();
                 _rankingChannelFactory.Abort();
@@ -226,7 +226,7 @@ namespace Torres.Client
             {
                 endingNoticeKey = TextKeys.Login.SignedInElsewhere;
             }
-            else if (_gameSessionConnection.WasLost)
+            else if (_gameSessionConnection.WasConnectionLost)
             {
                 endingNoticeKey = TextKeys.Common.ServerErrorTitle;
             }
@@ -236,7 +236,7 @@ namespace Torres.Client
 
         private void EndGameSession(string noticeKey)
         {
-            _gameSessionConnection.Abandon();
+            _gameSessionConnection.AbortSessionChannel();
             _playerSession.End();
             ShowScreen(ScreenId.Login);
             _loginScreen?.ShowNotice(noticeKey);
@@ -271,7 +271,7 @@ namespace Torres.Client
 
         private void ApplyMatchChange(MatchChange matchChange)
         {
-            _playerSession.FollowMatch(matchChange);
+            _playerSession.ApplyMatchChange(matchChange);
             if (matchChange.Kind == MatchChangeKind.Started)
             {
                 ShowScreen(ScreenId.MatchPreparation);

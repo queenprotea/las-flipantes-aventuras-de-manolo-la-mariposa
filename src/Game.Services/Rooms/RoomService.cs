@@ -114,9 +114,9 @@ namespace Game.Services
         public async Task<LeaveRoomResult> LeaveRoomAsync()
         {
             PlayerSession? caller = _sessionRegistry.FindCaller();
-            LeaveRoomResult leaving = caller is null ? LeaveRoomResult.NotInRoom : await LeaveForAsync(caller.Owner.OwnerId);
+            LeaveRoomResult leaveResult = caller is null ? LeaveRoomResult.NotInRoom : await LeaveRoomOfOwnerAsync(caller.Owner.OwnerId);
 
-            return leaving;
+            return leaveResult;
         }
 
         public RoomLookupResponse GetCurrentRoom()
@@ -160,49 +160,49 @@ namespace Game.Services
             return currentRoom;
         }
 
-        internal async Task<LeaveRoomResult> LeaveForAsync(int ownerId)
+        internal async Task<LeaveRoomResult> LeaveRoomOfOwnerAsync(int ownerId)
         {
             LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
-            LeaveRoomResult leaving = LeaveRoomResult.NotInRoom;
+            LeaveRoomResult leaveResult = LeaveRoomResult.NotInRoom;
             if (room is null)
             {
-                return leaving;
+                return leaveResult;
             }
 
-            RoomDeparture? departure = room.RemoveUnlessInMatch(ownerId);
-            if (departure is RoomDeparture completedDeparture)
+            RoomDeparture? roomDeparture = room.RemoveUnlessInMatch(ownerId);
+            if (roomDeparture is RoomDeparture completedDeparture)
             {
                 _roomRegistry.ForgetMembership(ownerId);
                 _log.InfoFormat(MemberLeftMessage, ownerId, room.RoomId);
                 await FollowDepartureAsync(room, completedDeparture, RoomChangeReason.MemberLeft);
-                leaving = completedDeparture.WasMember ? LeaveRoomResult.Left : LeaveRoomResult.NotInRoom;
+                leaveResult = completedDeparture.WasMember ? LeaveRoomResult.Left : LeaveRoomResult.NotInRoom;
             }
             else
             {
-                leaving = LeaveRoomResult.RoomInMatch;
+                leaveResult = LeaveRoomResult.RoomInMatch;
             }
 
-            return leaving;
+            return leaveResult;
         }
 
         internal async Task LeaveForClosedSessionAsync(int ownerId)
         {
-            LeaveRoomResult leaving = await LeaveForAsync(ownerId);
-            if (leaving == LeaveRoomResult.RoomInMatch)
+            LeaveRoomResult leaveResult = await LeaveRoomOfOwnerAsync(ownerId);
+            if (leaveResult == LeaveRoomResult.RoomInMatch)
             {
                 MarkMemberInactive(ownerId);
             }
         }
 
-        internal async Task<Sanction?> FindBanAsync(int ownerId, bool isGuest)
+        internal async Task<Sanction?> FindBanInForceAsync(int ownerId, bool isGuest)
         {
-            Sanction? ban = null;
+            Sanction? banInForce = null;
             if (!isGuest)
             {
-                ban = await _sanctionRepository.FindInForceAsync(ownerId, NowUtc());
+                banInForce = await _sanctionRepository.FindInForceAsync(ownerId, NowUtc());
             }
 
-            return ban;
+            return banInForce;
         }
 
         internal async Task RemoveExpiredMembersAsync(TimeSpan inactivityLimit)
@@ -214,16 +214,16 @@ namespace Game.Services
             }
         }
 
-        internal void NotifyMembers(LiveRoom room, RoomChangeReason reason, int? excludedOwnerId)
+        internal void NotifyMembers(LiveRoom room, RoomChangeReason changeReason, int? excludedOwnerId)
         {
-            foreach (RoomRecipientView recipient in room.BuildViewsForMembers())
+            foreach (RoomRecipientView recipientView in room.BuildViewsForMembers())
             {
-                if (recipient.OwnerId == excludedOwnerId)
+                if (recipientView.OwnerId == excludedOwnerId)
                 {
                     continue;
                 }
 
-                _sessionRegistry.Deliver(recipient.OwnerId, new RoomChangeNotice(reason, recipient.View));
+                _sessionRegistry.Deliver(recipientView.OwnerId, new RoomChangeNotice(changeReason, recipientView.View));
             }
         }
 
@@ -258,14 +258,14 @@ namespace Game.Services
             CreateRoomResult creation;
             try
             {
-                Sanction? ban = await FindBanAsync(owner.OwnerId, owner.IsGuest);
-                if (ban is null)
+                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
+                if (banInForce is null)
                 {
                     creation = await OpenRoomAsync(owner, visibility);
                 }
                 else
                 {
-                    creation = new CreateRoomResult { Status = CreateRoomStatus.Banned, BanEndsAtUtc = ban.EffectiveUntil };
+                    creation = new CreateRoomResult { Status = CreateRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
                 }
             }
             catch (NpgsqlException exception)
@@ -356,14 +356,14 @@ namespace Game.Services
             JoinRoomResult joining;
             try
             {
-                Sanction? ban = await FindBanAsync(owner.OwnerId, owner.IsGuest);
-                if (ban is null)
+                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
+                if (banInForce is null)
                 {
                     joining = Seat(owner, roomId);
                 }
                 else
                 {
-                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = ban.EffectiveUntil };
+                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
                 }
             }
             catch (NpgsqlException exception)

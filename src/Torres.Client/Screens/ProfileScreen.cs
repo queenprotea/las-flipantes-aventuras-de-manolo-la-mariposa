@@ -17,7 +17,7 @@ namespace Torres.Client.Screens
         private const int AvatarSpacing = 14;
         private const int AvatarHintSpacing = 10;
 
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Profile.UsernameLabel, false);
         private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.Profile.EmailLabel, false);
         private readonly HorizontalStackPanel _accountColumns;
@@ -32,12 +32,12 @@ namespace Torres.Client.Screens
         private readonly LocalizedButton _backToMenuButton;
         private readonly LocalizedButton _backToRoomButton;
 
-        internal ProfileScreen(PlayerSession session)
+        internal ProfileScreen(PlayerSession playerSession)
             : base(TextKeys.Profile.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
-            _session = session;
+            _playerSession = playerSession;
             _accountColumns = CreateColumns();
             _guestColumns = CreateColumns();
             _guestAliasLabel = CreatePlayerNameLabel(string.Empty, Theme.Ink);
@@ -51,16 +51,16 @@ namespace Torres.Client.Screens
         internal override void Open()
         {
             HideConfirmation();
-            bool isGuest = _session.IsGuest;
+            bool isGuest = _playerSession.IsGuest;
             HorizontalStackPanel visibleColumns = isGuest ? _guestColumns : _accountColumns;
             _contentPlaceholder.Widgets.Clear();
             _contentPlaceholder.Widgets.Add(visibleColumns);
             _logOutButton.Visible = !isGuest;
-            bool isInRoom = _session.CurrentRoom is not null;
+            bool isInRoom = _playerSession.CurrentRoom is not null;
             _backToMenuButton.Visible = !isInRoom;
             _backToRoomButton.Visible = isInRoom;
-            _guestAliasLabel.Text = _session.DisplayName;
-            if (_session.Player is PlayerIdentity player)
+            _guestAliasLabel.Text = _playerSession.DisplayName;
+            if (_playerSession.Player is PlayerIdentity player)
             {
                 _usernameField.Box.Text = player.Username;
                 _emailField.Box.Text = player.Email;
@@ -170,7 +170,7 @@ namespace Torres.Client.Screens
 
         private void LogOutButtonOnClick(object sender, MyraEventArgs e)
         {
-            if (_session.CurrentRoom is null)
+            if (_playerSession.CurrentRoom is null)
             {
                 WasLogOutRequested = true;
             }

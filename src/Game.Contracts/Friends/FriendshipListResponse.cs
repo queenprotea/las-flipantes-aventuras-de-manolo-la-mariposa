@@ -7,7 +7,7 @@ namespace Game.Contracts
     /// Carries the caller's friends and the friend requests the caller received and sent.
     /// </summary>
     [DataContract]
-    public sealed class FriendsOverviewResponse
+    public sealed class FriendshipListResponse
     {
         [DataMember]
         public List<PlayerSummary> Friends { get; set; } = new List<PlayerSummary>();

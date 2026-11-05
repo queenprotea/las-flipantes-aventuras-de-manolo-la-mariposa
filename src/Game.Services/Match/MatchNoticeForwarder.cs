@@ -17,7 +17,7 @@ namespace Game.Services
         {
             foreach (MatchRecipientView recipientView in recipientViews)
             {
-                _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStartedNotice(recipientView.View));
+                _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStartedNotice(recipientView.MatchView));
             }
         }
 
@@ -25,7 +25,7 @@ namespace Game.Services
         {
             foreach (MatchRecipientView recipientView in recipientViews)
             {
-                _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStateChangedNotice(recipientView.View));
+                _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStateChangedNotice(recipientView.MatchView));
             }
         }
     }

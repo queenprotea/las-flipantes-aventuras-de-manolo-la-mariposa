@@ -42,7 +42,7 @@ namespace Torres.Client.Screens
         private static readonly Thickness _cellPadding = new Thickness(NoSpacing, Metrics.ListSpacing, NoSpacing, Metrics.ListSpacing);
 
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LocalizedLabel _loadingLabel;
         private readonly VerticalStackPanel _matchPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
         private readonly VerticalStackPanel _failureNotice;
@@ -50,14 +50,14 @@ namespace Torres.Client.Screens
         private Task<MatchDetailResponse>? _detailRequest;
         private int? _requestedMatchId;
 
-        internal MatchDetailScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal MatchDetailScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MatchDetail.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _loadingLabel = CreateHint(TextKeys.MatchDetail.LoadingLabel);
 
             LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
@@ -71,9 +71,9 @@ namespace Torres.Client.Screens
             _matchPlaceholder.Widgets.Clear();
             _matchPlaceholder.Visible = false;
             _failureNotice.Visible = false;
-            _requestedMatchId = _session.MatchHistory.SelectedMatchId;
+            _requestedMatchId = _playerSession.MatchHistory.SelectedMatchId;
 
-            bool canShowMatch = _session.HasAccount && _gameSessionConnection.IsOpen && _requestedMatchId.HasValue;
+            bool canShowMatch = _playerSession.HasAccount && _gameSessionConnection.IsSessionOpen && _requestedMatchId.HasValue;
             if (!canShowMatch)
             {
                 RequestedScreen = ScreenId.History;
@@ -122,7 +122,7 @@ namespace Torres.Client.Screens
         private void StartDetailRequest(int matchId)
         {
             _failureNotice.Visible = false;
-            if (!_gameSessionConnection.IsOpen)
+            if (!_gameSessionConnection.IsSessionOpen)
             {
                 _loadingLabel.Visible = false;
                 _failureNotice.Visible = true;

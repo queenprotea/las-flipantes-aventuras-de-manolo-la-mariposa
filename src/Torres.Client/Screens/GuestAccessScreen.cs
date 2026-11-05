@@ -19,7 +19,7 @@ namespace Torres.Client.Screens
     {
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LabeledTextBox _aliasField = new LabeledTextBox(TextKeys.GuestAccess.MatchNameLabel, false);
         private readonly LocalizedLabel _aliasErrorLabel;
         private readonly LocalizedButton _enterButton;
@@ -29,16 +29,16 @@ namespace Torres.Client.Screens
         private Task<OpenSessionResult>? _sessionOpening;
         private string? _enteringAlias;
 
-        internal GuestAccessScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal GuestAccessScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.GuestAccess.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(accountChannelFactory);
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _accountChannelFactory = accountChannelFactory;
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _aliasErrorLabel = CreateErrorMessage(TextKeys.Common.RequiredField);
             _enterButton = CreatePrimaryButton(TextKeys.GuestAccess.EnterButton);
             _aliasField.Box.ValueChanging += AliasBoxOnValueChanging;
@@ -130,7 +130,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _gameSessionConnection.Abandon();
+                _gameSessionConnection.AbortSessionChannel();
                 ReportServerUnreachable();
             }
         }
@@ -192,8 +192,8 @@ namespace Torres.Client.Screens
 
         private void EnterAs(string guestAlias, OpenSessionResult openingResult)
         {
-            _gameSessionConnection.Start(openingResult);
-            _session.StartAsGuest(openingResult.Identity?.DisplayName ?? guestAlias);
+            _gameSessionConnection.BeginConnectionChecks(openingResult);
+            _playerSession.StartAsGuest(openingResult.Identity?.DisplayName ?? guestAlias);
             _aliasField.Box.Text = string.Empty;
             if (openingResult.CurrentRoom is null)
             {
@@ -201,7 +201,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _session.EnterRoom(openingResult.CurrentRoom);
+                _playerSession.EnterRoom(openingResult.CurrentRoom);
                 RequestedScreen = ScreenId.Room;
             }
         }

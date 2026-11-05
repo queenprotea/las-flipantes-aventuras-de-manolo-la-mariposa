@@ -8,7 +8,7 @@ namespace Game.Domain.Tests
     {
         private const int FivePlanters = 5;
         private const int TwoPlanters = 2;
-        private const int AreaOfTwoCells = 2;
+        private const int TwoCellCount = 2;
 
         [Fact]
         public void Test_FindPlanters_WithFiveSeparateFlowers_ReturnsFivePlanters()
@@ -28,7 +28,7 @@ namespace Game.Domain.Tests
             IReadOnlyList<Planter> planters = board.FindPlanters();
 
             Planter planter = Assert.Single(planters);
-            Assert.Equal(AreaOfTwoCells, planter.Area);
+            Assert.Equal(TwoCellCount, planter.CellCount);
         }
 
         [Fact]

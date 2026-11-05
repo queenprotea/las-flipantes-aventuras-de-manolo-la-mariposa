@@ -55,7 +55,7 @@ namespace Torres.Client.Ui
             return remainingText;
         }
 
-        internal static string FormatClock(TimeSpan remainingTime)
+        internal static string FormatCountdown(TimeSpan remainingTime)
         {
             int remainingSeconds = Math.Max(ExpiredClockSeconds, (int)Math.Ceiling(remainingTime.TotalSeconds));
             string clockText = string.Format(CultureInfo.CurrentCulture, ClockPattern, remainingSeconds / SecondsPerMinute, remainingSeconds % SecondsPerMinute);

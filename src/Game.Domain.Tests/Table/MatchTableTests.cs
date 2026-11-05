@@ -99,7 +99,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceInitialCaterpillar_OnOccupiedFlower_ReturnsFlowerOccupied()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberTwo, new Caterpillar[] { _seatOneCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberTwo, new Caterpillar[] { _seatOneCaterpillar }));
 
             PlacementOutcome outcome = table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthWestFlower);
 
@@ -125,7 +125,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceInitialCaterpillar_ByLastSeat_GivesButterflyToLastSeat()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar }));
 
             table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.CenterFlower);
 
@@ -136,7 +136,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceInitialCaterpillar_DuringButterflyPlacement_ReturnsWrongPhase()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             PlacementOutcome outcome = table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthEastFlower);
 
@@ -156,7 +156,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpirePlacement_OfLastSeatWithoutCaterpillar_GivesButterflyToLastPlacer()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar }));
 
             table.ExpirePlacement();
 
@@ -167,7 +167,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpirePlacement_OfButterflyPlacer_GivesButterflyToPreviousPlacer()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             table.ExpirePlacement();
 
@@ -177,7 +177,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpirePlacement_OfLastButterflyCandidate_StartsFirstTurnWithoutButterfly()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
 
             table.ExpirePlacement();
 
@@ -188,7 +188,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpirePlacement_WhenNobodyPlacedACaterpillar_StartsFirstTurn()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, Array.Empty<Caterpillar>()));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, Array.Empty<Caterpillar>()));
 
             table.ExpirePlacement();
 
@@ -198,7 +198,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpirePlacement_DuringPlayerTurn_ThrowsInvalidOperationException()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.PlayerTurn, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.PlayerTurn, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
 
             Assert.Throws<InvalidOperationException>(() => table.ExpirePlacement());
         }
@@ -206,7 +206,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceButterfly_OnFlowerWithCaterpillar_ReturnsPlaced()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             PlacementOutcome outcome = table.PlaceButterfly(SeatNumberThree, SampleLayouts.NorthWestFlower);
 
@@ -216,7 +216,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceButterfly_OnGround_ReturnsNotAFlower()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             PlacementOutcome outcome = table.PlaceButterfly(SeatNumberThree, SampleLayouts.GroundCell);
 
@@ -226,7 +226,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceButterfly_ByPlacer_StartsFirstTurnWithSeatOne()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             table.PlaceButterfly(SeatNumberThree, SampleLayouts.SouthEastFlower);
 
@@ -237,7 +237,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceButterfly_ByAnotherSeat_ReturnsNotYourPlacement()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             PlacementOutcome outcome = table.PlaceButterfly(SeatNumberOne, SampleLayouts.SouthEastFlower);
 
@@ -257,7 +257,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindPlacementTargets_WithOneOccupiedFlower_LeavesOutTheOccupiedFlower()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberTwo, new Caterpillar[] { _seatOneCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberTwo, new Caterpillar[] { _seatOneCaterpillar }));
             var expectedTargets = new BoardCell[] { SampleLayouts.NorthEastFlower, SampleLayouts.CenterFlower, SampleLayouts.SouthWestFlower, SampleLayouts.SouthEastFlower };
 
             IReadOnlyList<BoardCell> placementTargets = table.FindPlacementTargets();
@@ -268,7 +268,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindPlacementTargets_DuringButterflyPlacement_IncludesOccupiedFlowers()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.ButterflyPlacement, SeatNumberThree, new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar, _seatThreeCaterpillar }));
 
             IReadOnlyList<BoardCell> placementTargets = table.FindPlacementTargets();
 
@@ -278,7 +278,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindPlacementTargets_DuringPlayerTurn_ReturnsNoTargets()
         {
-            MatchTable table = MatchTable.Restore(CreateThreeSeatSnapshot(TablePhase.PlayerTurn, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
+            MatchTable table = MatchTable.RestoreFromSnapshot(CreateThreeSeatSnapshot(TablePhase.PlayerTurn, SeatNumberOne, new Caterpillar[] { _seatOneCaterpillar }));
 
             IReadOnlyList<BoardCell> placementTargets = table.FindPlacementTargets();
 
@@ -301,7 +301,7 @@ namespace Game.Domain.Tests
             var placedCaterpillars = new Caterpillar[] { _seatOneCaterpillar, _seatTwoCaterpillar };
             MatchSnapshot snapshot = CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberThree, placedCaterpillars);
 
-            MatchTable table = MatchTable.Restore(snapshot);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot);
 
             Assert.Equal(placedCaterpillars, table.Caterpillars);
         }
@@ -311,7 +311,7 @@ namespace Game.Domain.Tests
         {
             MatchSnapshot snapshot = CreateThreeSeatSnapshot(TablePhase.CaterpillarPlacement, SeatNumberFour, Array.Empty<Caterpillar>());
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => MatchTable.Restore(snapshot));
+            Assert.Throws<ArgumentOutOfRangeException>(() => MatchTable.RestoreFromSnapshot(snapshot));
         }
 
         private static MatchSnapshot CreateThreeSeatSnapshot(TablePhase phase, int activeSeatNumber, IReadOnlyList<Caterpillar> caterpillars)

@@ -16,23 +16,23 @@ namespace Game.Match
             _seatedEntrants = seatedEntrants;
         }
 
-        internal MatchView Create(MatchTable table, TimeSpan? placementTimeLeft, int viewerSeatNumber)
+        internal MatchView CreateForSeat(MatchTable matchTable, TimeSpan? placementTimeLeft, int viewerSeatNumber)
         {
-            MatchCell butterflyCell = table.ButterflyCell is BoardCell butterflyBoardCell ? MatchCellConversion.ToMatchCell(butterflyBoardCell) : new MatchCell();
+            MatchCell butterflyCell = matchTable.ButterflyCell is BoardCell butterflyBoardCell ? MatchCellConversion.ToMatchCell(butterflyBoardCell) : new MatchCell();
             var matchView = new MatchView
             {
-                Phase = ToMatchPhase(table.Phase),
-                RoundNumber = table.RoundNumber,
-                TurnNumber = table.TurnNumber,
+                Phase = ToMatchPhase(matchTable.Phase),
+                RoundNumber = matchTable.RoundNumber,
+                TurnNumber = matchTable.TurnNumber,
                 ViewerSeatNumber = viewerSeatNumber,
-                ActiveSeatNumber = table.ActiveSeatNumber,
+                ActiveSeatNumber = matchTable.ActiveSeatNumber,
                 PlacementTimeLeft = placementTimeLeft,
                 Seats = _seatedEntrants.Select(ToMatchSeat).ToList(),
-                Flowers = CreateFlowers(table),
-                Caterpillars = table.Caterpillars.Select(ToMatchCaterpillar).ToList(),
-                HasButterfly = table.ButterflyCell.HasValue,
+                Flowers = CreateFlowers(matchTable),
+                Caterpillars = matchTable.Caterpillars.Select(ToMatchCaterpillar).ToList(),
+                HasButterfly = matchTable.ButterflyCell.HasValue,
                 ButterflyCell = butterflyCell,
-                PlacementTargets = table.FindPlacementTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
+                PlacementTargets = matchTable.FindPlacementTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
             };
 
             return matchView;
@@ -53,14 +53,14 @@ namespace Game.Match
 
         private static MatchSeat ToMatchSeat(SeatedEntrant seatedEntrant)
         {
-            var matchSeat = new MatchSeat { SeatNumber = seatedEntrant.SeatNumber, DisplayName = seatedEntrant.Entrant.DisplayName, IsGuest = seatedEntrant.Entrant.IsGuest, Color = seatedEntrant.Entrant.Color };
+            var matchSeat = new MatchSeat { SeatNumber = seatedEntrant.SeatNumber, DisplayName = seatedEntrant.Entrant.DisplayName, IsGuest = seatedEntrant.Entrant.IsGuest, Color = seatedEntrant.Entrant.SeatColor };
 
             return matchSeat;
         }
 
-        private static List<MatchFlower> CreateFlowers(MatchTable table)
+        private static List<MatchFlower> CreateFlowers(MatchTable matchTable)
         {
-            IReadOnlyList<Planter> planters = table.FindPlanters();
+            IReadOnlyList<Planter> planters = matchTable.FindPlanters();
             var matchFlowers = new List<MatchFlower>();
             for (var i = 0; i < planters.Count; i++)
             {
@@ -74,7 +74,7 @@ namespace Game.Match
         {
             foreach (Flower flower in planter.Flowers)
             {
-                matchFlowers.Add(new MatchFlower { Cell = MatchCellConversion.ToMatchCell(flower.Cell), Height = flower.Height, PlanterNumber = planterNumber });
+                matchFlowers.Add(new MatchFlower { Cell = MatchCellConversion.ToMatchCell(flower.Cell), Level = flower.Level, PlanterNumber = planterNumber });
             }
         }
 

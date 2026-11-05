@@ -21,14 +21,14 @@ namespace Game.Services
         private const string MatchEndedMessage = "Player {0} ended the match in room {1}.";
         private const string StartFailedMessage = "The database could not be used while a match was starting in room {0}.";
 
-        private static readonly ILog _log = LogManager.GetLogger(typeof(MatchService));
+        private static readonly ILog _matchLog = LogManager.GetLogger(typeof(MatchService));
 
         private readonly RoomRegistry _roomRegistry;
         private readonly RoomService _roomService;
         private readonly SessionRegistry _sessionRegistry;
         private readonly SystemParameterReader _systemParameterReader;
         private readonly TimeProvider _timeProvider;
-        private readonly MatchCoordinator _coordinator;
+        private readonly MatchCoordinator _matchCoordinator;
 
         public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, TimeProvider timeProvider, StartingBoard startingBoard)
         {
@@ -44,26 +44,26 @@ namespace Game.Services
             _sessionRegistry = sessionRegistry;
             _systemParameterReader = systemParameterReader;
             _timeProvider = timeProvider;
-            _coordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells);
         }
 
         /// <inheritdoc/>
         public async Task<StartMatchResult> StartMatchAsync()
         {
-            PlayerSession? caller = _sessionRegistry.FindCaller();
-            LiveRoom? room = caller is null ? null : _roomRegistry.FindRoomOf(caller.Owner.OwnerId);
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            LiveRoom? callerRoom = callerSession is null ? null : _roomRegistry.FindRoomOf(callerSession.Owner.OwnerId);
             StartMatchResult startResult;
-            if (caller is null)
+            if (callerSession is null)
             {
                 startResult = new StartMatchResult { Status = StartMatchStatus.NotIdentified };
             }
-            else if (room is null)
+            else if (callerRoom is null)
             {
                 startResult = new StartMatchResult { Status = StartMatchStatus.NotInRoom };
             }
             else
             {
-                startResult = await StartMatchInRoomAsync(room, caller.Owner.OwnerId);
+                startResult = await StartMatchInRoomAsync(callerRoom, callerSession.Owner.OwnerId);
             }
 
             return startResult;
@@ -72,7 +72,7 @@ namespace Game.Services
         /// <inheritdoc/>
         public PlacementResult PlaceCaterpillar(int row, int column)
         {
-            PlacementResult placementResult = Place(row, column, _coordinator.PlaceCaterpillar);
+            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceCaterpillar);
 
             return placementResult;
         }
@@ -80,7 +80,7 @@ namespace Game.Services
         /// <inheritdoc/>
         public PlacementResult PlaceButterfly(int row, int column)
         {
-            PlacementResult placementResult = Place(row, column, _coordinator.PlaceButterfly);
+            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceButterfly);
 
             return placementResult;
         }
@@ -88,49 +88,49 @@ namespace Game.Services
         /// <inheritdoc/>
         public EndMatchResult EndMatch()
         {
-            PlayerSession? caller = _sessionRegistry.FindCaller();
-            EndMatchResult endResult = caller is null ? EndMatchResult.NotIdentified : EndMatchOf(caller.Owner.OwnerId);
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            EndMatchResult endResult = callerSession is null ? EndMatchResult.NotIdentified : EndMatchOf(callerSession.Owner.OwnerId);
 
             return endResult;
         }
 
         private static StartMatchResult ToBannedResult(MatchBan ban)
         {
-            var bannedResult = new StartMatchResult { Status = StartMatchStatus.PlayerBanned, BannedDisplayName = ban.DisplayName, IsBanPermanent = ban.IsPermanent, BanTimeLeft = ban.TimeLeft };
+            var bannedResult = new StartMatchResult { Status = StartMatchStatus.PlayerBanned, BannedDisplayName = ban.DisplayName, IsBanPermanent = ban.IsPermanent, BanTimeLeft = ban.BanTimeLeft };
 
             return bannedResult;
         }
 
         private EndMatchResult EndMatchOf(int ownerId)
         {
-            EndMatchResult endResult = _coordinator.EndMatch(ownerId);
-            LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
-            if ((endResult == EndMatchResult.Ended) && (room is not null) && room.EndMatch())
+            EndMatchResult endResult = _matchCoordinator.EndMatch(ownerId);
+            LiveRoom? callerRoom = _roomRegistry.FindRoomOf(ownerId);
+            if ((endResult == EndMatchResult.Ended) && (callerRoom is not null) && callerRoom.EndMatch())
             {
                 int? noExcludedOwnerId = null;
-                _roomService.NotifyMembers(room, RoomChangeReason.MatchEnded, noExcludedOwnerId);
-                _log.InfoFormat(MatchEndedMessage, ownerId, room.RoomId);
+                _roomService.NotifyMembers(callerRoom, RoomChangeReason.MatchEnded, noExcludedOwnerId);
+                _matchLog.InfoFormat(MatchEndedMessage, ownerId, callerRoom.RoomId);
             }
 
             return endResult;
         }
 
-        private PlacementResult Place(int row, int column, Func<int, MatchCell, PlacementResult> placeInMatch)
+        private PlacementResult PlaceForCaller(int row, int column, Func<int, MatchCell, PlacementResult> placeInMatch)
         {
-            PlayerSession? caller = _sessionRegistry.FindCaller();
-            var cell = new MatchCell { Row = row, Column = column };
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            var destinationCell = new MatchCell { Row = row, Column = column };
             PlacementResult placementResult;
-            if (caller is null)
+            if (callerSession is null)
             {
                 placementResult = PlacementResult.NotIdentified;
             }
-            else if (!MatchCoordinator.BoardContains(cell))
+            else if (!MatchCoordinator.BoardContains(destinationCell))
             {
                 placementResult = PlacementResult.OutsideBoard;
             }
             else
             {
-                placementResult = placeInMatch(caller.Owner.OwnerId, cell);
+                placementResult = placeInMatch(callerSession.Owner.OwnerId, destinationCell);
             }
 
             return placementResult;
@@ -146,7 +146,7 @@ namespace Game.Services
             catch (NpgsqlException exception)
             {
                 string failureMessage = string.Format(CultureInfo.InvariantCulture, StartFailedMessage, room.RoomId);
-                _log.Error(failureMessage, exception);
+                _matchLog.Error(failureMessage, exception);
                 startResult = new StartMatchResult { Status = StartMatchStatus.DatabaseUnavailable };
             }
 
@@ -156,15 +156,15 @@ namespace Game.Services
         private async Task<StartMatchResult> CheckAndStartMatchAsync(LiveRoom room, int callerOwnerId)
         {
             MatchStartCheck startCheck = room.CheckMatchStart(callerOwnerId);
-            MatchBan? ban = startCheck.Status == StartMatchStatus.Started ? await FindFirstBanAsync(startCheck.Entrants) : null;
+            MatchBan? firstBan = startCheck.Status == StartMatchStatus.Started ? await FindFirstBanAsync(startCheck.Entrants) : null;
             StartMatchResult startResult;
             if (startCheck.Status != StartMatchStatus.Started)
             {
                 startResult = new StartMatchResult { Status = startCheck.Status };
             }
-            else if (ban is not null)
+            else if (firstBan is not null)
             {
-                startResult = ToBannedResult(ban);
+                startResult = ToBannedResult(firstBan);
             }
             else
             {
@@ -182,9 +182,9 @@ namespace Game.Services
             {
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
-                int matchId = await _coordinator.StartMatchAsync(startCheck.Entrants, placementTime);
+                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, placementTime);
                 int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
-                _log.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
+                _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 
             var startResult = new StartMatchResult { Status = startCheck.Status };
@@ -198,7 +198,7 @@ namespace Game.Services
             MatchBan? firstBan = null;
             foreach (MatchEntrant activeEntrant in activeEntrants)
             {
-                Sanction? sanction = await _roomService.FindBanAsync(activeEntrant.EntrantId, activeEntrant.IsGuest);
+                Sanction? sanction = await _roomService.FindBanInForceAsync(activeEntrant.EntrantId, activeEntrant.IsGuest);
                 if (sanction is not null)
                 {
                     firstBan = ToMatchBan(activeEntrant, sanction);
@@ -218,9 +218,9 @@ namespace Game.Services
                 banTimeLeft = effectiveUntilUtc - nowUtc;
             }
 
-            var ban = new MatchBan(bannedEntrant.DisplayName, sanction.EffectiveUntil is null, banTimeLeft);
+            var matchBan = new MatchBan(bannedEntrant.DisplayName, sanction.EffectiveUntil is null, banTimeLeft);
 
-            return ban;
+            return matchBan;
         }
 
         private async Task<TimeSpan> ReadPlacementTimeAsync()

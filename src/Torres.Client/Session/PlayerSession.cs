@@ -52,13 +52,13 @@ namespace Torres.Client.Session
             RoomChat.Follow(room.RoomId);
         }
 
-        internal void FollowMatch(MatchChange matchChange)
+        internal void ApplyMatchChange(MatchChange matchChange)
         {
             ArgumentNullException.ThrowIfNull(matchChange);
 
-            CurrentMatchView = matchChange.View;
+            CurrentMatchView = matchChange.MatchView;
             PlacementEndsAtUtc = null;
-            if (matchChange.View.PlacementTimeLeft is TimeSpan placementTimeLeft)
+            if (matchChange.MatchView.PlacementTimeLeft is TimeSpan placementTimeLeft)
             {
                 PlacementEndsAtUtc = matchChange.ReceivedAtUtc + placementTimeLeft;
             }

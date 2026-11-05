@@ -11,40 +11,40 @@ namespace Game.Match
     internal sealed class LiveMatch
     {
         private readonly Lock _matchLock = new Lock();
-        private readonly MatchTable _table;
+        private readonly MatchTable _matchTable;
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
         private readonly MatchViewFactory _viewFactory;
         private readonly TimeProvider _timeProvider;
-        private readonly IMatchListener _listener;
+        private readonly IMatchListener _matchListener;
         private readonly TimeSpan _placementTime;
 
         private CancellationTokenSource? _placementCountdown;
         private DateTime? _placementEndsAtUtc;
         private bool _hasEnded;
 
-        internal LiveMatch(int matchId, MatchTable table, IReadOnlyList<SeatedEntrant> seatedEntrants, TimeProvider timeProvider, IMatchListener listener, TimeSpan placementTime)
+        internal LiveMatch(int matchId, MatchTable matchTable, IReadOnlyList<SeatedEntrant> seatedEntrants, TimeProvider timeProvider, IMatchListener matchListener, TimeSpan placementTime)
         {
             MatchId = matchId;
-            _table = table;
+            _matchTable = matchTable;
             _seatedEntrants = seatedEntrants;
             _viewFactory = new MatchViewFactory(seatedEntrants);
             _timeProvider = timeProvider;
-            _listener = listener;
+            _matchListener = matchListener;
             _placementTime = placementTime;
         }
 
         internal int MatchId { get; }
 
-        internal void Start()
+        internal void StartPlacement()
         {
             lock (_matchLock)
             {
                 RestartPlacementCountdown();
-                _listener.ReceiveMatchStarted(BuildRecipientViews());
+                _matchListener.ReceiveMatchStarted(BuildRecipientViews());
             }
         }
 
-        internal void End()
+        internal void EndMatch()
         {
             lock (_matchLock)
             {
@@ -53,44 +53,44 @@ namespace Game.Match
             }
         }
 
-        internal PlacementResult PlaceCaterpillar(int entrantId, BoardCell cell)
+        internal PlacementResult PlaceCaterpillar(int entrantId, BoardCell destinationCell)
         {
             PlacementResult placementResult;
             lock (_matchLock)
             {
-                placementResult = Place(entrantId, cell, _table.PlaceInitialCaterpillar);
+                placementResult = PlaceOnTable(entrantId, destinationCell, _matchTable.PlaceInitialCaterpillar);
             }
 
             return placementResult;
         }
 
-        internal PlacementResult PlaceButterfly(int entrantId, BoardCell cell)
+        internal PlacementResult PlaceButterfly(int entrantId, BoardCell destinationCell)
         {
             PlacementResult placementResult;
             lock (_matchLock)
             {
-                placementResult = Place(entrantId, cell, _table.PlaceButterfly);
+                placementResult = PlaceOnTable(entrantId, destinationCell, _matchTable.PlaceButterfly);
             }
 
             return placementResult;
         }
 
-        private static PlacementResult ToPlacementResult(PlacementOutcome outcome)
+        private static PlacementResult ToPlacementResult(PlacementOutcome placementOutcome)
         {
-            PlacementResult placementResult = outcome switch
+            PlacementResult placementResult = placementOutcome switch
             {
                 PlacementOutcome.Placed => PlacementResult.Placed,
                 PlacementOutcome.WrongPhase => PlacementResult.WrongPhase,
                 PlacementOutcome.NotYourPlacement => PlacementResult.NotYourPlacement,
                 PlacementOutcome.NotAFlower => PlacementResult.NotAFlower,
                 PlacementOutcome.FlowerOccupied => PlacementResult.FlowerOccupied,
-                _ => throw new ArgumentOutOfRangeException(nameof(outcome)),
+                _ => throw new ArgumentOutOfRangeException(nameof(placementOutcome)),
             };
 
             return placementResult;
         }
 
-        private PlacementResult Place(int entrantId, BoardCell cell, Func<int, BoardCell, PlacementOutcome> placeOnTable)
+        private PlacementResult PlaceOnTable(int entrantId, BoardCell destinationCell, Func<int, BoardCell, PlacementOutcome> placeOnTable)
         {
             PlacementResult placementResult = PlacementResult.TimeExpired;
             if (_hasEnded)
@@ -99,14 +99,14 @@ namespace Game.Match
             }
             else if (!HasPlacementExpired())
             {
-                PlacementOutcome outcome = placeOnTable(GetSeatNumber(entrantId), cell);
-                placementResult = ToPlacementResult(outcome);
+                PlacementOutcome placementOutcome = placeOnTable(GetSeatNumber(entrantId), destinationCell);
+                placementResult = ToPlacementResult(placementOutcome);
             }
 
             if (placementResult == PlacementResult.Placed)
             {
                 RestartPlacementCountdown();
-                _listener.ReceiveMatchStateChanged(BuildRecipientViews());
+                _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
 
             return placementResult;
@@ -123,9 +123,9 @@ namespace Game.Match
                     return;
                 }
 
-                _table.ExpirePlacement();
+                _matchTable.ExpirePlacement();
                 RestartPlacementCountdown();
-                _listener.ReceiveMatchStateChanged(BuildRecipientViews());
+                _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
         }
 
@@ -144,7 +144,7 @@ namespace Game.Match
 
         private void StartPlacementCountdown()
         {
-            if (_table.Phase == TablePhase.PlayerTurn)
+            if (_matchTable.Phase == TablePhase.PlayerTurn)
             {
                 return;
             }
@@ -185,7 +185,7 @@ namespace Game.Match
             var recipientViews = new List<MatchRecipientView>();
             foreach (SeatedEntrant recipient in _seatedEntrants)
             {
-                MatchView matchView = _viewFactory.Create(_table, placementTimeLeft, recipient.SeatNumber);
+                MatchView matchView = _viewFactory.CreateForSeat(_matchTable, placementTimeLeft, recipient.SeatNumber);
                 recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, matchView));
             }
 

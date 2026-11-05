@@ -42,39 +42,39 @@ namespace Torres.Client.Scene
                 ? BoardGeometry.GetFlowerTop(flowerLevel) + LiftOnFlower
                 : BoardGeometry.GrassTop;
             Vector3 bodyOrigin = BoardGeometry.GetCellCenter(caterpillar.Cell) + new Vector3(0f, baseHeight, 0f);
-            Vector3 heading = BoardGeometry.GetHeadingDirection(caterpillar.HeadingDegrees);
-            Color bodyColor = SeatColors.ColorFor(caterpillar.Color);
+            Vector3 headingDirection = BoardGeometry.GetHeadingDirection(caterpillar.HeadingDegrees);
+            Color bodyColor = SeatColors.ColorFor(caterpillar.SeatColor);
 
             float segmentOffset = FirstSegmentOffset;
             for (var segmentIndex = 0; segmentIndex < _segmentRadii.Length; segmentIndex++)
             {
                 float segmentRadius = _segmentRadii[segmentIndex];
                 float bobPhaseRadians = MathHelper.ToRadians(SegmentBobStepDegrees * segmentIndex);
-                float bob = SegmentBobHeight * MathF.Sin(bobPhaseRadians);
-                Vector3 segmentCenter = bodyOrigin + (heading * segmentOffset) + new Vector3(0f, segmentRadius + bob, 0f);
+                float bobLift = SegmentBobHeight * MathF.Sin(bobPhaseRadians);
+                Vector3 segmentCenter = bodyOrigin + (headingDirection * segmentOffset) + new Vector3(0f, segmentRadius + bobLift, 0f);
                 meshBuilder.AddSphere(Matrix.CreateScale(segmentRadius) * Matrix.CreateTranslation(segmentCenter), bodyColor);
                 segmentOffset += segmentRadius * SegmentSpacing;
             }
 
-            Vector3 headCenter = bodyOrigin + (heading * (segmentOffset + HeadForwardGap)) + new Vector3(0f, HeadRadius + HeadLift, 0f);
+            Vector3 headCenter = bodyOrigin + (headingDirection * (segmentOffset + HeadForwardGap)) + new Vector3(0f, HeadRadius + HeadLift, 0f);
             meshBuilder.AddSphere(Matrix.CreateScale(HeadRadius) * Matrix.CreateTranslation(headCenter), bodyColor);
             AddFace(meshBuilder, caterpillar, headCenter);
         }
 
         private static void AddFace(MeshBuilder meshBuilder, BoardCaterpillar caterpillar, Vector3 headCenter)
         {
-            Vector3 heading = BoardGeometry.GetHeadingDirection(caterpillar.HeadingDegrees);
-            Vector3 sideways = Vector3.Cross(Vector3.Up, heading);
-            Color bodyColor = SeatColors.ColorFor(caterpillar.Color);
-            foreach (float side in BoardGeometry.MirroredSides)
+            Vector3 headingDirection = BoardGeometry.GetHeadingDirection(caterpillar.HeadingDegrees);
+            Vector3 sidewaysDirection = Vector3.Cross(Vector3.Up, headingDirection);
+            Color bodyColor = SeatColors.ColorFor(caterpillar.SeatColor);
+            foreach (float sideSign in BoardGeometry.MirroredSideSigns)
             {
-                Vector3 eyeCenter = headCenter + (heading * EyeForward) + (sideways * EyeSpread * side) + new Vector3(0f, EyeLift, 0f);
-                meshBuilder.AddSphere(Matrix.CreateScale(EyeRadius) * Matrix.CreateTranslation(eyeCenter), GardenPalette.Eye);
+                Vector3 eyeCenter = headCenter + (headingDirection * EyeForward) + (sidewaysDirection * EyeSpread * sideSign) + new Vector3(0f, EyeLift, 0f);
+                meshBuilder.AddSphere(Matrix.CreateScale(EyeRadius) * Matrix.CreateTranslation(eyeCenter), GardenPalette.CaterpillarEye);
 
-                Vector3 antennaBase = headCenter + (sideways * AntennaSpread * side) + new Vector3(0f, AntennaBaseLift, 0f);
-                float antennaTiltRadians = MathHelper.ToRadians(-AntennaTiltDegrees * side);
+                Vector3 antennaBase = headCenter + (sidewaysDirection * AntennaSpread * sideSign) + new Vector3(0f, AntennaBaseLift, 0f);
+                float antennaTiltRadians = MathHelper.ToRadians(-AntennaTiltDegrees * sideSign);
                 Matrix antennaTransform = Matrix.CreateScale(_antennaScale)
-                    * Matrix.CreateFromAxisAngle(heading, antennaTiltRadians)
+                    * Matrix.CreateFromAxisAngle(headingDirection, antennaTiltRadians)
                     * Matrix.CreateTranslation(antennaBase);
                 meshBuilder.AddCylinder(antennaTransform, bodyColor);
             }

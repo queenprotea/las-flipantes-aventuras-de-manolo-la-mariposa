@@ -18,7 +18,7 @@ namespace Torres.Client.Screens
     internal sealed class ChatView
     {
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly VerticalStackPanel _messageList = new VerticalStackPanel { Spacing = Metrics.ChatSpacing };
         private readonly ScrollViewer _messageScroller;
@@ -33,14 +33,14 @@ namespace Torres.Client.Screens
         private bool _isScrollToEndPending;
         private KeyboardState _previousKeyboardState;
 
-        internal ChatView(GameSessionConnection gameSessionConnection, PlayerSession session, int panelWidth)
+        internal ChatView(GameSessionConnection gameSessionConnection, PlayerSession playerSession, int panelWidth)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(panelWidth);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _messageList.Width = panelWidth - Metrics.ChatPadding.Left - Metrics.ChatPadding.Right - Metrics.ChatScrollbarAllowance;
             _messageScroller = new ScrollViewer
             {
@@ -73,7 +73,7 @@ namespace Torres.Client.Screens
             FollowSendRequest();
             FollowEnterKey();
             _inputHint.Visible = (ReadTypedText().Length == 0) && !HasTypingFocus;
-            if (_session.RoomChat.Revision != _shownRevision)
+            if (_playerSession.RoomChat.Revision != _shownRevision)
             {
                 RenderMessages();
             }
@@ -131,7 +131,7 @@ namespace Torres.Client.Screens
 
         private void RenderMessages()
         {
-            RoomChatLog roomChat = _session.RoomChat;
+            RoomChatLog roomChat = _playerSession.RoomChat;
             _shownRevision = roomChat.Revision;
             _messageList.Widgets.Clear();
             if (roomChat.Messages.Count == 0)
@@ -190,9 +190,9 @@ namespace Torres.Client.Screens
 
         private void RequestMissingHistory()
         {
-            RoomChatLog roomChat = _session.RoomChat;
+            RoomChatLog roomChat = _playerSession.RoomChat;
             int? followedRoomId = roomChat.RoomId;
-            bool canRequestHistory = (_historyRequest is null) && !roomChat.IsLoaded && _gameSessionConnection.IsOpen;
+            bool canRequestHistory = (_historyRequest is null) && !roomChat.IsLoaded && _gameSessionConnection.IsSessionOpen;
             if (canRequestHistory && (followedRoomId is not null))
             {
                 _historyRoomId = followedRoomId.Value;
@@ -211,7 +211,7 @@ namespace Torres.Client.Screens
             _historyRequest = null;
             if (completedHistory.IsCompletedSuccessfully)
             {
-                _session.RoomChat.Load(_historyRoomId, completedHistory.Result);
+                _playerSession.RoomChat.Load(_historyRoomId, completedHistory.Result);
             }
             else
             {
@@ -233,7 +233,7 @@ namespace Torres.Client.Screens
         private void StartSend()
         {
             string typedText = ReadTypedText().Trim();
-            bool canSend = (_sendRequest is null) && (typedText.Length > 0) && _gameSessionConnection.IsOpen;
+            bool canSend = (_sendRequest is null) && (typedText.Length > 0) && _gameSessionConnection.IsSessionOpen;
             if (!canSend)
             {
                 return;
@@ -287,7 +287,7 @@ namespace Torres.Client.Screens
 
         private void InputBoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)
         {
-            int messageMaxLength = _session.RoomChat.MessageMaxLength;
+            int messageMaxLength = _playerSession.RoomChat.MessageMaxLength;
             if ((messageMaxLength > 0) && (e.NewValue is not null) && (e.NewValue.Length > messageMaxLength))
             {
                 e.Cancel = true;

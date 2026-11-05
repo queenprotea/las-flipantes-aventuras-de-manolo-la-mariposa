@@ -19,7 +19,7 @@ namespace Torres.Client.Screens
         private const int LoneMemberCount = 1;
 
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly VerticalStackPanel _topBarPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
         private readonly VerticalStackPanel _playersPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
@@ -28,18 +28,18 @@ namespace Torres.Client.Screens
         private Room? _shownRoom;
         private Task<LeaveRoomResult>? _leaveRequest;
         private Task<KickMemberResult>? _kickRequest;
-        private Task<StartMatchResult>? _startRequest;
-        private Task<EndMatchResult>? _endRequest;
+        private Task<StartMatchResult>? _startMatchRequest;
+        private Task<EndMatchResult>? _endMatchRequest;
 
-        internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Room.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
-            _chatView = new ChatView(gameSessionConnection, session, Sizes.RoomSideColumnWidth);
+            _playerSession = playerSession;
+            _chatView = new ChatView(gameSessionConnection, playerSession, Sizes.RoomSideColumnWidth);
         }
 
         internal override void Open()
@@ -47,7 +47,7 @@ namespace Torres.Client.Screens
             _noticeBox.Hide();
             HideConfirmation();
             _shownRoom = null;
-            if (_session.CurrentRoom is null)
+            if (_playerSession.CurrentRoom is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
             }
@@ -57,7 +57,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
-            Room? currentRoom = _session.CurrentRoom;
+            Room? currentRoom = _playerSession.CurrentRoom;
             if ((currentRoom is not null) && !ReferenceEquals(currentRoom, _shownRoom))
             {
                 Render(currentRoom);
@@ -65,8 +65,8 @@ namespace Torres.Client.Screens
 
             FollowLeaveRequest();
             FollowKickRequest();
-            FollowStartRequest();
-            FollowEndRequest();
+            FollowStartMatchRequest();
+            FollowEndMatchRequest();
             _chatView.Update();
         }
 
@@ -167,11 +167,11 @@ namespace Torres.Client.Screens
             endMatchButton.Click += EndMatchButtonOnClick;
             roomActionsBar.Widgets.Add(endMatchButton);
 
-            LocalizedButton startButton = CreatePrimaryButton(TextKeys.Room.StartMatchButton);
-            startButton.Visible = isViewerHost;
-            startButton.Enabled = room.CanViewerStartMatch;
-            startButton.Click += StartButtonOnClick;
-            roomActionsBar.Widgets.Add(startButton);
+            LocalizedButton startMatchButton = CreatePrimaryButton(TextKeys.Room.StartMatchButton);
+            startMatchButton.Visible = isViewerHost;
+            startMatchButton.Enabled = room.CanViewerStartMatch;
+            startMatchButton.Click += StartMatchButtonOnClick;
+            roomActionsBar.Widgets.Add(startMatchButton);
 
             return roomActionsBar;
         }
@@ -345,7 +345,7 @@ namespace Torres.Client.Screens
             }
             else if (completedLeave.IsCompletedSuccessfully)
             {
-                _session.LeaveRoom();
+                _playerSession.LeaveRoom();
                 RequestedScreen = ScreenId.MainMenu;
             }
             else
@@ -373,18 +373,18 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void FollowStartRequest()
+        private void FollowStartMatchRequest()
         {
-            if ((_startRequest is null) || !_startRequest.IsCompleted)
+            if ((_startMatchRequest is null) || !_startMatchRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<StartMatchResult> completedStart = _startRequest;
-            _startRequest = null;
-            if (completedStart.IsCompletedSuccessfully)
+            Task<StartMatchResult> completedStartMatch = _startMatchRequest;
+            _startMatchRequest = null;
+            if (completedStartMatch.IsCompletedSuccessfully)
             {
-                ShowStartResult(completedStart.Result);
+                ShowStartMatchResult(completedStartMatch.Result);
             }
             else
             {
@@ -392,22 +392,22 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void FollowEndRequest()
+        private void FollowEndMatchRequest()
         {
-            if ((_endRequest is null) || !_endRequest.IsCompleted)
+            if ((_endMatchRequest is null) || !_endMatchRequest.IsCompleted)
             {
                 return;
             }
 
-            Task<EndMatchResult> completedEnd = _endRequest;
-            _endRequest = null;
-            if (!completedEnd.IsCompletedSuccessfully || (completedEnd.Result == EndMatchResult.NotIdentified))
+            Task<EndMatchResult> completedEndMatch = _endMatchRequest;
+            _endMatchRequest = null;
+            if (!completedEndMatch.IsCompletedSuccessfully || (completedEndMatch.Result == EndMatchResult.NotIdentified))
             {
                 ShowServerError();
             }
         }
 
-        private void ShowStartResult(StartMatchResult startResult)
+        private void ShowStartMatchResult(StartMatchResult startResult)
         {
             switch (startResult.Status)
             {
@@ -456,16 +456,16 @@ namespace Torres.Client.Screens
             _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
         }
 
-        private void StartButtonOnClick(object sender, MyraEventArgs e)
+        private void StartMatchButtonOnClick(object sender, MyraEventArgs e)
         {
             _noticeBox.Hide();
-            _startRequest ??= _gameSessionConnection.StartMatchAsync();
+            _startMatchRequest ??= _gameSessionConnection.StartMatchAsync();
         }
 
         private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
         {
             _noticeBox.Hide();
-            _endRequest ??= _gameSessionConnection.EndMatchAsync();
+            _endMatchRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void CopyButtonOnClick(object sender, MyraEventArgs e)

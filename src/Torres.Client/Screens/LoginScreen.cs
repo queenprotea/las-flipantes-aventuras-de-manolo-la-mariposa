@@ -18,7 +18,7 @@ namespace Torres.Client.Screens
     {
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Login.UsernameLabel, false);
         private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Login.PasswordLabel, true);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Login.InvalidCredentials);
@@ -30,22 +30,22 @@ namespace Torres.Client.Screens
         private Task<OpenSessionResult>? _sessionOpening;
         private PlayerIdentity? _loggedInPlayer;
 
-        internal LoginScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal LoginScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Login.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(accountChannelFactory);
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _accountChannelFactory = accountChannelFactory;
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _guestButton = CreateLinkButton(TextKeys.Login.PlayAsGuestLink);
         }
 
         internal override void Open()
         {
-            _guestButton.Visible = !_session.IsGuest;
+            _guestButton.Visible = !_playerSession.IsGuest;
         }
 
         internal override void Update(GameTime gameTime)
@@ -92,7 +92,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _gameSessionConnection.Abandon();
+                _gameSessionConnection.AbortSessionChannel();
                 ShowError(TextKeys.Common.ServerErrorTitle);
             }
         }
@@ -201,10 +201,10 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            if (_session.IsGuest)
+            if (_playerSession.IsGuest)
             {
                 _gameSessionConnection.CloseSession();
-                _session.End();
+                _playerSession.End();
             }
 
             _loggedInPlayer = loginResult.Player;
@@ -213,8 +213,8 @@ namespace Torres.Client.Screens
 
         private void EnterAs(PlayerIdentity player, OpenSessionResult opening)
         {
-            _gameSessionConnection.Start(opening);
-            _session.Start(player);
+            _gameSessionConnection.BeginConnectionChecks(opening);
+            _playerSession.Start(player);
             _passwordField.Box.Text = string.Empty;
             if (opening.CurrentRoom is null)
             {
@@ -222,7 +222,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _session.EnterRoom(opening.CurrentRoom);
+                _playerSession.EnterRoom(opening.CurrentRoom);
                 RequestedScreen = ScreenId.Room;
             }
         }

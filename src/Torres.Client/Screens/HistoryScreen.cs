@@ -51,7 +51,7 @@ namespace Torres.Client.Screens
         private static readonly ChipStyle _blushChipStyle = new ChipStyle(Theme.BlushTintBrush, Theme.BlushBrush, Theme.BlushInk);
 
         private readonly GameSessionConnection _gameSessionConnection;
-        private readonly PlayerSession _session;
+        private readonly PlayerSession _playerSession;
         private readonly LocalizedLabel _loadingLabel;
         private readonly VerticalStackPanel _contentPlaceholder = new VerticalStackPanel { Visible = false };
         private readonly VerticalStackPanel _failureNotice;
@@ -66,14 +66,14 @@ namespace Torres.Client.Screens
         private int _shownPageNumber = MatchHistorySelection.FirstPageNumber;
         private int _pageCount;
 
-        internal HistoryScreen(GameSessionConnection gameSessionConnection, PlayerSession session)
+        internal HistoryScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.History.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
+            ArgumentNullException.ThrowIfNull(playerSession);
 
             _gameSessionConnection = gameSessionConnection;
-            _session = session;
+            _playerSession = playerSession;
             _loadingLabel = CreateHint(TextKeys.History.LoadingLabel);
 
             LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Common.RetryButton);
@@ -102,8 +102,8 @@ namespace Torres.Client.Screens
             _pageBar.Visible = false;
             _failureNotice.Visible = false;
 
-            int pageToOpen = _session.MatchHistory.TakePageToResume();
-            if (!_session.HasAccount || !_gameSessionConnection.IsOpen)
+            int pageToOpen = _playerSession.MatchHistory.TakePageToResume();
+            if (!_playerSession.HasAccount || !_gameSessionConnection.IsSessionOpen)
             {
                 RequestedScreen = ScreenId.Login;
                 return;
@@ -153,7 +153,7 @@ namespace Torres.Client.Screens
             _requestedPageNumber = pageNumber;
             _failureNotice.Visible = false;
 
-            if (!_gameSessionConnection.IsOpen)
+            if (!_gameSessionConnection.IsSessionOpen)
             {
                 _loadingLabel.Visible = false;
                 ShowFailure();
@@ -479,7 +479,7 @@ namespace Torres.Client.Screens
         {
             if ((sender is Button rowClickTarget) && _matchIdsByRowClickTarget.TryGetValue(rowClickTarget, out int matchId) && (_historyRequest is null))
             {
-                _session.MatchHistory.Select(matchId, _shownPageNumber);
+                _playerSession.MatchHistory.Select(matchId, _shownPageNumber);
                 RequestedScreen = ScreenId.MatchDetail;
             }
         }
