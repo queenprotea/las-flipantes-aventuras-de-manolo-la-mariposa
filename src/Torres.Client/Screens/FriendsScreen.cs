@@ -129,7 +129,7 @@ namespace Torres.Client.Screens
             if (completedFriendshipList.IsCompletedSuccessfully)
             {
                 FriendshipListResponse receivedFriendshipList = completedFriendshipList.Result;
-                bool hasChanged = !HasSamePlayers(_friendshipList, receivedFriendshipList);
+                bool hasChanged = !ShowsSameRows(_friendshipList, receivedFriendshipList);
                 _friendshipList = receivedFriendshipList;
                 if (hasChanged)
                 {
@@ -256,21 +256,24 @@ namespace Torres.Client.Screens
             }
         }
 
-        private static bool HasSamePlayers(FriendshipListResponse shownFriendshipList, FriendshipListResponse receivedFriendshipList)
+        private static bool ShowsSameRows(FriendshipListResponse shownFriendshipList, FriendshipListResponse receivedFriendshipList)
         {
-            bool hasSamePlayers = HasSamePlayers(shownFriendshipList.Friends, receivedFriendshipList.Friends)
-                && HasSamePlayers(shownFriendshipList.ReceivedRequests, receivedFriendshipList.ReceivedRequests)
-                && HasSamePlayers(shownFriendshipList.SentRequests, receivedFriendshipList.SentRequests);
+            bool showsSameRows = ShowsSameRows(shownFriendshipList.Friends, receivedFriendshipList.Friends)
+                && ShowsSameRows(shownFriendshipList.ReceivedRequests, receivedFriendshipList.ReceivedRequests)
+                && ShowsSameRows(shownFriendshipList.SentRequests, receivedFriendshipList.SentRequests);
 
-            return hasSamePlayers;
+            return showsSameRows;
         }
 
-        private static bool HasSamePlayers(IEnumerable<PlayerSummary> shownPlayers, IEnumerable<PlayerSummary> receivedPlayers)
+        private static bool ShowsSameRows(IEnumerable<PlayerSummary> shownPlayers, IEnumerable<PlayerSummary> receivedPlayers)
         {
             bool hasSamePlayers = shownPlayers.Select(player => player.PlayerId)
                 .SequenceEqual(receivedPlayers.Select(player => player.PlayerId));
+            bool hasSameConnectionStatus = shownPlayers.Select(player => player.IsOnline)
+                .SequenceEqual(receivedPlayers.Select(player => player.IsOnline));
+            bool showsSameRows = hasSamePlayers && hasSameConnectionStatus;
 
-            return hasSamePlayers;
+            return showsSameRows;
         }
 
         private void StartFriendshipListRequest()
@@ -427,7 +430,11 @@ namespace Torres.Client.Screens
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
                 itemRow.Widgets.Add(_avatarViews.Create(friend.AvatarReference).Root);
-                itemRow.Widgets.Add(CreateUsernameLabel(friend.Username));
+
+                var nameColumn = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
+                nameColumn.Widgets.Add(CreateUsernameLabel(friend.Username));
+                nameColumn.Widgets.Add(BuildConnectionStatusRow(friend.IsOnline));
+                itemRow.Widgets.Add(nameColumn);
 
                 var spacer = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
                 StackPanel.SetProportionType(spacer, ProportionType.Part);
@@ -441,6 +448,32 @@ namespace Torres.Client.Screens
             }
 
             return friendsList;
+        }
+
+        private static HorizontalStackPanel BuildConnectionStatusRow(bool isOnline)
+        {
+            Color connectionDotColor = isOnline ? Theme.MintLine : Theme.Blush;
+            string connectionTextKey = isOnline ? TextKeys.Friends.OnlineStatus : TextKeys.Friends.OfflineStatus;
+
+            var connectionDot = new Label
+            {
+                Text = DisplaySymbols.ConnectionDot,
+                Font = Fonts.Small,
+                TextColor = connectionDotColor,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var connectionLabel = new LocalizedLabel(connectionTextKey)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var connectionStatusRow = new HorizontalStackPanel { Spacing = Metrics.FieldLabelSpacing };
+            connectionStatusRow.Widgets.Add(connectionDot);
+            connectionStatusRow.Widgets.Add(connectionLabel);
+
+            return connectionStatusRow;
         }
 
         private Widget BuildReceivedList()

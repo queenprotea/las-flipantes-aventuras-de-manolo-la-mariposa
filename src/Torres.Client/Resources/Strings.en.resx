@@ -478,6 +478,12 @@
   <data name="Friends.InviteToRoomButton" xml:space="preserve">
     <value>Invite to Room</value>
   </data>
+  <data name="Friends.OnlineStatus" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="Friends.OfflineStatus" xml:space="preserve">
+    <value>Offline</value>
+  </data>
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitations</value>
   </data>

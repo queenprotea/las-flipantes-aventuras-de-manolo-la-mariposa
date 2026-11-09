@@ -165,7 +165,9 @@ namespace Game.Services
             {
                 FriendRelationship relationship = ToRelationship(friendshipsByOtherPlayer[otherPlayer.PlayerId], callerPlayerId);
                 List<PlayerSummary> relationshipPlayers = SelectRelationshipPlayers(friendshipList, relationship);
-                relationshipPlayers.Add(ToPlayerSummary(otherPlayer));
+                PlayerSummary otherPlayerSummary = ToPlayerSummary(otherPlayer);
+                otherPlayerSummary.IsOnline = (relationship == FriendRelationship.Friend) && _sessionRegistry.HasOpenSession(otherPlayer.PlayerId);
+                relationshipPlayers.Add(otherPlayerSummary);
             }
 
             return friendshipList;

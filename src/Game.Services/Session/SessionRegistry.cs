@@ -77,6 +77,17 @@ namespace Game.Services
             return callerSession;
         }
 
+        internal bool HasOpenSession(int ownerId)
+        {
+            bool hasOpenSession;
+            lock (_registryLock)
+            {
+                hasOpenSession = _sessionsByOwnerId.ContainsKey(ownerId);
+            }
+
+            return hasOpenSession;
+        }
+
         internal void Touch(PlayerSession session)
         {
             session.Touch(_timeProvider.GetUtcNow().UtcDateTime);

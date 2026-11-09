@@ -190,6 +190,8 @@ namespace Torres.Client.Localization
             internal const string NoResultsTitle = "Friends.NoResultsTitle";
             internal const string NoResultsHint = "Friends.NoResultsHint";
             internal const string InviteToRoomButton = "Friends.InviteToRoomButton";
+            internal const string OnlineStatus = "Friends.OnlineStatus";
+            internal const string OfflineStatus = "Friends.OfflineStatus";
         }
 
         internal static class Invitations
