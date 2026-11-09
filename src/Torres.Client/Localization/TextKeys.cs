@@ -133,6 +133,9 @@ namespace Torres.Client.Localization
             internal const string AvatarFormatHint = "Profile.AvatarFormatHint";
             internal const string AvatarMissing = "Profile.AvatarMissing";
             internal const string AvatarTooLarge = "Profile.AvatarTooLarge";
+            internal const string AvatarInvalidFormat = "Profile.AvatarInvalidFormat";
+            internal const string SavedMessage = "Profile.SavedMessage";
+            internal const string MatchInProgress = "Profile.MatchInProgress";
             internal const string AccountTitle = "Profile.AccountTitle";
             internal const string AccountHint = "Profile.AccountHint";
             internal const string UsernameLabel = "Profile.UsernameLabel";

@@ -72,6 +72,34 @@ namespace Game.Persistence
             return player;
         }
 
+        public Task<Player?> FindByIdAsync(int playerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
+            Task<Player?> playerReading = ReadByIdAsync(playerId);
+
+            return playerReading;
+        }
+
+        public Task<string?> FindAvatarReferenceAsync(int playerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
+            Task<string?> avatarReferenceReading = ReadAvatarReferenceAsync(playerId);
+
+            return avatarReferenceReading;
+        }
+
+        public Task<ProfileUpdateOutcome> UpdateProfileAsync(int playerId, string username, string? avatarReference)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+
+            Task<ProfileUpdateOutcome> profileWriting = WriteProfileAsync(playerId, username, avatarReference);
+
+            return profileWriting;
+        }
+
         public Player? FindByUsername(string username)
         {
             ArgumentNullException.ThrowIfNull(username);
@@ -119,6 +147,55 @@ namespace Game.Persistence
                 .ToListAsync();
 
             return players;
+        }
+
+        private async Task<Player?> ReadByIdAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            Player? player = await databaseContext.Players
+                .AsNoTracking()
+                .SingleOrDefaultAsync(storedPlayer => storedPlayer.PlayerId == playerId);
+
+            return player;
+        }
+
+        private async Task<string?> ReadAvatarReferenceAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            string? avatarReference = await databaseContext.Players
+                .AsNoTracking()
+                .Where(storedPlayer => storedPlayer.PlayerId == playerId)
+                .Select(storedPlayer => storedPlayer.AvatarReference)
+                .SingleOrDefaultAsync();
+
+            return avatarReference;
+        }
+
+        private async Task<ProfileUpdateOutcome> WriteProfileAsync(int playerId, string username, string? avatarReference)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            Player? storedPlayer = await databaseContext.Players.SingleOrDefaultAsync(candidate => candidate.PlayerId == playerId);
+            if (storedPlayer is null)
+            {
+                return ProfileUpdateOutcome.PlayerNotFound;
+            }
+
+            storedPlayer.Username = username;
+            storedPlayer.AvatarReference = avatarReference;
+            ProfileUpdateOutcome updateOutcome = ProfileUpdateOutcome.Updated;
+            try
+            {
+                await databaseContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException exception)
+                when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: UsernameIndex })
+            {
+                updateOutcome = ProfileUpdateOutcome.UsernameTaken;
+            }
+
+            return updateOutcome;
         }
 
         private static PlayerCreationOutcome ToTakenOutcome(string? violatedIndex)

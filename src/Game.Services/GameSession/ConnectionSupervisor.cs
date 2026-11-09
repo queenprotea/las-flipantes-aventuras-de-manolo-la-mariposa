@@ -8,20 +8,23 @@ namespace Game.Services
     {
         private readonly SessionRegistry _sessionRegistry;
         private readonly RoomService _roomService;
+        private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly SessionTimings _sessionTimings;
 
         private PeriodicTimer? _connectionCheckTimer;
         private Task _supervisionTask = Task.CompletedTask;
         private TimeSpan _roomInactivityLimit;
 
-        public ConnectionSupervisor(SessionRegistry sessionRegistry, RoomService roomService, SessionTimings sessionTimings)
+        public ConnectionSupervisor(SessionRegistry sessionRegistry, RoomService roomService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
+            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
             ArgumentNullException.ThrowIfNull(sessionTimings);
 
             _sessionRegistry = sessionRegistry;
             _roomService = roomService;
+            _avatarUploadRegistry = avatarUploadRegistry;
             _sessionTimings = sessionTimings;
         }
 
@@ -45,6 +48,7 @@ namespace Game.Services
             while ((_connectionCheckTimer is not null) && await _connectionCheckTimer.WaitForNextTickAsync())
             {
                 DropSilentSessions();
+                _avatarUploadRegistry.DiscardIdle();
                 await _roomService.RemoveExpiredMembersAsync(_roomInactivityLimit);
             }
         }

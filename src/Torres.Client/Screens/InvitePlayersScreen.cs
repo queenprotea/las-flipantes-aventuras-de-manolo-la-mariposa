@@ -5,6 +5,7 @@ using System.Linq;
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Ui;
 
@@ -15,12 +16,16 @@ namespace Torres.Client.Screens
         private readonly List<InviteCandidate> _friends = CreateSampleFriends();
         private readonly VerticalStackPanel _candidatesPlaceholder = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
         private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
+        private readonly AvatarViewSet _avatarViews;
 
         private string _searchTerm = string.Empty;
 
-        internal InvitePlayersScreen()
+        internal InvitePlayersScreen(AvatarCache avatarCache)
             : base(TextKeys.InvitePlayers.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(avatarCache);
+
+            _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);
         }
 
         protected override Widget Build()
@@ -56,6 +61,7 @@ namespace Torres.Client.Screens
         private void RenderCandidates()
         {
             _candidatesPlaceholder.Widgets.Clear();
+            _avatarViews.Clear();
             List<InviteCandidate> matchingCandidates = FindMatchingCandidates();
             if (matchingCandidates.Count == 0)
             {
@@ -66,6 +72,7 @@ namespace Torres.Client.Screens
             foreach (InviteCandidate candidate in matchingCandidates)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(_avatarViews.Create(null).Root);
                 Label usernameLabel = CreateUsernameLabel(candidate.Username);
                 itemRow.Widgets.Add(usernameLabel);
                 StackPanel.SetProportionType(usernameLabel, ProportionType.Fill);

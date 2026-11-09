@@ -329,7 +329,16 @@
     <value>Your image is no longer on the server: the default avatar is shown.</value>
   </data>
   <data name="Profile.AvatarTooLarge" xml:space="preserve">
-    <value>The file is 7.4 MB.</value>
+    <value>The file is {0} MB.</value>
+  </data>
+  <data name="Profile.AvatarInvalidFormat" xml:space="preserve">
+    <value>Only PNG or JPG images are allowed.</value>
+  </data>
+  <data name="Profile.SavedMessage" xml:space="preserve">
+    <value>Profile updated.</value>
+  </data>
+  <data name="Profile.MatchInProgress" xml:space="preserve">
+    <value>You can't edit your profile during a match.</value>
   </data>
   <data name="Profile.AccountTitle" xml:space="preserve">
     <value>Your account</value>

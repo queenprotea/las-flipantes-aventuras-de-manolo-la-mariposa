@@ -10,20 +10,23 @@ namespace Game.Services
         private readonly SessionRegistry _sessionRegistry;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly RoomService _roomService;
+        private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly SessionTimings _sessionTimings;
         private readonly TimeProvider _timeProvider;
 
-        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, SessionTimings sessionTimings, TimeProvider timeProvider)
+        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(roomService);
+            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
             ArgumentNullException.ThrowIfNull(sessionTimings);
             ArgumentNullException.ThrowIfNull(timeProvider);
 
             _sessionRegistry = sessionRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _roomService = roomService;
+            _avatarUploadRegistry = avatarUploadRegistry;
             _sessionTimings = sessionTimings;
             _timeProvider = timeProvider;
         }
@@ -63,6 +66,7 @@ namespace Game.Services
             if (caller is not null)
             {
                 _sessionRegistry.Close(caller);
+                _avatarUploadRegistry.DiscardForClosedSession(caller.Owner.OwnerId);
                 await _roomService.LeaveForClosedSessionAsync(caller.Owner.OwnerId);
             }
 

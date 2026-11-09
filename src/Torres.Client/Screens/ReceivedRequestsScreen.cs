@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Ui;
 
@@ -11,10 +13,14 @@ namespace Torres.Client.Screens
     internal sealed class ReceivedRequestsScreen : Screen
     {
         private readonly List<RequestEntry> _receivedInvitations = CreateSampleInvitations();
+        private readonly AvatarViewSet _avatarViews;
 
-        internal ReceivedRequestsScreen()
+        internal ReceivedRequestsScreen(AvatarCache avatarCache)
             : base(TextKeys.Friends.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(avatarCache);
+
+            _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);
         }
 
         protected override Widget Build()
@@ -43,6 +49,7 @@ namespace Torres.Client.Screens
             foreach (RequestEntry invitation in _receivedInvitations)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(_avatarViews.Create(null).Root);
 
                 var nameColumn = new VerticalStackPanel();
                 nameColumn.Widgets.Add(CreateUsernameLabel(invitation.Username));

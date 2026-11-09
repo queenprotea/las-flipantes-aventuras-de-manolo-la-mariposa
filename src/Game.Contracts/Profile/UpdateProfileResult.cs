@@ -3,27 +3,15 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Tells whether a profile was updated, or which change was rejected.
+    /// Carries the outcome of a profile update and, when it succeeds, the avatar reference the profile has now.
     /// </summary>
     [DataContract]
-    public enum UpdateProfileResult
+    public sealed class UpdateProfileResult
     {
-        [EnumMember]
-        Updated,
+        [DataMember]
+        public UpdateProfileStatus Status { get; set; }
 
-        [EnumMember]
-        UsernameTaken,
-
-        [EnumMember]
-        InvalidUsername,
-
-        [EnumMember]
-        AvatarTooLarge,
-
-        [EnumMember]
-        AvatarInvalidFormat,
-
-        [EnumMember]
-        DatabaseUnavailable,
+        [DataMember]
+        public string? AvatarReference { get; set; }
     }
 }

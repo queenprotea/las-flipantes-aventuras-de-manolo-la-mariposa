@@ -11,6 +11,8 @@ namespace Torres.Client.Ui
         private const string ClockPattern = "{0}:{1:00}";
         private const int SecondsPerMinute = 60;
         private const int ExpiredClockSeconds = 0;
+        private const string MegabytesPattern = "0.0";
+        private const double BytesPerMegabyte = 1024d * 1024d;
 
         internal static string FormatThousands(int number)
         {
@@ -38,6 +40,14 @@ namespace Torres.Client.Ui
             string authorText = displayName + DisplaySymbols.ChatAuthorSeparator;
 
             return authorText;
+        }
+
+        internal static string FormatMegabytes(long byteCount)
+        {
+            double megabytes = byteCount / BytesPerMegabyte;
+            string formattedMegabytes = megabytes.ToString(MegabytesPattern, CultureInfo.CurrentCulture);
+
+            return formattedMegabytes;
         }
 
         internal static string FormatInteger(int number)

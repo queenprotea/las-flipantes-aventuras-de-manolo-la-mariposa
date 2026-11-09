@@ -12,6 +12,7 @@ using Myra;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Screens;
 using Torres.Client.Session;
@@ -40,6 +41,8 @@ namespace Torres.Client
         private LoginScreen? _loginScreen;
         private GuestAccessScreen? _guestAccessScreen;
         private ProfileScreen? _profileScreen;
+        private AvatarCache? _avatarCache;
+        private OwnProfileReader? _ownProfileReader;
         private ScreenId _openScreen = ScreenId.Startup;
         private string _appliedUiCultureName = string.Empty;
         private KeyboardState _previousKeyboardState;
@@ -80,9 +83,12 @@ namespace Torres.Client
             MyraEnvironment.Game = this;
             WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
 
-            RegisterScreens();
+            var avatarCache = new AvatarCache(GraphicsDevice, _gameSessionConnection);
+            _avatarCache = avatarCache;
+            _ownProfileReader = new OwnProfileReader(_gameSessionConnection, _playerSession);
+            RegisterScreens(avatarCache);
 
-            _topBarView = new TopBarView(_playerSession);
+            _topBarView = new TopBarView(_playerSession, avatarCache);
             _screenContainer = new Panel
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -107,7 +113,7 @@ namespace Torres.Client
             base.Initialize();
         }
 
-        private void RegisterScreens()
+        private void RegisterScreens(AvatarCache avatarCache)
         {
             _screensById.Add(ScreenId.Startup, _startupScreen);
             _screensById.Add(ScreenId.MainMenu, _mainMenuScreen);
@@ -118,7 +124,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
             _guestAccessScreen = new GuestAccessScreen(_accountChannelFactory, _gameSessionConnection, _playerSession);
             _screensById.Add(ScreenId.GuestAccess, _guestAccessScreen);
-            _profileScreen = new ProfileScreen(_playerSession);
+            _profileScreen = new ProfileScreen(_gameSessionConnection, _playerSession, avatarCache);
             _screensById.Add(ScreenId.Profile, _profileScreen);
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen(_gameSessionConnection, _playerSession));
@@ -126,10 +132,10 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Match, _matchScreen);
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.Friends, new FriendsScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen());
-            _screensById.Add(ScreenId.Room, new RoomScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen());
+            _screensById.Add(ScreenId.Friends, new FriendsScreen(_gameSessionConnection, _playerSession, avatarCache));
+            _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen(avatarCache));
+            _screensById.Add(ScreenId.Room, new RoomScreen(_gameSessionConnection, _playerSession, avatarCache));
+            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen(avatarCache));
             _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession));
@@ -146,6 +152,9 @@ namespace Torres.Client
         {
             _gameSessionConnection.CheckConnection(gameTime);
             FollowGameSession();
+            _ownProfileReader?.Update();
+            _avatarCache?.Update();
+            _topBarView?.Update();
             Screen openScreen = _screensById[_openScreen];
             openScreen.Update(gameTime);
             Window.Title = LocalizedText.Get(TextKeys.Common.WindowTitle);
@@ -172,6 +181,7 @@ namespace Torres.Client
             Window.ClientSizeChanged -= WindowOnClientSizeChanged;
             _matchScreen?.Dispose();
             _initialPlacementScreen?.Dispose();
+            _avatarCache?.Dispose();
             base.UnloadContent();
         }
 
@@ -401,6 +411,7 @@ namespace Torres.Client
 
         private void ShowScreen(ScreenId screenId)
         {
+            _screensById[_openScreen].Close();
             _openScreen = screenId;
             Screen selectedScreen = _screensById[screenId];
 

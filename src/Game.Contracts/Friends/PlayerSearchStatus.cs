@@ -5,7 +5,7 @@ namespace Game.Contracts
     /// <summary>
     /// Tells whether a player search found an account.
     /// </summary>
-    [DataContract]
+    [DataContract]  
     public enum PlayerSearchStatus
     {
         [EnumMember]

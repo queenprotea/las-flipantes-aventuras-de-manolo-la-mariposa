@@ -7,6 +7,10 @@ namespace Game.Services
 {
     internal sealed class LiveRoomMember
     {
+        internal const int InitialProfileVersion = 0;
+
+        private MemberProfile? _heldProfile;
+
         internal LiveRoomMember(int memberId, SessionOwner owner, SeatColor color)
         {
             MemberId = memberId;
@@ -20,7 +24,11 @@ namespace Game.Services
 
         internal int OwnerId { get; }
 
-        internal string DisplayName { get; }
+        internal string DisplayName { get; private set; }
+
+        internal string? AvatarReference { get; private set; }
+
+        internal int ProfileVersion { get; private set; } = InitialProfileVersion;
 
         internal bool IsGuest { get; }
 
@@ -40,6 +48,36 @@ namespace Game.Services
         {
             IsActive = true;
             InactiveSinceUtc = null;
+        }
+
+        internal void ApplyProfile(string username, string? avatarReference)
+        {
+            DisplayName = username;
+            AvatarReference = avatarReference;
+            ProfileVersion++;
+        }
+
+        internal void HoldProfile(string username, string? avatarReference)
+        {
+            _heldProfile = new MemberProfile(username, avatarReference);
+            ProfileVersion++;
+        }
+
+        internal void ApplyHeldProfile()
+        {
+            if (_heldProfile is null)
+            {
+                return;
+            }
+
+            DisplayName = _heldProfile.Username;
+            AvatarReference = _heldProfile.AvatarReference;
+            _heldProfile = null;
+        }
+
+        internal void ApplyLoadedAvatar(string avatarReference)
+        {
+            AvatarReference = avatarReference;
         }
 
         internal bool HasExpiredBefore(DateTime limitUtc)
@@ -65,6 +103,7 @@ namespace Game.Services
                 IsGuest = IsGuest,
                 Color = Color,
                 IsActive = IsActive,
+                AvatarReference = AvatarReference,
             };
 
             return roomMember;

@@ -16,8 +16,9 @@ namespace Game.Services
         private readonly ChatService _chatService;
         private readonly HistoryService _historyService;
         private readonly MatchService _matchService;
+        private readonly ProfileService _profileService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService, MatchService matchService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService, MatchService matchService, ProfileService profileService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
@@ -25,6 +26,7 @@ namespace Game.Services
             ArgumentNullException.ThrowIfNull(chatService);
             ArgumentNullException.ThrowIfNull(historyService);
             ArgumentNullException.ThrowIfNull(matchService);
+            ArgumentNullException.ThrowIfNull(profileService);
 
             _sessionService = sessionService;
             _roomService = roomService;
@@ -32,6 +34,7 @@ namespace Game.Services
             _chatService = chatService;
             _historyService = historyService;
             _matchService = matchService;
+            _profileService = profileService;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
@@ -197,6 +200,52 @@ namespace Game.Services
             EndMatchResult endResult = _matchService.EndMatch();
 
             return endResult;
+        }
+
+        /// <inheritdoc/>
+        public Task<ProfileResponse> GetProfileAsync()
+        {
+            Task<ProfileResponse> profileReading = _profileService.GetProfileAsync();
+
+            return profileReading;
+        }
+
+        /// <inheritdoc/>
+        public BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes)
+        {
+            BeginAvatarUploadResult beginResult = _profileService.BeginAvatarUpload(originalBytes, thumbnailBytes);
+
+            return beginResult;
+        }
+
+        /// <inheritdoc/>
+        public SendAvatarPartResult SendAvatarPart(AvatarFileKind fileKind, int offset, byte[] part)
+        {
+            SendAvatarPartResult partResult = _profileService.SendAvatarPart(fileKind, offset, part);
+
+            return partResult;
+        }
+
+        /// <inheritdoc/>
+        public void CancelAvatarUpload()
+        {
+            _profileService.CancelAvatarUpload();
+        }
+
+        /// <inheritdoc/>
+        public Task<UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar)
+        {
+            Task<UpdateProfileResult> profileUpdate = _profileService.UpdateProfileAsync(username, includesNewAvatar);
+
+            return profileUpdate;
+        }
+
+        /// <inheritdoc/>
+        public Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)
+        {
+            Task<AvatarResponse> thumbnailReading = _profileService.GetAvatarThumbnailAsync(avatarReference);
+
+            return thumbnailReading;
         }
     }
 }

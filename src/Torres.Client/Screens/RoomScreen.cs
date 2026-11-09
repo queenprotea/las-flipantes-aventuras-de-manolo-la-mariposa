@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Session;
 using Torres.Client.Ui;
@@ -24,6 +25,7 @@ namespace Torres.Client.Screens
         private readonly VerticalStackPanel _topBarPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
         private readonly VerticalStackPanel _playersPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
         private readonly ChatView _chatView;
+        private readonly AvatarViewSet _avatarViews;
 
         private Room? _shownRoom;
         private Task<LeaveRoomResult>? _leaveRequest;
@@ -31,15 +33,17 @@ namespace Torres.Client.Screens
         private Task<StartMatchResult>? _startMatchRequest;
         private Task<EndMatchResult>? _endMatchRequest;
 
-        internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
             : base(TextKeys.Room.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
             ArgumentNullException.ThrowIfNull(playerSession);
+            ArgumentNullException.ThrowIfNull(avatarCache);
 
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _chatView = new ChatView(gameSessionConnection, playerSession, Sizes.RoomSideColumnWidth);
+            _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);
         }
 
         internal override void Open()
@@ -68,6 +72,7 @@ namespace Torres.Client.Screens
             FollowStartMatchRequest();
             FollowEndMatchRequest();
             _chatView.Update();
+            _avatarViews.Refresh();
         }
 
         protected override Widget Build()
@@ -113,6 +118,7 @@ namespace Torres.Client.Screens
         private void Render(Room room)
         {
             _shownRoom = room;
+            _avatarViews.Clear();
             bool isViewerHost = room.HostMemberId == room.ViewerMemberId;
             _topBarPlaceholder.Widgets.Clear();
             _topBarPlaceholder.Widgets.Add(BuildTopBar(room, isViewerHost));
@@ -217,6 +223,8 @@ namespace Torres.Client.Screens
 
             HorizontalStackPanel nameLine = CreateButtonRow();
             nameLine.Widgets.Add(BuildColorSwatch(member.Color));
+            string? avatarReference = member.MemberId == room.ViewerMemberId ? _playerSession.AvatarReference : member.AvatarReference;
+            nameLine.Widgets.Add(_avatarViews.Create(avatarReference).Root);
             nameLine.Widgets.Add(CreateUsernameLabel(member.DisplayName));
             if (member.MemberId == room.ViewerMemberId)
             {

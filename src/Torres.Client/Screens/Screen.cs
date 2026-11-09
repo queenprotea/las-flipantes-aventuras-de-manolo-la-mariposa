@@ -43,6 +43,10 @@ namespace Torres.Client.Screens
         {
         }
 
+        internal virtual void Close()
+        {
+        }
+
         internal virtual void RenderScene()
         {
         }

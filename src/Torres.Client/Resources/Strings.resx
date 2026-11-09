@@ -329,7 +329,16 @@
     <value>Tu imagen ya no está en el servidor: se muestra el avatar por defecto.</value>
   </data>
   <data name="Profile.AvatarTooLarge" xml:space="preserve">
-    <value>El archivo pesa 7.4 MB.</value>
+    <value>El archivo pesa {0} MB.</value>
+  </data>
+  <data name="Profile.AvatarInvalidFormat" xml:space="preserve">
+    <value>Solo se admiten imágenes PNG o JPG.</value>
+  </data>
+  <data name="Profile.SavedMessage" xml:space="preserve">
+    <value>Perfil actualizado.</value>
+  </data>
+  <data name="Profile.MatchInProgress" xml:space="preserve">
+    <value>No puedes modificar tu perfil durante una partida.</value>
   </data>
   <data name="Profile.AccountTitle" xml:space="preserve">
     <value>Tu cuenta</value>

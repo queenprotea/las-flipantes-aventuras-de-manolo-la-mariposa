@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Session;
 using Torres.Client.Ui;
@@ -26,6 +27,7 @@ namespace Torres.Client.Screens
         private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
         private readonly LocalizedButton _searchButton = CreatePrimaryButton(TextKeys.Friends.SearchButton);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Common.ServerErrorTitle);
+        private readonly AvatarViewSet _avatarViews;
 
         private FriendsTab _activeTab = FriendsTab.Friends;
         private Task<FriendshipListResponse>? _friendshipListRequest;
@@ -38,14 +40,16 @@ namespace Torres.Client.Screens
         private string _searchedUsername = string.Empty;
         private double _secondsSinceFriendshipList;
 
-        internal FriendsScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal FriendsScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
             : base(TextKeys.Friends.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
             ArgumentNullException.ThrowIfNull(playerSession);
+            ArgumentNullException.ThrowIfNull(avatarCache);
 
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);
         }
 
         private enum FriendsTab
@@ -82,6 +86,7 @@ namespace Torres.Client.Screens
             FollowFriendRequest();
             FollowResponse();
             FollowRemoval();
+            _avatarViews.Refresh();
         }
 
         protected override Widget Build()
@@ -365,6 +370,7 @@ namespace Torres.Client.Screens
 
         private void RenderTab()
         {
+            _avatarViews.Clear();
             Widget tabContent = _searchResult is null ? BuildActiveTabContent() : BuildSearchResult(_searchResult);
             _tabContentPlaceholder.Widgets.Clear();
             _tabContentPlaceholder.Widgets.Add(BuildTabsRow());
@@ -420,6 +426,7 @@ namespace Torres.Client.Screens
             foreach (PlayerSummary friend in _friendshipList.Friends)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(_avatarViews.Create(friend.AvatarReference).Root);
                 itemRow.Widgets.Add(CreateUsernameLabel(friend.Username));
 
                 var spacer = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -461,6 +468,7 @@ namespace Torres.Client.Screens
         {
             HorizontalStackPanel itemRow = CreateButtonRow();
             itemRow.HorizontalAlignment = HorizontalAlignment.Stretch;
+            itemRow.Widgets.Add(_avatarViews.Create(requester.AvatarReference).Root);
 
             var nameColumn = new VerticalStackPanel();
             nameColumn.Widgets.Add(CreateUsernameLabel(requester.Username));
@@ -496,6 +504,7 @@ namespace Torres.Client.Screens
             foreach (PlayerSummary addressee in _friendshipList.SentRequests)
             {
                 HorizontalStackPanel itemRow = CreateButtonRow();
+                itemRow.Widgets.Add(_avatarViews.Create(addressee.AvatarReference).Root);
 
                 var nameColumn = new VerticalStackPanel();
                 nameColumn.Widgets.Add(CreateUsernameLabel(addressee.Username));
@@ -518,6 +527,7 @@ namespace Torres.Client.Screens
             }
 
             HorizontalStackPanel itemRow = CreateButtonRow();
+            itemRow.Widgets.Add(_avatarViews.Create(searchResult.Player.AvatarReference).Root);
             itemRow.Widgets.Add(CreateUsernameLabel(searchResult.Player.Username));
             itemRow.Widgets.Add(BuildRelationshipWidget(searchResult.Player, searchResult.Relationship));
 

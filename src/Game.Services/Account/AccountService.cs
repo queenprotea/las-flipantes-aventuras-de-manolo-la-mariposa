@@ -19,7 +19,6 @@ namespace Game.Services
     {
         private const int PasswordWorkFactor = 11;
         private const int LongestEmail = 254;
-        private const string UsernameFormat = "^[A-Za-z0-9_]{3,20}$";
         private const string PasswordFormat = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$";
         private const string RegistrationWriteFailedMessage = "The database could not be written during a registration.";
         private const string AccountCreatedMessage = "An account was created.";
@@ -29,7 +28,6 @@ namespace Game.Services
         private const string GuestEnteredMessage = "Guest {0} entered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
-        private static readonly Regex _usernamePattern = new Regex(UsernameFormat);
         private static readonly Regex _passwordPattern =
             new Regex(PasswordFormat);
 
@@ -194,7 +192,7 @@ namespace Game.Services
         private static RegistrationResult? FindInvalidField(string username, string email, string password)
         {
             RegistrationResult? invalidField = null;
-            if ((username is null) || !_usernamePattern.IsMatch(username))
+            if (!UsernameRules.IsValid(username))
             {
                 invalidField = RegistrationResult.InvalidUsername;
             }
