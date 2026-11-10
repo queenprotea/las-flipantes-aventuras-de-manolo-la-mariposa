@@ -35,6 +35,7 @@ namespace Torres.Client.Ui
         internal const int ChatMinHeight = 150;
         internal const int ChatAuthorSpacing = 4;
         internal const int ChatScrollbarAllowance = 14;
+        internal const int ChatReportButtonInset = 4;
 
         internal const int ScrollbarWidth = 6;
 
@@ -55,6 +56,8 @@ namespace Torres.Client.Ui
         internal static Thickness ListItemPadding { get; } = new Thickness(14, 11);
 
         internal static Thickness ChatPadding { get; } = new Thickness(12, 11);
+
+        internal static Thickness ChatReportButtonPadding { get; } = new Thickness(ChatReportButtonInset, 0, 0, 0);
 
         internal static Thickness ChipPadding { get; } = new Thickness(10, 3);
     }

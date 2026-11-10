@@ -7,6 +7,7 @@ namespace Torres.Client.Session
     internal sealed class RoomChatLog
     {
         private readonly List<ChatMessage> _messages = new List<ChatMessage>();
+        private readonly HashSet<int> _closedReportMessageIds = new HashSet<int>();
 
         private int _messagesKeptPerRoom;
 
@@ -65,9 +66,32 @@ namespace Torres.Client.Session
             }
         }
 
+        internal bool IsReportClosed(int messageId)
+        {
+            bool isClosed = _closedReportMessageIds.Contains(messageId);
+
+            return isClosed;
+        }
+
+        internal void CloseReport(int roomId, int messageId)
+        {
+            bool isForFollowedRoom = RoomId == roomId;
+            if (!isForFollowedRoom)
+            {
+                return;
+            }
+
+            bool wasClosedNow = _closedReportMessageIds.Add(messageId);
+            if (wasClosedNow)
+            {
+                Revision++;
+            }
+        }
+
         internal void Clear()
         {
             _messages.Clear();
+            _closedReportMessageIds.Clear();
             _messagesKeptPerRoom = 0;
             RoomId = null;
             IsLoaded = false;

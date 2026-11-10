@@ -329,6 +329,8 @@ namespace Torres.Client.Localization
             internal const string NoMessages = "Chat.NoMessages";
             internal const string InputPlaceholder = "Chat.InputPlaceholder";
             internal const string ReportToolTip = "Chat.ReportToolTip";
+            internal const string ReportSent = "Chat.ReportSent";
+            internal const string ReportUnavailable = "Chat.ReportUnavailable";
         }
 
         internal static class Alerts

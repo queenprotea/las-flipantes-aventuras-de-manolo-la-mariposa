@@ -191,6 +191,14 @@ namespace Game.Services
             return history;
         }
 
+        /// <inheritdoc/>
+        public Task<ReportChatMessageResult> ReportChatMessageAsync(int roomId, int messageId)
+        {
+            Task<ReportChatMessageResult> reporting = _chatService.ReportChatMessageAsync(roomId, messageId);
+
+            return reporting;
+        }
+
         public Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
         {
             Task<MatchHistoryResponse> historyReading = _historyService.GetMatchHistoryAsync(pageNumber);

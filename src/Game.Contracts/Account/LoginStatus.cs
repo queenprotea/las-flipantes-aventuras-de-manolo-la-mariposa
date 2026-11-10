@@ -15,6 +15,9 @@ namespace Game.Contracts
         InvalidCredentials,
 
         [EnumMember]
+        AccountBanned,
+
+        [EnumMember]
         DatabaseUnavailable,
     }
 }

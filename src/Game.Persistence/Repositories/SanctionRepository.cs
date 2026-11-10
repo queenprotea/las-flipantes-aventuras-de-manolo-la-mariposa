@@ -33,5 +33,80 @@ namespace Game.Persistence
 
             return sanctionInForce;
         }
+
+        public Task<bool> HasPermanentAsync(int playerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
+            Task<bool> permanentBanReading = ReadPermanentBanExistenceAsync(playerId);
+
+            return permanentBanReading;
+        }
+
+        public Task<DateTime?> FindLatestThresholdAsync(int playerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
+            Task<DateTime?> latestThresholdReading = ReadLatestThresholdAsync(playerId);
+
+            return latestThresholdReading;
+        }
+
+        public Task<int> CountAsync(int playerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
+
+            Task<int> sanctionCounting = CountForPlayerAsync(playerId);
+
+            return sanctionCounting;
+        }
+
+        public Task CreateAsync(Sanction newSanction)
+        {
+            ArgumentNullException.ThrowIfNull(newSanction);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newSanction.PlayerId);
+
+            Task creation = StoreAsync(newSanction);
+
+            return creation;
+        }
+
+        private async Task<bool> ReadPermanentBanExistenceAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            bool hasPermanentBan = await databaseContext.Sanctions
+                .AnyAsync(storedSanction => (storedSanction.PlayerId == playerId) && storedSanction.IsPermanent);
+
+            return hasPermanentBan;
+        }
+
+        private async Task<DateTime?> ReadLatestThresholdAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            DateTime? latestThresholdAt = await databaseContext.Sanctions
+                .Where(storedSanction => storedSanction.PlayerId == playerId)
+                .MaxAsync(storedSanction => (DateTime?)storedSanction.ThresholdAt);
+
+            return latestThresholdAt;
+        }
+
+        private async Task<int> CountForPlayerAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            int sanctionCount = await databaseContext.Sanctions
+                .CountAsync(storedSanction => storedSanction.PlayerId == playerId);
+
+            return sanctionCount;
+        }
+
+        private async Task StoreAsync(Sanction newSanction)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            databaseContext.Sanctions.Add(newSanction);
+            await databaseContext.SaveChangesAsync();
+        }
     }
 }

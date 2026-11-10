@@ -175,6 +175,13 @@ namespace Torres.Client.Session
             return chatHistoryReading;
         }
 
+        internal Task<ReportChatMessageResult> ReportChatMessageAsync(ChatMessage reportedMessage)
+        {
+            Task<ReportChatMessageResult> messageReporting = RequireChannel().ReportChatMessageAsync(reportedMessage.RoomId, reportedMessage.MessageId);
+
+            return messageReporting;
+        }
+
         internal Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
         {
             Task<MatchHistoryResponse> matchHistoryReading = RequireChannel().GetMatchHistoryAsync(pageNumber);

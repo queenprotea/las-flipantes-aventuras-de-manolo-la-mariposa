@@ -22,6 +22,7 @@ namespace Torres.Client.Screens
         private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Login.UsernameLabel, false);
         private readonly LabeledTextBox _passwordField = new LabeledTextBox(TextKeys.Login.PasswordLabel, true);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Login.InvalidCredentials);
+        private readonly NoticeBox _banNotice = new NoticeBox();
         private readonly LocalizedButton _logInButton = CreatePrimaryButton(TextKeys.Login.LogInButton);
         private readonly LocalizedButton _guestButton;
 
@@ -120,6 +121,7 @@ namespace Torres.Client.Screens
             VerticalStackPanel card = CreateCard(Sizes.LoginCardWidth);
             card.VerticalAlignment = VerticalAlignment.Center;
             card.Widgets.Add(CreateCardHeader(TextKeys.Login.Title, TextKeys.Login.Hint));
+            card.Widgets.Add(_banNotice);
             card.Widgets.Add(_usernameField);
 
             var passwordField = new VerticalStackPanel { Spacing = Metrics.FieldLabelSpacing };
@@ -149,6 +151,7 @@ namespace Torres.Client.Screens
         private void LogInButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             _errorLabel.Visible = false;
+            _banNotice.Hide();
 
             if (string.IsNullOrWhiteSpace(_usernameField.Value) || string.IsNullOrEmpty(_passwordField.Value))
             {
@@ -180,6 +183,11 @@ namespace Torres.Client.Screens
                 case LoginStatus.InvalidCredentials:
                     _logInButton.Enabled = true;
                     ShowError(TextKeys.Login.InvalidCredentials);
+                    break;
+
+                case LoginStatus.AccountBanned:
+                    _logInButton.Enabled = true;
+                    _banNotice.ShowMessage(TextKeys.Login.AccountBannedTitle, TextKeys.Login.AccountBannedDetail, null);
                     break;
 
                 case LoginStatus.DatabaseUnavailable:

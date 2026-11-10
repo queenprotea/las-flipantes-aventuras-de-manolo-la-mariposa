@@ -12,5 +12,6 @@ namespace Torres.Client.Ui
         internal const string InlineSeparator = "·";
         internal const string ListSeparator = ", ";
         internal const string ChatAuthorSeparator = ":";
+        internal const string ReportFlag = "⚑";
     }
 }

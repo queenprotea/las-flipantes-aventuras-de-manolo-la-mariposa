@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 using Myra.Events;
+using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -24,9 +25,18 @@ namespace Torres.Client.Screens
         private readonly ScrollViewer _messageScroller;
         private readonly TextBox _inputBox = new TextBox();
         private readonly LocalizedLabel _inputHint = new LocalizedLabel(TextKeys.Chat.InputPlaceholder);
+        private readonly LocalizedLabel _reportConfirmation = new LocalizedLabel(TextKeys.Chat.ReportSent)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.MintInk,
+            Wrap = true,
+            Visible = false,
+        };
 
         private Task<ChatHistoryResponse>? _historyRequest;
         private Task<SendChatMessageResult>? _sendRequest;
+        private Task<ReportChatMessageResult>? _reportRequest;
+        private ChatMessage? _messageBeingReported;
         private int _historyRoomId;
         private string _sentText = string.Empty;
         private int? _shownRevision;
@@ -61,7 +71,7 @@ namespace Torres.Client.Screens
 
         internal void Open()
         {
-            _noticeBox.Hide();
+            HideNotices();
             _shownRevision = null;
             _previousKeyboardState = Keyboard.GetState();
             RequestMissingHistory();
@@ -71,6 +81,7 @@ namespace Torres.Client.Screens
         {
             FollowHistoryRequest();
             FollowSendRequest();
+            FollowReportRequest();
             FollowEnterKey();
             _inputHint.Visible = (ReadTypedText().Length == 0) && !HasTypingFocus;
             if (_playerSession.RoomChat.Revision != _shownRevision)
@@ -122,6 +133,7 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
             chatPanel.Widgets.Add(_noticeBox);
+            chatPanel.Widgets.Add(_reportConfirmation);
             chatPanel.Widgets.Add(_messageScroller);
             StackPanel.SetProportionType(_messageScroller, ProportionType.Fill);
             chatPanel.Widgets.Add(inputArea);
@@ -152,7 +164,7 @@ namespace Torres.Client.Screens
             _isScrollToEndPending = true;
         }
 
-        private static HorizontalStackPanel BuildMessageRow(ChatMessage message)
+        private HorizontalStackPanel BuildMessageRow(ChatMessage message)
         {
             var authorLabel = new Label
             {
@@ -178,8 +190,121 @@ namespace Torres.Client.Screens
             messageRow.Widgets.Add(authorLabel);
             messageRow.Widgets.Add(messageTextLabel);
             StackPanel.SetProportionType(messageTextLabel, ProportionType.Fill);
+            if (IsReportable(message))
+            {
+                messageRow.Widgets.Add(BuildReportButton(message));
+            }
 
             return messageRow;
+        }
+
+        private bool IsReportable(ChatMessage message)
+        {
+            int? viewerMemberId = _playerSession.CurrentRoom?.ViewerMemberId;
+            bool isFromAnotherAccount = !message.SenderIsGuest && (message.SenderMemberId != viewerMemberId);
+            bool isReportable = _playerSession.HasAccount && isFromAnotherAccount && !_playerSession.RoomChat.IsReportClosed(message.MessageId);
+
+            return isReportable;
+        }
+
+        private LocalizedSymbolButton BuildReportButton(ChatMessage message)
+        {
+            var flagLabel = new Label
+            {
+                Text = DisplaySymbols.ReportFlag,
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+            };
+            var reportButton = new LocalizedSymbolButton(flagLabel, TextKeys.Chat.ReportToolTip)
+            {
+                Padding = Metrics.ChatReportButtonPadding,
+                Background = null,
+                OverBackground = null,
+                PressedBackground = null,
+                Border = null,
+                BorderThickness = new Thickness(0),
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+            reportButton.Click += (sender, e) => StartReport(message);
+
+            return reportButton;
+        }
+
+        private void StartReport(ChatMessage message)
+        {
+            bool canReport = (_reportRequest is null) && _gameSessionConnection.IsSessionOpen;
+            if (!canReport)
+            {
+                return;
+            }
+
+            HideNotices();
+            _messageBeingReported = message;
+            _reportRequest = _gameSessionConnection.ReportChatMessageAsync(message);
+        }
+
+        private void FollowReportRequest()
+        {
+            if ((_reportRequest is null) || !_reportRequest.IsCompleted || (_messageBeingReported is null))
+            {
+                return;
+            }
+
+            Task<ReportChatMessageResult> completedReport = _reportRequest;
+            ChatMessage reportedMessage = _messageBeingReported;
+            _reportRequest = null;
+            _messageBeingReported = null;
+            if (completedReport.IsCompletedSuccessfully)
+            {
+                ShowReportResult(reportedMessage, completedReport.Result);
+            }
+            else
+            {
+                _noticeBox.ShowTitle(TextKeys.Common.ServerErrorTitle);
+            }
+        }
+
+        private void ShowReportResult(ChatMessage reportedMessage, ReportChatMessageResult reportResult)
+        {
+            if (!ClosesReport(reportResult))
+            {
+                _noticeBox.ShowTitle(TextKeys.Common.ServerErrorTitle);
+                return;
+            }
+
+            _playerSession.RoomChat.CloseReport(reportedMessage.RoomId, reportedMessage.MessageId);
+            if (reportResult == ReportChatMessageResult.Reported)
+            {
+                _reportConfirmation.Visible = true;
+            }
+            else if (reportResult == ReportChatMessageResult.MessageNotFound)
+            {
+                _noticeBox.ShowTitle(TextKeys.Chat.ReportUnavailable);
+            }
+        }
+
+        private static bool ClosesReport(ReportChatMessageResult reportResult)
+        {
+            bool closesReport = reportResult switch
+            {
+                ReportChatMessageResult.Reported => true,
+                ReportChatMessageResult.MessageNotFound => true,
+                ReportChatMessageResult.AuthorIsGuest => true,
+                ReportChatMessageResult.OwnMessage => true,
+                ReportChatMessageResult.NotIdentified => false,
+                ReportChatMessageResult.ReporterIsGuest => false,
+                ReportChatMessageResult.NotInRoom => false,
+                ReportChatMessageResult.DatabaseUnavailable => false,
+                _ => throw new ArgumentOutOfRangeException(nameof(reportResult), reportResult, null),
+            };
+
+            return closesReport;
+        }
+
+        private void HideNotices()
+        {
+            _noticeBox.Hide();
+            _reportConfirmation.Visible = false;
         }
 
         private void ScrollToEnd()
@@ -239,7 +364,7 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            _noticeBox.Hide();
+            HideNotices();
             _sentText = typedText;
             _sendRequest = _gameSessionConnection.SendChatMessageAsync(typedText);
         }

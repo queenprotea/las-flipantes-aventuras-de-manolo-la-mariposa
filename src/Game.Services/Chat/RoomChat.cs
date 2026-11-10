@@ -7,7 +7,7 @@ namespace Game.Services
 {
     internal sealed class RoomChat
     {
-        private readonly Queue<ChatMessage> _keptMessages = new Queue<ChatMessage>();
+        private readonly Queue<RoomChatEntry> _keptEntries = new Queue<RoomChatEntry>();
         private readonly int _roomId;
 
         private int _lastMessageId;
@@ -30,10 +30,10 @@ namespace Game.Services
                 Text = messageDraft.Text,
                 SentAtUtc = messageDraft.SentAtUtc,
             };
-            _keptMessages.Enqueue(appendedMessage);
-            while (_keptMessages.Count > messagesKeptPerRoom)
+            _keptEntries.Enqueue(new RoomChatEntry(appendedMessage, author.OwnerId));
+            while (_keptEntries.Count > messagesKeptPerRoom)
             {
-                _keptMessages.Dequeue();
+                _keptEntries.Dequeue();
             }
 
             return appendedMessage;
@@ -41,9 +41,16 @@ namespace Game.Services
 
         internal IReadOnlyList<ChatMessage> ListMessages()
         {
-            List<ChatMessage> keptMessagesCopy = _keptMessages.ToList();
+            List<ChatMessage> keptMessagesCopy = _keptEntries.Select(keptEntry => keptEntry.Message).ToList();
 
             return keptMessagesCopy;
+        }
+
+        internal RoomChatEntry? FindEntry(int messageId)
+        {
+            RoomChatEntry? foundEntry = _keptEntries.FirstOrDefault(keptEntry => keptEntry.Message.MessageId == messageId);
+
+            return foundEntry;
         }
     }
 }

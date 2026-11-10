@@ -787,6 +787,12 @@
   <data name="Chat.ReportToolTip" xml:space="preserve">
     <value>Report</value>
   </data>
+  <data name="Chat.ReportSent" xml:space="preserve">
+    <value>Report recorded.</value>
+  </data>
+  <data name="Chat.ReportUnavailable" xml:space="preserve">
+    <value>That message can no longer be reported.</value>
+  </data>
   <data name="Alerts.HeaderLabel" xml:space="preserve">
     <value>notices</value>
   </data>

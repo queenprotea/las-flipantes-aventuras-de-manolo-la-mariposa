@@ -1,4 +1,5 @@
 using System.ServiceModel;
+using System.Threading.Tasks;
 
 namespace Game.Contracts
 {
@@ -22,5 +23,14 @@ namespace Game.Contracts
         /// <returns>The kept messages from oldest to newest and the chat limits; no messages when the caller is in no room.</returns>
         [OperationContract(Name = "GetChatHistory", IsInitiating = false)]
         ChatHistoryResponse GetChatHistory();
+
+        /// <summary>
+        /// Records that the caller finds a message of their room offensive and keeps a copy of its text; nobody else is told about it.
+        /// </summary>
+        /// <param name="roomId">Identifier of the room where the message was written.</param>
+        /// <param name="messageId">Identifier of the message within that room.</param>
+        /// <returns>Whether the report was recorded, or why it was rejected.</returns>
+        [OperationContract(Name = "ReportChatMessage", IsInitiating = false)]
+        Task<ReportChatMessageResult> ReportChatMessageAsync(int roomId, int messageId);
     }
 }

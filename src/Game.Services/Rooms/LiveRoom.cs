@@ -315,6 +315,38 @@ namespace Game.Services
             return keptMessages;
         }
 
+        internal ReportTarget? FindReportTarget(int reporterOwnerId, int messageId)
+        {
+            ReportTarget? reportTarget = null;
+            lock (_roomLock)
+            {
+                RoomChatEntry? reportedEntry = FindByOwner(reporterOwnerId) is null ? null : _chat.FindEntry(messageId);
+                if (reportedEntry is not null)
+                {
+                    reportTarget = ToReportTarget(reportedEntry, reporterOwnerId);
+                }
+            }
+
+            return reportTarget;
+        }
+
+        internal void RecordReporter(int messageId, int reporterOwnerId)
+        {
+            lock (_roomLock)
+            {
+                _chat.FindEntry(messageId)?.RecordReporter(reporterOwnerId);
+            }
+        }
+
+        private ReportTarget ToReportTarget(RoomChatEntry reportedEntry, int reporterOwnerId)
+        {
+            ChatMessage reportedMessage = reportedEntry.Message;
+            bool wasReportedByReporter = reportedEntry.WasReportedBy(reporterOwnerId);
+            var reportTarget = new ReportTarget(RoomId, reportedMessage.MessageId, reportedEntry.AuthorOwnerId, reportedMessage.SenderIsGuest, reportedMessage.Text, wasReportedByReporter);
+
+            return reportTarget;
+        }
+
         private JoinRoomStatus JudgeAdmission()
         {
             JoinRoomStatus admission;

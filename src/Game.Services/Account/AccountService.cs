@@ -25,6 +25,7 @@ namespace Game.Services
         private const string UnknownCreationOutcomeMessage = "Unknown creation outcome {0}.";
         private const string LoginReadFailedMessage = "The database could not be read during a log in.";
         private const string PlayerLoggedInMessage = "Player {0} logged in.";
+        private const string BannedLoginRefusedMessage = "Player {0} was refused at log in because of a permanent ban.";
         private const string GuestEnteredMessage = "Guest {0} entered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
@@ -32,16 +33,19 @@ namespace Game.Services
             new Regex(PasswordFormat);
 
         private readonly PlayerRepository _playerRepository;
+        private readonly SanctionRepository _sanctionRepository;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly GuestIdIssuer _guestIdIssuer;
 
-        public AccountService(PlayerRepository playerRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer)
+        public AccountService(PlayerRepository playerRepository, SanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
+            ArgumentNullException.ThrowIfNull(sanctionRepository);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(guestIdIssuer);
 
             _playerRepository = playerRepository;
+            _sanctionRepository = sanctionRepository;
             _sessionTokenIssuer = sessionTokenIssuer;
             _guestIdIssuer = guestIdIssuer;
         }
@@ -133,31 +137,43 @@ namespace Game.Services
 
         private async Task<LoginResult> AuthenticateAsync(string username, string password)
         {
-            Player? player;
+            LoginResult loginResult;
             try
             {
-                player = await _playerRepository.FindByUsernameAsync(username);
+                Player? player = await _playerRepository.FindByUsernameAsync(username);
+                loginResult = await AdmitAsync(player, password);
             }
             catch (NpgsqlException exception)
             {
                 _log.Error(LoginReadFailedMessage, exception);
-                var unavailableResult = new LoginResult { Status = LoginStatus.DatabaseUnavailable };
-                return unavailableResult;
+                loginResult = new LoginResult { Status = LoginStatus.DatabaseUnavailable };
             }
-
-            LoginResult loginResult = VerifyCredentials(player, password);
 
             return loginResult;
         }
 
-        private LoginResult VerifyCredentials(Player? player, string password)
+        private async Task<LoginResult> AdmitAsync(Player? player, string password)
         {
+            LoginResult loginResult;
             if ((player is null) || !BCrypt.Net.BCrypt.Verify(password, player.PasswordHash))
             {
-                var rejectedResult = new LoginResult { Status = LoginStatus.InvalidCredentials };
-                return rejectedResult;
+                loginResult = new LoginResult { Status = LoginStatus.InvalidCredentials };
+            }
+            else if (await _sanctionRepository.HasPermanentAsync(player.PlayerId))
+            {
+                _log.InfoFormat(BannedLoginRefusedMessage, player.PlayerId);
+                loginResult = new LoginResult { Status = LoginStatus.AccountBanned };
+            }
+            else
+            {
+                loginResult = BuildLoggedInResult(player);
             }
 
+            return loginResult;
+        }
+
+        private LoginResult BuildLoggedInResult(Player player)
+        {
             _log.InfoFormat(PlayerLoggedInMessage, player.PlayerId);
             var loggedInResult = new LoginResult
             {

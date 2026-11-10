@@ -78,6 +78,8 @@ builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<RankingRepository>();
 builder.Services.AddSingleton<RoomRecordRepository>();
 builder.Services.AddSingleton<SanctionRepository>();
+builder.Services.AddSingleton<SanctionLevelRepository>();
+builder.Services.AddSingleton<ReportRepository>();
 builder.Services.AddSingleton<SystemParameterRepository>();
 builder.Services.AddSingleton<SystemParameterReader>();
 builder.Services.AddSingleton<FriendshipRepository>();
@@ -93,6 +95,7 @@ builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<FriendsService>();
 builder.Services.AddSingleton<InvitationService>();
+builder.Services.AddSingleton<ReportRecorder>();
 builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSingleton<HistoryService>();
 builder.Services.AddSingleton<MatchService>();
@@ -108,11 +111,13 @@ WebApplication app = builder.Build();
 RoomStartup roomStartup = app.Services.GetRequiredService<RoomStartup>();
 TimeSpan roomInactivityLimit;
 ChatCapacity chatCapacity;
+SanctionPolicy sanctionPolicy;
 try
 {
     await roomStartup.CloseLeftoverRoomsAsync();
     roomInactivityLimit = await roomStartup.ReadInactivityLimitAsync();
     chatCapacity = await roomStartup.ReadChatCapacityAsync();
+    sanctionPolicy = await roomStartup.ReadSanctionPolicyAsync();
 }
 catch (NpgsqlException exception)
 {
@@ -121,6 +126,7 @@ catch (NpgsqlException exception)
 }
 
 app.Services.GetRequiredService<ChatService>().Start(chatCapacity);
+app.Services.GetRequiredService<ReportRecorder>().Start(sanctionPolicy);
 
 app.Services.GetRequiredService<MatchService>();
 app.UseServiceModel(AddEndpoints);
