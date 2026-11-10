@@ -112,6 +112,13 @@ namespace Torres.Client.Session
             return matchChange;
         }
 
+        internal RoomInvitation? TakeRoomInvitation()
+        {
+            RoomInvitation? roomInvitation = _noticeQueue.TakeRoomInvitation();
+
+            return roomInvitation;
+        }
+
         internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility roomVisibility)
         {
             Task<CreateRoomResult> roomCreation = RequireChannel().CreateRoomAsync(roomVisibility);
@@ -222,6 +229,41 @@ namespace Torres.Client.Session
             Task<FriendRemovalResult> friendRemoval = new SessionCall<int, FriendRemovalResult>(RequireChannel().RemoveFriend, friendPlayerId).StartAsync();
 
             return friendRemoval;
+        }
+
+        internal Task<PendingInvitationsResponse> GetPendingInvitationsAsync()
+        {
+            Task<PendingInvitationsResponse> invitationsReading = RequireChannel().GetPendingInvitationsAsync();
+
+            return invitationsReading;
+        }
+
+        internal Task<RoomInviteesResponse> GetRoomInviteesAsync()
+        {
+            Task<RoomInviteesResponse> inviteesReading = RequireChannel().GetRoomInviteesAsync();
+
+            return inviteesReading;
+        }
+
+        internal Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
+        {
+            Task<SendInvitationResult> invitationSending = RequireChannel().SendInvitationAsync(targetPlayerId);
+
+            return invitationSending;
+        }
+
+        internal Task<RespondInvitationResult> AcceptInvitationAsync(int roomId)
+        {
+            Task<RespondInvitationResult> invitationAcceptance = RequireChannel().RespondInvitationAsync(roomId, true);
+
+            return invitationAcceptance;
+        }
+
+        internal Task<RespondInvitationResult> RejectInvitationAsync(int roomId)
+        {
+            Task<RespondInvitationResult> invitationRejection = RequireChannel().RespondInvitationAsync(roomId, false);
+
+            return invitationRejection;
         }
 
         internal Task<StartMatchResult> StartMatchAsync()

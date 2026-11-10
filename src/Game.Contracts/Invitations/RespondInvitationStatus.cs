@@ -24,6 +24,9 @@ namespace Game.Contracts
         RoomInMatch,
 
         [EnumMember]
+        Banned,
+
+        [EnumMember]
         AlreadyInRoom,
 
         [EnumMember]

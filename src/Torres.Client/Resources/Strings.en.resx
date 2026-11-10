@@ -475,9 +475,6 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>The search is exact: check the spelling.</value>
   </data>
-  <data name="Friends.InviteToRoomButton" xml:space="preserve">
-    <value>Invite to Room</value>
-  </data>
   <data name="Friends.OnlineStatus" xml:space="preserve">
     <value>Online</value>
   </data>
@@ -522,6 +519,9 @@
   </data>
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invite by email</value>
+  </data>
+  <data name="InvitePlayers.AlreadyInRoomBadge" xml:space="preserve">
+    <value>In the room</value>
   </data>
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>history</value>
@@ -822,6 +822,12 @@
   </data>
   <data name="Alerts.RoomFullBody" xml:space="preserve">
     <value>There are already four players in it. You can join another room or create your own.</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneTitle" xml:space="preserve">
+    <value>That room is no longer available</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneBody" xml:space="preserve">
+    <value>It was closed or the server restarted.</value>
   </data>
   <data name="Alerts.ViewRoomsButton" xml:space="preserve">
     <value>View rooms</value>

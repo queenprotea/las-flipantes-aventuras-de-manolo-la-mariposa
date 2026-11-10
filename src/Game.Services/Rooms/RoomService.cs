@@ -17,6 +17,8 @@ namespace Game.Services
     public sealed class RoomService : IRoomService
     {
         private const int MostCodeDraws = 10;
+        private const string PublicVisibilityCode = "public";
+        private const string PrivateVisibilityCode = "private";
         private const string RoomCreatedMessage = "Room {0} created by player {1}.";
         private const string NoFreeCodeMessage = "No free room code was found after {0} draws.";
         private const string CreationFailedMessage = "The database could not be used while player {0} created a room.";
@@ -229,6 +231,30 @@ namespace Game.Services
             return banInForce;
         }
 
+        internal async Task<JoinRoomResult> JoinForAsync(SessionOwner owner, int roomId)
+        {
+            JoinRoomResult joining;
+            try
+            {
+                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
+                if (banInForce is null)
+                {
+                    joining = Seat(owner, roomId);
+                }
+                else
+                {
+                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
+                }
+            }
+            catch (NpgsqlException exception)
+            {
+                _log.Error(string.Format(CultureInfo.InvariantCulture, JoinFailedMessage, owner.OwnerId, roomId), exception);
+                joining = new JoinRoomResult { Status = JoinRoomStatus.DatabaseUnavailable };
+            }
+
+            return joining;
+        }
+
         internal async Task RemoveExpiredMembersAsync(TimeSpan inactivityLimit)
         {
             DateTime limitUtc = NowUtc() - inactivityLimit;
@@ -269,8 +295,8 @@ namespace Game.Services
         {
             string visibilityCode = visibility switch
             {
-                RoomVisibility.Public => RoomVisibilityCodes.Public,
-                RoomVisibility.Private => RoomVisibilityCodes.Private,
+                RoomVisibility.Public => PublicVisibilityCode,
+                RoomVisibility.Private => PrivateVisibilityCode,
                 _ => throw new ArgumentOutOfRangeException(nameof(visibility)),
             };
 
@@ -374,30 +400,6 @@ namespace Game.Services
             };
 
             return creation;
-        }
-
-        private async Task<JoinRoomResult> JoinForAsync(SessionOwner owner, int roomId)
-        {
-            JoinRoomResult joining;
-            try
-            {
-                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
-                if (banInForce is null)
-                {
-                    joining = Seat(owner, roomId);
-                }
-                else
-                {
-                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
-                }
-            }
-            catch (NpgsqlException exception)
-            {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, JoinFailedMessage, owner.OwnerId, roomId), exception);
-                joining = new JoinRoomResult { Status = JoinRoomStatus.DatabaseUnavailable };
-            }
-
-            return joining;
         }
 
         private JoinRoomResult Seat(SessionOwner owner, int roomId)

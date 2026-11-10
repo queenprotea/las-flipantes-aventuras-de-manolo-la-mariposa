@@ -475,9 +475,6 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>La búsqueda es exacta: revisa cómo se escribe.</value>
   </data>
-  <data name="Friends.InviteToRoomButton" xml:space="preserve">
-    <value>Invitar a Sala</value>
-  </data>
   <data name="Friends.OnlineStatus" xml:space="preserve">
     <value>Conectado</value>
   </data>
@@ -522,6 +519,9 @@
   </data>
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invitar por correo</value>
+  </data>
+  <data name="InvitePlayers.AlreadyInRoomBadge" xml:space="preserve">
+    <value>En la sala</value>
   </data>
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>historial</value>
@@ -822,6 +822,12 @@
   </data>
   <data name="Alerts.RoomFullBody" xml:space="preserve">
     <value>Ya hay cuatro jugadores dentro. Puedes unirte a otra sala o crear la tuya.</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneTitle" xml:space="preserve">
+    <value>Esa sala ya no está disponible</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneBody" xml:space="preserve">
+    <value>Se cerró o el servidor se reinició.</value>
   </data>
   <data name="Alerts.ViewRoomsButton" xml:space="preserve">
     <value>Ver salas</value>

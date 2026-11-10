@@ -160,6 +160,7 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(spacer, ProportionType.Fill);
 
             LocalizedButton inviteButton = CreateSecondaryButton(TextKeys.Room.InvitePlayersButton);
+            inviteButton.Visible = _playerSession.HasAccount && (room.State != RoomState.InMatch);
             inviteButton.Click += InviteButtonOnClick;
             roomActionsBar.Widgets.Add(inviteButton);
 

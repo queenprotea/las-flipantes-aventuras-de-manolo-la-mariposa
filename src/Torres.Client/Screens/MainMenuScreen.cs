@@ -1,4 +1,9 @@
 using System;
+using System.Threading.Tasks;
+
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
@@ -11,7 +16,10 @@ namespace Torres.Client.Screens
 {
     internal sealed class MainMenuScreen : Screen
     {
+        private const int MostInvitationsCounted = 9;
+
         private readonly LanguagePreference _languagePreference;
+        private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private LocalizedButton? _exitButton;
         private LocalizedButton? _languageButton;
@@ -20,15 +28,20 @@ namespace Torres.Client.Screens
         private LocalizedButton? _friendsButton;
         private LocalizedButton? _invitationsButton;
         private LocalizedButton? _historyButton;
+        private Label? _invitationsMark;
         private NoticeBox? _noticeBox;
+        private Task<PendingInvitationsResponse>? _invitationsRequest;
+        private int? _shownInvitationsRevision;
 
-        internal MainMenuScreen(LanguagePreference languagePreference, PlayerSession playerSession)
+        internal MainMenuScreen(LanguagePreference languagePreference, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MainMenu.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(languagePreference);
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
             ArgumentNullException.ThrowIfNull(playerSession);
 
             _languagePreference = languagePreference;
+            _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }
 
@@ -38,6 +51,21 @@ namespace Torres.Client.Screens
         {
             _noticeBox?.Hide();
             FollowSession();
+            ShowInvitationCount();
+            bool canReadInvitations = _playerSession.HasAccount && _gameSessionConnection.IsSessionOpen && (_invitationsRequest is null);
+            if (canReadInvitations)
+            {
+                _invitationsRequest = _gameSessionConnection.GetPendingInvitationsAsync();
+            }
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            FollowInvitationsRequest();
+            if (_shownInvitationsRevision != _playerSession.Invitations.Revision)
+            {
+                ShowInvitationCount();
+            }
         }
 
         internal void ShowNotice(string titleKey, string bodyKey, string[]? bodyArguments)
@@ -69,7 +97,15 @@ namespace Torres.Client.Screens
 
         private static LocalizedButton CreateMenuItem(string textKey, bool isAvailable)
         {
-            var menuItem = new LocalizedButton(textKey)
+            LocalizedButton menuItem = CreateMenuButton(textKey, isAvailable);
+            menuItem.SetTrailingMark(DisplaySymbols.MenuChevron, Theme.MutedInk);
+
+            return menuItem;
+        }
+
+        private static LocalizedButton CreateMenuButton(string textKey, bool isAvailable)
+        {
+            var menuButton = new LocalizedButton(textKey)
             {
                 LabelColor = isAvailable ? Theme.Ink : Theme.MutedInk,
                 LabelFont = Fonts.MenuItem,
@@ -81,9 +117,8 @@ namespace Torres.Client.Screens
                 BorderThickness = new Thickness(0),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            menuItem.SetTrailingMark(DisplaySymbols.MenuChevron, Theme.MutedInk);
 
-            return menuItem;
+            return menuButton;
         }
 
         private static void ApplyAvailability(LocalizedButton? menuItem, bool isAvailable)
@@ -111,6 +146,49 @@ namespace Torres.Client.Screens
             return separatorPanel;
         }
 
+        private static string FormatInvitationCount(int invitationCount)
+        {
+            string countText = DisplayFormats.FormatInteger(invitationCount);
+            if (invitationCount == 0)
+            {
+                countText = DisplaySymbols.MenuChevron;
+            }
+            else if (invitationCount > MostInvitationsCounted)
+            {
+                countText = DisplaySymbols.CountOverflow;
+            }
+
+            return countText;
+        }
+
+        private void FollowInvitationsRequest()
+        {
+            if ((_invitationsRequest is null) || !_invitationsRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<PendingInvitationsResponse> completedRequest = _invitationsRequest;
+            _invitationsRequest = null;
+            if (completedRequest.IsCompletedSuccessfully && _playerSession.HasAccount)
+            {
+                _playerSession.Invitations.Load(completedRequest.Result);
+            }
+        }
+
+        private void ShowInvitationCount()
+        {
+            _shownInvitationsRevision = _playerSession.Invitations.Revision;
+            if (_invitationsMark is null)
+            {
+                return;
+            }
+
+            int invitationCount = _playerSession.HasAccount ? _playerSession.Invitations.Invitations.Count : 0;
+            _invitationsMark.Text = FormatInvitationCount(invitationCount);
+            _invitationsMark.TextColor = invitationCount == 0 ? Theme.MutedInk : Theme.MintInk;
+        }
+
         private void FollowSession()
         {
             bool canUseAccountFeatures = !_playerSession.IsGuest;
@@ -132,7 +210,8 @@ namespace Torres.Client.Screens
             _roomsButton = CreateMenuItem(TextKeys.MainMenu.RoomsButton, true);
             _roomsButton.Click += RoomsButtonOnClick;
             menuList.Widgets.Add(_roomsButton);
-            _invitationsButton = CreateMenuItem(TextKeys.MainMenu.InvitationsButton, true);
+            _invitationsButton = CreateMenuButton(TextKeys.MainMenu.InvitationsButton, true);
+            _invitationsMark = _invitationsButton.SetTrailingMark(DisplaySymbols.MenuChevron, Theme.MutedInk);
             _invitationsButton.Click += InvitationsButtonOnClick;
             menuList.Widgets.Add(_invitationsButton);
             _friendsButton = CreateMenuItem(TextKeys.MainMenu.FriendsButton, true);
@@ -205,7 +284,7 @@ namespace Torres.Client.Screens
 
         private void InvitationsButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.ReceivedRequests;
+            RequestedScreen = ScreenId.Invitations;
         }
 
         private void HistoryButtonOnClick(object sender, Myra.Events.MyraEventArgs e)

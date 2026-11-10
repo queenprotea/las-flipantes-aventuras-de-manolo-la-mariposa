@@ -433,7 +433,7 @@ namespace Torres.Client.Screens
 
                 var nameColumn = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
                 nameColumn.Widgets.Add(CreateUsernameLabel(friend.Username));
-                nameColumn.Widgets.Add(BuildConnectionStatusRow(friend.IsOnline));
+                nameColumn.Widgets.Add(CreateConnectionStatusRow(friend.IsOnline));
                 itemRow.Widgets.Add(nameColumn);
 
                 var spacer = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -448,32 +448,6 @@ namespace Torres.Client.Screens
             }
 
             return friendsList;
-        }
-
-        private static HorizontalStackPanel BuildConnectionStatusRow(bool isOnline)
-        {
-            Color connectionDotColor = isOnline ? Theme.MintLine : Theme.Blush;
-            string connectionTextKey = isOnline ? TextKeys.Friends.OnlineStatus : TextKeys.Friends.OfflineStatus;
-
-            var connectionDot = new Label
-            {
-                Text = DisplaySymbols.ConnectionDot,
-                Font = Fonts.Small,
-                TextColor = connectionDotColor,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            var connectionLabel = new LocalizedLabel(connectionTextKey)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MutedInk,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            var connectionStatusRow = new HorizontalStackPanel { Spacing = Metrics.FieldLabelSpacing };
-            connectionStatusRow.Widgets.Add(connectionDot);
-            connectionStatusRow.Widgets.Add(connectionLabel);
-
-            return connectionStatusRow;
         }
 
         private Widget BuildReceivedList()

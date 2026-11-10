@@ -72,7 +72,7 @@ namespace Torres.Client
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
 
             _gameSessionConnection = new GameSessionConnection(clientSettings);
-            _mainMenuScreen = new MainMenuScreen(_languagePreference, _playerSession);
+            _mainMenuScreen = new MainMenuScreen(_languagePreference, _gameSessionConnection, _playerSession);
             _startupScreen = new StartupScreen(_statusChannelFactory);
         }
 
@@ -133,9 +133,9 @@ namespace Torres.Client
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.Friends, new FriendsScreen(_gameSessionConnection, _playerSession, avatarCache));
-            _screensById.Add(ScreenId.ReceivedRequests, new ReceivedRequestsScreen(avatarCache));
+            _screensById.Add(ScreenId.Invitations, new InvitationsScreen(_gameSessionConnection, _playerSession, avatarCache));
             _screensById.Add(ScreenId.Room, new RoomScreen(_gameSessionConnection, _playerSession, avatarCache));
-            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen(avatarCache));
+            _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen(_gameSessionConnection, _playerSession, avatarCache));
             _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession));
@@ -226,6 +226,13 @@ namespace Torres.Client
             {
                 _playerSession.RoomChat.Add(chatMessage);
                 chatMessage = _gameSessionConnection.TakeChatMessage();
+            }
+
+            RoomInvitation? roomInvitation = _gameSessionConnection.TakeRoomInvitation();
+            while (roomInvitation is not null)
+            {
+                _playerSession.Invitations.Add(roomInvitation);
+                roomInvitation = _gameSessionConnection.TakeRoomInvitation();
             }
         }
 

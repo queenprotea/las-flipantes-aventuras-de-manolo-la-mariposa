@@ -22,6 +22,8 @@ namespace Torres.Client.Session
 
         internal MatchHistorySelection MatchHistory { get; } = new MatchHistorySelection();
 
+        internal RoomInvitationInbox Invitations { get; } = new RoomInvitationInbox();
+
         internal bool HasAccount => Player is not null;
 
         internal bool IsGuest => GuestAlias is not null;
@@ -104,6 +106,7 @@ namespace Torres.Client.Session
             PlacementEndsAtUtc = null;
             RoomChat.Clear();
             MatchHistory.Clear();
+            Invitations.Clear();
         }
     }
 }

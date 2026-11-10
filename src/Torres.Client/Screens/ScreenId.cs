@@ -28,7 +28,7 @@ namespace Torres.Client.Screens
 
         Friends,
 
-        ReceivedRequests,
+        Invitations,
 
         Room,
 

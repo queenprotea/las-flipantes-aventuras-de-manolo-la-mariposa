@@ -13,16 +13,18 @@ namespace Game.Services
         private readonly SessionService _sessionService;
         private readonly RoomService _roomService;
         private readonly FriendsService _friendsService;
+        private readonly InvitationService _invitationService;
         private readonly ChatService _chatService;
         private readonly HistoryService _historyService;
         private readonly MatchService _matchService;
         private readonly ProfileService _profileService;
 
-        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, ChatService chatService, HistoryService historyService, MatchService matchService, ProfileService profileService)
+        public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, InvitationService invitationService, ChatService chatService, HistoryService historyService, MatchService matchService, ProfileService profileService)
         {
             ArgumentNullException.ThrowIfNull(sessionService);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(friendsService);
+            ArgumentNullException.ThrowIfNull(invitationService);
             ArgumentNullException.ThrowIfNull(chatService);
             ArgumentNullException.ThrowIfNull(historyService);
             ArgumentNullException.ThrowIfNull(matchService);
@@ -31,6 +33,7 @@ namespace Game.Services
             _sessionService = sessionService;
             _roomService = roomService;
             _friendsService = friendsService;
+            _invitationService = invitationService;
             _chatService = chatService;
             _historyService = historyService;
             _matchService = matchService;
@@ -140,6 +143,38 @@ namespace Game.Services
             FriendRemovalResult removalResult = _friendsService.RemoveFriend(friendPlayerId);
 
             return removalResult;
+        }
+
+        /// <inheritdoc/>
+        public Task<PendingInvitationsResponse> GetPendingInvitationsAsync()
+        {
+            Task<PendingInvitationsResponse> invitationsReading = _invitationService.GetPendingInvitationsAsync();
+
+            return invitationsReading;
+        }
+
+        /// <inheritdoc/>
+        public Task<RoomInviteesResponse> GetRoomInviteesAsync()
+        {
+            Task<RoomInviteesResponse> inviteesReading = _invitationService.GetRoomInviteesAsync();
+
+            return inviteesReading;
+        }
+
+        /// <inheritdoc/>
+        public Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
+        {
+            Task<SendInvitationResult> invitationSending = _invitationService.SendInvitationAsync(targetPlayerId);
+
+            return invitationSending;
+        }
+
+        /// <inheritdoc/>
+        public Task<RespondInvitationResult> RespondInvitationAsync(int roomId, bool accept)
+        {
+            Task<RespondInvitationResult> invitationAnswer = _invitationService.RespondInvitationAsync(roomId, accept);
+
+            return invitationAnswer;
         }
 
         public SendChatMessageResult SendChatMessage(string text)
