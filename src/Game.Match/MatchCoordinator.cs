@@ -102,7 +102,8 @@ namespace Game.Match
             EndMatchResult endResult = EndMatchResult.NotInMatch;
             lock (_coordinatorLock)
             {
-                if (_matchesByEntrantId.TryGetValue(entrantId, out LiveMatch? liveMatch))
+                LiveMatch? liveMatch = _matchesByEntrantId.GetValueOrDefault(entrantId);
+                if (liveMatch is not null)
                 {
                     liveMatch.EndMatch();
                     List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
@@ -153,7 +154,7 @@ namespace Game.Match
             LiveMatch? liveMatch;
             lock (_coordinatorLock)
             {
-                _matchesByEntrantId.TryGetValue(entrantId, out liveMatch);
+                liveMatch = _matchesByEntrantId.GetValueOrDefault(entrantId);
             }
 
             return liveMatch;
