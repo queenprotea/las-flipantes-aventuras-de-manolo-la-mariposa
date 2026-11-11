@@ -15,6 +15,13 @@ namespace Game.Services
 
         internal static SessionOwner RequireAccountOwner(SessionRegistry sessionRegistry, ILog featureLog, string featureName)
         {
+            SessionOwner accountOwner = RequireAccountSession(sessionRegistry, featureLog, featureName).Owner;
+
+            return accountOwner;
+        }
+
+        internal static PlayerSession RequireAccountSession(SessionRegistry sessionRegistry, ILog featureLog, string featureName)
+        {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(featureLog);
             ArgumentException.ThrowIfNullOrWhiteSpace(featureName);
@@ -32,9 +39,7 @@ namespace Game.Services
                 throw new FaultException(rejectionReason);
             }
 
-            SessionOwner accountOwner = caller.Owner;
-
-            return accountOwner;
+            return caller;
         }
     }
 }

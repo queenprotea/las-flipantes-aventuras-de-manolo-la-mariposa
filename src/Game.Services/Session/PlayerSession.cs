@@ -36,7 +36,7 @@ namespace Game.Services
             _lastConnectionCheckTicks = openedAtUtc.Ticks;
         }
 
-        internal SessionOwner Owner { get; }
+        internal SessionOwner Owner { get; private set; }
 
         internal string SessionId { get; }
 
@@ -55,6 +55,11 @@ namespace Game.Services
             }
 
             _senderTask = Task.Run(SendPendingAsync);
+        }
+
+        internal void ApplyUsername(string username)
+        {
+            Owner = Owner.WithUsername(username);
         }
 
         internal void Enqueue(Notice notice)

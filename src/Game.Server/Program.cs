@@ -25,6 +25,7 @@ const string LogConfigurationFile = "log4net.config";
 const string HostLoggerName = "Game.Server.Host";
 const string ServerListeningMessage = "Server listening on net.tcp port {0}";
 const string StartupDatabaseFailedMessage = "The database could not be used while the server started; the server does not start.";
+const string AvatarFolderFailedMessage = "The avatar folder could not be created; the server does not start.";
 
 Env.TraversePath().Load();
 XmlConfigurator.Configure(
@@ -44,6 +45,23 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(hostOptions);
 ServerSettings serverSettings = ServerSettings.Read(builder.Configuration);
 SessionSettings sessionSettings = SessionSettings.Read(builder.Configuration);
 HistorySettings historySettings = HistorySettings.Read(builder.Configuration);
+AvatarSettings avatarSettings = AvatarSettings.Read(builder.Configuration);
+TimeSpan avatarUploadIdleLimit = TimeSpan.FromSeconds(avatarSettings.UploadIdleSeconds);
+var avatarStore = new AvatarStore(avatarSettings.ResolveFolderPath());
+try
+{
+    avatarStore.EnsureFolder();
+}
+catch (IOException exception)
+{
+    hostLog.Fatal(AvatarFolderFailedMessage, exception);
+    return;
+}
+catch (UnauthorizedAccessException exception)
+{
+    hostLog.Fatal(AvatarFolderFailedMessage, exception);
+    return;
+}
 MatchBoardSettings matchBoardSettings = MatchBoardSettings.ReadFromConfiguration(builder.Configuration);
 List<MatchCell> startingFlowerCells = matchBoardSettings.StartingFlowers.Select(startingFlower => new MatchCell { Row = startingFlower.Row, Column = startingFlower.Column }).ToList();
 
@@ -63,6 +81,7 @@ builder.Services.AddSingleton<SanctionRepository>();
 builder.Services.AddSingleton<SystemParameterRepository>();
 builder.Services.AddSingleton<SystemParameterReader>();
 builder.Services.AddSingleton<FriendshipRepository>();
+builder.Services.AddSingleton<RoomInvitationRepository>();
 builder.Services.AddSingleton<MatchRecordRepository>();
 builder.Services.AddSingleton<MatchParticipantRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
@@ -73,9 +92,13 @@ builder.Services.AddSingleton<RoomRegistry>();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<FriendsService>();
+builder.Services.AddSingleton<InvitationService>();
 builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSingleton<HistoryService>();
 builder.Services.AddSingleton<MatchService>();
+builder.Services.AddSingleton(avatarStore);
+builder.Services.AddSingleton(serviceProvider => new AvatarUploadRegistry(serviceProvider.GetRequiredService<SessionRegistry>(), TimeProvider.System, avatarUploadIdleLimit));
+builder.Services.AddSingleton<ProfileService>();
 builder.Services.AddSingleton<GameSessionService>();
 builder.Services.AddSingleton<RoomStartup>();
 builder.Services.AddSingleton<ConnectionSupervisor>();
@@ -124,6 +147,14 @@ static void AddEndpoints(IServiceBuilder serviceBuilder)
         ServiceEndpointPaths.Ranking);
     serviceBuilder.AddService<GameSessionService>();
     serviceBuilder.AddServiceEndpoint<GameSessionService, IGameSessionService>(
-        new NetTcpBinding(SecurityMode.None),
+        CreateGameSessionBinding(),
         ServiceEndpointPaths.GameSession);
+}
+
+static NetTcpBinding CreateGameSessionBinding()
+{
+    var gameSessionBinding = new NetTcpBinding(SecurityMode.None);
+    gameSessionBinding.ReaderQuotas.MaxArrayLength = ProfileLimits.LargestArrayBytes;
+
+    return gameSessionBinding;
 }

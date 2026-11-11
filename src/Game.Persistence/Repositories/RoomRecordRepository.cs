@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 using Npgsql;
 
@@ -55,19 +56,27 @@ namespace Game.Persistence
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
 
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            await using IDbContextTransaction closing = await databaseContext.Database.BeginTransactionAsync();
 
+            await databaseContext.RoomInvitationRecords
+                .Where(storedInvitation => storedInvitation.RoomId == roomId)
+                .ExecuteDeleteAsync();
             await databaseContext.RoomRecords
                 .Where(storedRoom => (storedRoom.RoomId == roomId) && !storedRoom.ClosedAt.HasValue)
                 .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAtUtc));
+            await closing.CommitAsync();
         }
 
         public async Task<int> CloseAllOpenAsync(DateTime closedAtUtc)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            await using IDbContextTransaction closing = await databaseContext.Database.BeginTransactionAsync();
 
+            await databaseContext.RoomInvitationRecords.ExecuteDeleteAsync();
             int closedCount = await databaseContext.RoomRecords
                 .Where(storedRoom => !storedRoom.ClosedAt.HasValue)
                 .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAtUtc));
+            await closing.CommitAsync();
 
             return closedCount;
         }

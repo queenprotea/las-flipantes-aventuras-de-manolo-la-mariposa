@@ -40,6 +40,64 @@ namespace Game.Services
 
         internal bool IsPublic => Visibility == RoomVisibility.Public;
 
+        internal bool HasMatchInProgress()
+        {
+            bool isInMatch;
+            lock (_roomLock)
+            {
+                isInMatch = _isInMatch;
+            }
+
+            return isInMatch;
+        }
+
+        internal int? FindMemberIdOf(int ownerId)
+        {
+            int? memberId;
+            lock (_roomLock)
+            {
+                memberId = FindByOwner(ownerId)?.MemberId;
+            }
+
+            return memberId;
+        }
+
+        internal bool ApplyProfile(int ownerId, string username, string? avatarReference)
+        {
+            bool isApplied = false;
+            lock (_roomLock)
+            {
+                LiveRoomMember? member = FindByOwner(ownerId);
+                if ((member is not null) && !_isInMatch)
+                {
+                    member.ApplyProfile(username, avatarReference);
+                    isApplied = true;
+                }
+                else
+                {
+                    member?.HoldProfile(username, avatarReference);
+                }
+            }
+
+            return isApplied;
+        }
+
+        internal bool ApplyLoadedAvatar(int memberId, string avatarReference, int expectedProfileVersion)
+        {
+            bool isApplied = false;
+            lock (_roomLock)
+            {
+                LiveRoomMember? member = _members.Find(candidate => candidate.MemberId == memberId);
+                if ((member is not null) && (member.ProfileVersion == expectedProfileVersion))
+                {
+                    member.ApplyLoadedAvatar(avatarReference);
+                    isApplied = true;
+                }
+            }
+
+            return isApplied;
+        }
+
         internal JoinRoomStatus Admit(SessionOwner owner)
         {
             JoinRoomStatus admission;
@@ -176,6 +234,7 @@ namespace Game.Services
             {
                 wasInMatch = _isInMatch;
                 _isInMatch = false;
+                _members.ForEach(ApplyHeldProfile);
             }
 
             return wasInMatch;
@@ -484,6 +543,11 @@ namespace Game.Services
             MatchEntrant entrant = member.ToMatchEntrant();
 
             return entrant;
+        }
+
+        private static void ApplyHeldProfile(LiveRoomMember member)
+        {
+            member.ApplyHeldProfile();
         }
 
         private static RoomMember ToMemberContract(LiveRoomMember member)

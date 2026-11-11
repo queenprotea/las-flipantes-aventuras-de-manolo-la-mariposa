@@ -6,6 +6,8 @@ using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
+using Torres.Client.Avatars;
+
 namespace Torres.Client.Session
 {
     internal sealed class GameSessionConnection
@@ -19,6 +21,7 @@ namespace Torres.Client.Session
 
         private IGameSessionService? _sessionChannel;
         private Task<ConnectionCheckResponse>? _pendingConnectionCheck;
+        private Task? _pendingUploadCancellation;
         private TimeSpan _connectionCheckPeriod;
         private TimeSpan _sinceLastConnectionCheck;
 
@@ -28,7 +31,7 @@ namespace Torres.Client.Session
 
             _channelFactory = new DuplexChannelFactory<IGameSessionService>(
                 new InstanceContext(_noticeQueue),
-                new NetTcpBinding(SecurityMode.None),
+                CreateSessionBinding(),
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.GameSession));
         }
 
@@ -67,6 +70,7 @@ namespace Torres.Client.Session
 
             _sinceLastConnectionCheck += gameTime.ElapsedGameTime;
             FollowConnectionCheck();
+            FollowUploadCancellation();
             bool isConnectionCheckDue = (_pendingConnectionCheck is null) && (_sinceLastConnectionCheck >= _connectionCheckPeriod);
             if (isConnectionCheckDue)
             {
@@ -106,6 +110,13 @@ namespace Torres.Client.Session
             MatchChange? matchChange = _noticeQueue.TakeMatchChange();
 
             return matchChange;
+        }
+
+        internal RoomInvitation? TakeRoomInvitation()
+        {
+            RoomInvitation? roomInvitation = _noticeQueue.TakeRoomInvitation();
+
+            return roomInvitation;
         }
 
         internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility roomVisibility)
@@ -220,6 +231,41 @@ namespace Torres.Client.Session
             return friendRemoval;
         }
 
+        internal Task<PendingInvitationsResponse> GetPendingInvitationsAsync()
+        {
+            Task<PendingInvitationsResponse> invitationsReading = RequireChannel().GetPendingInvitationsAsync();
+
+            return invitationsReading;
+        }
+
+        internal Task<RoomInviteesResponse> GetRoomInviteesAsync()
+        {
+            Task<RoomInviteesResponse> inviteesReading = RequireChannel().GetRoomInviteesAsync();
+
+            return inviteesReading;
+        }
+
+        internal Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
+        {
+            Task<SendInvitationResult> invitationSending = RequireChannel().SendInvitationAsync(targetPlayerId);
+
+            return invitationSending;
+        }
+
+        internal Task<RespondInvitationResult> AcceptInvitationAsync(int roomId)
+        {
+            Task<RespondInvitationResult> invitationAcceptance = RequireChannel().RespondInvitationAsync(roomId, true);
+
+            return invitationAcceptance;
+        }
+
+        internal Task<RespondInvitationResult> RejectInvitationAsync(int roomId)
+        {
+            Task<RespondInvitationResult> invitationRejection = RequireChannel().RespondInvitationAsync(roomId, false);
+
+            return invitationRejection;
+        }
+
         internal Task<StartMatchResult> StartMatchAsync()
         {
             Task<StartMatchResult> matchStart = RequireChannel().StartMatchAsync();
@@ -248,6 +294,46 @@ namespace Torres.Client.Session
             return butterflyPlacement;
         }
 
+        internal Task<ProfileResponse> GetProfileAsync()
+        {
+            Task<ProfileResponse> profileReading = RequireChannel().GetProfileAsync();
+
+            return profileReading;
+        }
+
+        internal Task<BeginAvatarUploadResult> BeginAvatarUploadAsync(PreparedAvatar preparedAvatar)
+        {
+            Task<BeginAvatarUploadResult> uploadBeginning = new SessionCall<PreparedAvatar, BeginAvatarUploadResult>(BeginAvatarUpload, preparedAvatar).StartAsync();
+
+            return uploadBeginning;
+        }
+
+        internal Task<SendAvatarPartResult> SendAvatarPartAsync(AvatarPart avatarPart)
+        {
+            Task<SendAvatarPartResult> partSending = new SessionCall<AvatarPart, SendAvatarPartResult>(SendAvatarPart, avatarPart).StartAsync();
+
+            return partSending;
+        }
+
+        internal void RequestAvatarUploadCancellation()
+        {
+            _pendingUploadCancellation = Task.Run(CancelAvatarUpload);
+        }
+
+        internal Task<UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar)
+        {
+            Task<UpdateProfileResult> profileUpdate = RequireChannel().UpdateProfileAsync(username, includesNewAvatar);
+
+            return profileUpdate;
+        }
+
+        internal Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)
+        {
+            Task<AvatarResponse> thumbnailReading = RequireChannel().GetAvatarThumbnailAsync(avatarReference);
+
+            return thumbnailReading;
+        }
+
         internal void CloseSession()
         {
             if (IsSessionOpen && (_sessionChannel is not null))
@@ -274,6 +360,7 @@ namespace Torres.Client.Session
 
             _sessionChannel = null;
             _pendingConnectionCheck = null;
+            _pendingUploadCancellation = null;
             IsSessionOpen = false;
             WasConnectionLost = false;
             _noticeQueue.Clear();
@@ -288,6 +375,14 @@ namespace Torres.Client.Session
 
             WasConnectionLost = !_pendingConnectionCheck.IsCompletedSuccessfully;
             _pendingConnectionCheck = null;
+        }
+
+        private void FollowUploadCancellation()
+        {
+            if ((_pendingUploadCancellation is not null) && _pendingUploadCancellation.IsCompleted)
+            {
+                _pendingUploadCancellation = null;
+            }
         }
 
         private FriendRequestResponseResult AcceptFriendRequest(int requesterPlayerId)
@@ -316,6 +411,33 @@ namespace Torres.Client.Session
             PlacementResult butterflyPlacementResult = RequireChannel().PlaceButterfly(destinationCell.Row, destinationCell.Column);
 
             return butterflyPlacementResult;
+        }
+
+        private static NetTcpBinding CreateSessionBinding()
+        {
+            var sessionBinding = new NetTcpBinding(SecurityMode.None);
+            sessionBinding.ReaderQuotas.MaxArrayLength = ProfileLimits.LargestArrayBytes;
+
+            return sessionBinding;
+        }
+
+        private BeginAvatarUploadResult BeginAvatarUpload(PreparedAvatar preparedAvatar)
+        {
+            BeginAvatarUploadResult beginResult = RequireChannel().BeginAvatarUpload(preparedAvatar.Original.Length, preparedAvatar.Thumbnail.Length);
+
+            return beginResult;
+        }
+
+        private SendAvatarPartResult SendAvatarPart(AvatarPart avatarPart)
+        {
+            SendAvatarPartResult partResult = RequireChannel().SendAvatarPart(avatarPart.FileKind, avatarPart.Offset, avatarPart.Bytes);
+
+            return partResult;
+        }
+
+        private void CancelAvatarUpload()
+        {
+            RequireChannel().CancelAvatarUpload();
         }
 
         private IGameSessionService RequireChannel()

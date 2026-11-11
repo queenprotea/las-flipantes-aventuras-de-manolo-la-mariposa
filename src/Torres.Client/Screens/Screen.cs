@@ -43,6 +43,10 @@ namespace Torres.Client.Screens
         {
         }
 
+        internal virtual void Close()
+        {
+        }
+
         internal virtual void RenderScene()
         {
         }
@@ -465,6 +469,32 @@ namespace Torres.Client.Screens
             });
 
             return statusBadge;
+        }
+
+        protected static HorizontalStackPanel CreateConnectionStatusRow(bool isOnline)
+        {
+            Color connectionDotColor = isOnline ? Theme.MintLine : Theme.Blush;
+            string connectionTextKey = isOnline ? TextKeys.Friends.OnlineStatus : TextKeys.Friends.OfflineStatus;
+
+            var connectionDot = new Label
+            {
+                Text = DisplaySymbols.ConnectionDot,
+                Font = Fonts.Small,
+                TextColor = connectionDotColor,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var connectionLabel = new LocalizedLabel(connectionTextKey)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var connectionStatusRow = new HorizontalStackPanel { Spacing = Metrics.FieldLabelSpacing };
+            connectionStatusRow.Widgets.Add(connectionDot);
+            connectionStatusRow.Widgets.Add(connectionLabel);
+
+            return connectionStatusRow;
         }
 
         protected static Label CreateUsernameLabel(string username)

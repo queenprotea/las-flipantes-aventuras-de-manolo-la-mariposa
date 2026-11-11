@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -16,6 +17,8 @@ namespace Game.Services
     public sealed class RoomService : IRoomService
     {
         private const int MostCodeDraws = 10;
+        private const string PublicVisibilityCode = "public";
+        private const string PrivateVisibilityCode = "private";
         private const string RoomCreatedMessage = "Room {0} created by player {1}.";
         private const string NoFreeCodeMessage = "No free room code was found after {0} draws.";
         private const string CreationFailedMessage = "The database could not be used while player {0} created a room.";
@@ -26,27 +29,34 @@ namespace Game.Services
         private const string MemberTimedOutMessage = "Player {0} lost their seat in room {1} after being inactive.";
         private const string RoomClosedMessage = "Room {0} closed because nobody was left.";
         private const string CloseFailedMessage = "Room {0} could not be closed in the database; the next start up closes it.";
+        private const string AvatarLoadFailedMessage = "The avatar of player {0} could not be read after joining room {1}; the room shows the default avatar.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RoomService));
+
+        private readonly Lock _avatarLoadsLock = new Lock();
+        private readonly List<Task> _avatarLoads = new List<Task>();
 
         private readonly RoomRegistry _roomRegistry;
         private readonly SessionRegistry _sessionRegistry;
         private readonly RoomRecordRepository _roomRecordRepository;
         private readonly SanctionRepository _sanctionRepository;
+        private readonly PlayerRepository _playerRepository;
         private readonly TimeProvider _timeProvider;
 
-        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, RoomRecordRepository roomRecordRepository, SanctionRepository sanctionRepository, TimeProvider timeProvider)
+        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, RoomRecordRepository roomRecordRepository, SanctionRepository sanctionRepository, PlayerRepository playerRepository, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(roomRecordRepository);
             ArgumentNullException.ThrowIfNull(sanctionRepository);
+            ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(timeProvider);
 
             _roomRegistry = roomRegistry;
             _sessionRegistry = sessionRegistry;
             _roomRecordRepository = roomRecordRepository;
             _sanctionRepository = sanctionRepository;
+            _playerRepository = playerRepository;
             _timeProvider = timeProvider;
             _sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
         }
@@ -160,6 +170,22 @@ namespace Game.Services
             return currentRoom;
         }
 
+        internal bool HasMatchInProgress(int ownerId)
+        {
+            bool isInMatch = _roomRegistry.FindRoomOf(ownerId)?.HasMatchInProgress() ?? false;
+
+            return isInMatch;
+        }
+
+        internal void ApplyProfile(int ownerId, string username, string? avatarReference)
+        {
+            LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
+            if ((room is not null) && room.ApplyProfile(ownerId, username, avatarReference))
+            {
+                NotifyMembers(room, RoomChangeReason.MemberProfileChanged, null);
+            }
+        }
+
         internal async Task<LeaveRoomResult> LeaveRoomOfOwnerAsync(int ownerId)
         {
             LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
@@ -205,6 +231,30 @@ namespace Game.Services
             return banInForce;
         }
 
+        internal async Task<JoinRoomResult> JoinForAsync(SessionOwner owner, int roomId)
+        {
+            JoinRoomResult joining;
+            try
+            {
+                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
+                if (banInForce is null)
+                {
+                    joining = Seat(owner, roomId);
+                }
+                else
+                {
+                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
+                }
+            }
+            catch (NpgsqlException exception)
+            {
+                _log.Error(string.Format(CultureInfo.InvariantCulture, JoinFailedMessage, owner.OwnerId, roomId), exception);
+                joining = new JoinRoomResult { Status = JoinRoomStatus.DatabaseUnavailable };
+            }
+
+            return joining;
+        }
+
         internal async Task RemoveExpiredMembersAsync(TimeSpan inactivityLimit)
         {
             DateTime limitUtc = NowUtc() - inactivityLimit;
@@ -245,8 +295,8 @@ namespace Game.Services
         {
             string visibilityCode = visibility switch
             {
-                RoomVisibility.Public => RoomVisibilityCodes.Public,
-                RoomVisibility.Private => RoomVisibilityCodes.Private,
+                RoomVisibility.Public => PublicVisibilityCode,
+                RoomVisibility.Private => PrivateVisibilityCode,
                 _ => throw new ArgumentOutOfRangeException(nameof(visibility)),
             };
 
@@ -342,6 +392,7 @@ namespace Game.Services
             room.Admit(owner);
             _roomRegistry.AddRoom(room, owner.OwnerId);
             _log.InfoFormat(RoomCreatedMessage, room.RoomId, owner.OwnerId);
+            StartAvatarLoad(room, owner);
             var creation = new CreateRoomResult
             {
                 Status = CreateRoomStatus.Created,
@@ -349,30 +400,6 @@ namespace Game.Services
             };
 
             return creation;
-        }
-
-        private async Task<JoinRoomResult> JoinForAsync(SessionOwner owner, int roomId)
-        {
-            JoinRoomResult joining;
-            try
-            {
-                Sanction? banInForce = await FindBanInForceAsync(owner.OwnerId, owner.IsGuest);
-                if (banInForce is null)
-                {
-                    joining = Seat(owner, roomId);
-                }
-                else
-                {
-                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
-                }
-            }
-            catch (NpgsqlException exception)
-            {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, JoinFailedMessage, owner.OwnerId, roomId), exception);
-                joining = new JoinRoomResult { Status = JoinRoomStatus.DatabaseUnavailable };
-            }
-
-            return joining;
         }
 
         private JoinRoomResult Seat(SessionOwner owner, int roomId)
@@ -392,6 +419,7 @@ namespace Game.Services
                 _log.InfoFormat(MemberJoinedMessage, owner.OwnerId, room.RoomId);
                 NotifyMembers(room, RoomChangeReason.MemberJoined, owner.OwnerId);
                 joining.Room = room.BuildViewFor(owner.OwnerId);
+                StartAvatarLoad(room, owner);
             }
             else
             {
@@ -399,6 +427,48 @@ namespace Game.Services
             }
 
             return joining;
+        }
+
+        private void StartAvatarLoad(LiveRoom room, SessionOwner owner)
+        {
+            int? memberId = owner.IsGuest ? null : room.FindMemberIdOf(owner.OwnerId);
+            if (memberId is not int loadedMemberId)
+            {
+                return;
+            }
+
+            Task avatarLoad = LoadMemberAvatarAsync(room, loadedMemberId, owner.OwnerId);
+            lock (_avatarLoadsLock)
+            {
+                _avatarLoads.RemoveAll(IsFinished);
+                _avatarLoads.Add(avatarLoad);
+            }
+        }
+
+        private static bool IsFinished(Task avatarLoad)
+        {
+            bool isFinished = avatarLoad.IsCompleted;
+
+            return isFinished;
+        }
+
+        private async Task LoadMemberAvatarAsync(LiveRoom room, int memberId, int ownerId)
+        {
+            string? avatarReference;
+            try
+            {
+                avatarReference = await _playerRepository.FindAvatarReferenceAsync(ownerId);
+            }
+            catch (NpgsqlException exception)
+            {
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, AvatarLoadFailedMessage, ownerId, room.RoomId), exception);
+                return;
+            }
+
+            if ((avatarReference is not null) && room.ApplyLoadedAvatar(memberId, avatarReference, LiveRoomMember.InitialProfileVersion))
+            {
+                NotifyMembers(room, RoomChangeReason.MemberProfileChanged, null);
+            }
         }
 
         private Room? FindViewFor(int ownerId)

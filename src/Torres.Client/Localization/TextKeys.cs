@@ -133,6 +133,9 @@ namespace Torres.Client.Localization
             internal const string AvatarFormatHint = "Profile.AvatarFormatHint";
             internal const string AvatarMissing = "Profile.AvatarMissing";
             internal const string AvatarTooLarge = "Profile.AvatarTooLarge";
+            internal const string AvatarInvalidFormat = "Profile.AvatarInvalidFormat";
+            internal const string SavedMessage = "Profile.SavedMessage";
+            internal const string MatchInProgress = "Profile.MatchInProgress";
             internal const string AccountTitle = "Profile.AccountTitle";
             internal const string AccountHint = "Profile.AccountHint";
             internal const string UsernameLabel = "Profile.UsernameLabel";
@@ -186,7 +189,8 @@ namespace Torres.Client.Localization
             internal const string SelfExcludedHint = "Friends.SelfExcludedHint";
             internal const string NoResultsTitle = "Friends.NoResultsTitle";
             internal const string NoResultsHint = "Friends.NoResultsHint";
-            internal const string InviteToRoomButton = "Friends.InviteToRoomButton";
+            internal const string OnlineStatus = "Friends.OnlineStatus";
+            internal const string OfflineStatus = "Friends.OfflineStatus";
         }
 
         internal static class Invitations
@@ -208,6 +212,7 @@ namespace Torres.Client.Localization
             internal const string InvitedBadge = "InvitePlayers.InvitedBadge";
             internal const string InviteButton = "InvitePlayers.InviteButton";
             internal const string InviteByEmailButton = "InvitePlayers.InviteByEmailButton";
+            internal const string AlreadyInRoomBadge = "InvitePlayers.AlreadyInRoomBadge";
         }
 
         internal static class History
@@ -340,6 +345,8 @@ namespace Torres.Client.Localization
             internal const string RoomNotFoundBody = "Alerts.RoomNotFoundBody";
             internal const string RoomFullTitle = "Alerts.RoomFullTitle";
             internal const string RoomFullBody = "Alerts.RoomFullBody";
+            internal const string InvitationRoomGoneTitle = "Alerts.InvitationRoomGoneTitle";
+            internal const string InvitationRoomGoneBody = "Alerts.InvitationRoomGoneBody";
             internal const string ViewRoomsButton = "Alerts.ViewRoomsButton";
             internal const string RemovePlayerTitle = "Alerts.RemovePlayerTitle";
             internal const string RemovePlayerBody = "Alerts.RemovePlayerBody";

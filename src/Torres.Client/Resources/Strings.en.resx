@@ -329,7 +329,16 @@
     <value>Your image is no longer on the server: the default avatar is shown.</value>
   </data>
   <data name="Profile.AvatarTooLarge" xml:space="preserve">
-    <value>The file is 7.4 MB.</value>
+    <value>The file is {0} MB.</value>
+  </data>
+  <data name="Profile.AvatarInvalidFormat" xml:space="preserve">
+    <value>Only PNG or JPG images are allowed.</value>
+  </data>
+  <data name="Profile.SavedMessage" xml:space="preserve">
+    <value>Profile updated.</value>
+  </data>
+  <data name="Profile.MatchInProgress" xml:space="preserve">
+    <value>You can't edit your profile during a match.</value>
   </data>
   <data name="Profile.AccountTitle" xml:space="preserve">
     <value>Your account</value>
@@ -466,8 +475,11 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>The search is exact: check the spelling.</value>
   </data>
-  <data name="Friends.InviteToRoomButton" xml:space="preserve">
-    <value>Invite to Room</value>
+  <data name="Friends.OnlineStatus" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="Friends.OfflineStatus" xml:space="preserve">
+    <value>Offline</value>
   </data>
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitations</value>
@@ -507,6 +519,9 @@
   </data>
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invite by email</value>
+  </data>
+  <data name="InvitePlayers.AlreadyInRoomBadge" xml:space="preserve">
+    <value>In the room</value>
   </data>
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>history</value>
@@ -807,6 +822,12 @@
   </data>
   <data name="Alerts.RoomFullBody" xml:space="preserve">
     <value>There are already four players in it. You can join another room or create your own.</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneTitle" xml:space="preserve">
+    <value>That room is no longer available</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneBody" xml:space="preserve">
+    <value>It was closed or the server restarted.</value>
   </data>
   <data name="Alerts.ViewRoomsButton" xml:space="preserve">
     <value>View rooms</value>

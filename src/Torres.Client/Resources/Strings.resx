@@ -329,7 +329,16 @@
     <value>Tu imagen ya no está en el servidor: se muestra el avatar por defecto.</value>
   </data>
   <data name="Profile.AvatarTooLarge" xml:space="preserve">
-    <value>El archivo pesa 7.4 MB.</value>
+    <value>El archivo pesa {0} MB.</value>
+  </data>
+  <data name="Profile.AvatarInvalidFormat" xml:space="preserve">
+    <value>Solo se admiten imágenes PNG o JPG.</value>
+  </data>
+  <data name="Profile.SavedMessage" xml:space="preserve">
+    <value>Perfil actualizado.</value>
+  </data>
+  <data name="Profile.MatchInProgress" xml:space="preserve">
+    <value>No puedes modificar tu perfil durante una partida.</value>
   </data>
   <data name="Profile.AccountTitle" xml:space="preserve">
     <value>Tu cuenta</value>
@@ -466,8 +475,11 @@
   <data name="Friends.NoResultsHint" xml:space="preserve">
     <value>La búsqueda es exacta: revisa cómo se escribe.</value>
   </data>
-  <data name="Friends.InviteToRoomButton" xml:space="preserve">
-    <value>Invitar a Sala</value>
+  <data name="Friends.OnlineStatus" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="Friends.OfflineStatus" xml:space="preserve">
+    <value>Desconectado</value>
   </data>
   <data name="Invitations.HeaderLabel" xml:space="preserve">
     <value>invitaciones</value>
@@ -507,6 +519,9 @@
   </data>
   <data name="InvitePlayers.InviteByEmailButton" xml:space="preserve">
     <value>Invitar por correo</value>
+  </data>
+  <data name="InvitePlayers.AlreadyInRoomBadge" xml:space="preserve">
+    <value>En la sala</value>
   </data>
   <data name="History.HeaderLabel" xml:space="preserve">
     <value>historial</value>
@@ -807,6 +822,12 @@
   </data>
   <data name="Alerts.RoomFullBody" xml:space="preserve">
     <value>Ya hay cuatro jugadores dentro. Puedes unirte a otra sala o crear la tuya.</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneTitle" xml:space="preserve">
+    <value>Esa sala ya no está disponible</value>
+  </data>
+  <data name="Alerts.InvitationRoomGoneBody" xml:space="preserve">
+    <value>Se cerró o el servidor se reinició.</value>
   </data>
   <data name="Alerts.ViewRoomsButton" xml:space="preserve">
     <value>Ver salas</value>

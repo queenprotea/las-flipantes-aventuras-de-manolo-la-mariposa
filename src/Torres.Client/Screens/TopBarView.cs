@@ -3,6 +3,7 @@ using System;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Avatars;
 using Torres.Client.Localization;
 using Torres.Client.Session;
 using Torres.Client.Ui;
@@ -19,12 +20,15 @@ namespace Torres.Client.Screens
         private readonly PlayerSession _playerSession;
         private readonly LocalizedButton _logInButton;
         private readonly HorizontalStackPanel _accountSummary;
+        private readonly AvatarView _avatarView;
 
-        internal TopBarView(PlayerSession playerSession)
+        internal TopBarView(PlayerSession playerSession, AvatarCache avatarCache)
         {
             ArgumentNullException.ThrowIfNull(playerSession);
+            ArgumentNullException.ThrowIfNull(avatarCache);
 
             _playerSession = playerSession;
+            _avatarView = new AvatarView(avatarCache, Sizes.AppBarAvatarSize);
             _logInButton = BuildLogInButton();
             _accountSummary = BuildAccountSummary();
 
@@ -65,6 +69,13 @@ namespace Torres.Client.Screens
             }
 
             FollowSession();
+        }
+
+        internal void Update()
+        {
+            _usernameLabel.Text = _playerSession.DisplayName;
+            _avatarView.AvatarReference = _playerSession.AvatarReference;
+            _avatarView.Refresh();
         }
 
         internal void ClearRequests()
@@ -162,18 +173,9 @@ namespace Torres.Client.Screens
 
         private Button BuildAvatarButton()
         {
-            var avatarPanel = new Panel
-            {
-                Width = Sizes.AppBarAvatarSize,
-                Height = Sizes.AppBarAvatarSize,
-                Background = Theme.MintAltBrush,
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
-            };
-
             var avatarButton = new Button
             {
-                Content = avatarPanel,
+                Content = _avatarView.Root,
                 Padding = new Thickness(0),
                 Background = null,
                 OverBackground = null,

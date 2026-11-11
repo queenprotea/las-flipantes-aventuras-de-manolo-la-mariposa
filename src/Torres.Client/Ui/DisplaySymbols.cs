@@ -6,6 +6,7 @@ namespace Torres.Client.Ui
         internal const string MissingValue = "—";
         internal const string BonusSign = "+";
         internal const string MenuChevron = "›";
+        internal const string CountOverflow = "9+";
         internal const string ConnectionDot = "●";
         internal const string WaitingClock = "◷";
         internal const string InlineSeparator = "·";

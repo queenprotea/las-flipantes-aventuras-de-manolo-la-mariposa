@@ -15,22 +15,10 @@ namespace Game.Contracts
         NotInRoom,
 
         [EnumMember]
-        RoomFull,
-
-        [EnumMember]
-        RoomInMatch,
-
-        [EnumMember]
         PlayerNotFound,
 
         [EnumMember]
-        PlayerNotFriend,
-
-        [EnumMember]
-        PlayerOffline,
-
-        [EnumMember]
-        PlayerAlreadyInRoom,
+        AlreadyInThisRoom,
 
         [EnumMember]
         InvitationAlreadyPending,

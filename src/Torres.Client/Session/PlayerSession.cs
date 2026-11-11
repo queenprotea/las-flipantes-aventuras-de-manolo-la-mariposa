@@ -10,6 +10,8 @@ namespace Torres.Client.Session
 
         internal string? GuestAlias { get; private set; }
 
+        internal string? AvatarReference { get; private set; }
+
         internal Room? CurrentRoom { get; private set; }
 
         internal MatchView? CurrentMatchView { get; private set; }
@@ -19,6 +21,8 @@ namespace Torres.Client.Session
         internal RoomChatLog RoomChat { get; } = new RoomChatLog();
 
         internal MatchHistorySelection MatchHistory { get; } = new MatchHistorySelection();
+
+        internal RoomInvitationInbox Invitations { get; } = new RoomInvitationInbox();
 
         internal bool HasAccount => Player is not null;
 
@@ -34,6 +38,7 @@ namespace Torres.Client.Session
 
             Player = player;
             GuestAlias = null;
+            AvatarReference = null;
         }
 
         internal void StartAsGuest(string guestAlias)
@@ -42,6 +47,19 @@ namespace Torres.Client.Session
 
             Player = null;
             GuestAlias = guestAlias;
+            AvatarReference = null;
+        }
+
+        internal void ApplyProfile(string username, string? avatarReference)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+
+            if (Player is not null)
+            {
+                Player.Username = username;
+            }
+
+            AvatarReference = avatarReference;
         }
 
         internal void EnterRoom(Room room)
@@ -82,11 +100,13 @@ namespace Torres.Client.Session
         {
             Player = null;
             GuestAlias = null;
+            AvatarReference = null;
             CurrentRoom = null;
             CurrentMatchView = null;
             PlacementEndsAtUtc = null;
             RoomChat.Clear();
             MatchHistory.Clear();
+            Invitations.Clear();
         }
     }
 }

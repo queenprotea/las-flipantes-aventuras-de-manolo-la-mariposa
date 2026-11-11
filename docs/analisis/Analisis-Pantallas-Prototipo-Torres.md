@@ -306,7 +306,7 @@ corrección estructural. Lo que hay que completar:
 | Cancelar una solicitud enviada | `[PENDIENTE PU-11]` |
 | Eliminar una amistad aceptada | `[PENDIENTE PU-11]` |
 | Bloquear | **No existe** `P-15`. No se prototipa |
-| Ver si un amigo está conectado | `[PENDIENTE PU-12]` — y **no hace falta para el flujo**: la invitación se conserva hasta que el amigo entre `P-21` |
+| Ver si un amigo está conectado | `[DEFINIDO]` **Cerrada PU-12 el 8 nov 2026:** punto verde «Conectado» o rosa «Desconectado» bajo el nombre, solo en la pestaña Amigos. Se actualiza con el refresco de la lista cada 5 s |
 
 La búsqueda es **solo por username** `P-16`. No por correo: el correo es dato personal
 protegido por `CON-06` y el sistema **nunca guarda el correo de un tercero** `P-22`.
@@ -511,7 +511,7 @@ aparecen más abajo con lo que obligaron a dibujar; en su lugar queda abierta `P
 | **PU-07** | Texto exacto del rechazo por código inexistente, sala cerrada o sala llena | `PT-17` | `D-23`, `P-33`, `P-34` |
 | **PU-08** | Si se puede navegar fuera de la sala sin salir de ella | Toda la navegación | Una sala por jugador `P-33`; no se sale jugando `P-35` |
 | **PU-11** | Si se puede cancelar una solicitud ya enviada | `PT-09` | El rechazo borra `P-15`; eliminar una amistad aceptada ya está decidido `OB-07` |
-| **PU-12** | Si se muestra el estado de conexión de los amigos | `PT-09` | No hace falta para el flujo: la invitación espera al amigo `P-21` |
+| **PU-12** | Si se muestra el estado de conexión de los amigos | `PT-09` | **Cerrada el 8 nov 2026:** sí, solo en la pestaña Amigos y solo a los amigos aceptados (ni en la búsqueda ni en las solicitudes). «Conectado» es tener la sesión abierta, sea en el menú, una sala o una partida; llega en `PlayerSummary.IsOnline` con el refresco de la lista cada 5 s, sin aviso nuevo |
 | **PU-15** | Si «Configurar cuenta» tendrá algo más que el idioma y el borrado | `PT-08` | Hoy solo esos dos están respaldados `D-28`, `P-42`, `OB-06` |
 | **PU-18** | Longitud, paginación y resaltado de la posición propia en el ranking | `PT-13` | El orden está definido `DR-15` |
 | **PU-19** | Si el historial necesita detalle de partida propio | `PT-11`, `PT-12` | Solo puede mostrar resultados; no hay jugadas ni desglose por rondas `D-21` |

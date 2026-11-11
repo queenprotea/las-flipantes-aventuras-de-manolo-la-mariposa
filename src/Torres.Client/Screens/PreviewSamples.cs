@@ -13,11 +13,6 @@ namespace Torres.Client.Screens
         internal const string SeatThreePlayer = "salma";
         internal const string SeatFourPlayer = "scarleth";
         internal const string AnaPlayer = "ana_torres";
-        internal const string LuisPlayer = "luis_m";
-        internal const string SofiaPlayer = "sofia99";
-        internal const string DiegoPlayer = "dgomez";
-        internal const string MarcoPlayer = "marco_r";
-        internal const string PauPlayer = "pau_v";
         internal const string InesPlayer = "ines_b";
         internal const string TomasPlayer = "tomas";
         internal const string NewPlayer = "nuevo_jugador";
