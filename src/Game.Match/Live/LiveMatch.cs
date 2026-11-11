@@ -144,7 +144,8 @@ namespace Game.Match
 
         private void StartPlacementCountdown()
         {
-            if (_matchTable.Phase == TablePhase.PlayerTurn)
+            bool isPlacementOpen = (_matchTable.Phase == TablePhase.CaterpillarPlacement) || (_matchTable.Phase == TablePhase.ButterflyPlacement);
+            if (!isPlacementOpen)
             {
                 return;
             }

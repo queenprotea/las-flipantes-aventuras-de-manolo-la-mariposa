@@ -31,7 +31,7 @@ namespace Game.Services
         private readonly TimeProvider _timeProvider;
         private readonly MatchCoordinator _matchCoordinator;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard, Random tieBreakRandom)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
@@ -40,6 +40,7 @@ namespace Game.Services
             ArgumentNullException.ThrowIfNull(matchRuleReader);
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
+            ArgumentNullException.ThrowIfNull(tieBreakRandom);
 
             _roomRegistry = roomRegistry;
             _roomService = roomService;
@@ -47,7 +48,7 @@ namespace Game.Services
             _systemParameterReader = systemParameterReader;
             _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells, tieBreakRandom);
         }
 
         /// <inheritdoc/>

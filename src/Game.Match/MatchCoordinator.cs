@@ -18,18 +18,21 @@ namespace Game.Match
         private readonly TimeProvider _timeProvider;
         private readonly IMatchListener _matchListener;
         private readonly StartingLayout _startingLayout;
+        private readonly Random _tieBreakRandom;
 
         private int _lastMatchId;
 
-        public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, IReadOnlyList<MatchCell> startingFlowerCells)
+        public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, IReadOnlyList<MatchCell> startingFlowerCells, Random tieBreakRandom)
         {
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(matchListener);
             ArgumentNullException.ThrowIfNull(startingFlowerCells);
+            ArgumentNullException.ThrowIfNull(tieBreakRandom);
 
             _timeProvider = timeProvider;
             _matchListener = matchListener;
             _startingLayout = new StartingLayout(startingFlowerCells.Select(ToStartingFlower).ToList());
+            _tieBreakRandom = tieBreakRandom;
         }
 
         public static int MinimumEntrantCount => MatchTable.MinimumSeatCount;
@@ -55,7 +58,7 @@ namespace Game.Match
             MatchRules matchRules = MatchRuleConversion.ToMatchRules(ruleSet);
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(entrants);
             List<int> entrantIds = seatedEntrants.Select(seatedEntrant => seatedEntrant.Entrant.EntrantId).ToList();
-            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count, matchRules);
+            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count, matchRules, _tieBreakRandom);
             LiveMatch liveMatch;
             lock (_coordinatorLock)
             {

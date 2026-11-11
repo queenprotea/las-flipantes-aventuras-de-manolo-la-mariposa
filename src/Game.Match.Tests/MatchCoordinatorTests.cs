@@ -26,7 +26,7 @@ namespace Game.Match.Tests
 
         public MatchCoordinatorTests()
         {
-            _coordinator = new MatchCoordinator(_fakeTimeProvider, _listener, SampleMatches.FiveFlowerCells);
+            _coordinator = new MatchCoordinator(_fakeTimeProvider, _listener, SampleMatches.FiveFlowerCells, new Random(SampleMatches.TieBreakSeed));
         }
 
         [Fact]

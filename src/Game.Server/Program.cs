@@ -69,6 +69,7 @@ builder.WebHost.UseNetTcp(serverSettings.NetTcpPort);
 builder.Services.AddServiceModelServices();
 builder.Services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(Random.Shared);
 builder.Services.AddSingleton(new SessionTimings(TimeSpan.FromSeconds(sessionSettings.ConnectionCheckPeriodSeconds), sessionSettings.ConnectionCheckMissesToDrop));
 builder.Services.AddSingleton(new SessionTokenIssuer(sessionSigningKey, TimeProvider.System));
 builder.Services.AddSingleton(new HistoryPaging(historySettings.MatchesPerPage));

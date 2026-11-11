@@ -1,3 +1,5 @@
+using System;
+
 namespace Game.Domain.Tests
 {
     internal static class SampleRules
@@ -8,6 +10,8 @@ namespace Game.Domain.Tests
         internal const int BuildingCost = 1;
         internal const int ThreeBuildings = 3;
         internal const int TwoBuildings = 2;
+
+        private const int TieBreakSeed = 7;
 
         internal static ActionCosts Costs { get; } = new ActionCosts(PlacementCost, MovementCost, ClimbCost, BuildingCost);
 
@@ -20,5 +24,12 @@ namespace Game.Domain.Tests
         internal static MatchRules ThreeSeatRules { get; } = new MatchRules(new RoundLayout[] { new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings, TwoBuildings }), new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }), new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }) }, Costs);
 
         internal static MatchRules OneTurnPerRoundRules { get; } = new MatchRules(new RoundLayout[] { OneTurnRound, OneTurnRound, OneTurnRound }, Costs);
+
+        internal static Random CreateTieBreakRandom()
+        {
+            var tieBreakRandom = new Random(TieBreakSeed);
+
+            return tieBreakRandom;
+        }
     }
 }

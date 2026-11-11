@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Game.Domain
@@ -37,5 +38,11 @@ namespace Game.Domain
         public IReadOnlyList<Caterpillar> Caterpillars { get; }
 
         public BoardCell? ButterflyCell { get; }
+
+        public IReadOnlyList<SeatStanding> Standings { get; init; } = Array.Empty<SeatStanding>();
+
+        public IReadOnlyList<int> PendingButterflyPlacers { get; init; } = Array.Empty<int>();
+
+        public FinishCause? FinishCause { get; init; }
     }
 }

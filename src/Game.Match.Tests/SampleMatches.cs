@@ -7,6 +7,8 @@ namespace Game.Match.Tests
 {
     internal static class SampleMatches
     {
+        internal const int TieBreakSeed = 7;
+
         internal static TimeSpan PlacementTime { get; } = TimeSpan.FromSeconds(90);
 
         internal static RoundRule FourTurnRound { get; } = new RoundRule(new int[] { 3, 3, 3, 3 });

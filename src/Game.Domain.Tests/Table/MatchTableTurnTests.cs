@@ -93,7 +93,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceCaterpillar_DuringCaterpillarPlacement_ReturnsWrongPhase()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
 
             TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
 
@@ -411,38 +411,26 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpireTurn_DuringCaterpillarPlacement_ThrowsInvalidOperationException()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
 
             Assert.Throws<InvalidOperationException>(table.ExpireTurn);
         }
 
         [Fact]
-        public void Test_ExpireTurn_AfterEveryTurnOfRoundOne_StartsRoundTwo()
+        public void Test_ExpireTurn_AfterEveryTurnOfRoundOne_OpensTheButterflyPlacementOfRoundTwo()
         {
             MatchTable table = CreatePlayedOpening();
 
             ExpireTurns(table, FourTurns * TwoSeatCount);
 
             Assert.Equal(RoundNumberTwo, table.RoundNumber);
-            Assert.Equal(MatchTable.FirstTurnNumber, table.TurnNumber);
-            Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
-        }
-
-        [Fact]
-        public void Test_ExpireTurn_AfterEveryTurnOfRoundThree_FinishesTheMatch()
-        {
-            MatchTable table = CreatePlayedOpening(SampleRules.OneTurnPerRoundRules);
-
-            ExpireTurns(table, MatchRules.RoundCount * TwoSeatCount);
-
-            Assert.Equal(TablePhase.Finished, table.Phase);
-            Assert.Empty(table.FindBuildTargets());
+            Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
         }
 
         [Fact]
         public void Test_ExpireTurn_InTurnThreeWithThreeSeats_HandsOutTwoBuilds()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateTieBreakRandom());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
@@ -460,7 +448,7 @@ namespace Game.Domain.Tests
             MatchTable table = CreatePlayedOpening();
             table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
 
-            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules);
+            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
 
             Assert.Equal(table.ActionPointsLeft, restoredTable.ActionPointsLeft);
             Assert.Equal(table.BuildsLeft, restoredTable.BuildsLeft);
@@ -475,7 +463,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreatePlayedOpening(MatchRules rules)
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, rules);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, rules, SampleRules.CreateTieBreakRandom());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceButterfly(SeatNumberTwo, SampleLayouts.SouthEastFlower);
@@ -486,7 +474,7 @@ namespace Game.Domain.Tests
         private static MatchTable CreateTurnTable(IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars)
         {
             var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null);
-            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
 
             return table;
         }
