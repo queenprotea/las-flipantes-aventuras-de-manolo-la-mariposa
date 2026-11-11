@@ -944,7 +944,7 @@
     <value>Buildings</value>
   </data>
   <data name="Match.RoundTurnInstruction" xml:space="preserve">
-    <value>Round {0} of 3 · Turn {1} of 3</value>
+    <value>Round {0} of 3 · Turn {1} of {2}</value>
   </data>
   <data name="Match.YourTurnStatus" xml:space="preserve">
     <value>your turn</value>
@@ -957,9 +957,6 @@
   </data>
   <data name="Match.MoveActionButton" xml:space="preserve">
     <value>Move</value>
-  </data>
-  <data name="Match.GrowActionButton" xml:space="preserve">
-    <value>Grow</value>
   </data>
   <data name="Match.BuildActionButton" xml:space="preserve">
     <value>Build</value>
@@ -981,6 +978,57 @@
   </data>
   <data name="Match.ActionPointsLabel" xml:space="preserve">
     <value>AP</value>
+  </data>
+  <data name="Match.ChoosePlacementHint" xml:space="preserve">
+    <value>Choose a free flower for your new caterpillar</value>
+  </data>
+  <data name="Match.ChooseCaterpillarHint" xml:space="preserve">
+    <value>Choose the caterpillar you want to move</value>
+  </data>
+  <data name="Match.ChooseDestinationHint" xml:space="preserve">
+    <value>Choose where it goes · each level it climbs costs {0} more AP</value>
+  </data>
+  <data name="Match.ChooseBuildHint" xml:space="preserve">
+    <value>Choose the flower that grows or where a new one sprouts</value>
+  </data>
+  <data name="Match.NotYourTurnNotice" xml:space="preserve">
+    <value>It's not your turn yet.</value>
+  </data>
+  <data name="Match.TimeExpiredNotice" xml:space="preserve">
+    <value>Your turn's time ran out.</value>
+  </data>
+  <data name="Match.NotEnoughPointsNotice" xml:space="preserve">
+    <value>You don't have enough action points for that.</value>
+  </data>
+  <data name="Match.NoCaterpillarsLeftNotice" xml:space="preserve">
+    <value>You've already placed your five caterpillars.</value>
+  </data>
+  <data name="Match.NotAFlowerNotice" xml:space="preserve">
+    <value>New caterpillars go on a flower.</value>
+  </data>
+  <data name="Match.CellOccupiedNotice" xml:space="preserve">
+    <value>That cell already has a caterpillar.</value>
+  </data>
+  <data name="Match.NotYourCaterpillarNotice" xml:space="preserve">
+    <value>That caterpillar isn't yours.</value>
+  </data>
+  <data name="Match.NotNeighborNotice" xml:space="preserve">
+    <value>A caterpillar only moves to a cell beside it, never diagonally.</value>
+  </data>
+  <data name="Match.ClimbTooHighNotice" xml:space="preserve">
+    <value>A caterpillar climbs at most one level per move.</value>
+  </data>
+  <data name="Match.FlowerAtMaximumNotice" xml:space="preserve">
+    <value>That flower is already at level 3.</value>
+  </data>
+  <data name="Match.NoBuildsLeftNotice" xml:space="preserve">
+    <value>You've used up this turn's buildings.</value>
+  </data>
+  <data name="Match.NotNextToPlanterNotice" xml:space="preserve">
+    <value>A new flower sprouts next to a planter.</value>
+  </data>
+  <data name="Match.JoinsPlantersNotice" xml:space="preserve">
+    <value>That flower would join two planters.</value>
   </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>end of round {0}</value>
@@ -1006,8 +1054,11 @@
   <data name="RoundSummary.PlaceButterflyInstruction" xml:space="preserve">
     <value>Place the butterfly</value>
   </data>
-  <data name="RoundSummary.Round3RulesInstruction" xml:space="preserve">
-    <value>Round 3 · 3 turns per player · 1 building per turn · the butterfly is worth 15</value>
+  <data name="RoundSummary.ContinueButton" xml:space="preserve">
+    <value>Go to the board</value>
+  </data>
+  <data name="RoundSummary.NextRoundRulesInstruction" xml:space="preserve">
+    <value>Round {0} · {1} turns per player · the butterfly is worth {2}</value>
   </data>
   <data name="Result.HeaderLabel" xml:space="preserve">
     <value>result</value>
@@ -1017,6 +1068,9 @@
   </data>
   <data name="Result.SummaryLabel" xml:space="preserve">
     <value>3 rounds · {0} players</value>
+  </data>
+  <data name="Result.AbandonedSummaryLabel" xml:space="preserve">
+    <value>It ended because only one player was left</value>
   </data>
   <data name="Result.PlayerColumn" xml:space="preserve">
     <value>Player</value>

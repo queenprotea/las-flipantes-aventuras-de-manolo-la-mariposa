@@ -20,6 +20,12 @@ namespace Game.Contracts
         public int TurnNumber { get; set; }
 
         [DataMember]
+        public int RoundTurnCount { get; set; }
+
+        [DataMember]
+        public int RoundButterflyPoints { get; set; }
+
+        [DataMember]
         public int ViewerSeatNumber { get; set; }
 
         [DataMember]
@@ -33,6 +39,9 @@ namespace Game.Contracts
 
         [DataMember]
         public int BuildsLeft { get; set; }
+
+        [DataMember]
+        public MatchActionCosts ActionCosts { get; set; } = new MatchActionCosts();
 
         [DataMember]
         public List<MatchSeat> Seats { get; set; } = new List<MatchSeat>();

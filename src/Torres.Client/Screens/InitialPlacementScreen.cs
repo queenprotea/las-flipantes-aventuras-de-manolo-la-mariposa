@@ -80,6 +80,10 @@ namespace Torres.Client.Screens
             {
                 RequestedScreen = ScreenId.Match;
             }
+            else if (matchView.Phase == MatchPhase.Finished)
+            {
+                RequestedScreen = ScreenId.Result;
+            }
         }
 
         internal override void RenderScene()

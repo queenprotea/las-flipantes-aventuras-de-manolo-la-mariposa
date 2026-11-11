@@ -24,11 +24,14 @@ namespace Game.Match
                 Phase = ToMatchPhase(matchTable.Phase),
                 RoundNumber = matchTable.RoundNumber,
                 TurnNumber = matchTable.TurnNumber,
+                RoundTurnCount = matchTable.RoundTurnCount,
+                RoundButterflyPoints = RoundScoreCalculator.GetButterflyPoints(matchTable.RoundNumber),
                 ViewerSeatNumber = viewerSeatNumber,
                 ActiveSeatNumber = matchTable.ActiveSeatNumber,
                 StepTimeLeft = stepTimeLeft,
                 ActionPointsLeft = matchTable.ActionPointsLeft,
                 BuildsLeft = matchTable.BuildsLeft,
+                ActionCosts = ToMatchActionCosts(matchTable.ActionCosts),
                 Seats = _seatedEntrants.Select(seatedEntrant => ToMatchSeat(seatedEntrant, matchTable)).ToList(),
                 Flowers = CreateFlowers(matchTable),
                 Caterpillars = matchTable.Caterpillars.Select(ToMatchCaterpillar).ToList(),
@@ -68,12 +71,26 @@ namespace Game.Match
                 IsGuest = seatedEntrant.Entrant.IsGuest,
                 Color = seatedEntrant.Entrant.SeatColor,
                 CaterpillarsLeft = matchTable.CountCaterpillarsLeft(seatedEntrant.SeatNumber),
-                RoundScores = standing.RoundScores.ToList(),
+                RoundScores = standing.RoundScores.Select(ToMatchRoundScore).ToList(),
                 TotalScore = standing.TotalScore,
                 IsRetired = standing.IsRetired,
             };
 
             return matchSeat;
+        }
+
+        private static MatchActionCosts ToMatchActionCosts(ActionCosts actionCosts)
+        {
+            var matchActionCosts = new MatchActionCosts { CaterpillarPlacement = actionCosts.CaterpillarPlacement, Movement = actionCosts.Movement, LevelClimb = actionCosts.LevelClimb, FlowerLevelAddition = actionCosts.FlowerLevelAddition };
+
+            return matchActionCosts;
+        }
+
+        private static MatchRoundScore ToMatchRoundScore(SeatRoundScore roundScore)
+        {
+            var matchRoundScore = new MatchRoundScore { PlanterPoints = roundScore.PlanterPoints, ButterflyPoints = roundScore.ButterflyPoints };
+
+            return matchRoundScore;
         }
 
         private static List<MatchMoveTarget> CreateMoveTargets(MatchTable matchTable, int viewerSeatNumber)

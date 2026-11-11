@@ -25,7 +25,7 @@ namespace Game.Contracts
         public int CaterpillarsLeft { get; set; }
 
         [DataMember]
-        public List<int> RoundScores { get; set; } = new List<int>();
+        public List<MatchRoundScore> RoundScores { get; set; } = new List<MatchRoundScore>();
 
         [DataMember]
         public int TotalScore { get; set; }

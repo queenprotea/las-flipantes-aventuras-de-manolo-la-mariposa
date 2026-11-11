@@ -28,17 +28,25 @@ namespace Game.Domain
             _butterflyCell = butterflyCell;
         }
 
-        public SeatRoundScore ScoreSeat(int seatNumber, int roundNumber)
+        public static int GetButterflyPoints(int roundNumber)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(roundNumber, MatchTable.FirstRoundNumber);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(roundNumber, MatchRules.RoundCount);
 
+            int butterflyPoints = _butterflyPointsByRound[roundNumber - MatchTable.FirstRoundNumber];
+
+            return butterflyPoints;
+        }
+
+        public SeatRoundScore ScoreSeat(int seatNumber, int roundNumber)
+        {
+            int roundButterflyPoints = GetButterflyPoints(roundNumber);
             List<Planter> scoredPlanters = _planters.Where(planter => CountCaterpillarsOf(planter, seatNumber) == SingleCaterpillarCount).ToList();
             int planterPoints = scoredPlanters.Sum(planter => CalculatePlanterPoints(planter, seatNumber));
             int butterflyPoints = 0;
             if (IsWithButterfly(seatNumber))
             {
-                butterflyPoints = _butterflyPointsByRound[roundNumber - MatchTable.FirstRoundNumber];
+                butterflyPoints = roundButterflyPoints;
             }
 
             var seatRoundScore = new SeatRoundScore(planterPoints, butterflyPoints, scoredPlanters.Count);

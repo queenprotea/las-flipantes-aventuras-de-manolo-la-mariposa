@@ -26,7 +26,7 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount);
 
-            Assert.All(table.Standings, standing => Assert.Equal(new int[] { OnePoint }, standing.RoundScores));
+            Assert.All(table.Standings, standing => Assert.Equal(OnePoint, Assert.Single(standing.RoundScores).TotalPoints));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount);
 
-            Assert.Equal(OnePoint + TenPoints, table.Standings[SeatNumberTwo - MatchTable.FirstSeatNumber].RoundScores[RoundNumberTwo - MatchTable.FirstRoundNumber]);
+            Assert.Equal(new SeatRoundScore(OnePoint, TenPoints, OneScoredPlanter), table.Standings[SeatNumberTwo - MatchTable.FirstSeatNumber].RoundScores[RoundNumberTwo - MatchTable.FirstRoundNumber]);
         }
 
         [Fact]
@@ -122,7 +122,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithHigherTotal_PutsItFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new int[] { OnePoint }, OneScoredPlanter, false), new SeatStanding(SeatNumberTwo, new int[] { TwoPoints }, OneScoredPlanter, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(OnePoint, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 
@@ -132,7 +132,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithTiedTotals_PutsMoreScoredPlantersFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new int[] { TwoPoints }, OneScoredPlanter, false), new SeatStanding(SeatNumberTwo, new int[] { TwoPoints }, TwoScoredPlanters, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, TwoScoredPlanters) }, false));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 
@@ -142,7 +142,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithFullTie_PutsTheLowerSeatFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new int[] { TwoPoints }, OneScoredPlanter, false), new SeatStanding(SeatNumberTwo, new int[] { TwoPoints }, OneScoredPlanter, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 

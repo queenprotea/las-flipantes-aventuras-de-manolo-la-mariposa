@@ -1,24 +1,25 @@
-using System.Globalization;
+using System;
+using System.Linq;
 
 using FontStashSharp;
 using FontStashSharp.RichText;
 
+using Game.Contracts;
+
 using Microsoft.Xna.Framework;
 
+using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
 {
     internal sealed class RoundSummaryScreen : Screen
     {
-        private const int PreviewRound = 2;
-        private const int NextRound = PreviewRound + 1;
-        private const double PreviewSecondsBeforeMatch = 5;
-
         private const int TitleBottomSpacing = 20;
         private const int TableCellSpacing = 9;
         private const int PlayerCellSpacing = 8;
@@ -29,64 +30,81 @@ namespace Torres.Client.Screens
         private const int ButterflyIconSize = 34;
         private const int ButterflyNameTopSpacing = 3;
         private const int RulesTopSpacing = 14;
+        private const int ContinueTopSpacing = 18;
 
         private static readonly Thickness _headerRowPadding = new Thickness(0, 0, 0, TableCellSpacing);
         private static readonly Thickness _playerRowPadding = new Thickness(0, TableCellSpacing);
         private static readonly Thickness _butterflyPadding = new Thickness(0, ButterflyVerticalPadding);
 
-        private static readonly RoundPlayer[] _previewPlayers =
-        {
-            new RoundPlayer(PreviewSamples.SeatOnePlayer, true, 24, 0, Theme.MintBrush),
-            new RoundPlayer(PreviewSamples.SeatTwoPlayer, false, 30, 10, Theme.LavenderBrush),
-            new RoundPlayer(PreviewSamples.SeatThreePlayer, false, 18, 0, Theme.ButterBrush),
-            new RoundPlayer(PreviewSamples.SeatFourPlayer, false, 12, 10, Theme.SkyBrush),
-        };
+        private readonly PlayerSession _playerSession;
+        private readonly LocalizedLabel _titleLabel = new LocalizedLabel(TextKeys.RoundSummary.RoundFinishedTitle) { Font = Fonts.Headline, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel();
+        private readonly VerticalStackPanel _placerPanel = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
+        private readonly Label _clockLabel = new Label { Font = Fonts.Body, TextColor = Theme.MintInk, VerticalAlignment = VerticalAlignment.Center };
+        private LocalizedLabel? _gardenStaysLabel;
+        private LocalizedLabel? _rulesLabel;
 
-        private double _secondsShown;
+        private MatchView? _shownMatchView;
 
-        internal RoundSummaryScreen()
+        internal RoundSummaryScreen(PlayerSession playerSession)
             : base(TextKeys.RoundSummary.HeaderLabel, true)
         {
-            HeaderArguments = new[] { DisplayFormats.FormatInteger(PreviewRound) };
+            ArgumentNullException.ThrowIfNull(playerSession);
+
+            _playerSession = playerSession;
         }
 
         internal override void Open()
         {
-            _secondsShown = 0;
+            _shownMatchView = null;
+            MatchView? matchView = _playerSession.CurrentMatchView;
+            if (matchView is null)
+            {
+                RequestedScreen = ScreenId.MainMenu;
+            }
+            else
+            {
+                HeaderArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber - 1) };
+                ShowMatchView(matchView);
+            }
         }
 
         internal override void Update(GameTime gameTime)
         {
-            _secondsShown += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_secondsShown < PreviewSecondsBeforeMatch)
+            MatchView? matchView = _playerSession.CurrentMatchView;
+            if (matchView is null)
             {
                 return;
             }
 
-            RequestedScreen = ScreenId.Match;
+            if (!ReferenceEquals(matchView, _shownMatchView))
+            {
+                ShowMatchView(matchView);
+            }
+
+            _clockLabel.Text = FormatStepTimeLeft();
+            if (matchView.Phase == MatchPhase.PlayerTurn)
+            {
+                RequestedScreen = ScreenId.Match;
+            }
+            else if (matchView.Phase == MatchPhase.Finished)
+            {
+                RequestedScreen = ScreenId.Result;
+            }
         }
 
         protected override Widget Build()
         {
-            var title = new LocalizedLabel(TextKeys.RoundSummary.RoundFinishedTitle)
-            {
-                Font = Fonts.Headline,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new[] { DisplayFormats.FormatInteger(PreviewRound) },
-            };
+            _gardenStaysLabel = CreateHint(TextKeys.RoundSummary.GardenStaysInstruction);
+            _gardenStaysLabel.Font = Fonts.Body;
+            _gardenStaysLabel.TextAlign = TextHorizontalAlignment.Center;
+            _gardenStaysLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            _gardenStaysLabel.Margin = new Thickness(0, 0, 0, TitleBottomSpacing);
 
-            LocalizedLabel gardenStays = CreateHint(TextKeys.RoundSummary.GardenStaysInstruction);
-            gardenStays.Font = Fonts.Body;
-            gardenStays.TextAlign = TextHorizontalAlignment.Center;
-            gardenStays.HorizontalAlignment = HorizontalAlignment.Center;
-            gardenStays.Margin = new Thickness(0, 0, 0, TitleBottomSpacing);
-            gardenStays.TextArguments = new[] { DisplayFormats.FormatInteger(NextRound) };
-
-            LocalizedLabel rules = CreateHint(TextKeys.RoundSummary.Round3RulesInstruction);
-            rules.TextAlign = TextHorizontalAlignment.Center;
-            rules.HorizontalAlignment = HorizontalAlignment.Center;
-            rules.Margin = new Thickness(0, RulesTopSpacing, 0, 0);
+            _rulesLabel = CreateHint(TextKeys.RoundSummary.NextRoundRulesInstruction);
+            _rulesLabel.TextAlign = TextHorizontalAlignment.Center;
+            _rulesLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            _rulesLabel.Margin = new Thickness(0, RulesTopSpacing, 0, 0);
 
             var screenLayout = new VerticalStackPanel
             {
@@ -94,38 +112,14 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            screenLayout.Widgets.Add(title);
-            screenLayout.Widgets.Add(gardenStays);
+            screenLayout.Widgets.Add(_titleLabel);
+            screenLayout.Widgets.Add(_gardenStaysLabel);
             screenLayout.Widgets.Add(BuildTable());
             screenLayout.Widgets.Add(BuildButterflyPlacer());
-            screenLayout.Widgets.Add(rules);
+            screenLayout.Widgets.Add(_rulesLabel);
+            screenLayout.Widgets.Add(BuildContinueRow());
 
             return screenLayout;
-        }
-
-        private static VerticalStackPanel BuildTable()
-        {
-            var headerRow = new HorizontalStackPanel
-            {
-                Padding = _headerRowPadding,
-            };
-            LocalizedLabel playerHeader = BuildHeaderCell(TextKeys.RoundSummary.PlayerColumn);
-            playerHeader.Width = null;
-            headerRow.Widgets.Add(playerHeader);
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.PlantersColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.ButterflyColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.RoundColumn));
-            StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
-
-            var scoreTable = new VerticalStackPanel();
-            scoreTable.Widgets.Add(headerRow);
-            foreach (RoundPlayer player in _previewPlayers)
-            {
-                scoreTable.Widgets.Add(CreateDivider());
-                scoreTable.Widgets.Add(BuildPlayerRow(player));
-            }
-
-            return scoreTable;
         }
 
         private static LocalizedLabel BuildHeaderCell(string textKey)
@@ -140,23 +134,25 @@ namespace Torres.Client.Screens
             return headerCell;
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(RoundPlayer player)
+        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, MatchRoundScore roundScore, bool isViewer)
         {
-            HorizontalStackPanel playerCell = BuildPlayerCell(player, Fonts.Control);
-            string butterflyText = player.ButterflyPoints > 0
-                ? DisplayFormats.FormatBonus(player.ButterflyPoints)
-                : DisplaySymbols.MissingValue;
+            HorizontalStackPanel playerCell = BuildPlayerCell(seat, Fonts.Control);
+            string butterflyText = DisplaySymbols.MissingValue;
+            if (roundScore.ButterflyPoints > 0)
+            {
+                butterflyText = DisplayFormats.FormatBonus(roundScore.ButterflyPoints);
+            }
 
             var playerRow = new HorizontalStackPanel
             {
                 Padding = _playerRowPadding,
             };
             playerRow.Widgets.Add(playerCell);
-            playerRow.Widgets.Add(BuildStatCell(player.PlanterPoints.ToString(CultureInfo.CurrentCulture), Theme.SoftInk));
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints), Theme.SoftInk));
             playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(player.RoundPoints.ToString(CultureInfo.CurrentCulture), Theme.Ink));
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints + roundScore.ButterflyPoints), Theme.Ink));
             StackPanel.SetProportionType(playerCell, ProportionType.Fill);
-            if (player.IsYou)
+            if (isViewer)
             {
                 playerRow.Background = Theme.MintTintBrush;
             }
@@ -164,9 +160,9 @@ namespace Torres.Client.Screens
             return playerRow;
         }
 
-        private static HorizontalStackPanel BuildPlayerCell(RoundPlayer player, SpriteFontBase font)
+        private static HorizontalStackPanel BuildPlayerCell(MatchSeat seat, SpriteFontBase font)
         {
-            Label nameLabel = CreatePlayerNameLabel(player.Name, Theme.Ink);
+            Label nameLabel = CreatePlayerNameLabel(seat.DisplayName, Theme.Ink);
             nameLabel.Font = font;
 
             var playerCell = new HorizontalStackPanel
@@ -177,7 +173,7 @@ namespace Torres.Client.Screens
             {
                 Width = PlayerColorSize,
                 Height = PlayerColorSize,
-                Background = player.ColorBrush,
+                Background = SeatColors.BrushFor(seat.Color),
                 VerticalAlignment = VerticalAlignment.Center,
             });
             playerCell.Widgets.Add(nameLabel);
@@ -199,22 +195,29 @@ namespace Torres.Client.Screens
             return statCell;
         }
 
-        private static VerticalStackPanel BuildButterflyPlacer()
+        private VerticalStackPanel BuildTable()
         {
-            HorizontalStackPanel placerCell = BuildPlayerCell(FindButterflyPlacer(), Fonts.Body);
-            placerCell.Margin = new Thickness(0, ButterflyNameTopSpacing, 0, 0);
-
-            var placer = new VerticalStackPanel
+            var headerRow = new HorizontalStackPanel
             {
-                VerticalAlignment = VerticalAlignment.Center,
+                Padding = _headerRowPadding,
             };
-            placer.Widgets.Add(new LocalizedLabel(TextKeys.RoundSummary.PlaceButterflyInstruction)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-            });
-            placer.Widgets.Add(placerCell);
+            LocalizedLabel playerHeader = BuildHeaderCell(TextKeys.RoundSummary.PlayerColumn);
+            playerHeader.Width = null;
+            headerRow.Widgets.Add(playerHeader);
+            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.PlantersColumn));
+            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.ButterflyColumn));
+            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.RoundColumn));
+            StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
 
+            var scoreTable = new VerticalStackPanel();
+            scoreTable.Widgets.Add(headerRow);
+            scoreTable.Widgets.Add(_scoreRows);
+
+            return scoreTable;
+        }
+
+        private VerticalStackPanel BuildButterflyPlacer()
+        {
             var placerRow = new HorizontalStackPanel
             {
                 Spacing = ButterflySpacing,
@@ -229,7 +232,9 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            placerRow.Widgets.Add(placer);
+            placerRow.Widgets.Add(_placerPanel);
+            placerRow.Widgets.Add(_clockLabel);
+            StackPanel.SetProportionType(_placerPanel, ProportionType.Fill);
 
             var butterflyPlacer = new VerticalStackPanel
             {
@@ -242,23 +247,68 @@ namespace Torres.Client.Screens
             return butterflyPlacer;
         }
 
-        private static RoundPlayer FindButterflyPlacer()
+        private HorizontalStackPanel BuildContinueRow()
         {
-            RoundPlayer placer = _previewPlayers[0];
-            foreach (RoundPlayer player in _previewPlayers)
-            {
-                if (player.RoundPoints < placer.RoundPoints)
-                {
-                    placer = player;
-                }
-            }
+            LocalizedButton continueButton = CreatePrimaryButton(TextKeys.RoundSummary.ContinueButton);
+            continueButton.Click += ContinueButtonOnClick;
 
-            return placer;
+            HorizontalStackPanel continueRow = CreateButtonRow();
+            continueRow.Margin = new Thickness(0, ContinueTopSpacing, 0, 0);
+            continueRow.HorizontalAlignment = HorizontalAlignment.Center;
+            continueRow.Widgets.Add(continueButton);
+
+            return continueRow;
         }
 
-        private sealed record RoundPlayer(string Name, bool IsYou, int PlanterPoints, int ButterflyPoints, IBrush ColorBrush)
+        private void ShowMatchView(MatchView matchView)
         {
-            internal int RoundPoints => PlanterPoints + ButterflyPoints;
+            _shownMatchView = matchView;
+            int closedRoundNumber = matchView.RoundNumber - 1;
+            _titleLabel.TextArguments = new[] { DisplayFormats.FormatInteger(closedRoundNumber) };
+            if (_gardenStaysLabel is not null)
+            {
+                _gardenStaysLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber) };
+            }
+
+            if (_rulesLabel is not null)
+            {
+                _rulesLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount), DisplayFormats.FormatInteger(matchView.RoundButterflyPoints) };
+            }
+
+            _scoreRows.Widgets.Clear();
+            foreach (MatchSeat seat in matchView.Seats.Where(seat => seat.RoundScores.Count >= closedRoundNumber))
+            {
+                _scoreRows.Widgets.Add(CreateDivider());
+                _scoreRows.Widgets.Add(BuildPlayerRow(seat, seat.RoundScores[closedRoundNumber - 1], seat.SeatNumber == matchView.ViewerSeatNumber));
+            }
+
+            _placerPanel.Widgets.Clear();
+            if (matchView.Phase == MatchPhase.ButterflyPlacement)
+            {
+                MatchSeat placerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber);
+                HorizontalStackPanel placerCell = BuildPlayerCell(placerSeat, Fonts.Body);
+                placerCell.Margin = new Thickness(0, ButterflyNameTopSpacing, 0, 0);
+                _placerPanel.Widgets.Add(new LocalizedLabel(TextKeys.RoundSummary.PlaceButterflyInstruction) { Font = Fonts.Label, TextColor = Theme.MutedInk });
+                _placerPanel.Widgets.Add(placerCell);
+            }
+        }
+
+        private string FormatStepTimeLeft()
+        {
+            TimeSpan stepTimeLeft = TimeSpan.Zero;
+            if (_playerSession.StepEndsAtUtc is DateTime stepEndsAtUtc)
+            {
+                stepTimeLeft = stepEndsAtUtc - DateTime.UtcNow;
+            }
+
+            string clockText = DisplayFormats.FormatCountdown(stepTimeLeft);
+
+            return clockText;
+        }
+
+        private void ContinueButtonOnClick(object sender, MyraEventArgs e)
+        {
+            RequestedScreen = ScreenId.InitialPlacement;
         }
     }
 }

@@ -85,6 +85,10 @@ namespace Game.Domain
 
         public FinishCause? FinishCause { get; private set; }
 
+        public int RoundTurnCount => _rules.GetTurnCount(RoundNumber);
+
+        public ActionCosts ActionCosts => _rules.ActionCosts;
+
         public IReadOnlyList<Caterpillar> Caterpillars => _caterpillars;
 
         public IReadOnlyList<SeatStanding> Standings => _standings;
@@ -387,7 +391,7 @@ namespace Game.Domain
 
         private static SeatStanding CreateFreshStanding(int seatNumber)
         {
-            var freshStanding = new SeatStanding(seatNumber, Array.Empty<int>(), 0, false);
+            var freshStanding = new SeatStanding(seatNumber, Array.Empty<SeatRoundScore>(), false);
 
             return freshStanding;
         }
@@ -724,7 +728,7 @@ namespace Game.Domain
                 if (!standing.IsRetired)
                 {
                     SeatRoundScore roundScore = scoreCalculator.ScoreSeat(standing.SeatNumber, RoundNumber);
-                    _standings[i] = standing with { RoundScores = standing.RoundScores.Append(roundScore.TotalPoints).ToList(), ScoredPlanterCount = standing.ScoredPlanterCount + roundScore.ScoredPlanterCount };
+                    _standings[i] = standing with { RoundScores = standing.RoundScores.Append(roundScore).ToList() };
                 }
             }
         }

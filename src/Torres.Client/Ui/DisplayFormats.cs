@@ -9,6 +9,7 @@ namespace Torres.Client.Ui
     {
         private const string ThousandsSeparatedPattern = "N0";
         private const string ClockPattern = "{0}:{1:00}";
+        private const string ActionCostPattern = "· {0}";
         private const int SecondsPerMinute = 60;
         private const int ExpiredClockSeconds = 0;
         private const string MegabytesPattern = "0.0";
@@ -33,6 +34,13 @@ namespace Torres.Client.Ui
             string bonusText = DisplaySymbols.BonusSign + points.ToString(CultureInfo.CurrentCulture);
 
             return bonusText;
+        }
+
+        internal static string FormatActionCost(int actionPointCost)
+        {
+            string costText = string.Format(CultureInfo.CurrentCulture, ActionCostPattern, actionPointCost);
+
+            return costText;
         }
 
         internal static string FormatChatAuthor(string displayName)

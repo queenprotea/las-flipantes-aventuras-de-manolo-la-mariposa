@@ -287,6 +287,27 @@ namespace Torres.Client.Session
             return pieceRequest;
         }
 
+        internal Task<MatchActionResult> MoveCaterpillarAsync(MatchMove move)
+        {
+            Task<MatchActionResult> moveRequest = new SessionCall<MatchMove, MatchActionResult>(MoveCaterpillar, move).StartAsync();
+
+            return moveRequest;
+        }
+
+        internal Task<MatchActionResult> AddFlowerLevelAsync(MatchCell buildCell)
+        {
+            Task<MatchActionResult> buildRequest = new SessionCall<MatchCell, MatchActionResult>(AddFlowerLevel, buildCell).StartAsync();
+
+            return buildRequest;
+        }
+
+        internal Task<MatchActionResult> EndTurnAsync()
+        {
+            Task<MatchActionResult> turnEnding = Task.Run(RequireChannel().EndTurn);
+
+            return turnEnding;
+        }
+
         internal Task<ProfileResponse> GetProfileAsync()
         {
             Task<ProfileResponse> profileReading = RequireChannel().GetProfileAsync();
@@ -397,6 +418,20 @@ namespace Torres.Client.Session
             MatchActionResult placementResult = RequireChannel().PlacePiece(piecePlacement.Piece, piecePlacement.DestinationCell);
 
             return placementResult;
+        }
+
+        private MatchActionResult MoveCaterpillar(MatchMove move)
+        {
+            MatchActionResult moveResult = RequireChannel().MoveCaterpillar(move);
+
+            return moveResult;
+        }
+
+        private MatchActionResult AddFlowerLevel(MatchCell buildCell)
+        {
+            MatchActionResult buildResult = RequireChannel().AddFlowerLevel(buildCell);
+
+            return buildResult;
         }
 
         private static NetTcpBinding CreateSessionBinding()
