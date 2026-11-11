@@ -43,5 +43,8 @@ namespace Game.Contracts
 
         [EnumMember]
         MemberProfileChanged,
+
+        [EnumMember]
+        MatchFinished,
     }
 }

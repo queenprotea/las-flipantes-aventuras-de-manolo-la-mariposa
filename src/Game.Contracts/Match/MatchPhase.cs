@@ -16,5 +16,8 @@ namespace Game.Contracts
 
         [EnumMember]
         PlayerTurn,
+
+        [EnumMember]
+        Finished,
     }
 }

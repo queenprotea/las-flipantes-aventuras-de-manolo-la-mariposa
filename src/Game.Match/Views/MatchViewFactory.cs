@@ -45,6 +45,7 @@ namespace Game.Match
                 TablePhase.CaterpillarPlacement => MatchPhase.CaterpillarPlacement,
                 TablePhase.ButterflyPlacement => MatchPhase.ButterflyPlacement,
                 TablePhase.PlayerTurn => MatchPhase.PlayerTurn,
+                TablePhase.Finished => MatchPhase.Finished,
                 _ => throw new ArgumentOutOfRangeException(nameof(phase)),
             };
 

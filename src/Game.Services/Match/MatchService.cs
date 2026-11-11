@@ -30,6 +30,7 @@ namespace Game.Services
         private readonly MatchRuleReader _matchRuleReader;
         private readonly TimeProvider _timeProvider;
         private readonly MatchCoordinator _matchCoordinator;
+        private readonly MatchRoomReturn _matchRoomReturn;
 
         public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard, Random tieBreakRandom)
         {
@@ -48,7 +49,8 @@ namespace Game.Services
             _systemParameterReader = systemParameterReader;
             _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells, tieBreakRandom);
+            _matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), startingBoard.FlowerCells, tieBreakRandom);
         }
 
         /// <inheritdoc/>
@@ -108,12 +110,10 @@ namespace Game.Services
         private EndMatchResult EndMatchOf(int ownerId)
         {
             EndMatchResult endResult = _matchCoordinator.EndMatch(ownerId);
-            LiveRoom? callerRoom = _roomRegistry.FindRoomOf(ownerId);
-            if ((endResult == EndMatchResult.Ended) && (callerRoom is not null) && callerRoom.EndMatch())
+            LiveRoom? returnedRoom = endResult == EndMatchResult.Ended ? _matchRoomReturn.ReturnRoomOf(ownerId, RoomChangeReason.MatchEnded) : null;
+            if (returnedRoom is not null)
             {
-                int? noExcludedOwnerId = null;
-                _roomService.NotifyMembers(callerRoom, RoomChangeReason.MatchEnded, noExcludedOwnerId);
-                _matchLog.InfoFormat(MatchEndedMessage, ownerId, callerRoom.RoomId);
+                _matchLog.InfoFormat(MatchEndedMessage, ownerId, returnedRoom.RoomId);
             }
 
             return endResult;

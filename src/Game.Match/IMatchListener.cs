@@ -7,5 +7,7 @@ namespace Game.Match
         void ReceiveMatchStarted(IReadOnlyList<MatchRecipientView> recipientViews);
 
         void ReceiveMatchStateChanged(IReadOnlyList<MatchRecipientView> recipientViews);
+
+        void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds);
     }
 }

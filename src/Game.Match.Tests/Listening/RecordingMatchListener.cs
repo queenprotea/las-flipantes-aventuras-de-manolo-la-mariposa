@@ -8,10 +8,15 @@ namespace Game.Match.Tests
     internal sealed class RecordingMatchListener : IMatchListener
     {
         private readonly List<RecordedNotice> _recordedNotices = new List<RecordedNotice>();
+        private readonly List<int> _releasedEntrantIds = new List<int>();
 
         internal int NoticeCount => _recordedNotices.Count;
 
         internal IReadOnlyList<RecordedNoticeKind> NoticeKinds => _recordedNotices.Select(notice => notice.Kind).ToList();
+
+        internal IReadOnlyList<int> ReleasedEntrantIds => _releasedEntrantIds;
+
+        internal int FinishCount { get; private set; }
 
         public void ReceiveMatchStarted(IReadOnlyList<MatchRecipientView> recipientViews)
         {
@@ -21,6 +26,12 @@ namespace Game.Match.Tests
         public void ReceiveMatchStateChanged(IReadOnlyList<MatchRecipientView> recipientViews)
         {
             _recordedNotices.Add(new RecordedNotice(RecordedNoticeKind.MatchStateChanged, recipientViews));
+        }
+
+        public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds)
+        {
+            FinishCount++;
+            _releasedEntrantIds.AddRange(releasedEntrantIds);
         }
 
         internal bool HasNotified(int entrantId)

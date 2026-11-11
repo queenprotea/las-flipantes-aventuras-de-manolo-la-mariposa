@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -19,6 +20,7 @@ namespace Game.Match.Tests
         private const int FourFreeFlowers = 4;
         private const int StartNoticeOnly = 1;
         private const int StartAndChangeNotices = 2;
+        private const int MostStepsOfAShortMatch = 20;
 
         private readonly FakeTimeProvider _fakeTimeProvider = new FakeTimeProvider();
         private readonly RecordingMatchListener _listener = new RecordingMatchListener();
@@ -246,15 +248,12 @@ namespace Game.Match.Tests
         }
 
         [Fact]
-        public async Task Test_ExpirePlacement_AfterFirstTurnStarts_SendsNoMoreChanges()
+        public async Task Test_TurnTime_BeforeRunningOut_SendsNoChange()
         {
-            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.Rules);
-            _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
-            _coordinator.PlaceCaterpillar(SampleMatches.Beto.EntrantId, SampleMatches.NorthEastFlower);
-            _coordinator.PlaceButterfly(SampleMatches.Beto.EntrantId, SampleMatches.CenterFlower);
+            await StartPlayedOpeningAsync(SampleMatches.Rules);
             int noticeCountAtFirstTurn = _listener.NoticeCount;
 
-            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
+            _fakeTimeProvider.Advance(SampleMatches.JustBeforeDeadline);
 
             Assert.Equal(noticeCountAtFirstTurn, _listener.NoticeCount);
         }
@@ -270,7 +269,7 @@ namespace Game.Match.Tests
         }
 
         [Fact]
-        public async Task Test_PlaceButterfly_ByLastPlacer_StartsFirstTurnWithoutPlacementTime()
+        public async Task Test_PlaceButterfly_ByLastPlacer_StartsFirstTurnWithTheWholeTurnTime()
         {
             await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.Rules);
             _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
@@ -285,7 +284,65 @@ namespace Game.Match.Tests
             Assert.True(view.HasButterfly);
             Assert.Equal(SampleMatches.CenterFlower.Row, view.ButterflyCell.Row);
             Assert.Equal(SampleMatches.CenterFlower.Column, view.ButterflyCell.Column);
-            Assert.Null(view.PlacementTimeLeft);
+            Assert.Equal(SampleMatches.PlacementTime, view.PlacementTimeLeft);
+        }
+
+        [Fact]
+        public async Task Test_TurnTime_RunningOut_PassesTheTurnToSeatTwo()
+        {
+            await StartPlayedOpeningAsync(SampleMatches.Rules);
+
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
+
+            MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(MatchPhase.PlayerTurn, view.Phase);
+            Assert.Equal(SeatNumberTwo, view.ActiveSeatNumber);
+            Assert.Equal(SampleMatches.PlacementTime, view.PlacementTimeLeft);
+        }
+
+        [Fact]
+        public async Task Test_TimeRunningOutForEveryStep_FinishesTheMatchOnce()
+        {
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.OneTurnPerRoundRules);
+
+            AdvanceUntilFinished();
+
+            Assert.Equal(1, _listener.FinishCount);
+            Assert.Equal(MatchPhase.Finished, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Phase);
+        }
+
+        [Fact]
+        public async Task Test_TimeRunningOutForEveryStep_ReleasesBothPlayers()
+        {
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.OneTurnPerRoundRules);
+
+            AdvanceUntilFinished();
+
+            Assert.Equal(new int[] { SampleMatches.Ana.EntrantId, SampleMatches.Beto.EntrantId }, _listener.ReleasedEntrantIds.Order());
+            Assert.Equal(PlacementResult.NotInMatch, _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower));
+        }
+
+        [Fact]
+        public async Task Test_FinishedMatch_StopsItsClock()
+        {
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.OneTurnPerRoundRules);
+            AdvanceUntilFinished();
+            int noticeCountAtFinish = _listener.NoticeCount;
+
+            _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
+
+            Assert.Equal(noticeCountAtFinish, _listener.NoticeCount);
+        }
+
+        [Fact]
+        public async Task Test_FinishedMatch_LetsBothPlayersStartAgain()
+        {
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.OneTurnPerRoundRules);
+            AdvanceUntilFinished();
+
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, SampleMatches.Rules);
+
+            Assert.Equal(PlacementResult.Placed, _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower));
         }
 
         [Fact]
@@ -340,6 +397,22 @@ namespace Game.Match.Tests
             bool isOnBoard = MatchCoordinator.BoardContains(outsideCell);
 
             Assert.False(isOnBoard);
+        }
+
+        private async Task StartPlayedOpeningAsync(MatchRuleSet ruleSet)
+        {
+            await _coordinator.StartMatchAsync(SampleMatches.AnaAndBeto, SampleMatches.PlacementTime, ruleSet);
+            _coordinator.PlaceCaterpillar(SampleMatches.Ana.EntrantId, SampleMatches.NorthWestFlower);
+            _coordinator.PlaceCaterpillar(SampleMatches.Beto.EntrantId, SampleMatches.NorthEastFlower);
+            _coordinator.PlaceButterfly(SampleMatches.Beto.EntrantId, SampleMatches.CenterFlower);
+        }
+
+        private void AdvanceUntilFinished()
+        {
+            for (var i = 0; (i < MostStepsOfAShortMatch) && (_listener.FinishCount == 0); i++)
+            {
+                _fakeTimeProvider.Advance(SampleMatches.PlacementTime);
+            }
         }
     }
 }

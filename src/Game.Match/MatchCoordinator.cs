@@ -75,6 +75,7 @@ namespace Game.Match
                     _matchesByEntrantId.Add(entrantId, liveMatch);
                 }
 
+                liveMatch.Finished += LiveMatchOnFinished;
                 liveMatch.StartPlacement();
             }
 
@@ -111,13 +112,9 @@ namespace Game.Match
                 LiveMatch? liveMatch = _matchesByEntrantId.GetValueOrDefault(entrantId);
                 if (liveMatch is not null)
                 {
+                    liveMatch.Finished -= LiveMatchOnFinished;
                     liveMatch.EndMatch();
-                    List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
-                    foreach (int seatedEntrantId in seatedEntrantIds)
-                    {
-                        _matchesByEntrantId.Remove(seatedEntrantId);
-                    }
-
+                    RemoveEntrantsOf(liveMatch);
                     endResult = EndMatchResult.Ended;
                 }
             }
@@ -153,6 +150,32 @@ namespace Game.Match
             var flower = new Flower(MatchCellConversion.ToBoardCell(flowerCell), StartingLayout.StartingFlowerLevel);
 
             return flower;
+        }
+
+        private void LiveMatchOnFinished(object? sender, EventArgs e)
+        {
+            if (sender is LiveMatch finishedMatch)
+            {
+                finishedMatch.Finished -= LiveMatchOnFinished;
+                List<int> releasedEntrantIds;
+                lock (_coordinatorLock)
+                {
+                    releasedEntrantIds = RemoveEntrantsOf(finishedMatch);
+                }
+
+                _matchListener.ReceiveMatchFinished(releasedEntrantIds);
+            }
+        }
+
+        private List<int> RemoveEntrantsOf(LiveMatch liveMatch)
+        {
+            List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
+            foreach (int seatedEntrantId in seatedEntrantIds)
+            {
+                _matchesByEntrantId.Remove(seatedEntrantId);
+            }
+
+            return seatedEntrantIds;
         }
 
         private LiveMatch? FindMatchOfEntrant(int entrantId)

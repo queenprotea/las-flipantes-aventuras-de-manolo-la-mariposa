@@ -16,13 +16,14 @@ namespace Game.Match
         private readonly MatchViewFactory _viewFactory;
         private readonly TimeProvider _timeProvider;
         private readonly IMatchListener _matchListener;
-        private readonly TimeSpan _placementTime;
+        private readonly TimeSpan _stepTime;
 
-        private CancellationTokenSource? _placementCountdown;
-        private DateTime? _placementEndsAtUtc;
+        private CancellationTokenSource? _stepCountdown;
+        private DateTime? _stepEndsAtUtc;
         private bool _hasEnded;
+        private bool _hasReportedFinish;
 
-        internal LiveMatch(int matchId, MatchTable matchTable, IReadOnlyList<SeatedEntrant> seatedEntrants, TimeProvider timeProvider, IMatchListener matchListener, TimeSpan placementTime)
+        internal LiveMatch(int matchId, MatchTable matchTable, IReadOnlyList<SeatedEntrant> seatedEntrants, TimeProvider timeProvider, IMatchListener matchListener, TimeSpan stepTime)
         {
             MatchId = matchId;
             _matchTable = matchTable;
@@ -30,8 +31,10 @@ namespace Game.Match
             _viewFactory = new MatchViewFactory(seatedEntrants);
             _timeProvider = timeProvider;
             _matchListener = matchListener;
-            _placementTime = placementTime;
+            _stepTime = stepTime;
         }
+
+        internal event EventHandler? Finished;
 
         internal int MatchId { get; }
 
@@ -39,7 +42,7 @@ namespace Game.Match
         {
             lock (_matchLock)
             {
-                RestartPlacementCountdown();
+                RestartStepCountdown();
                 _matchListener.ReceiveMatchStarted(BuildRecipientViews());
             }
         }
@@ -49,7 +52,7 @@ namespace Game.Match
             lock (_matchLock)
             {
                 _hasEnded = true;
-                StopPlacementCountdown();
+                StopStepCountdown();
             }
         }
 
@@ -97,7 +100,7 @@ namespace Game.Match
             {
                 placementResult = PlacementResult.NotInMatch;
             }
-            else if (!HasPlacementExpired())
+            else if (!HasStepExpired())
             {
                 PlacementOutcome placementOutcome = placeOnTable(GetSeatNumber(entrantId), destinationCell);
                 placementResult = ToPlacementResult(placementOutcome);
@@ -105,67 +108,99 @@ namespace Game.Match
 
             if (placementResult == PlacementResult.Placed)
             {
-                RestartPlacementCountdown();
+                RestartStepCountdown();
                 _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
 
             return placementResult;
         }
 
-        private void ExpirePlacement()
+        private void ExpireStep()
         {
+            bool hasJustFinished;
             lock (_matchLock)
             {
-                bool isCurrentCountdown = (_placementCountdown is not null) && _placementCountdown.IsCancellationRequested;
-
-                if (!isCurrentCountdown)
+                bool isCurrentCountdown = (_stepCountdown is not null) && _stepCountdown.IsCancellationRequested;
+                if (isCurrentCountdown)
                 {
-                    return;
+                    ExpireTableStep();
+                    RestartStepCountdown();
+                    _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
                 }
 
+                hasJustFinished = TakeFinishToReport();
+            }
+
+            ReportFinish(hasJustFinished);
+        }
+
+        private void ExpireTableStep()
+        {
+            if (_matchTable.Phase == TablePhase.PlayerTurn)
+            {
+                _matchTable.ExpireTurn();
+            }
+            else
+            {
                 _matchTable.ExpirePlacement();
-                RestartPlacementCountdown();
-                _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
         }
 
-        private void RestartPlacementCountdown()
+        private bool TakeFinishToReport()
         {
-            StopPlacementCountdown();
-            StartPlacementCountdown();
+            bool hasJustFinished = (_matchTable.Phase == TablePhase.Finished) && !_hasReportedFinish;
+            if (hasJustFinished)
+            {
+                _hasReportedFinish = true;
+            }
+
+            return hasJustFinished;
         }
 
-        private void StopPlacementCountdown()
+        private void ReportFinish(bool hasJustFinished)
         {
-            _placementCountdown?.Dispose();
-            _placementCountdown = null;
-            _placementEndsAtUtc = null;
+            if (hasJustFinished)
+            {
+                Finished?.Invoke(this, EventArgs.Empty);
+            }
         }
 
-        private void StartPlacementCountdown()
+        private void RestartStepCountdown()
         {
-            bool isPlacementOpen = (_matchTable.Phase == TablePhase.CaterpillarPlacement) || (_matchTable.Phase == TablePhase.ButterflyPlacement);
-            if (!isPlacementOpen)
+            StopStepCountdown();
+            StartStepCountdown();
+        }
+
+        private void StopStepCountdown()
+        {
+            _stepCountdown?.Dispose();
+            _stepCountdown = null;
+            _stepEndsAtUtc = null;
+        }
+
+        private void StartStepCountdown()
+        {
+            if (_matchTable.Phase == TablePhase.Finished)
             {
                 return;
             }
 
-            _placementEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + _placementTime;
-            _placementCountdown = new CancellationTokenSource(_placementTime, _timeProvider);
-            _placementCountdown.Token.Register(ExpirePlacement);
+            _stepEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + _stepTime;
+            _stepCountdown = new CancellationTokenSource(_stepTime, _timeProvider);
+            _stepCountdown.Token.Register(ExpireStep);
         }
 
-        private bool HasPlacementExpired()
+        private bool HasStepExpired()
         {
-            bool hasExpired = (_placementEndsAtUtc is DateTime endsAtUtc) && (_timeProvider.GetUtcNow().UtcDateTime >= endsAtUtc);
+            bool hasExpired = (_stepEndsAtUtc is DateTime endsAtUtc) && (_timeProvider.GetUtcNow().UtcDateTime >= endsAtUtc);
 
             return hasExpired;
         }
 
-        private TimeSpan? ReadPlacementTimeLeft()
+        private TimeSpan? ReadStepTimeLeft()
         {
             TimeSpan? placementTimeLeft = null;
-            if (_placementEndsAtUtc is DateTime endsAtUtc)
+            if (_stepEndsAtUtc is DateTime endsAtUtc)
             {
                 placementTimeLeft = endsAtUtc - _timeProvider.GetUtcNow().UtcDateTime;
             }
@@ -182,11 +217,11 @@ namespace Game.Match
 
         private List<MatchRecipientView> BuildRecipientViews()
         {
-            TimeSpan? placementTimeLeft = ReadPlacementTimeLeft();
+            TimeSpan? stepTimeLeft = ReadStepTimeLeft();
             var recipientViews = new List<MatchRecipientView>();
             foreach (SeatedEntrant recipient in _seatedEntrants)
             {
-                MatchView matchView = _viewFactory.CreateForSeat(_matchTable, placementTimeLeft, recipient.SeatNumber);
+                MatchView matchView = _viewFactory.CreateForSeat(_matchTable, stepTimeLeft, recipient.SeatNumber);
                 recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, matchView));
             }
 
