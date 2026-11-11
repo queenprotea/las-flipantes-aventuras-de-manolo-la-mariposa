@@ -9,6 +9,10 @@ namespace Game.Match.Tests
     {
         internal static TimeSpan PlacementTime { get; } = TimeSpan.FromSeconds(90);
 
+        internal static RoundRule FourTurnRound { get; } = new RoundRule(new int[] { 3, 3, 3, 3 });
+
+        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts { CaterpillarPlacement = 2, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
+
         internal static TimeSpan FirstPlacementTaken { get; } = TimeSpan.FromSeconds(60);
 
         internal static TimeSpan RestOfFirstPlacement { get; } = PlacementTime - FirstPlacementTaken;

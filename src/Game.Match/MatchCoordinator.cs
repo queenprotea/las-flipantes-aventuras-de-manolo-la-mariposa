@@ -36,6 +36,8 @@ namespace Game.Match
 
         public static int MaximumEntrantCount => MatchTable.MaximumSeatCount;
 
+        public static int RoundCount => MatchRules.RoundCount;
+
         public static bool BoardContains(MatchCell examinedCell)
         {
             ArgumentNullException.ThrowIfNull(examinedCell);
@@ -45,14 +47,15 @@ namespace Game.Match
             return isOnBoard;
         }
 
-        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan placementTime)
+        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan placementTime, MatchRuleSet ruleSet)
         {
             ArgumentNullException.ThrowIfNull(entrants);
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(placementTime, TimeSpan.Zero);
 
+            MatchRules matchRules = MatchRuleConversion.ToMatchRules(ruleSet);
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(entrants);
             List<int> entrantIds = seatedEntrants.Select(seatedEntrant => seatedEntrant.Entrant.EntrantId).ToList();
-            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count);
+            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count, matchRules);
             LiveMatch liveMatch;
             lock (_coordinatorLock)
             {

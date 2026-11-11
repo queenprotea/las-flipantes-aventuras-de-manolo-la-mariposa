@@ -12,6 +12,7 @@ namespace Game.Domain
         private const int GroundLevel = 0;
         private const int LowestFlowerLevel = 1;
         private const string RepeatedFlowerMessage = "Two flowers cannot stand on the same cell.";
+        private const string FullFlowerMessage = "A flower cannot grow past its maximum level.";
 
         private readonly int[,] _flowerLevels = new int[CellsPerSide, CellsPerSide];
 
@@ -24,6 +25,8 @@ namespace Game.Domain
                 PlantFlower(flower, nameof(flowers));
             }
         }
+
+        internal static IReadOnlyList<BoardCell> AllCells { get; } = CreateAllCells();
 
         public static bool Contains(BoardCell examinedCell)
         {
@@ -68,6 +71,27 @@ namespace Game.Domain
             return flowerCells;
         }
 
+        public void AddFlowerLevel(BoardCell growingCell)
+        {
+            int flowerLevel = GetFlowerLevel(growingCell);
+            if (flowerLevel == MaximumFlowerLevel)
+            {
+                throw new InvalidOperationException(FullFlowerMessage);
+            }
+
+            _flowerLevels[growingCell.Row, growingCell.Column] = flowerLevel + 1;
+        }
+
+        public int CountPlantersAround(BoardCell examinedCell)
+        {
+            ThrowIfOutside(examinedCell, nameof(examinedCell));
+
+            List<BoardCell> neighborCells = FindNeighborCells(examinedCell);
+            int planterCount = FindPlanters().Count(planter => IsPlanterAround(planter, neighborCells));
+
+            return planterCount;
+        }
+
         public IReadOnlyList<Planter> FindPlanters()
         {
             var visitedCells = new HashSet<BoardCell>();
@@ -93,12 +117,38 @@ namespace Game.Domain
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Column, CellsPerSide, parameterName);
         }
 
-        private static List<BoardCell> FindNeighborCells(BoardCell centerCell)
+        internal static List<BoardCell> FindNeighborCells(BoardCell centerCell)
         {
             var sideCells = new BoardCell[] { new BoardCell(centerCell.Row - 1, centerCell.Column), new BoardCell(centerCell.Row + 1, centerCell.Column), new BoardCell(centerCell.Row, centerCell.Column - 1), new BoardCell(centerCell.Row, centerCell.Column + 1) };
             List<BoardCell> neighborCells = sideCells.Where(Contains).ToList();
 
             return neighborCells;
+        }
+
+        private static bool IsPlanterAround(Planter planter, List<BoardCell> neighborCells)
+        {
+            bool isAround = planter.Flowers.Any(flower => neighborCells.Contains(flower.Cell));
+
+            return isAround;
+        }
+
+        private static List<BoardCell> CreateAllCells()
+        {
+            var allCells = new List<BoardCell>();
+            for (var row = 0; row < CellsPerSide; row++)
+            {
+                AddCellsOfRow(row, allCells);
+            }
+
+            return allCells;
+        }
+
+        private static void AddCellsOfRow(int row, List<BoardCell> allCells)
+        {
+            for (var column = 0; column < CellsPerSide; column++)
+            {
+                allCells.Add(new BoardCell(row, column));
+            }
         }
 
         private void PlantFlower(Flower flower, string parameterName)

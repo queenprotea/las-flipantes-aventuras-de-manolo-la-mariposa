@@ -27,15 +27,17 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly SessionRegistry _sessionRegistry;
         private readonly SystemParameterReader _systemParameterReader;
+        private readonly MatchRuleReader _matchRuleReader;
         private readonly TimeProvider _timeProvider;
         private readonly MatchCoordinator _matchCoordinator;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, TimeProvider timeProvider, StartingBoard startingBoard)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(systemParameterReader);
+            ArgumentNullException.ThrowIfNull(matchRuleReader);
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
 
@@ -43,6 +45,7 @@ namespace Game.Services
             _roomService = roomService;
             _sessionRegistry = sessionRegistry;
             _systemParameterReader = systemParameterReader;
+            _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
             _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells);
         }
@@ -177,13 +180,14 @@ namespace Game.Services
         private async Task<StartMatchResult> StartCheckedMatchAsync(LiveRoom room, int callerOwnerId)
         {
             TimeSpan placementTime = await ReadPlacementTimeAsync();
+            IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
             MatchStartCheck startCheck = room.StartMatch(callerOwnerId);
             if (startCheck.Status == StartMatchStatus.Started)
             {
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
-                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, placementTime);
                 int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
+                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, placementTime, ruleSetsByPlayerCount[seatedCount]);
                 _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 

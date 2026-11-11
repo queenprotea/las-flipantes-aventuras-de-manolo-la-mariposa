@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Xunit;
@@ -59,6 +60,34 @@ namespace Game.Domain.Tests
             bool isInside = Board.Contains(outsideCell);
 
             Assert.False(isInside);
+        }
+
+        [Fact]
+        public void Test_CountPlantersAround_OfCellBetweenTwoPlanters_ReturnsTwo()
+        {
+            var board = new Board(new Flower[] { new Flower(new BoardCell(2, 1), 1), new Flower(new BoardCell(2, 3), 1) });
+
+            int planterCount = board.CountPlantersAround(new BoardCell(2, 2));
+
+            Assert.Equal(TwoPlanters, planterCount);
+        }
+
+        [Fact]
+        public void Test_AddFlowerLevel_OnGround_PlantsALevelOneFlower()
+        {
+            var board = new Board(SampleLayouts.FiveStartingFlowers);
+
+            board.AddFlowerLevel(SampleLayouts.GroundCell);
+
+            Assert.Equal(StartingLayout.StartingFlowerLevel, board.GetFlowerLevel(SampleLayouts.GroundCell));
+        }
+
+        [Fact]
+        public void Test_AddFlowerLevel_OnLevelThreeFlower_ThrowsInvalidOperationException()
+        {
+            var board = new Board(new Flower[] { new Flower(SampleLayouts.CenterFlower, Board.MaximumFlowerLevel) });
+
+            Assert.Throws<InvalidOperationException>(() => board.AddFlowerLevel(SampleLayouts.CenterFlower));
         }
     }
 }
