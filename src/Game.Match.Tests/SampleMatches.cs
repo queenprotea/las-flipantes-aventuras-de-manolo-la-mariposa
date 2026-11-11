@@ -8,6 +8,7 @@ namespace Game.Match.Tests
     internal static class SampleMatches
     {
         internal const int TieBreakSeed = 7;
+        internal const int CaterpillarPlacementCost = 2;
 
         internal static TimeSpan PlacementTime { get; } = TimeSpan.FromSeconds(90);
 
@@ -15,9 +16,9 @@ namespace Game.Match.Tests
 
         internal static RoundRule OneTurnRound { get; } = new RoundRule(new int[] { 3 });
 
-        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts { CaterpillarPlacement = 2, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
+        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts { CaterpillarPlacement = CaterpillarPlacementCost, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
 
-        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts { CaterpillarPlacement = 2, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
+        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts { CaterpillarPlacement = CaterpillarPlacementCost, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
 
         internal static TimeSpan FirstPlacementTaken { get; } = TimeSpan.FromSeconds(60);
 
@@ -34,6 +35,10 @@ namespace Game.Match.Tests
         internal static MatchCell SouthWestFlower { get; } = new MatchCell { Row = 6, Column = 1 };
 
         internal static MatchCell SouthEastFlower { get; } = new MatchCell { Row = 6, Column = 6 };
+
+        internal static MatchCell SouthOfNorthWest { get; } = new MatchCell { Row = 2, Column = 1 };
+
+        internal static MatchCell SouthOfNorthEast { get; } = new MatchCell { Row = 2, Column = 6 };
 
         internal static MatchCell GroundCell { get; } = new MatchCell { Row = 4, Column = 4 };
 

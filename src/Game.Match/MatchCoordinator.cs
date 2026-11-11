@@ -84,24 +84,44 @@ namespace Game.Match
             return startedMatchId;
         }
 
-        public PlacementResult PlaceCaterpillar(int entrantId, MatchCell destinationCell)
+        public MatchActionResult PlacePiece(int entrantId, MatchPiece piece, MatchCell destinationCell)
         {
             ThrowIfOffBoard(destinationCell);
 
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
-            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceCaterpillar(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.PlacePiece(entrantId, piece, MatchCellConversion.ToBoardCell(destinationCell));
 
-            return placementResult;
+            return actionResult;
         }
 
-        public PlacementResult PlaceButterfly(int entrantId, MatchCell destinationCell)
+        public MatchActionResult MoveCaterpillar(int entrantId, MatchMove move)
         {
-            ThrowIfOffBoard(destinationCell);
+            ArgumentNullException.ThrowIfNull(move);
+            ThrowIfOffBoard(move.Origin);
+            ThrowIfOffBoard(move.Destination);
 
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
-            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceButterfly(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.MoveCaterpillar(entrantId, MatchCellConversion.ToCaterpillarMove(move));
 
-            return placementResult;
+            return actionResult;
+        }
+
+        public MatchActionResult AddFlowerLevel(int entrantId, MatchCell buildCell)
+        {
+            ThrowIfOffBoard(buildCell);
+
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.AddFlowerLevel(entrantId, MatchCellConversion.ToBoardCell(buildCell));
+
+            return actionResult;
+        }
+
+        public MatchActionResult EndTurn(int entrantId)
+        {
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.EndTurn(entrantId);
+
+            return actionResult;
         }
 
         public EndMatchResult EndMatch(int entrantId)

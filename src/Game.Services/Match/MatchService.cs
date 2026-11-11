@@ -76,19 +76,60 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceCaterpillar(int row, int column)
+        public MatchActionResult PlacePiece(MatchPiece piece, MatchCell destinationCell)
         {
-            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceCaterpillar);
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = JudgeCall(callerOwnerId, destinationCell);
+            if ((actionResult == MatchActionResult.Applied) && !Enum.IsDefined(piece))
+            {
+                actionResult = MatchActionResult.WrongPhase;
+            }
 
-            return placementResult;
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.PlacePiece(ownerId, piece, destinationCell);
+            }
+
+            return actionResult;
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceButterfly(int row, int column)
+        public MatchActionResult MoveCaterpillar(MatchMove move)
         {
-            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceButterfly);
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = JudgeCall(callerOwnerId, move?.Origin, move?.Destination);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId) && (move is not null))
+            {
+                actionResult = _matchCoordinator.MoveCaterpillar(ownerId, move);
+            }
 
-            return placementResult;
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult AddFlowerLevel(MatchCell buildCell)
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = JudgeCall(callerOwnerId, buildCell);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.AddFlowerLevel(ownerId, buildCell);
+            }
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult EndTurn()
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = JudgeCall(callerOwnerId);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.EndTurn(ownerId);
+            }
+
+            return actionResult;
         }
 
         /// <inheritdoc/>
@@ -119,25 +160,34 @@ namespace Game.Services
             return endResult;
         }
 
-        private PlacementResult PlaceForCaller(int row, int column, Func<int, MatchCell, PlacementResult> placeInMatch)
+        private static MatchActionResult JudgeCall(int? callerOwnerId, params MatchCell?[] examinedCells)
         {
-            PlayerSession? callerSession = _sessionRegistry.FindCaller();
-            var destinationCell = new MatchCell { Row = row, Column = column };
-            PlacementResult placementResult;
-            if (callerSession is null)
+            MatchActionResult actionResult = MatchActionResult.Applied;
+            if (callerOwnerId is null)
             {
-                placementResult = PlacementResult.NotIdentified;
+                actionResult = MatchActionResult.NotIdentified;
             }
-            else if (!MatchCoordinator.BoardContains(destinationCell))
+            else if (!examinedCells.All(IsOnBoard))
             {
-                placementResult = PlacementResult.OutsideBoard;
-            }
-            else
-            {
-                placementResult = placeInMatch(callerSession.Owner.OwnerId, destinationCell);
+                actionResult = MatchActionResult.OutsideBoard;
             }
 
-            return placementResult;
+            return actionResult;
+        }
+
+        private static bool IsOnBoard(MatchCell? examinedCell)
+        {
+            bool isOnBoard = (examinedCell is not null) && MatchCoordinator.BoardContains(examinedCell);
+
+            return isOnBoard;
+        }
+
+        private int? FindCallerOwnerId()
+        {
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            int? callerOwnerId = callerSession?.Owner.OwnerId;
+
+            return callerOwnerId;
         }
 
         private async Task<StartMatchResult> StartMatchInRoomAsync(LiveRoom room, int callerOwnerId)

@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes a seat of the match: its number, who sits there, the guest mark and the color kept from the room.
+    /// Describes a seat of the match: its number, who sits there, the guest mark, the color kept from the room, the caterpillars still in hand, the points of each closed round and whether the player was retired.
     /// </summary>
     [DataContract]
     public sealed class MatchSeat
@@ -19,5 +20,17 @@ namespace Game.Contracts
 
         [DataMember]
         public SeatColor Color { get; set; }
+
+        [DataMember]
+        public int CaterpillarsLeft { get; set; }
+
+        [DataMember]
+        public List<int> RoundScores { get; set; } = new List<int>();
+
+        [DataMember]
+        public int TotalScore { get; set; }
+
+        [DataMember]
+        public bool IsRetired { get; set; }
     }
 }

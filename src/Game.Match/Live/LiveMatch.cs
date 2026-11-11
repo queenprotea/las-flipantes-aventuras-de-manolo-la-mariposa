@@ -56,63 +56,154 @@ namespace Game.Match
             }
         }
 
-        internal PlacementResult PlaceCaterpillar(int entrantId, BoardCell destinationCell)
+        internal MatchActionResult PlacePiece(int entrantId, MatchPiece piece, BoardCell destinationCell)
         {
-            PlacementResult placementResult;
+            MatchActionResult actionResult;
+            bool hasJustFinished;
             lock (_matchLock)
             {
-                placementResult = PlaceOnTable(entrantId, destinationCell, _matchTable.PlaceInitialCaterpillar);
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = PlacePieceOnTable(GetSeatNumber(entrantId), piece, destinationCell);
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
             }
 
-            return placementResult;
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
         }
 
-        internal PlacementResult PlaceButterfly(int entrantId, BoardCell destinationCell)
+        internal MatchActionResult MoveCaterpillar(int entrantId, CaterpillarMove move)
         {
-            PlacementResult placementResult;
+            MatchActionResult actionResult;
+            bool hasJustFinished;
             lock (_matchLock)
             {
-                placementResult = PlaceOnTable(entrantId, destinationCell, _matchTable.PlaceButterfly);
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.MoveCaterpillar(GetSeatNumber(entrantId), move));
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
             }
 
-            return placementResult;
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
         }
 
-        private static PlacementResult ToPlacementResult(PlacementOutcome placementOutcome)
+        internal MatchActionResult AddFlowerLevel(int entrantId, BoardCell buildCell)
         {
-            PlacementResult placementResult = placementOutcome switch
+            MatchActionResult actionResult;
+            bool hasJustFinished;
+            lock (_matchLock)
             {
-                PlacementOutcome.Placed => PlacementResult.Placed,
-                PlacementOutcome.WrongPhase => PlacementResult.WrongPhase,
-                PlacementOutcome.NotYourPlacement => PlacementResult.NotYourPlacement,
-                PlacementOutcome.NotAFlower => PlacementResult.NotAFlower,
-                PlacementOutcome.FlowerOccupied => PlacementResult.FlowerOccupied,
-                _ => throw new ArgumentOutOfRangeException(nameof(placementOutcome)),
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.AddFlowerLevel(GetSeatNumber(entrantId), buildCell));
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
+            }
+
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
+        }
+
+        internal MatchActionResult EndTurn(int entrantId)
+        {
+            MatchActionResult actionResult;
+            bool hasJustFinished;
+            lock (_matchLock)
+            {
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.EndTurn(GetSeatNumber(entrantId)));
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
+            }
+
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
+        }
+
+        private MatchActionResult PlacePieceOnTable(int seatNumber, MatchPiece piece, BoardCell destinationCell)
+        {
+            MatchActionResult actionResult = piece switch
+            {
+                MatchPiece.Butterfly => MatchActionResultConversion.ToActionResult(_matchTable.PlaceButterfly(seatNumber, destinationCell)),
+                MatchPiece.Caterpillar => PlaceCaterpillarOnTable(seatNumber, destinationCell),
+                _ => throw new ArgumentOutOfRangeException(nameof(piece)),
             };
 
-            return placementResult;
+            return actionResult;
         }
 
-        private PlacementResult PlaceOnTable(int entrantId, BoardCell destinationCell, Func<int, BoardCell, PlacementOutcome> placeOnTable)
+        private MatchActionResult PlaceCaterpillarOnTable(int seatNumber, BoardCell destinationCell)
         {
-            PlacementResult placementResult = PlacementResult.TimeExpired;
-            if (_hasEnded)
+            MatchActionResult actionResult;
+            if (_matchTable.Phase == TablePhase.PlayerTurn)
             {
-                placementResult = PlacementResult.NotInMatch;
+                actionResult = MatchActionResultConversion.ToActionResult(_matchTable.PlaceCaterpillar(seatNumber, destinationCell));
             }
-            else if (!HasStepExpired())
+            else
             {
-                PlacementOutcome placementOutcome = placeOnTable(GetSeatNumber(entrantId), destinationCell);
-                placementResult = ToPlacementResult(placementOutcome);
+                actionResult = MatchActionResultConversion.ToActionResult(_matchTable.PlaceInitialCaterpillar(seatNumber, destinationCell));
             }
 
-            if (placementResult == PlacementResult.Placed)
+            return actionResult;
+        }
+
+        private MatchActionResult JudgeOpenStep()
+        {
+            MatchActionResult actionResult = MatchActionResult.Applied;
+            if (_hasEnded)
             {
-                RestartStepCountdown();
+                actionResult = MatchActionResult.NotInMatch;
+            }
+            else if (HasStepExpired())
+            {
+                actionResult = MatchActionResult.TimeExpired;
+            }
+
+            return actionResult;
+        }
+
+        private bool CompleteAction(MatchActionResult actionResult, TableStep stepBefore)
+        {
+            if (actionResult == MatchActionResult.Applied)
+            {
+                if (ReadTableStep() != stepBefore)
+                {
+                    RestartStepCountdown();
+                }
+
                 _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
 
-            return placementResult;
+            bool hasJustFinished = TakeFinishToReport();
+
+            return hasJustFinished;
+        }
+
+        private TableStep ReadTableStep()
+        {
+            var tableStep = new TableStep(_matchTable.Phase, _matchTable.RoundNumber, _matchTable.TurnNumber, _matchTable.ActiveSeatNumber);
+
+            return tableStep;
         }
 
         private void ExpireStep()

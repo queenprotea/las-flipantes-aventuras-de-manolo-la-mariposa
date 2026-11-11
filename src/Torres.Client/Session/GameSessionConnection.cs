@@ -280,18 +280,11 @@ namespace Torres.Client.Session
             return matchEnding;
         }
 
-        internal Task<PlacementResult> PlaceCaterpillarAsync(MatchCell destinationCell)
+        internal Task<MatchActionResult> PlacePieceAsync(PiecePlacement piecePlacement)
         {
-            Task<PlacementResult> caterpillarPlacement = new SessionCall<MatchCell, PlacementResult>(PlaceCaterpillar, destinationCell).StartAsync();
+            Task<MatchActionResult> pieceRequest = new SessionCall<PiecePlacement, MatchActionResult>(PlacePiece, piecePlacement).StartAsync();
 
-            return caterpillarPlacement;
-        }
-
-        internal Task<PlacementResult> PlaceButterflyAsync(MatchCell destinationCell)
-        {
-            Task<PlacementResult> butterflyPlacement = new SessionCall<MatchCell, PlacementResult>(PlaceButterfly, destinationCell).StartAsync();
-
-            return butterflyPlacement;
+            return pieceRequest;
         }
 
         internal Task<ProfileResponse> GetProfileAsync()
@@ -399,18 +392,11 @@ namespace Torres.Client.Session
             return rejectionResult;
         }
 
-        private PlacementResult PlaceCaterpillar(MatchCell destinationCell)
+        private MatchActionResult PlacePiece(PiecePlacement piecePlacement)
         {
-            PlacementResult caterpillarPlacementResult = RequireChannel().PlaceCaterpillar(destinationCell.Row, destinationCell.Column);
+            MatchActionResult placementResult = RequireChannel().PlacePiece(piecePlacement.Piece, piecePlacement.DestinationCell);
 
-            return caterpillarPlacementResult;
-        }
-
-        private PlacementResult PlaceButterfly(MatchCell destinationCell)
-        {
-            PlacementResult butterflyPlacementResult = RequireChannel().PlaceButterfly(destinationCell.Row, destinationCell.Column);
-
-            return butterflyPlacementResult;
+            return placementResult;
         }
 
         private static NetTcpBinding CreateSessionBinding()

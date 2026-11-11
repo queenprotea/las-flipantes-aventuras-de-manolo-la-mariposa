@@ -34,7 +34,7 @@ namespace Torres.Client.Screens
         private readonly LocalizedLabel _turnLabel = new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction) { Font = Fonts.Small, TextColor = Theme.MutedInk, HorizontalAlignment = HorizontalAlignment.Center };
 
         private MatchView? _shownMatchView;
-        private Task<PlacementResult>? _placementRequest;
+        private Task<MatchActionResult>? _placementRequest;
         private Task<EndMatchResult>? _endMatchRequest;
 
         internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
@@ -118,17 +118,16 @@ namespace Torres.Client.Screens
             return placingName;
         }
 
-        private static string ToPlacementRejectionKey(PlacementResult placementRejection)
+        private static string ToPlacementRejectionKey(MatchActionResult placementRejection)
         {
             string rejectionKey = placementRejection switch
             {
-                PlacementResult.FlowerOccupied => TextKeys.InitialPlacement.FlowerOccupiedNotice,
-                PlacementResult.NotAFlower or PlacementResult.OutsideBoard => TextKeys.InitialPlacement.NotAFlowerNotice,
-                PlacementResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
-                PlacementResult.NotYourPlacement or PlacementResult.WrongPhase => TextKeys.InitialPlacement.NotYourPlacementNotice,
-                PlacementResult.NotInMatch or PlacementResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
-                PlacementResult.Placed => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
-                _ => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.CellOccupied => TextKeys.InitialPlacement.FlowerOccupiedNotice,
+                MatchActionResult.NotAFlower or MatchActionResult.OutsideBoard => TextKeys.InitialPlacement.NotAFlowerNotice,
+                MatchActionResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
+                MatchActionResult.NotInMatch or MatchActionResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
+                MatchActionResult.Applied => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                _ => TextKeys.InitialPlacement.NotYourPlacementNotice,
             };
 
             return rejectionKey;
@@ -251,7 +250,7 @@ namespace Torres.Client.Screens
         private string FormatPlacementTimeLeft()
         {
             TimeSpan placementTimeLeft = TimeSpan.Zero;
-            if (_playerSession.PlacementEndsAtUtc is DateTime placementEndsAtUtc)
+            if (_playerSession.StepEndsAtUtc is DateTime placementEndsAtUtc)
             {
                 placementTimeLeft = placementEndsAtUtc - DateTime.UtcNow;
             }
@@ -314,7 +313,8 @@ namespace Torres.Client.Screens
 
             _noticeBox.Hide();
             MatchCell destinationCell = MatchCellConversion.ToMatchCell(placementCell);
-            _placementRequest = matchView.Phase == MatchPhase.ButterflyPlacement ? _gameSessionConnection.PlaceButterflyAsync(destinationCell) : _gameSessionConnection.PlaceCaterpillarAsync(destinationCell);
+            MatchPiece placedPiece = matchView.Phase == MatchPhase.ButterflyPlacement ? MatchPiece.Butterfly : MatchPiece.Caterpillar;
+            _placementRequest = _gameSessionConnection.PlacePieceAsync(new PiecePlacement(placedPiece, destinationCell));
         }
 
         private void FollowPlacementRequest()
@@ -324,13 +324,13 @@ namespace Torres.Client.Screens
                 return;
             }
 
-            Task<PlacementResult> completedPlacement = _placementRequest;
+            Task<MatchActionResult> completedPlacement = _placementRequest;
             _placementRequest = null;
             if (!completedPlacement.IsCompletedSuccessfully)
             {
                 ShowServerError();
             }
-            else if (completedPlacement.Result != PlacementResult.Placed)
+            else if (completedPlacement.Result != MatchActionResult.Applied)
             {
                 _noticeBox.ShowTitle(ToPlacementRejectionKey(completedPlacement.Result));
             }

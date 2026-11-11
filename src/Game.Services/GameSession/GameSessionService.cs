@@ -214,19 +214,35 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceCaterpillar(int row, int column)
+        public MatchActionResult PlacePiece(MatchPiece piece, MatchCell destinationCell)
         {
-            PlacementResult placementResult = _matchService.PlaceCaterpillar(row, column);
+            MatchActionResult actionResult = _matchService.PlacePiece(piece, destinationCell);
 
-            return placementResult;
+            return actionResult;
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceButterfly(int row, int column)
+        public MatchActionResult MoveCaterpillar(MatchMove move)
         {
-            PlacementResult placementResult = _matchService.PlaceButterfly(row, column);
+            MatchActionResult actionResult = _matchService.MoveCaterpillar(move);
 
-            return placementResult;
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult AddFlowerLevel(MatchCell buildCell)
+        {
+            MatchActionResult actionResult = _matchService.AddFlowerLevel(buildCell);
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult EndTurn()
+        {
+            MatchActionResult actionResult = _matchService.EndTurn();
+
+            return actionResult;
         }
 
         /// <inheritdoc/>
