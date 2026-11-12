@@ -64,13 +64,13 @@ namespace Torres.Client
             ClientSettings clientSettings = ClientSettings.Load();
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
-                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.ServerStatus));
+                clientSettings.CreateEndpointAddress(clientSettings.ServicePaths.ServerStatus));
             _accountChannelFactory = new ChannelFactory<IAccountService>(
                 new NetTcpBinding(SecurityMode.None),
-                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Account));
+                clientSettings.CreateEndpointAddress(clientSettings.ServicePaths.Account));
             _rankingChannelFactory = new ChannelFactory<IRankingService>(
                 new NetTcpBinding(SecurityMode.None),
-                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
+                clientSettings.CreateEndpointAddress(clientSettings.ServicePaths.Ranking));
 
             _gameSessionConnection = new GameSessionConnection(clientSettings);
             _doomLauncher = new DoomLauncher(clientSettings);

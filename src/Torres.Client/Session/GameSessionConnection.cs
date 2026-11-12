@@ -32,7 +32,7 @@ namespace Torres.Client.Session
             _channelFactory = new DuplexChannelFactory<IGameSessionService>(
                 new InstanceContext(_noticeQueue),
                 CreateSessionBinding(),
-                clientSettings.CreateEndpointAddress(ServiceEndpointPaths.GameSession));
+                clientSettings.CreateEndpointAddress(clientSettings.ServicePaths.GameSession));
         }
 
         internal bool IsSessionOpen { get; private set; }
