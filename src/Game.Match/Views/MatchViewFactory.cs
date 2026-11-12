@@ -16,23 +16,33 @@ namespace Game.Match
             _seatedEntrants = seatedEntrants;
         }
 
-        internal MatchView CreateForSeat(MatchTable matchTable, TimeSpan? placementTimeLeft, int viewerSeatNumber)
+        internal MatchView CreateForSeat(MatchTable matchTable, TimeSpan? stepTimeLeft, int viewerSeatNumber)
         {
             MatchCell butterflyCell = matchTable.ButterflyCell is BoardCell butterflyBoardCell ? MatchCellConversion.ToMatchCell(butterflyBoardCell) : new MatchCell();
             var matchView = new MatchView
             {
                 Phase = ToMatchPhase(matchTable.Phase),
                 RoundNumber = matchTable.RoundNumber,
-                TurnNumber = matchTable.TurnNumber,
+                TurnRoundNumber = matchTable.TurnRoundNumber,
+                RoundTurnCount = matchTable.RoundTurnCount,
+                RoundButterflyPoints = RoundScoreCalculator.GetButterflyPoints(matchTable.RoundNumber),
                 ViewerSeatNumber = viewerSeatNumber,
                 ActiveSeatNumber = matchTable.ActiveSeatNumber,
-                PlacementTimeLeft = placementTimeLeft,
-                Seats = _seatedEntrants.Select(ToMatchSeat).ToList(),
+                StepTimeLeft = stepTimeLeft,
+                ActionPointsLeft = matchTable.ActionPointsLeft,
+                BuildsLeft = matchTable.BuildsLeft,
+                CaterpillarsPerSeat = MatchTable.CaterpillarsPerSeat,
+                ActionCosts = ToMatchActionCosts(matchTable.ActionCosts),
+                Seats = _seatedEntrants.Select(seatedEntrant => ToMatchSeat(seatedEntrant, matchTable)).ToList(),
                 Flowers = CreateFlowers(matchTable),
                 Caterpillars = matchTable.Caterpillars.Select(ToMatchCaterpillar).ToList(),
                 HasButterfly = matchTable.ButterflyCell.HasValue,
                 ButterflyCell = butterflyCell,
                 PlacementTargets = matchTable.FindPlacementTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
+                MoveTargets = CreateMoveTargets(matchTable, viewerSeatNumber),
+                BuildTargets = matchTable.FindBuildTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
+                RankedSeatNumbers = CreateRankedSeatNumbers(matchTable),
+                WasAbandoned = matchTable.FinishCause == FinishCause.TooFewSeats,
             };
 
             return matchView;
@@ -45,17 +55,77 @@ namespace Game.Match
                 TablePhase.CaterpillarPlacement => MatchPhase.CaterpillarPlacement,
                 TablePhase.ButterflyPlacement => MatchPhase.ButterflyPlacement,
                 TablePhase.PlayerTurn => MatchPhase.PlayerTurn,
+                TablePhase.Finished => MatchPhase.Finished,
                 _ => throw new ArgumentOutOfRangeException(nameof(phase)),
             };
 
             return matchPhase;
         }
 
-        private static MatchSeat ToMatchSeat(SeatedEntrant seatedEntrant)
+        private static MatchSeat ToMatchSeat(SeatedEntrant seatedEntrant, MatchTable matchTable)
         {
-            var matchSeat = new MatchSeat { SeatNumber = seatedEntrant.SeatNumber, DisplayName = seatedEntrant.Entrant.DisplayName, IsGuest = seatedEntrant.Entrant.IsGuest, Color = seatedEntrant.Entrant.SeatColor };
+            SeatStanding standing = matchTable.Standings[seatedEntrant.SeatNumber - MatchTable.FirstSeatNumber];
+            var matchSeat = new MatchSeat
+            {
+                SeatNumber = seatedEntrant.SeatNumber,
+                DisplayName = seatedEntrant.Entrant.DisplayName,
+                IsGuest = seatedEntrant.Entrant.IsGuest,
+                Color = seatedEntrant.Entrant.SeatColor,
+                CaterpillarsLeft = matchTable.CountCaterpillarsLeft(seatedEntrant.SeatNumber),
+                RoundScores = standing.RoundScores.Select(ToMatchRoundScore).ToList(),
+                TotalScore = standing.TotalScore,
+                IsRetired = standing.IsRetired,
+            };
 
             return matchSeat;
+        }
+
+        private static MatchActionCosts ToMatchActionCosts(ActionCosts actionCosts)
+        {
+            var matchActionCosts = new MatchActionCosts { CaterpillarPlacement = actionCosts.CaterpillarPlacement, Movement = actionCosts.Movement, LevelClimb = actionCosts.LevelClimb, FlowerLevelAddition = actionCosts.FlowerLevelAddition };
+
+            return matchActionCosts;
+        }
+
+        private static MatchRoundScore ToMatchRoundScore(SeatRoundScore roundScore)
+        {
+            var matchRoundScore = new MatchRoundScore { PlanterPoints = roundScore.PlanterPoints, ButterflyPoints = roundScore.ButterflyPoints };
+
+            return matchRoundScore;
+        }
+
+        private static List<MatchMoveTarget> CreateMoveTargets(MatchTable matchTable, int viewerSeatNumber)
+        {
+            var moveTargets = new List<MatchMoveTarget>();
+            bool isViewerPlaying = (matchTable.Phase == TablePhase.PlayerTurn) && (matchTable.ActiveSeatNumber == viewerSeatNumber);
+            if (isViewerPlaying)
+            {
+                List<Caterpillar> viewerCaterpillars = matchTable.Caterpillars.Where(caterpillar => caterpillar.SeatNumber == viewerSeatNumber).ToList();
+                foreach (Caterpillar viewerCaterpillar in viewerCaterpillars)
+                {
+                    moveTargets.AddRange(matchTable.FindMoveTargets(viewerCaterpillar.Cell).Select(moveTarget => ToMatchMoveTarget(viewerCaterpillar.Cell, moveTarget)));
+                }
+            }
+
+            return moveTargets;
+        }
+
+        private static MatchMoveTarget ToMatchMoveTarget(BoardCell originCell, MoveTarget moveTarget)
+        {
+            var matchMoveTarget = new MatchMoveTarget { Origin = MatchCellConversion.ToMatchCell(originCell), Destination = MatchCellConversion.ToMatchCell(moveTarget.Destination), ActionPointCost = moveTarget.ActionPointCost };
+
+            return matchMoveTarget;
+        }
+
+        private static List<int> CreateRankedSeatNumbers(MatchTable matchTable)
+        {
+            var rankedSeatNumbers = new List<int>();
+            if (matchTable.Phase == TablePhase.Finished)
+            {
+                rankedSeatNumbers.AddRange(matchTable.FindRanking().Select(standing => standing.SeatNumber));
+            }
+
+            return rankedSeatNumbers;
         }
 
         private static List<MatchFlower> CreateFlowers(MatchTable matchTable)

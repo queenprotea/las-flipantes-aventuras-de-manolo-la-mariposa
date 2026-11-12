@@ -950,7 +950,7 @@
     <value>Construcciones</value>
   </data>
   <data name="Match.RoundTurnInstruction" xml:space="preserve">
-    <value>Ronda {0} de 3 · Turno {1} de 3</value>
+    <value>Ronda {0} de 3 · Turno {1} de {2}</value>
   </data>
   <data name="Match.YourTurnStatus" xml:space="preserve">
     <value>juegas tú</value>
@@ -963,9 +963,6 @@
   </data>
   <data name="Match.MoveActionButton" xml:space="preserve">
     <value>Mover</value>
-  </data>
-  <data name="Match.GrowActionButton" xml:space="preserve">
-    <value>Subir</value>
   </data>
   <data name="Match.BuildActionButton" xml:space="preserve">
     <value>Construir</value>
@@ -987,6 +984,57 @@
   </data>
   <data name="Match.ActionPointsLabel" xml:space="preserve">
     <value>PA</value>
+  </data>
+  <data name="Match.ChoosePlacementHint" xml:space="preserve">
+    <value>Elige una flor libre para tu oruga nueva</value>
+  </data>
+  <data name="Match.ChooseCaterpillarHint" xml:space="preserve">
+    <value>Elige la oruga que quieres mover</value>
+  </data>
+  <data name="Match.ChooseDestinationHint" xml:space="preserve">
+    <value>Elige a dónde avanza · cada nivel que sube cuesta {0} PA más</value>
+  </data>
+  <data name="Match.ChooseBuildHint" xml:space="preserve">
+    <value>Elige la flor que crece o dónde nace una nueva</value>
+  </data>
+  <data name="Match.NotYourTurnNotice" xml:space="preserve">
+    <value>Todavía no es tu turno.</value>
+  </data>
+  <data name="Match.TimeExpiredNotice" xml:space="preserve">
+    <value>Se acabó el tiempo de tu turno.</value>
+  </data>
+  <data name="Match.NotEnoughPointsNotice" xml:space="preserve">
+    <value>No te quedan puntos de acción para eso.</value>
+  </data>
+  <data name="Match.NoCaterpillarsLeftNotice" xml:space="preserve">
+    <value>Ya colocaste tus cinco orugas.</value>
+  </data>
+  <data name="Match.NotAFlowerNotice" xml:space="preserve">
+    <value>Las orugas nuevas van sobre una flor.</value>
+  </data>
+  <data name="Match.CellOccupiedNotice" xml:space="preserve">
+    <value>Esa casilla ya tiene una oruga.</value>
+  </data>
+  <data name="Match.NotYourCaterpillarNotice" xml:space="preserve">
+    <value>Esa oruga no es tuya.</value>
+  </data>
+  <data name="Match.NotNeighborNotice" xml:space="preserve">
+    <value>Una oruga avanza solo a una casilla contigua por un lado.</value>
+  </data>
+  <data name="Match.ClimbTooHighNotice" xml:space="preserve">
+    <value>Una oruga sube como mucho un nivel por movimiento.</value>
+  </data>
+  <data name="Match.FlowerAtMaximumNotice" xml:space="preserve">
+    <value>Esa flor ya está en el nivel 3.</value>
+  </data>
+  <data name="Match.NoBuildsLeftNotice" xml:space="preserve">
+    <value>Ya usaste las construcciones de este turno.</value>
+  </data>
+  <data name="Match.NotNextToPlanterNotice" xml:space="preserve">
+    <value>Una flor nueva nace junto a una jardinera.</value>
+  </data>
+  <data name="Match.JoinsPlantersNotice" xml:space="preserve">
+    <value>Esa flor uniría dos jardineras.</value>
   </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>cierre de la ronda {0}</value>
@@ -1012,8 +1060,11 @@
   <data name="RoundSummary.PlaceButterflyInstruction" xml:space="preserve">
     <value>Coloca la mariposa</value>
   </data>
-  <data name="RoundSummary.Round3RulesInstruction" xml:space="preserve">
-    <value>Ronda 3 · 3 turnos por jugador · 1 construcción por turno · la mariposa vale 15</value>
+  <data name="RoundSummary.ContinueButton" xml:space="preserve">
+    <value>Ir al tablero</value>
+  </data>
+  <data name="RoundSummary.NextRoundRulesInstruction" xml:space="preserve">
+    <value>Ronda {0} · {1} turnos por jugador · la mariposa vale {2}</value>
   </data>
   <data name="Result.HeaderLabel" xml:space="preserve">
     <value>resultado</value>
@@ -1023,6 +1074,9 @@
   </data>
   <data name="Result.SummaryLabel" xml:space="preserve">
     <value>3 rondas · {0} jugadores</value>
+  </data>
+  <data name="Result.AbandonedSummaryLabel" xml:space="preserve">
+    <value>Terminó porque quedó un solo jugador</value>
   </data>
   <data name="Result.PlayerColumn" xml:space="preserve">
     <value>Jugador</value>

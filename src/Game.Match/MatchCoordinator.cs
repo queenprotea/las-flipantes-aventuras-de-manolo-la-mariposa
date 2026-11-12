@@ -18,23 +18,28 @@ namespace Game.Match
         private readonly TimeProvider _timeProvider;
         private readonly IMatchListener _matchListener;
         private readonly StartingLayout _startingLayout;
+        private readonly Random _tieBreakRandom;
 
         private int _lastMatchId;
 
-        public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, IReadOnlyList<MatchCell> startingFlowerCells)
+        public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, IReadOnlyList<MatchCell> startingFlowerCells, Random tieBreakRandom)
         {
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(matchListener);
             ArgumentNullException.ThrowIfNull(startingFlowerCells);
+            ArgumentNullException.ThrowIfNull(tieBreakRandom);
 
             _timeProvider = timeProvider;
             _matchListener = matchListener;
             _startingLayout = new StartingLayout(startingFlowerCells.Select(ToStartingFlower).ToList());
+            _tieBreakRandom = tieBreakRandom;
         }
 
         public static int MinimumEntrantCount => MatchTable.MinimumSeatCount;
 
         public static int MaximumEntrantCount => MatchTable.MaximumSeatCount;
+
+        public static int RoundCount => MatchRules.RoundCount;
 
         public static bool BoardContains(MatchCell examinedCell)
         {
@@ -45,14 +50,15 @@ namespace Game.Match
             return isOnBoard;
         }
 
-        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan placementTime)
+        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan stepTime, MatchRuleSet ruleSet)
         {
             ArgumentNullException.ThrowIfNull(entrants);
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(placementTime, TimeSpan.Zero);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(stepTime, TimeSpan.Zero);
 
+            MatchRules matchRules = MatchRuleConversion.ToMatchRules(ruleSet);
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(entrants);
             List<int> entrantIds = seatedEntrants.Select(seatedEntrant => seatedEntrant.Entrant.EntrantId).ToList();
-            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count);
+            var matchTable = new MatchTable(_startingLayout, seatedEntrants.Count, matchRules, _tieBreakRandom);
             LiveMatch liveMatch;
             lock (_coordinatorLock)
             {
@@ -63,12 +69,13 @@ namespace Game.Match
                 }
 
                 _lastMatchId++;
-                liveMatch = new LiveMatch(_lastMatchId, matchTable, seatedEntrants, _timeProvider, _matchListener, placementTime);
+                liveMatch = new LiveMatch(_lastMatchId, matchTable, seatedEntrants, _timeProvider, _matchListener, stepTime);
                 foreach (int entrantId in entrantIds)
                 {
                     _matchesByEntrantId.Add(entrantId, liveMatch);
                 }
 
+                liveMatch.Finished += LiveMatchOnFinished;
                 liveMatch.StartPlacement();
             }
 
@@ -77,24 +84,44 @@ namespace Game.Match
             return startedMatchId;
         }
 
-        public PlacementResult PlaceCaterpillar(int entrantId, MatchCell destinationCell)
+        public MatchActionResult PlacePiece(int entrantId, MatchPiece piece, MatchCell destinationCell)
         {
             ThrowIfOffBoard(destinationCell);
 
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
-            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceCaterpillar(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.PlacePiece(entrantId, piece, MatchCellConversion.ToBoardCell(destinationCell));
 
-            return placementResult;
+            return actionResult;
         }
 
-        public PlacementResult PlaceButterfly(int entrantId, MatchCell destinationCell)
+        public MatchActionResult MoveCaterpillar(int entrantId, MatchMove move)
         {
-            ThrowIfOffBoard(destinationCell);
+            ArgumentNullException.ThrowIfNull(move);
+            ThrowIfOffBoard(move.Origin);
+            ThrowIfOffBoard(move.Destination);
 
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
-            PlacementResult placementResult = liveMatch is null ? PlacementResult.NotInMatch : liveMatch.PlaceButterfly(entrantId, MatchCellConversion.ToBoardCell(destinationCell));
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.MoveCaterpillar(entrantId, MatchCellConversion.ToCaterpillarMove(move));
 
-            return placementResult;
+            return actionResult;
+        }
+
+        public MatchActionResult AddFlowerLevel(int entrantId, MatchCell buildCell)
+        {
+            ThrowIfOffBoard(buildCell);
+
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.AddFlowerLevel(entrantId, MatchCellConversion.ToBoardCell(buildCell));
+
+            return actionResult;
+        }
+
+        public MatchActionResult EndTurn(int entrantId)
+        {
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.EndTurn(entrantId);
+
+            return actionResult;
         }
 
         public EndMatchResult EndMatch(int entrantId)
@@ -102,15 +129,12 @@ namespace Game.Match
             EndMatchResult endResult = EndMatchResult.NotInMatch;
             lock (_coordinatorLock)
             {
-                if (_matchesByEntrantId.TryGetValue(entrantId, out LiveMatch? liveMatch))
+                LiveMatch? liveMatch = _matchesByEntrantId.GetValueOrDefault(entrantId);
+                if (liveMatch is not null)
                 {
+                    liveMatch.Finished -= LiveMatchOnFinished;
                     liveMatch.EndMatch();
-                    List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
-                    foreach (int seatedEntrantId in seatedEntrantIds)
-                    {
-                        _matchesByEntrantId.Remove(seatedEntrantId);
-                    }
-
+                    RemoveEntrantsOf(liveMatch);
                     endResult = EndMatchResult.Ended;
                 }
             }
@@ -148,12 +172,38 @@ namespace Game.Match
             return flower;
         }
 
+        private void LiveMatchOnFinished(object? sender, EventArgs e)
+        {
+            if (sender is LiveMatch finishedMatch)
+            {
+                finishedMatch.Finished -= LiveMatchOnFinished;
+                List<int> releasedEntrantIds;
+                lock (_coordinatorLock)
+                {
+                    releasedEntrantIds = RemoveEntrantsOf(finishedMatch);
+                }
+
+                _matchListener.ReceiveMatchFinished(releasedEntrantIds);
+            }
+        }
+
+        private List<int> RemoveEntrantsOf(LiveMatch liveMatch)
+        {
+            List<int> seatedEntrantIds = _matchesByEntrantId.Where(matchByEntrant => matchByEntrant.Value == liveMatch).Select(matchByEntrant => matchByEntrant.Key).ToList();
+            foreach (int seatedEntrantId in seatedEntrantIds)
+            {
+                _matchesByEntrantId.Remove(seatedEntrantId);
+            }
+
+            return seatedEntrantIds;
+        }
+
         private LiveMatch? FindMatchOfEntrant(int entrantId)
         {
             LiveMatch? liveMatch;
             lock (_coordinatorLock)
             {
-                _matchesByEntrantId.TryGetValue(entrantId, out liveMatch);
+                liveMatch = _matchesByEntrantId.GetValueOrDefault(entrantId);
             }
 
             return liveMatch;

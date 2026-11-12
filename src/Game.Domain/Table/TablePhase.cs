@@ -5,5 +5,6 @@ namespace Game.Domain
         CaterpillarPlacement,
         ButterflyPlacement,
         PlayerTurn,
+        Finished,
     }
 }

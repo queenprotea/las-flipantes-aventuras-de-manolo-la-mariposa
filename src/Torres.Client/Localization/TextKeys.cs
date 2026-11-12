@@ -404,7 +404,6 @@ namespace Torres.Client.Localization
             internal const string OtherPlayerTurnStatus = "Match.OtherPlayerTurnStatus";
             internal const string CaterpillarActionButton = "Match.CaterpillarActionButton";
             internal const string MoveActionButton = "Match.MoveActionButton";
-            internal const string GrowActionButton = "Match.GrowActionButton";
             internal const string BuildActionButton = "Match.BuildActionButton";
             internal const string DeckLabel = "Match.DeckLabel";
             internal const string DrawButton = "Match.DrawButton";
@@ -412,6 +411,23 @@ namespace Torres.Client.Localization
             internal const string MatchLabel = "Match.MatchLabel";
             internal const string ForfeitButton = "Match.ForfeitButton";
             internal const string ActionPointsLabel = "Match.ActionPointsLabel";
+            internal const string ChoosePlacementHint = "Match.ChoosePlacementHint";
+            internal const string ChooseCaterpillarHint = "Match.ChooseCaterpillarHint";
+            internal const string ChooseDestinationHint = "Match.ChooseDestinationHint";
+            internal const string ChooseBuildHint = "Match.ChooseBuildHint";
+            internal const string NotYourTurnNotice = "Match.NotYourTurnNotice";
+            internal const string TimeExpiredNotice = "Match.TimeExpiredNotice";
+            internal const string NotEnoughPointsNotice = "Match.NotEnoughPointsNotice";
+            internal const string NoCaterpillarsLeftNotice = "Match.NoCaterpillarsLeftNotice";
+            internal const string NotAFlowerNotice = "Match.NotAFlowerNotice";
+            internal const string CellOccupiedNotice = "Match.CellOccupiedNotice";
+            internal const string NotYourCaterpillarNotice = "Match.NotYourCaterpillarNotice";
+            internal const string NotNeighborNotice = "Match.NotNeighborNotice";
+            internal const string ClimbTooHighNotice = "Match.ClimbTooHighNotice";
+            internal const string FlowerAtMaximumNotice = "Match.FlowerAtMaximumNotice";
+            internal const string NoBuildsLeftNotice = "Match.NoBuildsLeftNotice";
+            internal const string NotNextToPlanterNotice = "Match.NotNextToPlanterNotice";
+            internal const string JoinsPlantersNotice = "Match.JoinsPlantersNotice";
         }
 
         internal static class RoundSummary
@@ -424,7 +440,8 @@ namespace Torres.Client.Localization
             internal const string ButterflyColumn = "RoundSummary.ButterflyColumn";
             internal const string RoundColumn = "RoundSummary.RoundColumn";
             internal const string PlaceButterflyInstruction = "RoundSummary.PlaceButterflyInstruction";
-            internal const string Round3RulesInstruction = "RoundSummary.Round3RulesInstruction";
+            internal const string ContinueButton = "RoundSummary.ContinueButton";
+            internal const string NextRoundRulesInstruction = "RoundSummary.NextRoundRulesInstruction";
         }
 
         internal static class Result
@@ -432,6 +449,7 @@ namespace Torres.Client.Localization
             internal const string HeaderLabel = "Result.HeaderLabel";
             internal const string WinnerTitle = "Result.WinnerTitle";
             internal const string SummaryLabel = "Result.SummaryLabel";
+            internal const string AbandonedSummaryLabel = "Result.AbandonedSummaryLabel";
             internal const string PlayerColumn = "Result.PlayerColumn";
             internal const string PlantersColumn = "Result.PlantersColumn";
             internal const string ButterflyColumn = "Result.ButterflyColumn";

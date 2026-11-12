@@ -24,25 +24,25 @@ trabajo, y las reglas del juego solo se alcanzan por un camino.**
  │  muestra lo que recibe        │  respuestas  │       │   └ Game.Domain  reglas          │
  └──────────────┬────────────────┘  (y avisos)  │       └ Game.Persistence  base de datos ─┼──► PostgreSQL
                 │                               └──────────────────────┬───────────────────┘
-                └──────────────► Game.Contracts ◄──────────────────────┘
-                                 el idioma común: qué se puede pedir y qué datos viajan
+                │                                    Game.Contracts ◄──────┘
+                │                                          │ publica su descripción (HTTP, solo al regenerar)
+                └──── Contracts/GameContracts.cs ◄─────────┘ generado con dotnet-svcutil y guardado en el cliente
 ```
 
 ---
 
-## 2. Las tres soluciones
+## 2. Las dos soluciones
 
 | Solución | Para qué | Proyectos |
 |---|---|---|
 | `Torres.Server.sln` | Trabajar en el servidor | `Game.Server`, `Game.Services`, `Game.Match`, `Game.Domain`, `Game.Persistence`, `Game.Contracts` |
-| `Torres.Client.sln` | Trabajar en el cliente | `Torres.Client`, `Game.Contracts` |
-| `Torres.sln` | Tenerlo todo abierto, incluidos los ejemplos. Es la que usa la configuración de Rider «Servidor y cliente», que arranca los dos a la vez | Todos |
+| `Torres.Client.sln` | Trabajar en el cliente | `Torres.Client` |
 
-**`Game.Contracts` aparece en las dos soluciones, pero es el mismo archivo `.csproj`, no una copia.**
-Si se cambia un contrato desde una solución, la otra ve el cambio.
-
-**Lo que no significa tener dos soluciones:** no hay dos repositorios, no se copian los contratos y
-no se genera ningún proxy. Los procesos ya eran dos antes: el cliente de cada jugador y el servidor.
+**Cliente y servidor se tratan como repositorios independientes.** Ninguno referencia al otro para
+compilar ni para arrancar. El cliente conoce los contratos por un archivo generado
+(`Contracts/GameContracts.cs`) a partir de la descripción que publica el servidor, y tiene sus
+propios `Directory.Build.props`, `.editorconfig` y `CodeMetricsConfig.txt`. Cómo regenerarlo está en
+el `README.md`.
 
 ---
 
@@ -55,7 +55,7 @@ no se genera ningún proxy. Los procesos ya eran dos antes: el cliente de cada j
 | **Trabajo** | Declarar qué le puede pedir el cliente al servidor (interfaces `[ServiceContract]`) y qué datos viajan (`[DataContract]` y enumerados de resultado) |
 | **Contiene hoy** | Una carpeta por área, con su interfaz y sus tipos juntos: `Account/` (`IAccountService`, `LoginResult`, `LoginStatus`, `RegistrationResult`, `PlayerIdentity`), `Ranking/` (`IRankingService`, `GlobalRankingResponseContract`, `RankingEntryContract`) y `Status/` (`IServerStatusService`, `ServerStatus`). En la raíz, `ServiceEndpointPaths`, con las rutas `/status`, `/account` y `/ranking`, porque lo usan todas las áreas |
 | **Carpetas y espacio de nombres** | Las carpetas solo ordenan: todo está en `Game.Contracts`. Aquí importa especialmente, porque WCF identifica los tipos que viajan por la red por su espacio de nombres; mantenerlo garantiza que cliente y servidor siguen hablando el mismo idioma. Un área nueva (sesión, salas, chat, partida…) es una carpeta nueva |
-| **Destino** | `netstandard2.0`, para que lo usen los dos lados |
+| **Destino** | `net10.0`. Solo lo usa el servidor; el cliente genera su copia a partir de la descripción que publica |
 | **No contiene** | Lógica, textos traducibles ni tipos del dominio. Los errores viajan como **código** (un valor de enumerado) y el cliente los traduce a su idioma |
 
 ### `Game.Server`: el host
@@ -109,7 +109,7 @@ no se genera ningún proxy. Los procesos ya eran dos antes: el cliente de cada j
 | | |
 |---|---|
 | **Trabajo** | Dibujar, leer la entrada, enviar intenciones y mostrar lo que el servidor contesta. El idioma solo existe aquí |
-| **Conoce del servidor** | Únicamente `Game.Contracts` y la dirección del servidor (`appsettings.json` → `ServerAddress`) |
+| **Conoce del servidor** | El código generado de `Contracts/` (tipos en el espacio `Game.Contracts`), las rutas de los servicios (`appsettings.json` → `ServicePaths`), los límites de perfil y cuenta que tiene que respetar (`Contracts/ProfileLimits`, `Contracts/AccountLimits`) y la dirección del servidor (`ServerAddress`, que `appsettings.Local.json` sustituye en cada equipo) |
 | **No contiene** | Ninguna regla ni parámetro del juego. Hoy `Screens/MatchScreen.cs` todavía tiene los costes escritos a mano. Es una deuda conocida: tendrán que llegar del servidor |
 
 ---
@@ -124,8 +124,11 @@ no se genera ningún proxy. Los procesos ya eran dos antes: el cliente de cada j
 - **El cliente nunca bloquea el hilo del juego.** La pantalla guarda el `Task` de la llamada y en cada
   `Update` mira si ya terminó. `LoginScreen`, `RegisterScreen`, `StartupScreen` y
   `GlobalRankingScreen` siguen ese patrón.
-- **El cliente no recibe los contratos del servidor en ejecución.** Los conoce al compilar, porque
-  referencia `Game.Contracts`. En ejecución solo necesita la dirección.
+- **El cliente no recibe los contratos del servidor en ejecución.** Los conoce al compilar, por el
+  código generado que guarda en `Contracts/`. En ejecución solo necesita la dirección.
+- **El código generado no sabe qué operación abre la sesión ni cuál la cierra.** Lo garantiza
+  `GameSessionConnection`: no deja llamar a nada antes de abrir la sesión y cierra el canal después
+  de `CloseSession`.
 
 ### 4.2 Dentro del servidor: entre proyectos
 
@@ -180,13 +183,13 @@ Verificado en `examples/Torres.ArchitectureSpike`:
 
 | Proyecto | Puede referenciar | Nunca | Por qué |
 |---|---|---|---|
-| `Game.Contracts` | Solo `System.ServiceModel.Primitives` | Nada nuestro | Lo usa el cliente: todo lo que referencie viajaría con él |
+| `Game.Contracts` | Solo `System.ServiceModel.Primitives` | Nada nuestro | Es lo que el servidor publica como descripción: todo lo que referencie aparecería en ella |
 | `Game.Domain` | Nada | Todo | Para probar las reglas sin servidor, ventana ni base (`E 2.2`, T-1) |
 | `Game.Persistence` | Nada nuestro (EF Core, Npgsql) | Domain, Match, Services | Solo lee y escribe; no decide nada |
 | `Game.Match` | Domain (**privada**), Persistence, Contracts | Services, Server | Si conociera Services se formaría un ciclo; los avisos van por interfaz |
 | `Game.Services` | Match, Persistence, Contracts | **Domain**, Server | Una sola entrada a las reglas: por Match |
 | `Game.Server` | Services, Persistence, Contracts | — | Es quien registra todo |
-| `Torres.Client` | Contracts | Todo lo del servidor | El cliente no decide resultados (`RES-05`) |
+| `Torres.Client` | Ningún proyecto nuestro | Todo lo del servidor, incluido `Game.Contracts` | Repositorios independientes; el cliente no decide resultados (`RES-05`) |
 
 **Sin ciclos.** Si se ordenan los proyectos por nivel (0: Contracts, Domain, Persistence · 1: Match · 2:
 Services · 3: Server), toda referencia baja de nivel.
@@ -241,7 +244,9 @@ Ejemplo: recuperar la contraseña (CU-03), que se usa sin estar identificado.
    `Program.cs` (`AddSingleton`), añade el extremo en `AddEndpoints` y la ruta en
    `Game.Contracts/ServiceEndpointPaths`. Si es una operación de un servicio existente, no hay que
    tocar nada.
-5. **`Torres.Client`:** usa la fábrica de canales de ese contrato. Crea el canal, llama, guarda el
+5. **`Torres.Client`:** regenera `Contracts/GameContracts.cs` (ver el `README.md`); si el servicio es
+   nuevo, añade su ruta a `ServicePaths` en `appsettings.json`. Después usa la fábrica de canales de
+   ese contrato. Crea el canal, llama, guarda el
    `Task` y míralo en `Update`. Traduce el código con `TextKeys` y el `.resx`.
 
 ### 7.2 Algo que necesita saber quién es el jugador

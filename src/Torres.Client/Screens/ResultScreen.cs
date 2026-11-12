@@ -1,7 +1,10 @@
-using System.Globalization;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using FontStashSharp.RichText;
+
+using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
@@ -10,6 +13,7 @@ using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -26,21 +30,30 @@ namespace Torres.Client.Screens
         private static readonly Thickness _headerRowPadding = new Thickness(0, 0, 0, TableCellSpacing);
         private static readonly Thickness _playerRowPadding = new Thickness(0, TableCellSpacing);
 
-        private static readonly ResultPlayer[] _previewPlayers =
-        {
-            new ResultPlayer(PreviewSamples.SeatOnePlayer, true, false, 52, 15, 3, Theme.MintBrush),
-            new ResultPlayer(PreviewSamples.SeatTwoPlayer, false, false, 61, 0, 1, Theme.LavenderBrush),
-            new ResultPlayer(PreviewSamples.SeatThreePlayer, false, true, 44, 15, 0, Theme.ButterBrush),
-            new ResultPlayer(PreviewSamples.SeatFourPlayer, false, false, 30, 0, 2, Theme.SkyBrush),
-        };
+        private readonly PlayerSession _playerSession;
+        private readonly LocalizedLabel _winnerLabel = new LocalizedLabel(TextKeys.Result.WinnerTitle) { Font = Fonts.Winner, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.Result.SummaryLabel) { Font = Fonts.Body, TextColor = Theme.MutedInk, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel();
 
-        private static readonly ResultPlayer[] _rankedPlayers = _previewPlayers
-            .OrderByDescending(player => player.TotalPoints)
-            .ToArray();
-
-        internal ResultScreen()
+        internal ResultScreen(PlayerSession playerSession)
             : base(TextKeys.Result.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(playerSession);
+
+            _playerSession = playerSession;
+        }
+
+        internal override void Open()
+        {
+            MatchView? matchView = _playerSession.CurrentMatchView;
+            if (matchView is null)
+            {
+                RequestedScreen = ScreenId.MainMenu;
+            }
+            else
+            {
+                ShowMatchView(matchView);
+            }
         }
 
         protected override Widget Build()
@@ -64,7 +77,111 @@ namespace Torres.Client.Screens
             return screenLayout;
         }
 
-        private static VerticalStackPanel BuildWinnerHeader()
+        private static MatchSeat FindSeat(MatchView matchView, int seatNumber)
+        {
+            MatchSeat foundSeat = matchView.Seats.First(seat => seat.SeatNumber == seatNumber);
+
+            return foundSeat;
+        }
+
+        private static LocalizedLabel BuildHeaderCell(string textKey)
+        {
+            var headerCell = new LocalizedLabel(textKey)
+            {
+                Width = Sizes.RankingStatColumnWidth,
+                Font = Fonts.Label,
+                TextColor = Theme.MutedInk,
+            };
+
+            return headerCell;
+        }
+
+        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, string rankText, bool isViewer)
+        {
+            int planterPoints = seat.RoundScores.Sum(roundScore => roundScore.PlanterPoints);
+            int butterflyPoints = seat.RoundScores.Sum(roundScore => roundScore.ButterflyPoints);
+            string butterflyText = DisplaySymbols.MissingValue;
+            if (butterflyPoints > 0)
+            {
+                butterflyText = DisplayFormats.FormatBonus(butterflyPoints);
+            }
+
+            Label rankLabel = BuildStatCell(rankText, Theme.MutedInk);
+            rankLabel.Width = Sizes.ResultRankColumnWidth;
+            HorizontalStackPanel playerCell = BuildPlayerCell(seat);
+
+            var playerRow = new HorizontalStackPanel
+            {
+                Padding = _playerRowPadding,
+            };
+            playerRow.Widgets.Add(rankLabel);
+            playerRow.Widgets.Add(playerCell);
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(planterPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(seat.TotalScore), Theme.Ink));
+            StackPanel.SetProportionType(playerCell, ProportionType.Fill);
+            if (isViewer)
+            {
+                playerRow.Background = Theme.MintTintBrush;
+            }
+
+            return playerRow;
+        }
+
+        private static HorizontalStackPanel BuildPlayerCell(MatchSeat seat)
+        {
+            var playerCell = new HorizontalStackPanel
+            {
+                Spacing = PlayerCellSpacing,
+            };
+            playerCell.Widgets.Add(new Panel
+            {
+                Width = PlayerColorSize,
+                Height = PlayerColorSize,
+                Background = SeatColors.BrushFor(seat.Color),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            playerCell.Widgets.Add(CreatePlayerNameLabel(seat.DisplayName, Theme.Ink));
+            if (seat.IsGuest)
+            {
+                playerCell.Widgets.Add(CreateSeatTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
+            }
+
+            if (seat.IsRetired)
+            {
+                playerCell.Widgets.Add(CreateSeatTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
+            }
+
+            return playerCell;
+        }
+
+        private static LocalizedLabel CreateSeatTag(string textKey, Color textColor)
+        {
+            var seatTag = new LocalizedLabel(textKey)
+            {
+                Font = Fonts.Label,
+                TextColor = textColor,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            return seatTag;
+        }
+
+        private static Label BuildStatCell(string cellText, Color textColor)
+        {
+            var statCell = new Label
+            {
+                Text = cellText,
+                Width = Sizes.RankingStatColumnWidth,
+                Font = Fonts.Body,
+                TextColor = textColor,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            return statCell;
+        }
+
+        private VerticalStackPanel BuildWinnerHeader()
         {
             var winnerHeader = new VerticalStackPanel
             {
@@ -80,25 +197,13 @@ namespace Torres.Client.Screens
                 BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            winnerHeader.Widgets.Add(new LocalizedLabel(TextKeys.Result.WinnerTitle)
-            {
-                Font = Fonts.Winner,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new[] { _rankedPlayers[0].Name },
-            });
-            winnerHeader.Widgets.Add(new LocalizedLabel(TextKeys.Result.SummaryLabel)
-            {
-                Font = Fonts.Body,
-                TextColor = Theme.MutedInk,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextArguments = new[] { DisplayFormats.FormatInteger(_previewPlayers.Length) },
-            });
+            winnerHeader.Widgets.Add(_winnerLabel);
+            winnerHeader.Widgets.Add(_summaryLabel);
 
             return winnerHeader;
         }
 
-        private static VerticalStackPanel BuildTable()
+        private VerticalStackPanel BuildTable()
         {
             var playerHeader = new LocalizedLabel(TextKeys.Result.PlayerColumn)
             {
@@ -117,102 +222,14 @@ namespace Torres.Client.Screens
             headerRow.Widgets.Add(playerHeader);
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.PlantersColumn));
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.ButterflyColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.CardsColumn));
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.TotalColumn));
             StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
 
             var scoreTable = new VerticalStackPanel();
             scoreTable.Widgets.Add(headerRow);
-            for (var i = 0; i < _rankedPlayers.Length; i++)
-            {
-                scoreTable.Widgets.Add(CreateDivider());
-                scoreTable.Widgets.Add(BuildPlayerRow(_rankedPlayers[i], i + 1));
-            }
+            scoreTable.Widgets.Add(_scoreRows);
 
             return scoreTable;
-        }
-
-        private static LocalizedLabel BuildHeaderCell(string textKey)
-        {
-            var headerCell = new LocalizedLabel(textKey)
-            {
-                Width = Sizes.RankingStatColumnWidth,
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-            };
-
-            return headerCell;
-        }
-
-        private static HorizontalStackPanel BuildPlayerRow(ResultPlayer player, int place)
-        {
-            HorizontalStackPanel playerCell = BuildPlayerCell(player);
-            string butterflyText = player.ButterflyPoints > 0
-                ? DisplayFormats.FormatBonus(player.ButterflyPoints)
-                : DisplaySymbols.MissingValue;
-
-            Label placeLabel = BuildStatCell(place.ToString(CultureInfo.CurrentCulture), Theme.MutedInk);
-            placeLabel.Width = Sizes.ResultRankColumnWidth;
-
-            var playerRow = new HorizontalStackPanel
-            {
-                Padding = _playerRowPadding,
-            };
-            playerRow.Widgets.Add(placeLabel);
-            playerRow.Widgets.Add(playerCell);
-            playerRow.Widgets.Add(BuildStatCell(player.PlanterPoints.ToString(CultureInfo.CurrentCulture), Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatBonus(player.CardPoints), Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(player.TotalPoints.ToString(CultureInfo.CurrentCulture), Theme.Ink));
-            StackPanel.SetProportionType(playerCell, ProportionType.Fill);
-            if (player.IsYou)
-            {
-                playerRow.Background = Theme.MintTintBrush;
-            }
-
-            return playerRow;
-        }
-
-        private static HorizontalStackPanel BuildPlayerCell(ResultPlayer player)
-        {
-            var playerCell = new HorizontalStackPanel
-            {
-                Spacing = PlayerCellSpacing,
-            };
-            playerCell.Widgets.Add(new Panel
-            {
-                Width = PlayerColorSize,
-                Height = PlayerColorSize,
-                Background = player.ColorBrush,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            playerCell.Widgets.Add(CreatePlayerNameLabel(player.Name, Theme.Ink));
-
-            if (player.IsGuest)
-            {
-                playerCell.Widgets.Add(new LocalizedLabel(TextKeys.Common.GuestTag)
-                {
-                    Font = Fonts.Label,
-                    TextColor = Theme.LavenderInk,
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-            }
-
-            return playerCell;
-        }
-
-        private static Label BuildStatCell(string cellText, Color textColor)
-        {
-            var statCell = new Label
-            {
-                Text = cellText,
-                Width = Sizes.RankingStatColumnWidth,
-                Font = Fonts.Body,
-                TextColor = textColor,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return statCell;
         }
 
         private HorizontalStackPanel BuildBackButton()
@@ -228,14 +245,33 @@ namespace Torres.Client.Screens
             return resultActions;
         }
 
-        private void BackButtonOnClick(object sender, MyraEventArgs e)
+        private void ShowMatchView(MatchView matchView)
         {
-            RequestedScreen = ScreenId.Room;
+            List<MatchSeat> rankedSeats = matchView.RankedSeatNumbers.Select(seatNumber => FindSeat(matchView, seatNumber)).ToList();
+            List<MatchSeat> retiredSeats = matchView.Seats.Where(seat => !matchView.RankedSeatNumbers.Contains(seat.SeatNumber)).ToList();
+            string winnerName = rankedSeats.Count > 0 ? rankedSeats[0].DisplayName : string.Empty;
+            _winnerLabel.TextArguments = new string[] { winnerName };
+            _summaryLabel.TextKey = matchView.WasAbandoned ? TextKeys.Result.AbandonedSummaryLabel : TextKeys.Result.SummaryLabel;
+            _summaryLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.Seats.Count) };
+
+            _scoreRows.Widgets.Clear();
+            for (var i = 0; i < rankedSeats.Count; i++)
+            {
+                _scoreRows.Widgets.Add(CreateDivider());
+                _scoreRows.Widgets.Add(BuildPlayerRow(rankedSeats[i], DisplayFormats.FormatInteger(i + 1), rankedSeats[i].SeatNumber == matchView.ViewerSeatNumber));
+            }
+
+            foreach (MatchSeat retiredSeat in retiredSeats)
+            {
+                _scoreRows.Widgets.Add(CreateDivider());
+                _scoreRows.Widgets.Add(BuildPlayerRow(retiredSeat, DisplaySymbols.MissingValue, retiredSeat.SeatNumber == matchView.ViewerSeatNumber));
+            }
         }
 
-        private sealed record ResultPlayer(string Name, bool IsYou, bool IsGuest, int PlanterPoints, int ButterflyPoints, int CardPoints, IBrush ColorBrush)
+        private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
-            internal int TotalPoints => PlanterPoints + ButterflyPoints + CardPoints;
+            _playerSession.LeaveMatch();
+            RequestedScreen = _playerSession.CurrentRoom is null ? ScreenId.MainMenu : ScreenId.Room;
         }
     }
 }

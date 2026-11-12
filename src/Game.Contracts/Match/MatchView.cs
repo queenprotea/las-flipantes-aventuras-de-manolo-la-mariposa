@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes a match as one of its players sees it: the phase, who places and for how long, the seats, the board and the cells where the current piece may go.
+    /// Describes a match as one of its players sees it: the phase, who plays and for how long, what the active player has left, the seats with their scores, the board, the legal targets and the final ranking.
     /// </summary>
     [DataContract]
     public sealed class MatchView
@@ -17,7 +17,13 @@ namespace Game.Contracts
         public int RoundNumber { get; set; }
 
         [DataMember]
-        public int TurnNumber { get; set; }
+        public int TurnRoundNumber { get; set; }
+
+        [DataMember]
+        public int RoundTurnCount { get; set; }
+
+        [DataMember]
+        public int RoundButterflyPoints { get; set; }
 
         [DataMember]
         public int ViewerSeatNumber { get; set; }
@@ -26,7 +32,19 @@ namespace Game.Contracts
         public int ActiveSeatNumber { get; set; }
 
         [DataMember]
-        public TimeSpan? PlacementTimeLeft { get; set; }
+        public TimeSpan? StepTimeLeft { get; set; }
+
+        [DataMember]
+        public int ActionPointsLeft { get; set; }
+
+        [DataMember]
+        public int BuildsLeft { get; set; }
+
+        [DataMember]
+        public int CaterpillarsPerSeat { get; set; }
+
+        [DataMember]
+        public MatchActionCosts ActionCosts { get; set; } = new MatchActionCosts();
 
         [DataMember]
         public List<MatchSeat> Seats { get; set; } = new List<MatchSeat>();
@@ -45,5 +63,17 @@ namespace Game.Contracts
 
         [DataMember]
         public List<MatchCell> PlacementTargets { get; set; } = new List<MatchCell>();
+
+        [DataMember]
+        public List<MatchMoveTarget> MoveTargets { get; set; } = new List<MatchMoveTarget>();
+
+        [DataMember]
+        public List<MatchCell> BuildTargets { get; set; } = new List<MatchCell>();
+
+        [DataMember]
+        public List<int> RankedSeatNumbers { get; set; } = new List<int>();
+
+        [DataMember]
+        public bool WasAbandoned { get; set; }
     }
 }

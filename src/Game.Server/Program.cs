@@ -5,6 +5,7 @@ using System.Linq;
 
 using CoreWCF;
 using CoreWCF.Configuration;
+using CoreWCF.Description;
 
 using DotNetEnv;
 
@@ -17,6 +18,7 @@ using log4net;
 using log4net.Config;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 using Npgsql;
@@ -24,6 +26,8 @@ using Npgsql;
 const string LogConfigurationFile = "log4net.config";
 const string HostLoggerName = "Game.Server.Host";
 const string ServerListeningMessage = "Server listening on net.tcp port {0}";
+const string MetadataPublishedMessage = "Service metadata published on {0}";
+const string MetadataHostName = "localhost";
 const string StartupDatabaseFailedMessage = "The database could not be used while the server started; the server does not start.";
 const string AvatarFolderFailedMessage = "The avatar folder could not be created; the server does not start.";
 
@@ -65,10 +69,18 @@ catch (UnauthorizedAccessException exception)
 MatchBoardSettings matchBoardSettings = MatchBoardSettings.ReadFromConfiguration(builder.Configuration);
 List<MatchCell> startingFlowerCells = matchBoardSettings.StartingFlowers.Select(startingFlower => new MatchCell { Row = startingFlower.Row, Column = startingFlower.Column }).ToList();
 
+Uri metadataBaseAddress = new UriBuilder(Uri.UriSchemeHttp, MetadataHostName, serverSettings.MetadataHttpPort).Uri;
 builder.WebHost.UseNetTcp(serverSettings.NetTcpPort);
 builder.Services.AddServiceModelServices();
+if (serverSettings.PublishesServiceMetadata)
+{
+    builder.WebHost.ConfigureKestrel(kestrelOptions => kestrelOptions.ListenLocalhost(serverSettings.MetadataHttpPort));
+    builder.Services.AddServiceModelMetadata();
+}
+
 builder.Services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(Random.Shared);
 builder.Services.AddSingleton(new SessionTimings(TimeSpan.FromSeconds(sessionSettings.ConnectionCheckPeriodSeconds), sessionSettings.ConnectionCheckMissesToDrop));
 builder.Services.AddSingleton(new SessionTokenIssuer(sessionSigningKey, TimeProvider.System));
 builder.Services.AddSingleton(new HistoryPaging(historySettings.MatchesPerPage));
@@ -82,6 +94,10 @@ builder.Services.AddSingleton<SanctionLevelRepository>();
 builder.Services.AddSingleton<ReportRepository>();
 builder.Services.AddSingleton<SystemParameterRepository>();
 builder.Services.AddSingleton<SystemParameterReader>();
+builder.Services.AddSingleton<TurnLayoutRepository>();
+builder.Services.AddSingleton<BuildAllowanceRepository>();
+builder.Services.AddSingleton<ActionCostRepository>();
+builder.Services.AddSingleton<MatchRuleReader>();
 builder.Services.AddSingleton<FriendshipRepository>();
 builder.Services.AddSingleton<RoomInvitationRepository>();
 builder.Services.AddSingleton<MatchRecordRepository>();
@@ -129,6 +145,13 @@ app.Services.GetRequiredService<ChatService>().Start(chatCapacity);
 app.Services.GetRequiredService<ReportRecorder>().Start(sanctionPolicy);
 
 app.Services.GetRequiredService<MatchService>();
+if (serverSettings.PublishesServiceMetadata)
+{
+    ServiceMetadataBehavior metadataBehavior = app.Services.GetRequiredService<ServiceMetadataBehavior>();
+    metadataBehavior.HttpGetEnabled = true;
+    hostLog.InfoFormat(MetadataPublishedMessage, metadataBaseAddress);
+}
+
 app.UseServiceModel(AddEndpoints);
 ConnectionSupervisor connectionSupervisor = app.Services.GetRequiredService<ConnectionSupervisor>();
 connectionSupervisor.Start(roomInactivityLimit);
@@ -137,24 +160,33 @@ hostLog.InfoFormat(ServerListeningMessage, serverSettings.NetTcpPort);
 await app.RunAsync();
 await connectionSupervisor.StopAsync();
 
-static void AddEndpoints(IServiceBuilder serviceBuilder)
+void AddEndpoints(IServiceBuilder serviceBuilder)
 {
-    serviceBuilder.AddService<ServerStatusService>();
+    serviceBuilder.AddService<ServerStatusService>(serviceOptions => AddMetadataAddress(serviceOptions, ServiceEndpointPaths.ServerStatus));
     serviceBuilder.AddServiceEndpoint<ServerStatusService, IServerStatusService>(
         new NetTcpBinding(SecurityMode.None),
         ServiceEndpointPaths.ServerStatus);
-    serviceBuilder.AddService<AccountService>();
+    serviceBuilder.AddService<AccountService>(serviceOptions => AddMetadataAddress(serviceOptions, ServiceEndpointPaths.Account));
     serviceBuilder.AddServiceEndpoint<AccountService, IAccountService>(
         new NetTcpBinding(SecurityMode.None),
         ServiceEndpointPaths.Account);
-    serviceBuilder.AddService<RankingService>();
+    serviceBuilder.AddService<RankingService>(serviceOptions => AddMetadataAddress(serviceOptions, ServiceEndpointPaths.Ranking));
     serviceBuilder.AddServiceEndpoint<RankingService, IRankingService>(
         new NetTcpBinding(SecurityMode.None),
         ServiceEndpointPaths.Ranking);
-    serviceBuilder.AddService<GameSessionService>();
+    serviceBuilder.AddService<GameSessionService>(serviceOptions => AddMetadataAddress(serviceOptions, ServiceEndpointPaths.GameSession));
     serviceBuilder.AddServiceEndpoint<GameSessionService, IGameSessionService>(
         CreateGameSessionBinding(),
         ServiceEndpointPaths.GameSession);
+}
+
+void AddMetadataAddress(ServiceOptions serviceOptions, string servicePath)
+{
+    if (serverSettings.PublishesServiceMetadata)
+    {
+        var metadataAddress = new Uri(metadataBaseAddress, servicePath);
+        serviceOptions.BaseAddresses.Add(metadataAddress);
+    }
 }
 
 static NetTcpBinding CreateGameSessionBinding()

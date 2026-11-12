@@ -27,24 +27,30 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly SessionRegistry _sessionRegistry;
         private readonly SystemParameterReader _systemParameterReader;
+        private readonly MatchRuleReader _matchRuleReader;
         private readonly TimeProvider _timeProvider;
         private readonly MatchCoordinator _matchCoordinator;
+        private readonly MatchRoomReturn _matchRoomReturn;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, TimeProvider timeProvider, StartingBoard startingBoard)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard, Random tieBreakRandom)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(systemParameterReader);
+            ArgumentNullException.ThrowIfNull(matchRuleReader);
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
+            ArgumentNullException.ThrowIfNull(tieBreakRandom);
 
             _roomRegistry = roomRegistry;
             _roomService = roomService;
             _sessionRegistry = sessionRegistry;
             _systemParameterReader = systemParameterReader;
+            _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry), startingBoard.FlowerCells);
+            _matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), startingBoard.FlowerCells, tieBreakRandom);
         }
 
         /// <inheritdoc/>
@@ -70,19 +76,60 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceCaterpillar(int row, int column)
+        public MatchActionResult PlacePiece(MatchPiece piece, MatchCell destinationCell)
         {
-            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceCaterpillar);
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, destinationCell);
+            if ((actionResult == MatchActionResult.Applied) && !Enum.IsDefined(piece))
+            {
+                actionResult = MatchActionResult.WrongPhase;
+            }
 
-            return placementResult;
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.PlacePiece(ownerId, piece, destinationCell);
+            }
+
+            return actionResult;
         }
 
         /// <inheritdoc/>
-        public PlacementResult PlaceButterfly(int row, int column)
+        public MatchActionResult MoveCaterpillar(MatchMove move)
         {
-            PlacementResult placementResult = PlaceForCaller(row, column, _matchCoordinator.PlaceButterfly);
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, move?.Origin, move?.Destination);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId) && (move is not null))
+            {
+                actionResult = _matchCoordinator.MoveCaterpillar(ownerId, move);
+            }
 
-            return placementResult;
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult AddFlowerLevel(MatchCell buildCell)
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, buildCell);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.AddFlowerLevel(ownerId, buildCell);
+            }
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult EndTurn()
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.EndTurn(ownerId);
+            }
+
+            return actionResult;
         }
 
         /// <inheritdoc/>
@@ -104,36 +151,43 @@ namespace Game.Services
         private EndMatchResult EndMatchOf(int ownerId)
         {
             EndMatchResult endResult = _matchCoordinator.EndMatch(ownerId);
-            LiveRoom? callerRoom = _roomRegistry.FindRoomOf(ownerId);
-            if ((endResult == EndMatchResult.Ended) && (callerRoom is not null) && callerRoom.EndMatch())
+            LiveRoom? returnedRoom = endResult == EndMatchResult.Ended ? _matchRoomReturn.ReturnRoomOf(ownerId, RoomChangeReason.MatchEnded) : null;
+            if (returnedRoom is not null)
             {
-                int? noExcludedOwnerId = null;
-                _roomService.NotifyMembers(callerRoom, RoomChangeReason.MatchEnded, noExcludedOwnerId);
-                _matchLog.InfoFormat(MatchEndedMessage, ownerId, callerRoom.RoomId);
+                _matchLog.InfoFormat(MatchEndedMessage, ownerId, returnedRoom.RoomId);
             }
 
             return endResult;
         }
 
-        private PlacementResult PlaceForCaller(int row, int column, Func<int, MatchCell, PlacementResult> placeInMatch)
+        private static MatchActionResult CheckCallArguments(int? callerOwnerId, params MatchCell?[] examinedCells)
         {
-            PlayerSession? callerSession = _sessionRegistry.FindCaller();
-            var destinationCell = new MatchCell { Row = row, Column = column };
-            PlacementResult placementResult;
-            if (callerSession is null)
+            MatchActionResult actionResult = MatchActionResult.Applied;
+            if (callerOwnerId is null)
             {
-                placementResult = PlacementResult.NotIdentified;
+                actionResult = MatchActionResult.NotIdentified;
             }
-            else if (!MatchCoordinator.BoardContains(destinationCell))
+            else if (!examinedCells.All(IsOnBoard))
             {
-                placementResult = PlacementResult.OutsideBoard;
-            }
-            else
-            {
-                placementResult = placeInMatch(callerSession.Owner.OwnerId, destinationCell);
+                actionResult = MatchActionResult.OutsideBoard;
             }
 
-            return placementResult;
+            return actionResult;
+        }
+
+        private static bool IsOnBoard(MatchCell? examinedCell)
+        {
+            bool isOnBoard = (examinedCell is not null) && MatchCoordinator.BoardContains(examinedCell);
+
+            return isOnBoard;
+        }
+
+        private int? FindCallerOwnerId()
+        {
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            int? callerOwnerId = callerSession?.Owner.OwnerId;
+
+            return callerOwnerId;
         }
 
         private async Task<StartMatchResult> StartMatchInRoomAsync(LiveRoom room, int callerOwnerId)
@@ -176,14 +230,15 @@ namespace Game.Services
 
         private async Task<StartMatchResult> StartCheckedMatchAsync(LiveRoom room, int callerOwnerId)
         {
-            TimeSpan placementTime = await ReadPlacementTimeAsync();
+            TimeSpan stepTime = await ReadStepTimeAsync();
+            IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
             MatchStartCheck startCheck = room.StartMatch(callerOwnerId);
             if (startCheck.Status == StartMatchStatus.Started)
             {
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
-                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, placementTime);
                 int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
+                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, stepTime, ruleSetsByPlayerCount[seatedCount]);
                 _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 
@@ -223,12 +278,12 @@ namespace Game.Services
             return matchBan;
         }
 
-        private async Task<TimeSpan> ReadPlacementTimeAsync()
+        private async Task<TimeSpan> ReadStepTimeAsync()
         {
             int turnSeconds = await _systemParameterReader.ReadPositiveAsync(TurnSecondsParameterCode);
-            TimeSpan placementTime = TimeSpan.FromSeconds(turnSeconds);
+            TimeSpan stepTime = TimeSpan.FromSeconds(turnSeconds);
 
-            return placementTime;
+            return stepTime;
         }
     }
 }

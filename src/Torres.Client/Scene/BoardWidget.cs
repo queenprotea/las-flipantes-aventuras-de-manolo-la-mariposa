@@ -17,6 +17,8 @@ namespace Torres.Client.Scene
         private const float FarPlaneDepth = 1f;
 
         private const float FrameLift = 0.012f;
+        private const float PlacementTargetPulseGrowth = 0.07f;
+        private const double PlacementTargetPulsePeriodSeconds = 1.2;
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly OrbitCamera _orbitCamera = new OrbitCamera();
@@ -24,15 +26,17 @@ namespace Torres.Client.Scene
         private readonly StaticMesh _hoverFrameMesh;
         private readonly StaticMesh _selectionFrameMesh;
         private readonly StaticMesh _placementTargetFrameMesh;
-        private readonly StaticMesh _butterflyCellFrameMesh;
+        private readonly ButterflyFigure _butterflyFigure;
+        private readonly CaterpillarFigure _caterpillarFigure;
 
         private BoardLayout _shownLayout;
         private CellPicker _cellPicker;
         private StaticMesh _gardenMesh;
         private StaticMesh _shadowMesh;
         private IReadOnlyList<BoardCell> _placementTargetCells = Array.Empty<BoardCell>();
-        private BoardCell? _butterflyCell;
         private RenderTarget2D? _sceneRenderTarget;
+        private TimeSpan _sceneTime;
+        private bool _isSkippingNextFlight;
         private BoardCell? _hoveredCell;
         private BoardCell? _selectedCell;
         private BoardCell? _clickedCell;
@@ -52,7 +56,8 @@ namespace Torres.Client.Scene
             _hoverFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.HoveredCellFrame);
             _selectionFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.SelectedCellFrame);
             _placementTargetFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.PlacementTargetFrame);
-            _butterflyCellFrameMesh = BuildFrameMesh(graphicsDevice, GardenPalette.ButterflyCellFrame);
+            _butterflyFigure = new ButterflyFigure(graphicsDevice);
+            _caterpillarFigure = new CaterpillarFigure(graphicsDevice);
 
             ClipToBounds = true;
             HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -63,13 +68,15 @@ namespace Torres.Client.Scene
 
         internal void ShowLayout(BoardLayout layout)
         {
-            _gardenMesh.Dispose();
-            _shadowMesh.Dispose();
-            _shownLayout = layout;
-            _cellPicker = new CellPicker(layout);
-            _gardenMesh = BuildGardenMesh(_graphicsDevice, layout);
-            _shadowMesh = BuildShadowMesh(_graphicsDevice, layout);
-            _selectedCell = null;
+            _caterpillarFigure.PlanMotions(new LayoutChange(_shownLayout, layout), _sceneTime);
+            ReplaceLayout(layout);
+        }
+
+        internal void ShowLayoutWithoutMotion(BoardLayout layout)
+        {
+            _caterpillarFigure.ClearMotions();
+            _isSkippingNextFlight = true;
+            ReplaceLayout(layout);
         }
 
         internal void ShowPlacementTargets(IReadOnlyList<BoardCell> placementTargetCells)
@@ -79,7 +86,25 @@ namespace Torres.Client.Scene
 
         internal void ShowButterflyCell(BoardCell? butterflyCell)
         {
-            _butterflyCell = butterflyCell;
+            if ((butterflyCell is BoardCell landingCell) && _isSkippingNextFlight)
+            {
+                _butterflyFigure.LandAt(FindFlowerTopPoint(landingCell));
+            }
+            else if (butterflyCell is BoardCell shownCell)
+            {
+                _butterflyFigure.FlyTo(FindFlowerTopPoint(shownCell), _sceneTime);
+            }
+            else
+            {
+                _butterflyFigure.Hide();
+            }
+
+            _isSkippingNextFlight = false;
+        }
+
+        internal void Advance(TimeSpan elapsedTime)
+        {
+            _sceneTime += elapsedTime;
         }
 
         internal BoardCell? TakeClickedCell()
@@ -127,11 +152,22 @@ namespace Torres.Client.Scene
             _sceneEffect.World = Matrix.Identity;
             _sceneEffect.LightingEnabled = true;
             _gardenMesh.Draw(_graphicsDevice, _sceneEffect);
+            _caterpillarFigure.Draw(_sceneEffect, _shownLayout, _sceneTime);
+            if (_butterflyFigure.IsShown)
+            {
+                _butterflyFigure.Draw(_sceneEffect, _sceneTime);
+            }
 
+            _sceneEffect.World = Matrix.Identity;
             _sceneEffect.LightingEnabled = false;
             _graphicsDevice.BlendState = BlendState.AlphaBlend;
             _graphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
             _shadowMesh.Draw(_graphicsDevice, _sceneEffect);
+            if (_butterflyFigure.IsShown)
+            {
+                _butterflyFigure.DrawShadow(_sceneEffect, _sceneTime, FindGroundHeightBelow(_butterflyFigure.FindFlightPoint(_sceneTime)));
+            }
+
             DrawFrames();
 
             _graphicsDevice.SetRenderTarget(null);
@@ -172,7 +208,8 @@ namespace Torres.Client.Scene
             _hoverFrameMesh.Dispose();
             _selectionFrameMesh.Dispose();
             _placementTargetFrameMesh.Dispose();
-            _butterflyCellFrameMesh.Dispose();
+            _butterflyFigure.Dispose();
+            _caterpillarFigure.Dispose();
             _sceneEffect.Dispose();
         }
 
@@ -200,7 +237,6 @@ namespace Torres.Client.Scene
             var gardenBuilder = new MeshBuilder();
             BoardShapes.AddBoard(gardenBuilder, layout);
             FlowerShapes.AddFlowers(gardenBuilder, layout);
-            CaterpillarShapes.AddCaterpillars(gardenBuilder, layout);
             StaticMesh gardenMesh = gardenBuilder.BuildMesh(graphicsDevice);
 
             return gardenMesh;
@@ -224,37 +260,62 @@ namespace Torres.Client.Scene
             return frameMesh;
         }
 
+        private void ReplaceLayout(BoardLayout layout)
+        {
+            _gardenMesh.Dispose();
+            _shadowMesh.Dispose();
+            _shownLayout = layout;
+            _cellPicker = new CellPicker(layout);
+            _gardenMesh = BuildGardenMesh(_graphicsDevice, layout);
+            _shadowMesh = BuildShadowMesh(_graphicsDevice, layout);
+            _selectedCell = null;
+        }
+
         private void DrawFrames()
         {
+            float placementTargetScale = 1f + (PlacementTargetPulseGrowth * SceneTiming.FindCycleWave(_sceneTime, PlacementTargetPulsePeriodSeconds));
             foreach (BoardCell placementTargetCell in _placementTargetCells)
             {
-                DrawFrame(_placementTargetFrameMesh, placementTargetCell);
-            }
-
-            if (_butterflyCell is BoardCell butterflyCell)
-            {
-                DrawFrame(_butterflyCellFrameMesh, butterflyCell);
+                DrawFrame(_placementTargetFrameMesh, placementTargetCell, placementTargetScale);
             }
 
             if ((_hoveredCell is BoardCell hoveredCell) && (hoveredCell != _selectedCell))
             {
-                DrawFrame(_hoverFrameMesh, hoveredCell);
+                DrawFrame(_hoverFrameMesh, hoveredCell, 1f);
             }
 
             if (_selectedCell is BoardCell selectedCell)
             {
-                DrawFrame(_selectionFrameMesh, selectedCell);
+                DrawFrame(_selectionFrameMesh, selectedCell, 1f);
             }
 
             _sceneEffect.World = Matrix.Identity;
         }
 
-        private void DrawFrame(StaticMesh frameMesh, BoardCell framedCell)
+        private void DrawFrame(StaticMesh frameMesh, BoardCell framedCell, float frameScale)
         {
             float frameHeight = BoardGeometry.GetSurfaceHeight(_shownLayout, framedCell) + FrameLift;
             Vector3 frameCenter = BoardGeometry.GetCellCenter(framedCell) + new Vector3(0f, frameHeight, 0f);
-            _sceneEffect.World = Matrix.CreateTranslation(frameCenter);
+            _sceneEffect.World = Matrix.CreateScale(frameScale, 1f, frameScale) * Matrix.CreateTranslation(frameCenter);
             frameMesh.Draw(_graphicsDevice, _sceneEffect);
+        }
+
+        private float FindGroundHeightBelow(Vector3 worldPoint)
+        {
+            BoardCell? cellBelow = BoardGeometry.FindCellAt(worldPoint);
+            bool isOverPlanter = (cellBelow is BoardCell examinedCell) && _shownLayout.IsPlanter(examinedCell);
+            float groundHeight = isOverPlanter ? BoardGeometry.SoilTop : BoardGeometry.GrassTop;
+
+            return groundHeight;
+        }
+
+        private Vector3 FindFlowerTopPoint(BoardCell flowerCell)
+        {
+            int flowerLevel = _shownLayout.GetFlowerLevel(flowerCell);
+            float topHeight = flowerLevel > 0 ? BoardGeometry.GetFlowerTop(flowerLevel) : BoardGeometry.GetSurfaceHeight(_shownLayout, flowerCell);
+            Vector3 flowerTopPoint = BoardGeometry.GetCellCenter(flowerCell) + new Vector3(0f, topHeight, 0f);
+
+            return flowerTopPoint;
         }
 
         private void ContinueDrag(Point mousePosition)

@@ -7,7 +7,7 @@ using Game.Contracts;
 namespace Torres.Client.Session
 {
     [CallbackBehavior(ConcurrencyMode = ConcurrencyMode.Multiple, UseSynchronizationContext = false)]
-    internal sealed class GameSessionNoticeQueue : IGameSessionNoticeReceiver
+    internal sealed class GameSessionNoticeQueue : IGameSessionServiceCallback
     {
         private readonly ConcurrentQueue<RoomChange> _roomChanges = new ConcurrentQueue<RoomChange>();
         private readonly ConcurrentQueue<SessionTerminationReason> _terminationReasons = new ConcurrentQueue<SessionTerminationReason>();

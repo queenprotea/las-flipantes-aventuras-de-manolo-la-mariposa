@@ -21,6 +21,12 @@ namespace Torres.Client.Scene
         internal static Color SelectedCellFrame { get; } = new Color(0x5E, 0x9A, 0x78);
         internal static Color HoveredCellFrame { get; } = new Color(0xFF, 0xFF, 0xFF);
         internal static Color PlacementTargetFrame { get; } = new Color(0xF2, 0xB8, 0x4B);
-        internal static Color ButterflyCellFrame { get; } = new Color(0xB4, 0x9C, 0xE0);
+        internal static Color ButterflyBody { get; } = new Color(0x5F, 0x71, 0x65);
+        internal static Color ButterflyLeftWing { get; } = new Color(0xF5, 0xC9, 0xC6);
+        internal static Color ButterflyRightWing { get; } = new Color(0xBF, 0xE0, 0xEC);
+        internal static Color ButterflyLowerWing { get; } = new Color(0xF7, 0xE9, 0xB0);
+        internal static Color ButterflyLeftWingRim { get; } = new Color(0xD8, 0x9A, 0x96);
+        internal static Color ButterflyRightWingRim { get; } = new Color(0x8F, 0xBF, 0xD1);
+        internal static Color ButterflyLowerWingRim { get; } = new Color(0xD9, 0xC2, 0x71);
     }
 }
