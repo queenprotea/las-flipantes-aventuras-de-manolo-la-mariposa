@@ -71,15 +71,15 @@ namespace Game.Domain
             return flowerCells;
         }
 
-        public void AddFlowerLevel(BoardCell growingCell)
+        public void AddFlowerLevel(BoardCell buildCell)
         {
-            int flowerLevel = GetFlowerLevel(growingCell);
+            int flowerLevel = GetFlowerLevel(buildCell);
             if (flowerLevel == MaximumFlowerLevel)
             {
                 throw new InvalidOperationException(FullFlowerMessage);
             }
 
-            _flowerLevels[growingCell.Row, growingCell.Column] = flowerLevel + 1;
+            _flowerLevels[buildCell.Row, buildCell.Column] = flowerLevel + 1;
         }
 
         public int CountPlantersAround(BoardCell examinedCell)

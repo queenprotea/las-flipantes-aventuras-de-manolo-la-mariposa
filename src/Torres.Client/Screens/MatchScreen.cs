@@ -21,7 +21,6 @@ namespace Torres.Client.Screens
 {
     internal sealed class MatchScreen : Screen, IDisposable
     {
-        private const int CaterpillarsPerPlayer = 5;
         private const float SpentPipOpacity = 0.28f;
 
         private readonly GameSessionConnection _gameSessionConnection;
@@ -60,11 +59,11 @@ namespace Torres.Client.Screens
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
-            _caterpillarButton = BuildActionButton(TextKeys.Match.CaterpillarActionButton, _caterpillarCostLabel);
+            _caterpillarButton = CreateActionButton(TextKeys.Match.CaterpillarActionButton, _caterpillarCostLabel);
             _caterpillarButton.Click += CaterpillarButtonOnClick;
-            _moveButton = BuildActionButton(TextKeys.Match.MoveActionButton, _moveCostLabel);
+            _moveButton = CreateActionButton(TextKeys.Match.MoveActionButton, _moveCostLabel);
             _moveButton.Click += MoveButtonOnClick;
-            _buildButton = BuildActionButton(TextKeys.Match.BuildActionButton, _buildCostLabel);
+            _buildButton = CreateActionButton(TextKeys.Match.BuildActionButton, _buildCostLabel);
             _buildButton.Click += BuildButtonOnClick;
             _endTurnButton = CreatePrimaryButton(TextKeys.Match.EndTurnButton);
             _endTurnButton.Padding = MatchLayout.EndTurnPadding;
@@ -80,7 +79,7 @@ namespace Torres.Client.Screens
             _actionMode = TurnActionMode.None;
             _moveOrigin = null;
             string roomCode = _playerSession.CurrentRoom?.Code ?? string.Empty;
-            HeaderArguments = new[] { roomCode };
+            HeaderArguments = new string[] { roomCode };
             if (_playerSession.CurrentMatchView is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
@@ -124,19 +123,19 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            HorizontalStackPanel columns = CreateColumns();
-            VerticalStackPanel centerPanel = BuildCenter();
-            columns.Widgets.Add(BuildSideBar());
-            columns.Widgets.Add(centerPanel);
-            columns.Widgets.Add(BuildSideColumn());
+            HorizontalStackPanel screenColumns = CreateColumns();
+            VerticalStackPanel centerPanel = BuildCenterPanel();
+            screenColumns.Widgets.Add(BuildSideBar());
+            screenColumns.Widgets.Add(centerPanel);
+            screenColumns.Widgets.Add(BuildSideColumn());
             StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
 
             VerticalStackPanel page = CreatePage();
             page.Spacing = MatchLayout.HudSpacing;
-            page.Widgets.Add(columns);
+            page.Widgets.Add(screenColumns);
             page.Widgets.Add(CreateDivider());
             page.Widgets.Add(BuildActionPoints());
-            StackPanel.SetProportionType(columns, ProportionType.Fill);
+            StackPanel.SetProportionType(screenColumns, ProportionType.Fill);
 
             return page;
         }
@@ -198,7 +197,7 @@ namespace Torres.Client.Screens
             return costLabel;
         }
 
-        private static Button BuildActionButton(string textKey, Label costLabel)
+        private static Button CreateActionButton(string textKey, Label costLabel)
         {
             var buttonContent = new HorizontalStackPanel
             {
@@ -272,19 +271,19 @@ namespace Torres.Client.Screens
             return playerRow;
         }
 
-        private static void ShowPips(HorizontalStackPanel pipRow, PipCount pipCount, IBrush pipBrush)
+        private static void ShowPips(HorizontalStackPanel pipRow, PipRowContent pipRowContent, IBrush pipBrush)
         {
             pipRow.Widgets.Clear();
-            for (var i = 0; i < pipCount.Total; i++)
+            for (var i = 0; i < pipRowContent.Total; i++)
             {
                 pipRow.Widgets.Add(new Panel
                 {
-                    Width = pipCount.Size,
-                    Height = pipCount.Size,
+                    Width = pipRowContent.PipSize,
+                    Height = pipRowContent.PipSize,
                     Background = pipBrush,
                     Border = Theme.StrongLineBrush,
                     BorderThickness = Sizes.Border,
-                    Opacity = i < pipCount.Available ? 1f : SpentPipOpacity,
+                    Opacity = i < pipRowContent.Available ? 1f : SpentPipOpacity,
                 });
             }
         }
@@ -303,7 +302,7 @@ namespace Torres.Client.Screens
             return moveDestinations;
         }
 
-        private static VerticalStackPanel BuildSideColumn(LocalizedButton endTurnButton, LocalizedButton endMatchButton)
+        private static VerticalStackPanel CreateSideColumnPanel(LocalizedButton endTurnButton, LocalizedButton endMatchButton)
         {
             VerticalStackPanel chatPanel = CreateChatPanel();
             var sideColumn = new VerticalStackPanel
@@ -336,7 +335,7 @@ namespace Torres.Client.Screens
             return sideBar;
         }
 
-        private VerticalStackPanel BuildCenter()
+        private VerticalStackPanel BuildCenterPanel()
         {
             var turnStatus = new HorizontalStackPanel
             {
@@ -378,7 +377,7 @@ namespace Torres.Client.Screens
             endMatchButton.Padding = Metrics.SmallButtonPadding;
             endMatchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
             endMatchButton.Click += EndMatchButtonOnClick;
-            VerticalStackPanel sideColumn = BuildSideColumn(_endTurnButton, endMatchButton);
+            VerticalStackPanel sideColumn = CreateSideColumnPanel(_endTurnButton, endMatchButton);
 
             return sideColumn;
         }
@@ -426,9 +425,9 @@ namespace Torres.Client.Screens
 
             MatchSeat activeSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber);
             MatchSeat viewerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ViewerSeatNumber);
-            _roundTurnLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.TurnNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount) };
+            _roundTurnLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.TurnRoundNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount) };
             _turnStatusLabel.TextKey = IsViewerPlaying(matchView) ? TextKeys.Match.YourTurnStatus : TextKeys.Match.OtherPlayerTurnStatus;
-            _turnStatusLabel.TextArguments = new[] { activeSeat.DisplayName };
+            _turnStatusLabel.TextArguments = new string[] { activeSeat.DisplayName };
             _actionPointsLabel.Text = DisplayFormats.FormatInteger(matchView.ActionPointsLeft);
             _caterpillarCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.CaterpillarPlacement);
             _moveCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.Movement);
@@ -448,8 +447,8 @@ namespace Torres.Client.Screens
                 _playersPanel.Widgets.Add(BuildPlayerRow(seat, seat.SeatNumber == matchView.ViewerSeatNumber, seat.SeatNumber == matchView.ActiveSeatNumber));
             }
 
-            ShowPips(_caterpillarPips, new PipCount(CaterpillarsPerPlayer, viewerSeat.CaterpillarsLeft, MatchLayout.CaterpillarPipSize), SeatColors.BrushFor(viewerSeat.Color));
-            ShowPips(_buildPips, new PipCount(matchView.BuildsLeft, matchView.BuildsLeft, MatchLayout.BuildingPipSize), Theme.SurfaceAltBrush);
+            ShowPips(_caterpillarPips, new PipRowContent(matchView.CaterpillarsPerSeat, viewerSeat.CaterpillarsLeft, MatchLayout.CaterpillarPipSize), SeatColors.BrushFor(viewerSeat.Color));
+            ShowPips(_buildPips, new PipRowContent(matchView.BuildsLeft, matchView.BuildsLeft, MatchLayout.BuildingPipSize), Theme.SurfaceAltBrush);
             RefreshActionControls(matchView);
         }
 
@@ -472,7 +471,7 @@ namespace Torres.Client.Screens
             _buildButton.Background = _actionMode == TurnActionMode.Build ? Theme.MintTintBrush : Theme.SurfaceBrush;
             _hintLabel.Visible = _actionMode != TurnActionMode.None;
             _hintLabel.TextKey = FindHintKey();
-            _hintLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.ActionCosts.LevelClimb) };
+            _hintLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.LevelClimb) };
             _boardWidget.ShowPlacementTargets(FindTargetCells(matchView));
         }
 
@@ -509,31 +508,53 @@ namespace Torres.Client.Screens
         private void FollowBoardClick(MatchView matchView)
         {
             BoardCell? clickedCell = _boardWidget.TakeClickedCell();
-            bool canChoose = (_actionRequest is null) && IsViewerPlaying(matchView) && (clickedCell is BoardCell chosenCell) && FindTargetCells(matchView).Contains(chosenCell);
-            if (!canChoose || (clickedCell is not BoardCell targetCell))
+            if ((clickedCell is not BoardCell clickedTargetCell) || !CanChooseCell(matchView, clickedTargetCell))
             {
                 return;
             }
 
             _noticeBox.Hide();
-            MatchCell targetMatchCell = MatchCellConversion.ToMatchCell(targetCell);
-            if ((_actionMode == TurnActionMode.Move) && (_moveOrigin is BoardCell originCell))
+            MatchCell targetMatchCell = MatchCellConversion.ToMatchCell(clickedTargetCell);
+            switch (_actionMode)
             {
-                var move = new MatchMove { Origin = MatchCellConversion.ToMatchCell(originCell), Destination = targetMatchCell };
+                case TurnActionMode.Move:
+                    ChooseMoveCell(matchView, clickedTargetCell);
+                    break;
+
+                case TurnActionMode.NewCaterpillar:
+                    StartActionRequest(_gameSessionConnection.PlacePieceAsync(new PiecePlacement(MatchPiece.Caterpillar, targetMatchCell)), matchView);
+                    break;
+
+                case TurnActionMode.Build:
+                    StartActionRequest(_gameSessionConnection.AddFlowerLevelAsync(targetMatchCell), matchView);
+                    break;
+
+                case TurnActionMode.None:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_actionMode));
+            }
+        }
+
+        private bool CanChooseCell(MatchView matchView, BoardCell clickedTargetCell)
+        {
+            bool canChoose = (_actionRequest is null) && IsViewerPlaying(matchView) && FindTargetCells(matchView).Contains(clickedTargetCell);
+
+            return canChoose;
+        }
+
+        private void ChooseMoveCell(MatchView matchView, BoardCell clickedTargetCell)
+        {
+            if (_moveOrigin is BoardCell originCell)
+            {
+                var move = new MatchMove { Origin = MatchCellConversion.ToMatchCell(originCell), Destination = MatchCellConversion.ToMatchCell(clickedTargetCell) };
                 StartActionRequest(_gameSessionConnection.MoveCaterpillarAsync(move), matchView);
             }
-            else if (_actionMode == TurnActionMode.Move)
+            else
             {
-                _moveOrigin = targetCell;
+                _moveOrigin = clickedTargetCell;
                 RefreshActionControls(matchView);
-            }
-            else if (_actionMode == TurnActionMode.NewCaterpillar)
-            {
-                StartActionRequest(_gameSessionConnection.PlacePieceAsync(new PiecePlacement(MatchPiece.Caterpillar, targetMatchCell)), matchView);
-            }
-            else if (_actionMode == TurnActionMode.Build)
-            {
-                StartActionRequest(_gameSessionConnection.AddFlowerLevelAsync(targetMatchCell), matchView);
             }
         }
 
@@ -632,6 +653,6 @@ namespace Torres.Client.Screens
             _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
         }
 
-        private readonly record struct PipCount(int Total, int Available, int Size);
+        private readonly record struct PipRowContent(int Total, int Available, int PipSize);
     }
 }

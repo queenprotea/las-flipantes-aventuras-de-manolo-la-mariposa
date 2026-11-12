@@ -10,21 +10,21 @@ namespace Game.Match.Tests
         internal const int TieBreakSeed = 7;
         internal const int CaterpillarPlacementCost = 2;
 
-        internal static TimeSpan PlacementTime { get; } = TimeSpan.FromSeconds(90);
+        internal static TimeSpan StepTime { get; } = TimeSpan.FromSeconds(90);
 
         internal static RoundRule FourTurnRound { get; } = new RoundRule(new int[] { 3, 3, 3, 3 });
 
         internal static RoundRule OneTurnRound { get; } = new RoundRule(new int[] { 3 });
 
-        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts { CaterpillarPlacement = CaterpillarPlacementCost, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
+        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1));
 
-        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts { CaterpillarPlacement = CaterpillarPlacementCost, Movement = 1, LevelClimb = 1, FlowerLevelAddition = 1 });
+        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1));
 
         internal static TimeSpan FirstPlacementTaken { get; } = TimeSpan.FromSeconds(60);
 
-        internal static TimeSpan RestOfFirstPlacement { get; } = PlacementTime - FirstPlacementTaken;
+        internal static TimeSpan RestOfFirstPlacement { get; } = StepTime - FirstPlacementTaken;
 
-        internal static TimeSpan JustBeforeDeadline { get; } = PlacementTime - TimeSpan.FromTicks(1);
+        internal static TimeSpan JustBeforeDeadline { get; } = StepTime - TimeSpan.FromTicks(1);
 
         internal static MatchCell NorthWestFlower { get; } = new MatchCell { Row = 1, Column = 1 };
 

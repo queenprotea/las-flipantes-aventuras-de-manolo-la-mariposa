@@ -130,8 +130,9 @@ namespace Torres.Client.Screens
                 MatchActionResult.NotAFlower or MatchActionResult.OutsideBoard => TextKeys.InitialPlacement.NotAFlowerNotice,
                 MatchActionResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
                 MatchActionResult.NotInMatch or MatchActionResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
-                MatchActionResult.Applied => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
-                _ => TextKeys.InitialPlacement.NotYourPlacementNotice,
+                MatchActionResult.NotYourTurn or MatchActionResult.WrongPhase => TextKeys.InitialPlacement.NotYourPlacementNotice,
+                MatchActionResult.Applied or MatchActionResult.NotEnoughActionPoints or MatchActionResult.NoCaterpillarsLeft or MatchActionResult.NotYourCaterpillar or MatchActionResult.NotNeighborCell or MatchActionResult.ClimbTooHigh or MatchActionResult.FlowerAtMaximumLevel or MatchActionResult.NoBuildsLeft or MatchActionResult.NotNextToPlanter or MatchActionResult.JoinsPlanters => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                _ => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
             };
 
             return rejectionKey;

@@ -96,7 +96,7 @@ namespace Torres.Client.Screens
             return headerCell;
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, string placeText, bool isViewer)
+        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, string rankText, bool isViewer)
         {
             int planterPoints = seat.RoundScores.Sum(roundScore => roundScore.PlanterPoints);
             int butterflyPoints = seat.RoundScores.Sum(roundScore => roundScore.ButterflyPoints);
@@ -106,15 +106,15 @@ namespace Torres.Client.Screens
                 butterflyText = DisplayFormats.FormatBonus(butterflyPoints);
             }
 
-            Label placeLabel = BuildStatCell(placeText, Theme.MutedInk);
-            placeLabel.Width = Sizes.ResultRankColumnWidth;
+            Label rankLabel = BuildStatCell(rankText, Theme.MutedInk);
+            rankLabel.Width = Sizes.ResultRankColumnWidth;
             HorizontalStackPanel playerCell = BuildPlayerCell(seat);
 
             var playerRow = new HorizontalStackPanel
             {
                 Padding = _playerRowPadding,
             };
-            playerRow.Widgets.Add(placeLabel);
+            playerRow.Widgets.Add(rankLabel);
             playerRow.Widgets.Add(playerCell);
             playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(planterPoints), Theme.SoftInk));
             playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
@@ -250,9 +250,9 @@ namespace Torres.Client.Screens
             List<MatchSeat> rankedSeats = matchView.RankedSeatNumbers.Select(seatNumber => FindSeat(matchView, seatNumber)).ToList();
             List<MatchSeat> retiredSeats = matchView.Seats.Where(seat => !matchView.RankedSeatNumbers.Contains(seat.SeatNumber)).ToList();
             string winnerName = rankedSeats.Count > 0 ? rankedSeats[0].DisplayName : string.Empty;
-            _winnerLabel.TextArguments = new[] { winnerName };
+            _winnerLabel.TextArguments = new string[] { winnerName };
             _summaryLabel.TextKey = matchView.WasAbandoned ? TextKeys.Result.AbandonedSummaryLabel : TextKeys.Result.SummaryLabel;
-            _summaryLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.Seats.Count) };
+            _summaryLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.Seats.Count) };
 
             _scoreRows.Widgets.Clear();
             for (var i = 0; i < rankedSeats.Count; i++)

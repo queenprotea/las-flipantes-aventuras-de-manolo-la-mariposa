@@ -23,7 +23,7 @@ namespace Game.Match
             {
                 Phase = ToMatchPhase(matchTable.Phase),
                 RoundNumber = matchTable.RoundNumber,
-                TurnNumber = matchTable.TurnNumber,
+                TurnRoundNumber = matchTable.TurnRoundNumber,
                 RoundTurnCount = matchTable.RoundTurnCount,
                 RoundButterflyPoints = RoundScoreCalculator.GetButterflyPoints(matchTable.RoundNumber),
                 ViewerSeatNumber = viewerSeatNumber,
@@ -31,6 +31,7 @@ namespace Game.Match
                 StepTimeLeft = stepTimeLeft,
                 ActionPointsLeft = matchTable.ActionPointsLeft,
                 BuildsLeft = matchTable.BuildsLeft,
+                CaterpillarsPerSeat = MatchTable.CaterpillarsPerSeat,
                 ActionCosts = ToMatchActionCosts(matchTable.ActionCosts),
                 Seats = _seatedEntrants.Select(seatedEntrant => ToMatchSeat(seatedEntrant, matchTable)).ToList(),
                 Flowers = CreateFlowers(matchTable),

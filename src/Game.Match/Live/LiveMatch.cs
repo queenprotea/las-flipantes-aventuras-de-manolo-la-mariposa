@@ -16,7 +16,7 @@ namespace Game.Match
         private readonly MatchViewFactory _viewFactory;
         private readonly TimeProvider _timeProvider;
         private readonly IMatchListener _matchListener;
-        private readonly TimeSpan _stepTime;
+        private readonly TimeSpan _stepDuration;
 
         private CancellationTokenSource? _stepCountdown;
         private DateTime? _stepEndsAtUtc;
@@ -31,7 +31,7 @@ namespace Game.Match
             _viewFactory = new MatchViewFactory(seatedEntrants);
             _timeProvider = timeProvider;
             _matchListener = matchListener;
-            _stepTime = stepTime;
+            _stepDuration = stepTime;
         }
 
         internal event EventHandler? Finished;
@@ -201,7 +201,7 @@ namespace Game.Match
 
         private TableStep ReadTableStep()
         {
-            var tableStep = new TableStep(_matchTable.Phase, _matchTable.RoundNumber, _matchTable.TurnNumber, _matchTable.ActiveSeatNumber);
+            var tableStep = new TableStep(_matchTable.Phase, _matchTable.RoundNumber, _matchTable.TurnRoundNumber, _matchTable.ActiveSeatNumber);
 
             return tableStep;
         }
@@ -276,8 +276,8 @@ namespace Game.Match
                 return;
             }
 
-            _stepEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + _stepTime;
-            _stepCountdown = new CancellationTokenSource(_stepTime, _timeProvider);
+            _stepEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + _stepDuration;
+            _stepCountdown = new CancellationTokenSource(_stepDuration, _timeProvider);
             _stepCountdown.Token.Register(ExpireStep);
         }
 
@@ -290,13 +290,13 @@ namespace Game.Match
 
         private TimeSpan? ReadStepTimeLeft()
         {
-            TimeSpan? placementTimeLeft = null;
+            TimeSpan? stepTimeLeft = null;
             if (_stepEndsAtUtc is DateTime endsAtUtc)
             {
-                placementTimeLeft = endsAtUtc - _timeProvider.GetUtcNow().UtcDateTime;
+                stepTimeLeft = endsAtUtc - _timeProvider.GetUtcNow().UtcDateTime;
             }
 
-            return placementTimeLeft;
+            return stepTimeLeft;
         }
 
         private int GetSeatNumber(int entrantId)

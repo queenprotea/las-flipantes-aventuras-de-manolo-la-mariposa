@@ -12,21 +12,20 @@ namespace Game.Match
         {
             ArgumentNullException.ThrowIfNull(ruleSet);
             ArgumentNullException.ThrowIfNull(ruleSet.RoundRules, nameof(ruleSet));
-            ArgumentNullException.ThrowIfNull(ruleSet.ActionPointCosts, nameof(ruleSet));
 
-            List<RoundLayout> roundLayouts = ruleSet.RoundRules.Select(ToRoundLayout).ToList();
+            List<RoundTurnPlan> roundTurnPlans = ruleSet.RoundRules.Select(ToRoundTurnPlan).ToList();
             ActionPointCosts actionPointCosts = ruleSet.ActionPointCosts;
             var actionCosts = new ActionCosts(actionPointCosts.CaterpillarPlacement, actionPointCosts.Movement, actionPointCosts.LevelClimb, actionPointCosts.FlowerLevelAddition);
-            var matchRules = new MatchRules(roundLayouts, actionCosts);
+            var matchRules = new MatchRules(roundTurnPlans, actionCosts);
 
             return matchRules;
         }
 
-        private static RoundLayout ToRoundLayout(RoundRule roundRule)
+        private static RoundTurnPlan ToRoundTurnPlan(RoundRule roundRule)
         {
-            var roundLayout = new RoundLayout(roundRule.BuildCountsByTurn);
+            var roundTurnPlan = new RoundTurnPlan(roundRule.BuildCountsByTurn);
 
-            return roundLayout;
+            return roundTurnPlan;
         }
     }
 }

@@ -48,13 +48,11 @@ namespace Game.Services
 
         private static ActionPointCosts ToActionPointCosts(List<ActionCost> actionCosts)
         {
-            var actionPointCosts = new ActionPointCosts
-            {
-                CaterpillarPlacement = FindCost(actionCosts, ActionCostCodes.CaterpillarPlacement),
-                Movement = FindCost(actionCosts, ActionCostCodes.CaterpillarMovement),
-                LevelClimb = FindCost(actionCosts, ActionCostCodes.LevelClimb),
-                FlowerLevelAddition = FindCost(actionCosts, ActionCostCodes.FlowerLevelAddition),
-            };
+            int caterpillarPlacementCost = FindCost(actionCosts, ActionCostCodes.CaterpillarPlacement);
+            int movementCost = FindCost(actionCosts, ActionCostCodes.CaterpillarMovement);
+            int levelClimbCost = FindCost(actionCosts, ActionCostCodes.LevelClimb);
+            int flowerLevelAdditionCost = FindCost(actionCosts, ActionCostCodes.FlowerLevelAddition);
+            var actionPointCosts = new ActionPointCosts(caterpillarPlacementCost, movementCost, levelClimbCost, flowerLevelAdditionCost);
 
             return actionPointCosts;
         }

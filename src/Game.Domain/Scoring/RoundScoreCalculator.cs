@@ -12,7 +12,7 @@ namespace Game.Domain
 
         private const int SingleCaterpillarCount = 1;
 
-        private static readonly int[] _butterflyPointsByRound = { RoundOneButterflyPoints, RoundTwoButterflyPoints, RoundThreeButterflyPoints };
+        private static readonly int[] _butterflyPointsByRound = new int[] { RoundOneButterflyPoints, RoundTwoButterflyPoints, RoundThreeButterflyPoints };
 
         private readonly IReadOnlyList<Planter> _planters;
         private readonly IReadOnlyList<Caterpillar> _caterpillars;

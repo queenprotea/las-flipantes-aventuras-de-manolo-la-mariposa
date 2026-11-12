@@ -303,9 +303,9 @@ namespace Torres.Client.Session
 
         internal Task<MatchActionResult> EndTurnAsync()
         {
-            Task<MatchActionResult> turnEnding = Task.Run(RequireChannel().EndTurn);
+            Task<MatchActionResult> endTurnRequest = Task.Run(RequireChannel().EndTurn);
 
-            return turnEnding;
+            return endTurnRequest;
         }
 
         internal Task<ProfileResponse> GetProfileAsync()

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -88,7 +89,7 @@ namespace Game.Domain.Tests
 
             Assert.Equal(PlacementOutcome.Placed, outcome);
             Assert.Equal(RoundNumberTwo, table.RoundNumber);
-            Assert.Equal(MatchTable.FirstTurnNumber, table.TurnNumber);
+            Assert.Equal(MatchTable.FirstTurnRoundNumber, table.TurnRoundNumber);
             Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
             Assert.Equal(MatchTable.ActionPointsPerTurn, table.ActionPointsLeft);
         }
@@ -255,11 +256,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreateFinishedTable(SeatStanding seatOneStanding, SeatStanding seatTwoStanding)
         {
-            var snapshot = new MatchSnapshot(TablePhase.Finished, MatchRules.RoundCount, MatchTable.FirstTurnNumber, TwoSeatCount, SeatNumberOne, 0, 0, SampleLayouts.FiveStartingFlowers, new List<Caterpillar>(), null)
-            {
-                Standings = new SeatStanding[] { seatOneStanding, seatTwoStanding },
-                FinishCause = FinishCause.Completed,
-            };
+            var snapshot = new MatchSnapshot(TablePhase.Finished, MatchRules.RoundCount, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, 0, 0, SampleLayouts.FiveStartingFlowers, new List<Caterpillar>(), null, new SeatStanding[] { seatOneStanding, seatTwoStanding }, Array.Empty<int>(), FinishCause.Completed);
             MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.OneTurnPerRoundRules, SampleRules.CreateTieBreakRandom());
 
             return table;
@@ -293,18 +290,27 @@ namespace Game.Domain.Tests
 
         private sealed class SeatStandingComparer : IEqualityComparer<SeatStanding>
         {
-            public bool Equals(SeatStanding? x, SeatStanding? y)
+            public bool Equals(SeatStanding? firstStanding, SeatStanding? secondStanding)
             {
-                bool areEqual = (x is not null) && (y is not null) && (x.SeatNumber == y.SeatNumber) && x.RoundScores.SequenceEqual(y.RoundScores) && (x.ScoredPlanterCount == y.ScoredPlanterCount) && (x.IsRetired == y.IsRetired);
+                bool areEqual = (firstStanding is SeatStanding comparedFirstStanding) && (secondStanding is SeatStanding comparedSecondStanding) && HaveSameScores(comparedFirstStanding, comparedSecondStanding);
 
                 return areEqual;
             }
 
-            public int GetHashCode(SeatStanding obj)
+            public int GetHashCode(SeatStanding standing)
             {
-                int hashCode = obj.SeatNumber;
+                int hashCode = standing.SeatNumber;
 
                 return hashCode;
+            }
+
+            private static bool HaveSameScores(SeatStanding firstStanding, SeatStanding secondStanding)
+            {
+                bool haveSameRounds = (firstStanding.SeatNumber == secondStanding.SeatNumber) && firstStanding.RoundScores.SequenceEqual(secondStanding.RoundScores);
+                bool haveSameEnding = (firstStanding.ScoredPlanterCount == secondStanding.ScoredPlanterCount) && (firstStanding.IsRetired == secondStanding.IsRetired);
+                bool haveSameScores = haveSameRounds && haveSameEnding;
+
+                return haveSameScores;
             }
         }
     }

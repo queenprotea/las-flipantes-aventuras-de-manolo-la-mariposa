@@ -17,7 +17,7 @@ namespace Game.Contracts
         public int RoundNumber { get; set; }
 
         [DataMember]
-        public int TurnNumber { get; set; }
+        public int TurnRoundNumber { get; set; }
 
         [DataMember]
         public int RoundTurnCount { get; set; }
@@ -39,6 +39,9 @@ namespace Game.Contracts
 
         [DataMember]
         public int BuildsLeft { get; set; }
+
+        [DataMember]
+        public int CaterpillarsPerSeat { get; set; }
 
         [DataMember]
         public MatchActionCosts ActionCosts { get; set; } = new MatchActionCosts();

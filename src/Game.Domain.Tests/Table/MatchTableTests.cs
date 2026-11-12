@@ -318,7 +318,7 @@ namespace Game.Domain.Tests
 
         private static MatchSnapshot CreateThreeSeatSnapshot(TablePhase phase, int activeSeatNumber, IReadOnlyList<Caterpillar> caterpillars)
         {
-            var snapshot = new MatchSnapshot(phase, MatchTable.FirstRoundNumber, MatchTable.FirstTurnNumber, ThreeSeatCount, activeSeatNumber, NoActionPoints, NoBuilds, SampleLayouts.FiveStartingFlowers, caterpillars, null);
+            var snapshot = new MatchSnapshot(phase, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, ThreeSeatCount, activeSeatNumber, NoActionPoints, NoBuilds, SampleLayouts.FiveStartingFlowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<int>(), null);
 
             return snapshot;
         }

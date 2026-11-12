@@ -13,8 +13,8 @@ namespace Game.Domain.Tests
         private const int SeatNumberOne = 1;
         private const int SeatNumberTwo = 2;
         private const int SeatNumberThree = 3;
-        private const int TurnNumberTwo = 2;
-        private const int TurnNumberThree = 3;
+        private const int TurnRoundNumberTwo = 2;
+        private const int TurnRoundNumberThree = 3;
         private const int RoundNumberTwo = 2;
         private const int FourTurns = 4;
         private const int LevelOne = 1;
@@ -384,7 +384,7 @@ namespace Game.Domain.Tests
 
             table.EndTurn(SeatNumberTwo);
 
-            Assert.Equal(TurnNumberTwo, table.TurnNumber);
+            Assert.Equal(TurnRoundNumberTwo, table.TurnRoundNumber);
             Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
         }
 
@@ -436,9 +436,9 @@ namespace Game.Domain.Tests
             table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
             table.PlaceButterfly(SeatNumberThree, SampleLayouts.CenterFlower);
 
-            ExpireTurns(table, TurnNumberTwo * ThreeSeatCount);
+            ExpireTurns(table, TurnRoundNumberTwo * ThreeSeatCount);
 
-            Assert.Equal(TurnNumberThree, table.TurnNumber);
+            Assert.Equal(TurnRoundNumberThree, table.TurnRoundNumber);
             Assert.Equal(SampleRules.TwoBuildings, table.BuildsLeft);
         }
 
@@ -473,7 +473,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreateTurnTable(IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars)
         {
-            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null);
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<int>(), null);
             MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
 
             return table;

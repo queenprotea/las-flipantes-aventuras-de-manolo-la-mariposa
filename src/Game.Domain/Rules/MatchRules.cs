@@ -10,18 +10,18 @@ namespace Game.Domain
 
         private const string RoundCountMessage = "The rules must describe exactly three rounds.";
 
-        private readonly IReadOnlyList<RoundLayout> _roundLayouts;
+        private readonly IReadOnlyList<RoundTurnPlan> _roundTurnPlans;
 
-        public MatchRules(IReadOnlyList<RoundLayout> roundLayouts, ActionCosts actionCosts)
+        public MatchRules(IReadOnlyList<RoundTurnPlan> roundTurnPlans, ActionCosts actionCosts)
         {
-            ArgumentNullException.ThrowIfNull(roundLayouts);
+            ArgumentNullException.ThrowIfNull(roundTurnPlans);
             ArgumentNullException.ThrowIfNull(actionCosts);
-            if ((roundLayouts.Count != RoundCount) || roundLayouts.Any(roundLayout => roundLayout is null))
+            if ((roundTurnPlans.Count != RoundCount) || roundTurnPlans.Any(roundTurnPlan => roundTurnPlan is null))
             {
-                throw new ArgumentException(RoundCountMessage, nameof(roundLayouts));
+                throw new ArgumentException(RoundCountMessage, nameof(roundTurnPlans));
             }
 
-            _roundLayouts = roundLayouts.ToList();
+            _roundTurnPlans = roundTurnPlans.ToList();
             ActionCosts = actionCosts;
         }
 
@@ -29,31 +29,31 @@ namespace Game.Domain
 
         public int GetTurnCount(int roundNumber)
         {
-            RoundLayout roundLayout = GetRoundLayout(roundNumber);
-            int turnCount = roundLayout.TurnCount;
+            RoundTurnPlan roundTurnPlan = GetRoundTurnPlan(roundNumber);
+            int turnCount = roundTurnPlan.TurnCount;
 
             return turnCount;
         }
 
-        public int GetBuildCount(int roundNumber, int turnNumber)
+        public int GetBuildCount(int roundNumber, int turnRoundNumber)
         {
-            RoundLayout roundLayout = GetRoundLayout(roundNumber);
-            ArgumentOutOfRangeException.ThrowIfLessThan(turnNumber, MatchTable.FirstTurnNumber);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(turnNumber, roundLayout.TurnCount);
+            RoundTurnPlan roundTurnPlan = GetRoundTurnPlan(roundNumber);
+            ArgumentOutOfRangeException.ThrowIfLessThan(turnRoundNumber, MatchTable.FirstTurnRoundNumber);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(turnRoundNumber, roundTurnPlan.TurnCount);
 
-            int buildCount = roundLayout.BuildCountsByTurn[turnNumber - MatchTable.FirstTurnNumber];
+            int buildCount = roundTurnPlan.BuildCountsByTurn[turnRoundNumber - MatchTable.FirstTurnRoundNumber];
 
             return buildCount;
         }
 
-        private RoundLayout GetRoundLayout(int roundNumber)
+        private RoundTurnPlan GetRoundTurnPlan(int roundNumber)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(roundNumber, MatchTable.FirstRoundNumber);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(roundNumber, RoundCount);
 
-            RoundLayout roundLayout = _roundLayouts[roundNumber - MatchTable.FirstRoundNumber];
+            RoundTurnPlan roundTurnPlan = _roundTurnPlans[roundNumber - MatchTable.FirstRoundNumber];
 
-            return roundLayout;
+            return roundTurnPlan;
         }
     }
 }

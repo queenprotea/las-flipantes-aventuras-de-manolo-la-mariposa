@@ -50,10 +50,10 @@ namespace Game.Match
             return isOnBoard;
         }
 
-        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan placementTime, MatchRuleSet ruleSet)
+        public Task<int> StartMatchAsync(IReadOnlyList<MatchEntrant> entrants, TimeSpan stepTime, MatchRuleSet ruleSet)
         {
             ArgumentNullException.ThrowIfNull(entrants);
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(placementTime, TimeSpan.Zero);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(stepTime, TimeSpan.Zero);
 
             MatchRules matchRules = MatchRuleConversion.ToMatchRules(ruleSet);
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(entrants);
@@ -69,7 +69,7 @@ namespace Game.Match
                 }
 
                 _lastMatchId++;
-                liveMatch = new LiveMatch(_lastMatchId, matchTable, seatedEntrants, _timeProvider, _matchListener, placementTime);
+                liveMatch = new LiveMatch(_lastMatchId, matchTable, seatedEntrants, _timeProvider, _matchListener, stepTime);
                 foreach (int entrantId in entrantIds)
                 {
                     _matchesByEntrantId.Add(entrantId, liveMatch);

@@ -10,7 +10,7 @@ namespace Game.Domain
         public const int MaximumSeatCount = 4;
         public const int FirstSeatNumber = 1;
         public const int FirstRoundNumber = 1;
-        public const int FirstTurnNumber = 1;
+        public const int FirstTurnRoundNumber = 1;
         public const int ActionPointsPerTurn = 5;
         public const int CaterpillarsPerSeat = 5;
 
@@ -25,7 +25,7 @@ namespace Game.Domain
         private readonly MatchRules _rules;
         private readonly Random _tieBreakRandom;
         private readonly List<SeatStanding> _standings;
-        private readonly List<int> _pendingButterflyPlacers;
+        private readonly List<int> _pendingButterflySeatNumbers;
 
         public MatchTable(StartingLayout startingLayout, int seatCount, MatchRules rules, Random tieBreakRandom)
         {
@@ -40,10 +40,10 @@ namespace Game.Domain
             _rules = rules;
             _tieBreakRandom = tieBreakRandom;
             _standings = CreateFreshStandings(seatCount);
-            _pendingButterflyPlacers = new List<int>();
+            _pendingButterflySeatNumbers = new List<int>();
             SeatCount = seatCount;
             RoundNumber = FirstRoundNumber;
-            TurnNumber = FirstTurnNumber;
+            TurnRoundNumber = FirstTurnRoundNumber;
             Phase = TablePhase.CaterpillarPlacement;
             ActiveSeatNumber = FirstSeatNumber;
         }
@@ -55,11 +55,11 @@ namespace Game.Domain
             _rules = rules;
             _tieBreakRandom = tieBreakRandom;
             _standings = snapshot.Standings.Count == 0 ? CreateFreshStandings(snapshot.SeatCount) : snapshot.Standings.ToList();
-            _pendingButterflyPlacers = snapshot.PendingButterflyPlacers.ToList();
+            _pendingButterflySeatNumbers = snapshot.PendingButterflySeatNumbers.ToList();
             FinishCause = snapshot.FinishCause;
             SeatCount = snapshot.SeatCount;
             RoundNumber = snapshot.RoundNumber;
-            TurnNumber = snapshot.TurnNumber;
+            TurnRoundNumber = snapshot.TurnRoundNumber;
             Phase = snapshot.Phase;
             ActiveSeatNumber = snapshot.ActiveSeatNumber;
             ActionPointsLeft = snapshot.ActionPointsLeft;
@@ -71,7 +71,7 @@ namespace Game.Domain
 
         public int RoundNumber { get; private set; }
 
-        public int TurnNumber { get; private set; }
+        public int TurnRoundNumber { get; private set; }
 
         public TablePhase Phase { get; private set; }
 
@@ -119,12 +119,7 @@ namespace Game.Domain
 
         public MatchSnapshot TakeSnapshot()
         {
-            var snapshot = new MatchSnapshot(Phase, RoundNumber, TurnNumber, SeatCount, ActiveSeatNumber, ActionPointsLeft, BuildsLeft, _board.FindFlowers(), _caterpillars.ToList(), ButterflyCell)
-            {
-                Standings = _standings.ToList(),
-                PendingButterflyPlacers = _pendingButterflyPlacers.ToList(),
-                FinishCause = FinishCause,
-            };
+            var snapshot = new MatchSnapshot(Phase, RoundNumber, TurnRoundNumber, SeatCount, ActiveSeatNumber, ActionPointsLeft, BuildsLeft, _board.FindFlowers(), _caterpillars.ToList(), ButterflyCell, _standings.ToList(), _pendingButterflySeatNumbers.ToList(), FinishCause);
 
             return snapshot;
         }
@@ -239,7 +234,7 @@ namespace Game.Domain
             if (placementOutcome == PlacementOutcome.Placed)
             {
                 ButterflyCell = destinationCell;
-                _pendingButterflyPlacers.Clear();
+                _pendingButterflySeatNumbers.Clear();
                 StartRoundTurns();
             }
 
@@ -371,7 +366,7 @@ namespace Game.Domain
             int standingIndex = seatNumber - FirstSeatNumber;
             _standings[standingIndex] = _standings[standingIndex] with { IsRetired = true };
             _caterpillars.RemoveAll(caterpillar => caterpillar.SeatNumber == seatNumber);
-            _pendingButterflyPlacers.Remove(seatNumber);
+            _pendingButterflySeatNumbers.Remove(seatNumber);
             if (CountActiveSeats() < MinimumSeatCount)
             {
                 FinishMatch(Domain.FinishCause.TooFewSeats);
@@ -669,10 +664,10 @@ namespace Game.Domain
 
         private void OpenNextButterflyPlacement()
         {
-            if (_pendingButterflyPlacers.Count > 0)
+            if (_pendingButterflySeatNumbers.Count > 0)
             {
-                int nextPlacerSeatNumber = _pendingButterflyPlacers[0];
-                _pendingButterflyPlacers.RemoveAt(0);
+                int nextPlacerSeatNumber = _pendingButterflySeatNumbers[0];
+                _pendingButterflySeatNumbers.RemoveAt(0);
                 OpenButterflyPlacementFor(nextPlacerSeatNumber);
             }
             else
@@ -683,7 +678,7 @@ namespace Game.Domain
 
         private void StartRoundTurns()
         {
-            TurnNumber = FirstTurnNumber;
+            TurnRoundNumber = FirstTurnRoundNumber;
             BeginTurnOf(FindFirstActiveSeat());
         }
 
@@ -694,9 +689,9 @@ namespace Game.Domain
             {
                 BeginTurnOf(playingSeatNumber);
             }
-            else if (TurnNumber < _rules.GetTurnCount(RoundNumber))
+            else if (TurnRoundNumber < _rules.GetTurnCount(RoundNumber))
             {
-                TurnNumber++;
+                TurnRoundNumber++;
                 BeginTurnOf(FindFirstActiveSeat());
             }
             else
@@ -738,8 +733,8 @@ namespace Game.Domain
             SeatStanding[] activeStandings = _standings.Where(standing => !standing.IsRetired).ToArray();
             _tieBreakRandom.Shuffle(activeStandings);
             List<int> placerOrder = activeStandings.OrderBy(standing => standing.TotalScore).Select(standing => standing.SeatNumber).ToList();
-            _pendingButterflyPlacers.Clear();
-            _pendingButterflyPlacers.AddRange(placerOrder);
+            _pendingButterflySeatNumbers.Clear();
+            _pendingButterflySeatNumbers.AddRange(placerOrder);
             ActionPointsLeft = 0;
             BuildsLeft = 0;
             OpenNextButterflyPlacement();
@@ -750,7 +745,7 @@ namespace Game.Domain
             Phase = TablePhase.PlayerTurn;
             ActiveSeatNumber = seatNumber;
             ActionPointsLeft = ActionPointsPerTurn;
-            BuildsLeft = _rules.GetBuildCount(RoundNumber, TurnNumber);
+            BuildsLeft = _rules.GetBuildCount(RoundNumber, TurnRoundNumber);
         }
 
         private void FinishMatch(FinishCause finishCause)
@@ -759,7 +754,7 @@ namespace Game.Domain
             FinishCause = finishCause;
             ActionPointsLeft = 0;
             BuildsLeft = 0;
-            _pendingButterflyPlacers.Clear();
+            _pendingButterflySeatNumbers.Clear();
         }
 
         private int? FindNextActiveSeatAfter(int seatNumber)

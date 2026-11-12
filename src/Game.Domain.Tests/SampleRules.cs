@@ -15,15 +15,15 @@ namespace Game.Domain.Tests
 
         internal static ActionCosts Costs { get; } = new ActionCosts(PlacementCost, MovementCost, ClimbCost, BuildingCost);
 
-        internal static RoundLayout FourTurnRound { get; } = new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, ThreeBuildings, ThreeBuildings });
+        internal static RoundTurnPlan FourTurnRound { get; } = new RoundTurnPlan(new int[] { ThreeBuildings, ThreeBuildings, ThreeBuildings, ThreeBuildings });
 
-        internal static RoundLayout OneTurnRound { get; } = new RoundLayout(new int[] { ThreeBuildings });
+        internal static RoundTurnPlan OneTurnRound { get; } = new RoundTurnPlan(new int[] { ThreeBuildings });
 
-        internal static MatchRules TwoSeatRules { get; } = new MatchRules(new RoundLayout[] { FourTurnRound, FourTurnRound, FourTurnRound }, Costs);
+        internal static MatchRules TwoSeatRules { get; } = new MatchRules(new RoundTurnPlan[] { FourTurnRound, FourTurnRound, FourTurnRound }, Costs);
 
-        internal static MatchRules ThreeSeatRules { get; } = new MatchRules(new RoundLayout[] { new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings, TwoBuildings }), new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }), new RoundLayout(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }) }, Costs);
+        internal static MatchRules ThreeSeatRules { get; } = new MatchRules(new RoundTurnPlan[] { new RoundTurnPlan(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings, TwoBuildings }), new RoundTurnPlan(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }), new RoundTurnPlan(new int[] { ThreeBuildings, ThreeBuildings, TwoBuildings }) }, Costs);
 
-        internal static MatchRules OneTurnPerRoundRules { get; } = new MatchRules(new RoundLayout[] { OneTurnRound, OneTurnRound, OneTurnRound }, Costs);
+        internal static MatchRules OneTurnPerRoundRules { get; } = new MatchRules(new RoundTurnPlan[] { OneTurnRound, OneTurnRound, OneTurnRound }, Costs);
 
         internal static Random CreateTieBreakRandom()
         {

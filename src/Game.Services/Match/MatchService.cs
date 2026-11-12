@@ -79,7 +79,7 @@ namespace Game.Services
         public MatchActionResult PlacePiece(MatchPiece piece, MatchCell destinationCell)
         {
             int? callerOwnerId = FindCallerOwnerId();
-            MatchActionResult actionResult = JudgeCall(callerOwnerId, destinationCell);
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, destinationCell);
             if ((actionResult == MatchActionResult.Applied) && !Enum.IsDefined(piece))
             {
                 actionResult = MatchActionResult.WrongPhase;
@@ -97,7 +97,7 @@ namespace Game.Services
         public MatchActionResult MoveCaterpillar(MatchMove move)
         {
             int? callerOwnerId = FindCallerOwnerId();
-            MatchActionResult actionResult = JudgeCall(callerOwnerId, move?.Origin, move?.Destination);
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, move?.Origin, move?.Destination);
             if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId) && (move is not null))
             {
                 actionResult = _matchCoordinator.MoveCaterpillar(ownerId, move);
@@ -110,7 +110,7 @@ namespace Game.Services
         public MatchActionResult AddFlowerLevel(MatchCell buildCell)
         {
             int? callerOwnerId = FindCallerOwnerId();
-            MatchActionResult actionResult = JudgeCall(callerOwnerId, buildCell);
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId, buildCell);
             if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
             {
                 actionResult = _matchCoordinator.AddFlowerLevel(ownerId, buildCell);
@@ -123,7 +123,7 @@ namespace Game.Services
         public MatchActionResult EndTurn()
         {
             int? callerOwnerId = FindCallerOwnerId();
-            MatchActionResult actionResult = JudgeCall(callerOwnerId);
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId);
             if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
             {
                 actionResult = _matchCoordinator.EndTurn(ownerId);
@@ -160,7 +160,7 @@ namespace Game.Services
             return endResult;
         }
 
-        private static MatchActionResult JudgeCall(int? callerOwnerId, params MatchCell?[] examinedCells)
+        private static MatchActionResult CheckCallArguments(int? callerOwnerId, params MatchCell?[] examinedCells)
         {
             MatchActionResult actionResult = MatchActionResult.Applied;
             if (callerOwnerId is null)
@@ -230,7 +230,7 @@ namespace Game.Services
 
         private async Task<StartMatchResult> StartCheckedMatchAsync(LiveRoom room, int callerOwnerId)
         {
-            TimeSpan placementTime = await ReadPlacementTimeAsync();
+            TimeSpan stepTime = await ReadStepTimeAsync();
             IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
             MatchStartCheck startCheck = room.StartMatch(callerOwnerId);
             if (startCheck.Status == StartMatchStatus.Started)
@@ -238,7 +238,7 @@ namespace Game.Services
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
                 int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
-                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, placementTime, ruleSetsByPlayerCount[seatedCount]);
+                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, stepTime, ruleSetsByPlayerCount[seatedCount]);
                 _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 
@@ -278,12 +278,12 @@ namespace Game.Services
             return matchBan;
         }
 
-        private async Task<TimeSpan> ReadPlacementTimeAsync()
+        private async Task<TimeSpan> ReadStepTimeAsync()
         {
             int turnSeconds = await _systemParameterReader.ReadPositiveAsync(TurnSecondsParameterCode);
-            TimeSpan placementTime = TimeSpan.FromSeconds(turnSeconds);
+            TimeSpan stepTime = TimeSpan.FromSeconds(turnSeconds);
 
-            return placementTime;
+            return stepTime;
         }
     }
 }

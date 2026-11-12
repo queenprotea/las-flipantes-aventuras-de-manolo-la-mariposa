@@ -64,7 +64,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                HeaderArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber - 1) };
+                HeaderArguments = new string[] { DisplayFormats.FormatInteger(matchView.RoundNumber - 1) };
                 ShowMatchView(matchView);
             }
         }
@@ -264,15 +264,15 @@ namespace Torres.Client.Screens
         {
             _shownMatchView = matchView;
             int closedRoundNumber = matchView.RoundNumber - 1;
-            _titleLabel.TextArguments = new[] { DisplayFormats.FormatInteger(closedRoundNumber) };
+            _titleLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(closedRoundNumber) };
             if (_gardenStaysLabel is not null)
             {
-                _gardenStaysLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber) };
+                _gardenStaysLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.RoundNumber) };
             }
 
             if (_rulesLabel is not null)
             {
-                _rulesLabel.TextArguments = new[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount), DisplayFormats.FormatInteger(matchView.RoundButterflyPoints) };
+                _rulesLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount), DisplayFormats.FormatInteger(matchView.RoundButterflyPoints) };
             }
 
             _scoreRows.Widgets.Clear();

@@ -26,7 +26,7 @@ namespace Game.Contracts
         MatchActionResult PlacePiece(MatchPiece piece, MatchCell destinationCell);
 
         /// <summary>
-        /// Moves a caterpillar of the caller to a neighbor cell during the caller's turn, for one action point and one more for each level it climbs.
+        /// Moves a caterpillar of the caller to a neighbor cell during the caller's turn, for the action points that moving and climbing cost; the view lists that cost for each destination.
         /// </summary>
         /// <param name="move">The cell where the caterpillar stands and the cell it goes to.</param>
         /// <returns>Whether the caterpillar moved, or why not.</returns>
@@ -49,7 +49,7 @@ namespace Game.Contracts
         MatchActionResult EndTurn();
 
         /// <summary>
-        /// Ends the caller's match for every seated player and takes the room back to waiting, while there is still no way to finish or give up a match.
+        /// Ends the caller's match for every seated player before it finishes, and takes the room back to waiting.
         /// </summary>
         /// <returns>Whether the match was ended, or why not.</returns>
         [OperationContract(Name = "EndMatch", IsInitiating = false)]

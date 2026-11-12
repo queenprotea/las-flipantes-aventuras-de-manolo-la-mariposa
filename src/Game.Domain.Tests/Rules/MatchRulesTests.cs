@@ -8,7 +8,7 @@ namespace Game.Domain.Tests
     {
         private const int RoundNumberOne = 1;
         private const int RoundNumberFour = 4;
-        private const int TurnNumberThree = 3;
+        private const int TurnRoundNumberThree = 3;
         private const int TurnNumberFive = 5;
         private const int FourTurns = 4;
         private const int NegativeBuildCount = -1;
@@ -17,7 +17,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_Constructor_WithTwoRounds_ThrowsArgumentException()
         {
-            var twoRounds = new RoundLayout[] { SampleRules.FourTurnRound, SampleRules.FourTurnRound };
+            var twoRounds = new RoundTurnPlan[] { SampleRules.FourTurnRound, SampleRules.FourTurnRound };
 
             Assert.Throws<ArgumentException>(() => new MatchRules(twoRounds, SampleRules.Costs));
         }
@@ -37,7 +37,7 @@ namespace Game.Domain.Tests
         {
             MatchRules rules = SampleRules.ThreeSeatRules;
 
-            int buildCount = rules.GetBuildCount(RoundNumberOne, TurnNumberThree);
+            int buildCount = rules.GetBuildCount(RoundNumberOne, TurnRoundNumberThree);
 
             Assert.Equal(SampleRules.TwoBuildings, buildCount);
         }
@@ -61,13 +61,13 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_RoundLayoutConstructor_WithoutTurns_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => new RoundLayout(Array.Empty<int>()));
+            Assert.Throws<ArgumentException>(() => new RoundTurnPlan(Array.Empty<int>()));
         }
 
         [Fact]
         public void Test_RoundLayoutConstructor_WithNegativeBuildCount_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => new RoundLayout(new int[] { NegativeBuildCount }));
+            Assert.Throws<ArgumentException>(() => new RoundTurnPlan(new int[] { NegativeBuildCount }));
         }
 
         [Fact]
