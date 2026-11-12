@@ -72,6 +72,7 @@ namespace Torres.Client.Screens
             }
 
             _clockLabel.Text = FormatPlacementTimeLeft();
+            _boardWidget.Advance(gameTime.ElapsedGameTime);
             _boardWidget.UpdateInput();
             FollowBoardClick(matchView);
             FollowPlacementRequest();
@@ -267,6 +268,7 @@ namespace Torres.Client.Screens
 
         private void ShowMatchView(MatchView matchView)
         {
+            bool isFirstView = _shownMatchView is null;
             _shownMatchView = matchView;
             bool isViewerPlacing = IsViewerPlacing(matchView);
             bool isButterflyPlacement = matchView.Phase == MatchPhase.ButterflyPlacement;
@@ -275,7 +277,15 @@ namespace Torres.Client.Screens
             _turnLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.ButterflyTurnInstruction : TextKeys.InitialPlacement.CurrentTurnInstruction;
             _turnLabel.TextArguments = new string[] { GetPlacingPlayerName(matchView) };
 
-            _boardWidget.ShowLayout(_layoutFactory.Create(matchView));
+            BoardLayout boardLayout = _layoutFactory.Create(matchView);
+            if (isFirstView)
+            {
+                _boardWidget.ShowLayoutWithoutMotion(boardLayout);
+            }
+            else
+            {
+                _boardWidget.ShowLayout(boardLayout);
+            }
             IReadOnlyList<BoardCell> targetCells = Array.Empty<BoardCell>();
             if (isViewerPlacing)
             {

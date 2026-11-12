@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
@@ -25,6 +26,20 @@ namespace Torres.Client.Scene
             return cellCenter;
         }
 
+        internal static BoardCell? FindCellAt(Vector3 worldPoint)
+        {
+            var nearestCell = new BoardCell((int)MathF.Round(worldPoint.Z + HalfSpan), (int)MathF.Round(worldPoint.X + HalfSpan));
+            bool isRowInside = (nearestCell.Row >= 0) && (nearestCell.Row < BoardLayout.CellsPerSide);
+            bool isColumnInside = (nearestCell.Column >= 0) && (nearestCell.Column < BoardLayout.CellsPerSide);
+            BoardCell? foundCell = null;
+            if (isRowInside && isColumnInside)
+            {
+                foundCell = nearestCell;
+            }
+
+            return foundCell;
+        }
+
         internal static float GetSurfaceHeight(BoardLayout layout, BoardCell examinedCell)
         {
             float surfaceHeight = layout.IsPlanter(examinedCell) ? PlanterTop : GrassTop;
@@ -45,6 +60,13 @@ namespace Torres.Client.Scene
             Matrix headingRotation = Matrix.CreateRotationY(headingRadians);
 
             return headingRotation;
+        }
+
+        internal static float GetHeadingDegrees(Vector3 travelDirection)
+        {
+            float headingDegrees = MathHelper.ToDegrees(MathF.Atan2(-travelDirection.Z, travelDirection.X));
+
+            return headingDegrees;
         }
 
         internal static Vector3 GetHeadingDirection(float headingDegrees)

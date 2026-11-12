@@ -100,6 +100,7 @@ namespace Torres.Client.Screens
             }
 
             _clockLabel.Text = FormatStepTimeLeft();
+            _boardWidget.Advance(gameTime.ElapsedGameTime);
             _boardWidget.UpdateInput();
             FollowBoardClick(matchView);
             FollowActionRequest();
@@ -416,6 +417,7 @@ namespace Torres.Client.Screens
 
         private void ShowMatchView(MatchView matchView)
         {
+            bool isFirstView = _shownMatchView is null;
             _shownMatchView = matchView;
             _moveOrigin = null;
             if (!IsViewerPlaying(matchView))
@@ -433,7 +435,15 @@ namespace Torres.Client.Screens
             _moveCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.Movement);
             _buildCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.FlowerLevelAddition);
 
-            _boardWidget.ShowLayout(_layoutFactory.Create(matchView));
+            BoardLayout boardLayout = _layoutFactory.Create(matchView);
+            if (isFirstView)
+            {
+                _boardWidget.ShowLayoutWithoutMotion(boardLayout);
+            }
+            else
+            {
+                _boardWidget.ShowLayout(boardLayout);
+            }
             BoardCell? butterflyCell = null;
             if (matchView.HasButterfly)
             {
