@@ -32,6 +32,7 @@ namespace Torres.Client
         private readonly ChannelFactory<IServerStatusService> _statusChannelFactory;
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
+        private readonly DoomLauncher _doomLauncher;
 
         private MatchScreen? _matchScreen;
         private InitialPlacementScreen? _initialPlacementScreen;
@@ -72,6 +73,7 @@ namespace Torres.Client
                 clientSettings.CreateEndpointAddress(ServiceEndpointPaths.Ranking));
 
             _gameSessionConnection = new GameSessionConnection(clientSettings);
+            _doomLauncher = new DoomLauncher(clientSettings);
             _mainMenuScreen = new MainMenuScreen(_languagePreference, _gameSessionConnection, _playerSession);
             _startupScreen = new StartupScreen(_statusChannelFactory);
         }
@@ -139,7 +141,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession));
-            _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, _gameSessionConnection, _playerSession);
+            _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, _gameSessionConnection, _playerSession, _doomLauncher);
             _screensById.Add(ScreenId.InitialPlacement, _initialPlacementScreen);
             _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen(_playerSession));
             _screensById.Add(ScreenId.Result, new ResultScreen(_playerSession));

@@ -24,6 +24,7 @@ namespace Torres.Client.Screens
     {
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
+        private readonly DoomLauncher _doomLauncher;
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly NoticeBox _noticeBox = new NoticeBox();
@@ -37,14 +38,16 @@ namespace Torres.Client.Screens
         private Task<MatchActionResult>? _placementRequest;
         private Task<EndMatchResult>? _endMatchRequest;
 
-        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession, DoomLauncher doomLauncher)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
         {
             ArgumentNullException.ThrowIfNull(gameSessionConnection);
             ArgumentNullException.ThrowIfNull(playerSession);
+            ArgumentNullException.ThrowIfNull(doomLauncher);
 
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _doomLauncher = doomLauncher;
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }
 
@@ -79,6 +82,7 @@ namespace Torres.Client.Screens
             FollowEndMatchRequest();
             if (matchView.Phase == MatchPhase.PlayerTurn)
             {
+                _doomLauncher.LaunchIfEnabled();
                 RequestedScreen = ScreenId.Match;
             }
             else if (matchView.Phase == MatchPhase.Finished)

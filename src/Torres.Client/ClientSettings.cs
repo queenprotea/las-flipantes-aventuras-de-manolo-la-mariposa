@@ -14,6 +14,12 @@ namespace Torres.Client
 
         public string ServerAddress { get; set; } = string.Empty;
 
+        public bool LaunchesDoomAfterPlacement { get; set; }
+
+        public string DoomProgramPath { get; set; } = string.Empty;
+
+        public string DoomWadPath { get; set; } = string.Empty;
+
         internal static ClientSettings Load()
         {
             string settingsPath = Path.Combine(AppContext.BaseDirectory, SettingsFileName);
