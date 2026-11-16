@@ -118,6 +118,9 @@
   <data name="Common.RemainingTime" xml:space="preserve">
     <value>{0} h {1} min</value>
   </data>
+  <data name="Common.TextLimitMessage" xml:space="preserve">
+    <value>At most {0} characters.</value>
+  </data>
   <data name="Startup.ConnectingStatus" xml:space="preserve">
     <value>Connecting…</value>
   </data>
@@ -205,6 +208,9 @@
   <data name="Login.SignedInElsewhere" xml:space="preserve">
     <value>Your account signed in on another computer, so this session was closed.</value>
   </data>
+  <data name="Login.PasswordChanged" xml:space="preserve">
+    <value>Your password was changed. You can log in now.</value>
+  </data>
   <data name="Register.HeaderLabel" xml:space="preserve">
     <value>create account</value>
   </data>
@@ -243,6 +249,21 @@
   </data>
   <data name="Register.PasswordInvalidFormat" xml:space="preserve">
     <value>Use 8 to 20 characters, including uppercase and lowercase letters, numbers, and special characters.</value>
+  </data>
+  <data name="Register.CodeStepTitle" xml:space="preserve">
+    <value>Check your email</value>
+  </data>
+  <data name="Register.CodeStepHint" xml:space="preserve">
+    <value>We sent you a code. Enter it to finish creating your account.</value>
+  </data>
+  <data name="Register.CodeLabel" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Register.ConfirmButton" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Register.InvalidCode" xml:space="preserve">
+    <value>That code isn't valid or has expired.</value>
   </data>
   <data name="PasswordRecovery.HeaderLabel" xml:space="preserve">
     <value>recover access</value>
@@ -294,6 +315,12 @@
   </data>
   <data name="PasswordRecovery.BackToLoginButton" xml:space="preserve">
     <value>Back to log in</value>
+  </data>
+  <data name="PasswordRecovery.PasswordsDoNotMatch" xml:space="preserve">
+    <value>The passwords don't match.</value>
+  </data>
+  <data name="PasswordRecovery.PasswordInvalidFormat" xml:space="preserve">
+    <value>Use 8 to 20 characters, including uppercase and lowercase letters, numbers, and special characters.</value>
   </data>
   <data name="GuestAccess.HeaderLabel" xml:space="preserve">
     <value>play as guest</value>
@@ -891,6 +918,9 @@
   </data>
   <data name="Alerts.LogOutConfirmButton" xml:space="preserve">
     <value>Log out</value>
+  </data>
+  <data name="Alerts.TooManyCodesBody" xml:space="preserve">
+    <value>Wait a moment before asking for another code.</value>
   </data>
   <data name="MatchPreparation.HeaderLabel" xml:space="preserve">
     <value>preparing the match</value>

@@ -61,6 +61,27 @@ namespace Game.Persistence
             return existenceReading;
         }
 
+        public Task<string?> FindChannelAsync(int roomId, int invitedPlayerId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
+
+            Task<string?> channelReading = ReadChannelAsync(roomId, invitedPlayerId);
+
+            return channelReading;
+        }
+
+        public Task ChangeChannelAsync(int roomId, int invitedPlayerId, string channel)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(channel);
+
+            Task channelChange = WriteChannelAsync(roomId, invitedPlayerId, channel);
+
+            return channelChange;
+        }
+
         public Task<bool> DeleteAsync(int roomId, int invitedPlayerId)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
@@ -127,6 +148,31 @@ namespace Game.Persistence
                 .AnyAsync(storedInvitation => (storedInvitation.RoomId == roomId) && (storedInvitation.InvitedPlayerId == invitedPlayerId));
 
             return exists;
+        }
+
+        private async Task<string?> ReadChannelAsync(int roomId, int invitedPlayerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            string? channel = await databaseContext.RoomInvitationRecords
+                .AsNoTracking()
+                .Where(storedInvitation => (storedInvitation.RoomId == roomId) && (storedInvitation.InvitedPlayerId == invitedPlayerId))
+                .Select(storedInvitation => storedInvitation.Channel)
+                .SingleOrDefaultAsync();
+
+            return channel;
+        }
+
+        private async Task WriteChannelAsync(int roomId, int invitedPlayerId, string channel)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+            RoomInvitationRecord? storedInvitation = await databaseContext.RoomInvitationRecords
+                .SingleOrDefaultAsync(candidate => (candidate.RoomId == roomId) && (candidate.InvitedPlayerId == invitedPlayerId));
+            if (storedInvitation is not null)
+            {
+                storedInvitation.Channel = channel;
+                await databaseContext.SaveChangesAsync();
+            }
         }
 
         private async Task<bool> RemoveAsync(int roomId, int invitedPlayerId)

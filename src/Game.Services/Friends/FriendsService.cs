@@ -67,8 +67,8 @@ namespace Game.Services
         public PlayerSearchResponse FindPlayerByUsername(string username)
         {
             int callerPlayerId = RequireAccountOwner().OwnerId;
-            bool isBlankUsername = string.IsNullOrWhiteSpace(username);
-            PlayerSearchResponse searchResult = isBlankUsername
+            bool isUnsearchableUsername = string.IsNullOrWhiteSpace(username) || (username.Trim().Length > AccountLimits.LongestUsername);
+            PlayerSearchResponse searchResult = isUnsearchableUsername
                 ? new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound }
                 : ReadPlayerSearch(username.Trim(), callerPlayerId);
 

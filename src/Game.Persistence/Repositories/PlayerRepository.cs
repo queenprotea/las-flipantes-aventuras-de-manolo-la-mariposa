@@ -72,6 +72,15 @@ namespace Game.Persistence
             return player;
         }
 
+        public Task<Player?> FindByEmailAsync(string email)
+        {
+            ArgumentNullException.ThrowIfNull(email);
+
+            Task<Player?> playerReading = ReadByEmailAsync(email);
+
+            return playerReading;
+        }
+
         public Task<Player?> FindByIdAsync(int playerId)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
@@ -147,6 +156,17 @@ namespace Game.Persistence
                 .ToListAsync();
 
             return players;
+        }
+
+        private async Task<Player?> ReadByEmailAsync(string email)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            Player? player = await databaseContext.Players
+                .AsNoTracking()
+                .SingleOrDefaultAsync(storedPlayer => storedPlayer.Email.ToLower() == email.ToLower());
+
+            return player;
         }
 
         private async Task<Player?> ReadByIdAsync(int playerId)

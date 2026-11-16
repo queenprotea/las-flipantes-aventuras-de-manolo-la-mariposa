@@ -20,7 +20,7 @@ namespace Torres.Client.Screens
         private readonly ChannelFactory<IAccountService> _accountChannelFactory;
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
-        private readonly LabeledTextBox _aliasField = new LabeledTextBox(TextKeys.GuestAccess.MatchNameLabel, false);
+        private readonly LabeledTextBox _aliasField = new LabeledTextBox(TextKeys.GuestAccess.MatchNameLabel, false, AccountLimits.LongestGuestAlias);
         private readonly LocalizedLabel _aliasErrorLabel;
         private readonly LocalizedButton _enterButton;
 
@@ -41,7 +41,6 @@ namespace Torres.Client.Screens
             _playerSession = playerSession;
             _aliasErrorLabel = CreateErrorMessage(TextKeys.Common.RequiredField);
             _enterButton = CreatePrimaryButton(TextKeys.GuestAccess.EnterButton);
-            _aliasField.Box.ValueChanging += AliasBoxOnValueChanging;
         }
 
         internal bool WasServerUnreachable { get; private set; }
@@ -227,14 +226,6 @@ namespace Torres.Client.Screens
             }
 
             _accountChannel = null;
-        }
-
-        private void AliasBoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)
-        {
-            if ((e.NewValue is not null) && (e.NewValue.Length > AccountLimits.LongestGuestAlias))
-            {
-                e.Cancel = true;
-            }
         }
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)

@@ -19,6 +19,7 @@ namespace Game.Services
     {
         private const string InvitationsFeatureName = "the room invitations";
         private const string InGameChannel = "in_game";
+        private const string EmailChannel = "email";
         private const string InvitationsUnavailableMessage = "The room invitations are not available right now.";
         private const string PendingReadFailedMessage = "The database could not be read while listing the invitations of player {0}.";
         private const string InviteesReadFailedMessage = "The database could not be read while player {0} listed the invitees of room {1}.";
@@ -30,6 +31,9 @@ namespace Game.Services
         private const string InvitationSentMessage = "Player {0} invited player {1} to room {2}.";
         private const string InvitationAcceptedMessage = "Player {0} accepted the invitation to room {1}.";
         private const string InvitationRejectedMessage = "Player {0} rejected the invitation to room {1}.";
+        private const string InvitationEmailedMessage = "Player {0} invited player {1} to room {2} by email.";
+        private const string InviteeReadFailedMessage = "The database could not be used to announce by email the invitation of player {0} to room {1}; the invitation waits in the inbox without an email.";
+        private const string InvitationEmailPacedMessage = "The invitation of player {0} to room {1} was not emailed because that address already received an invitation email less than a minute ago.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(InvitationService));
 
@@ -38,20 +42,26 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly RoomInvitationRepository _roomInvitationRepository;
         private readonly PlayerRepository _playerRepository;
+        private readonly IEmailSender _emailSender;
+        private readonly EmailSendingPacer _emailSendingPacer;
 
-        public InvitationService(SessionRegistry sessionRegistry, RoomRegistry roomRegistry, RoomService roomService, RoomInvitationRepository roomInvitationRepository, PlayerRepository playerRepository)
+        public InvitationService(SessionRegistry sessionRegistry, RoomRegistry roomRegistry, RoomService roomService, RoomInvitationRepository roomInvitationRepository, PlayerRepository playerRepository, IEmailSender emailSender, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(roomInvitationRepository);
             ArgumentNullException.ThrowIfNull(playerRepository);
+            ArgumentNullException.ThrowIfNull(emailSender);
+            ArgumentNullException.ThrowIfNull(timeProvider);
 
             _sessionRegistry = sessionRegistry;
             _roomRegistry = roomRegistry;
             _roomService = roomService;
             _roomInvitationRepository = roomInvitationRepository;
             _playerRepository = playerRepository;
+            _emailSender = emailSender;
+            _emailSendingPacer = new EmailSendingPacer(timeProvider);
         }
 
         /// <inheritdoc/>
@@ -103,30 +113,32 @@ namespace Game.Services
         {
             SessionOwner inviter = AccountOwnerGuard.RequireAccountOwner(_sessionRegistry, _log, InvitationsFeatureName);
             LiveRoom? room = _roomRegistry.FindRoomOf(inviter.OwnerId);
-            SendInvitationResult sendResult;
+            SendInvitationResult sendResult = SendInvitationResult.NotInRoom;
+            if (room is not null)
+            {
+                RoomInvitationRecord newInvitation = DraftInvitation(room, inviter, targetPlayerId);
+                sendResult = await InviteAsync(room, newInvitation);
+            }
+
+            return sendResult;
+        }
+
+        /// <inheritdoc/>
+        public async Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
+        {
+            SessionOwner inviter = AccountOwnerGuard.RequireAccountOwner(_sessionRegistry, _log, InvitationsFeatureName);
+            LiveRoom? room = _roomRegistry.FindRoomOf(inviter.OwnerId);
             if (room is null)
             {
-                sendResult = SendInvitationResult.NotInRoom;
+                return SendInvitationResult.NotInRoom;
             }
-            else if ((targetPlayerId <= 0) || (targetPlayerId == inviter.OwnerId))
+
+            RoomInvitationRecord newInvitation = DraftInvitation(room, inviter, targetPlayerId);
+            SendInvitationResult sendResult = await InviteAsync(room, newInvitation);
+            bool isAnnounceable = (sendResult == SendInvitationResult.Sent) || (sendResult == SendInvitationResult.InvitationAlreadyPending);
+            if (isAnnounceable)
             {
-                _log.WarnFormat(CultureInfo.InvariantCulture, InvalidInviteeMessage, inviter.OwnerId, targetPlayerId);
-                sendResult = SendInvitationResult.PlayerNotFound;
-            }
-            else if (room.FindMemberIdOf(targetPlayerId) is not null)
-            {
-                sendResult = SendInvitationResult.AlreadyInThisRoom;
-            }
-            else
-            {
-                var newInvitation = new RoomInvitationRecord
-                {
-                    RoomId = room.RoomId,
-                    InviterPlayerId = inviter.OwnerId,
-                    InvitedPlayerId = targetPlayerId,
-                    Channel = InGameChannel,
-                };
-                sendResult = await StoreInvitationAsync(newInvitation, room.Code);
+                sendResult = await AnnounceByEmailAsync(newInvitation, room.Code, inviter.DisplayName);
             }
 
             return sendResult;
@@ -194,6 +206,101 @@ namespace Game.Services
             }
 
             return roomCodesByRoomId;
+        }
+
+        private static RoomInvitationRecord DraftInvitation(LiveRoom room, SessionOwner inviter, int targetPlayerId)
+        {
+            var newInvitation = new RoomInvitationRecord
+            {
+                RoomId = room.RoomId,
+                InviterPlayerId = inviter.OwnerId,
+                InvitedPlayerId = targetPlayerId,
+                Channel = InGameChannel,
+            };
+
+            return newInvitation;
+        }
+
+        private async Task<SendInvitationResult> InviteAsync(LiveRoom room, RoomInvitationRecord newInvitation)
+        {
+            SendInvitationResult sendResult;
+            if ((newInvitation.InvitedPlayerId <= 0) || (newInvitation.InvitedPlayerId == newInvitation.InviterPlayerId))
+            {
+                _log.WarnFormat(CultureInfo.InvariantCulture, InvalidInviteeMessage, newInvitation.InviterPlayerId, newInvitation.InvitedPlayerId);
+                sendResult = SendInvitationResult.PlayerNotFound;
+            }
+            else if (room.FindMemberIdOf(newInvitation.InvitedPlayerId) is not null)
+            {
+                sendResult = SendInvitationResult.AlreadyInThisRoom;
+            }
+            else
+            {
+                sendResult = await StoreInvitationAsync(newInvitation, room.Code);
+            }
+
+            return sendResult;
+        }
+
+        private async Task<SendInvitationResult> AnnounceByEmailAsync(RoomInvitationRecord storedInvitation, string roomCode, string inviterUsername)
+        {
+            SendInvitationResult announcementResult;
+            try
+            {
+                announcementResult = await EmailInviteeAsync(storedInvitation, roomCode, inviterUsername);
+            }
+            catch (NpgsqlException exception)
+            {
+                string failureMessage = string.Format(CultureInfo.InvariantCulture, InviteeReadFailedMessage, storedInvitation.InvitedPlayerId, storedInvitation.RoomId);
+                _log.Warn(failureMessage, exception);
+                announcementResult = SendInvitationResult.EmailNotSent;
+            }
+
+            return announcementResult;
+        }
+
+        private async Task<SendInvitationResult> EmailInviteeAsync(RoomInvitationRecord storedInvitation, string roomCode, string inviterUsername)
+        {
+            string? channel = await _roomInvitationRepository.FindChannelAsync(storedInvitation.RoomId, storedInvitation.InvitedPlayerId);
+            Player? invitee = await _playerRepository.FindByIdAsync(storedInvitation.InvitedPlayerId);
+            SendInvitationResult emailResult;
+            if (string.Equals(channel, EmailChannel, StringComparison.Ordinal))
+            {
+                emailResult = SendInvitationResult.InvitationAlreadyPending;
+            }
+            else if (invitee is null)
+            {
+                emailResult = SendInvitationResult.EmailNotSent;
+            }
+            else if (!_emailSendingPacer.Admit(invitee.Email))
+            {
+                _log.WarnFormat(CultureInfo.InvariantCulture, InvitationEmailPacedMessage, storedInvitation.InvitedPlayerId, storedInvitation.RoomId);
+                emailResult = SendInvitationResult.EmailNotSent;
+            }
+            else
+            {
+                EmailMessage invitationEmail = EmailComposer.ComposeRoomInvitation(invitee.Email, roomCode, inviterUsername);
+                emailResult = await DeliverInvitationEmailAsync(storedInvitation, invitationEmail);
+            }
+
+            return emailResult;
+        }
+
+        private async Task<SendInvitationResult> DeliverInvitationEmailAsync(RoomInvitationRecord storedInvitation, EmailMessage invitationEmail)
+        {
+            bool wasEmailed = await _emailSender.SendAsync(invitationEmail);
+            SendInvitationResult deliveryResult = SendInvitationResult.EmailNotSent;
+            if (wasEmailed)
+            {
+                await _roomInvitationRepository.ChangeChannelAsync(storedInvitation.RoomId, storedInvitation.InvitedPlayerId, EmailChannel);
+                _log.InfoFormat(CultureInfo.InvariantCulture, InvitationEmailedMessage, storedInvitation.InviterPlayerId, storedInvitation.InvitedPlayerId, storedInvitation.RoomId);
+                deliveryResult = SendInvitationResult.Sent;
+            }
+            else
+            {
+                _emailSendingPacer.Release(invitationEmail.RecipientAddress);
+            }
+
+            return deliveryResult;
         }
 
         private async Task<SendInvitationResult> StoreInvitationAsync(RoomInvitationRecord newInvitation, string roomCode)

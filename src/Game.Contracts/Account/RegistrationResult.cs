@@ -3,13 +3,13 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Tells whether an account was created, or which rule the registration broke.
+    /// Tells whether the verification code of a new account was sent, or which rule the registration broke.
     /// </summary>
     [DataContract]
     public enum RegistrationResult
     {
         [EnumMember]
-        Created,
+        CodeSent,
 
         [EnumMember]
         UsernameTaken,
@@ -25,6 +25,12 @@ namespace Game.Contracts
 
         [EnumMember]
         InvalidUsername,
+
+        [EnumMember]
+        TooManyRequests,
+
+        [EnumMember]
+        MailDeliveryFailed,
 
         [EnumMember]
         DatabaseUnavailable,

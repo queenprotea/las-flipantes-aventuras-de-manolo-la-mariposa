@@ -49,6 +49,32 @@ Los ejemplos de `examples/` se abren por su propio `.csproj`.
 dotnet run --project src/Game.Server
 ```
 
+## Correo del servidor
+
+El servidor envía correos (código para crear la cuenta, código para recuperar el acceso e invitaciones
+a una sala). Por defecto los entrega a **Mailpit**, un servidor de correo local que no los manda a
+nadie y los muestra en `http://localhost:8025`.
+
+1. Instalar Mailpit una vez: Windows `winget install axllent.mailpit`, macOS `brew install mailpit`,
+   Linux el binario de los releases de `axllent/mailpit`.
+2. Abrirlo en una terminal antes del servidor:
+
+   ```
+   mailpit
+   ```
+
+Para que los correos lleguen a buzones de verdad, poner `"UsesRealServer": true` en la sección `Email`
+de `src/Game.Server/appsettings.json` (sin hacer commit de ese cambio) y añadir al `.env`:
+
+```
+TORRES_SMTP_USER=cuenta-del-proyecto@gmail.com
+TORRES_SMTP_PASSWORD=contrasenadeaplicacion
+```
+
+La contraseña es una **contraseña de aplicación** de Google (requiere la verificación en dos pasos),
+escrita sin espacios. Nunca va en el repositorio. Con `Real` y sin esas variables, el servidor no
+arranca. Detalles en `docs/STACK.md` y `docs/CAMBIOS-CORREO.md`.
+
 ## Ejecutar el cliente
 
 ```

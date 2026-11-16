@@ -35,6 +35,15 @@ namespace Game.Contracts
         Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId);
 
         /// <summary>
+        /// Invites an account to the room the caller is in, telling it inside the game and also by an email to the address of that account with the room code and who invites. Each invitation is emailed once: a pending invitation is emailed again only if its earlier email was not delivered, and one address receives at most one invitation email per minute.
+        /// </summary>
+        /// <param name="targetPlayerId">Identifier of the account to invite; it does not need to be a friend of the caller.</param>
+        /// <returns>Whether the invitation was sent, or why it was not. EmailNotSent means the invitation exists but the email could not be delivered.</returns>
+        /// <exception cref="FaultException">The caller is a guest.</exception>
+        [OperationContract(Name = "SendInvitationByEmail", IsInitiating = false)]
+        Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId);
+
+        /// <summary>
         /// Answers one of the caller's pending room invitations. Accepting it enters the caller into the room; rejecting it removes it without telling the sender. An invitation that could not be accepted because of the room, such as a full room, stays pending.
         /// </summary>
         /// <param name="roomId">Identifier of the room the invitation is for.</param>

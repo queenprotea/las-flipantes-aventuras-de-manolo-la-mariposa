@@ -14,7 +14,9 @@ namespace Torres.Client.Session
     {
         private const string ClosedConnectionMessage = "The game session is not open.";
 
-        private static readonly TimeSpan _sessionCloseTimeout = TimeSpan.FromSeconds(2);
+        private const int SessionCloseTimeoutSeconds = 2;
+
+        private static readonly TimeSpan _sessionCloseTimeout = TimeSpan.FromSeconds(SessionCloseTimeoutSeconds);
 
         private readonly GameSessionNoticeQueue _noticeQueue = new GameSessionNoticeQueue();
         private readonly DuplexChannelFactory<IGameSessionService> _channelFactory;
@@ -255,6 +257,13 @@ namespace Torres.Client.Session
         internal Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
         {
             Task<SendInvitationResult> invitationSending = RequireChannel().SendInvitationAsync(targetPlayerId);
+
+            return invitationSending;
+        }
+
+        internal Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
+        {
+            Task<SendInvitationResult> invitationSending = RequireChannel().SendInvitationByEmailAsync(targetPlayerId);
 
             return invitationSending;
         }

@@ -24,7 +24,7 @@ namespace Torres.Client.Screens
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly VerticalStackPanel _tabContentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
-        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
+        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false, AccountLimits.LongestUsername);
         private readonly LocalizedButton _searchButton = CreatePrimaryButton(TextKeys.Friends.SearchButton);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Common.ServerErrorTitle);
         private readonly AvatarViewSet _avatarViews;
@@ -35,7 +35,7 @@ namespace Torres.Client.Screens
         private Task<FriendRequestResult>? _friendRequest;
         private Task<FriendRequestResponseResult>? _responseRequest;
         private Task<FriendRemovalResult>? _removalRequest;
-        private FriendshipListResponse _friendshipList = new FriendshipListResponse();
+        private FriendshipListResponse _friendshipList = CreateEmptyFriendshipList();
         private PlayerSearchResponse? _searchResult;
         private string _searchedUsername = string.Empty;
         private double _secondsSinceFriendshipList;
@@ -63,7 +63,7 @@ namespace Torres.Client.Screens
         {
             ForgetRequests();
             _activeTab = FriendsTab.Friends;
-            _friendshipList = new FriendshipListResponse();
+            _friendshipList = CreateEmptyFriendshipList();
             _searchResult = null;
             _errorLabel.Visible = false;
             HideConfirmation();
@@ -415,6 +415,18 @@ namespace Torres.Client.Screens
             };
 
             return activeTabContent;
+        }
+
+        private static FriendshipListResponse CreateEmptyFriendshipList()
+        {
+            var emptyFriendshipList = new FriendshipListResponse
+            {
+                Friends = new List<PlayerSummary>(),
+                ReceivedRequests = new List<PlayerSummary>(),
+                SentRequests = new List<PlayerSummary>(),
+            };
+
+            return emptyFriendshipList;
         }
 
         private VerticalStackPanel BuildFriendsList()
