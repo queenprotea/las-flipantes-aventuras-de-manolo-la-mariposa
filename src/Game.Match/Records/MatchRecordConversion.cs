@@ -29,6 +29,13 @@ namespace Game.Match
             return playerResults;
         }
 
+        internal static List<MatchParticipant> ToAbandonedResults(MatchTable matchTable, IReadOnlyList<SeatedEntrant> seatedEntrants)
+        {
+            List<MatchParticipant> abandonedResults = seatedEntrants.Where(IsPlayer).Select(seatedEntrant => ToAbandonedResult(seatedEntrant, matchTable)).ToList();
+
+            return abandonedResults;
+        }
+
         internal static string ToEndReason(FinishCause? finishCause)
         {
             string endReason = finishCause switch
@@ -58,6 +65,14 @@ namespace Game.Match
             };
 
             return seatedPlayer;
+        }
+
+        private static MatchParticipant ToAbandonedResult(SeatedEntrant seatedEntrant, MatchTable matchTable)
+        {
+            MatchParticipant abandonedResult = ToSeatedPlayer(seatedEntrant);
+            abandonedResult.WasWithdrawn = matchTable.IsSeatRetired(seatedEntrant.SeatNumber);
+
+            return abandonedResult;
         }
 
         private static MatchParticipant ToPlayerResult(SeatedEntrant seatedEntrant, SeatStanding standing, List<int> finishingSeatNumbers)

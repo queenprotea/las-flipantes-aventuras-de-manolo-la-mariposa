@@ -61,6 +61,9 @@ INSERT INTO system_parameter (parameter_code, parameter_value) VALUES
     ('match_resume_minutes',         '3'),
     -- Turn clock and, by the same rule, the clock of each initial placement.
     ('turn_seconds',                 '90'),
+    -- Seat kept for a player who lost the connection during the turn of another player (rules 5.2).
+    -- During the player's own turn the window is what is left of that turn.
+    ('reconnection_seconds',         '90'),
     -- The emailed recovery code stops being valid after this.
     ('recovery_code_minutes',        '5'),
     -- BCrypt work factor.

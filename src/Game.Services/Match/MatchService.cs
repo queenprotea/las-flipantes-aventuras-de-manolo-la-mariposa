@@ -19,6 +19,9 @@ namespace Game.Services
     public sealed class MatchService : IMatchService
     {
         private const string TurnSecondsParameterCode = "turn_seconds";
+        private const string ReconnectionSecondsParameterCode = "reconnection_seconds";
+        private const string SeatKeptMessage = "Player {0} lost the connection during a match; the seat waits for the reconnection window.";
+        private const string SeatTakenBackMessage = "Player {0} came back to the match before the reconnection window ran out.";
         private const string MatchStartedMessage = "Match {0} started in room {1} with {2} players.";
         private const string MatchEndedMessage = "Player {0} ended the match in room {1}.";
         private const string StartFailedMessage = "The database could not be used while a match was starting in room {0}.";
@@ -35,7 +38,7 @@ namespace Game.Services
         private readonly MatchCoordinator _matchCoordinator;
         private readonly MatchRoomReturn _matchRoomReturn;
 
-        private TimeSpan _stepTime;
+        private MatchTimeLimits? _timeLimits;
         private IReadOnlyDictionary<int, MatchRuleSet>? _ruleSetsByPlayerCount;
 
         public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, TimeProvider timeProvider, StartingBoard startingBoard, Random chanceSource)
@@ -59,11 +62,16 @@ namespace Game.Services
             _timeProvider = timeProvider;
             _matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
             _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), matchRecordRepository, matchParticipantRepository, startingBoard.FlowerCells, chanceSource);
+            _sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
+            _sessionRegistry.SessionClosed += SessionRegistryOnSessionClosed;
+            _sessionRegistry.SessionOpened += SessionRegistryOnSessionOpened;
         }
 
         public async Task LoadRulesAsync()
         {
-            _stepTime = await ReadStepTimeAsync();
+            TimeSpan stepTime = await ReadSecondsAsync(TurnSecondsParameterCode);
+            TimeSpan reconnectionTime = await ReadSecondsAsync(ReconnectionSecondsParameterCode);
+            _timeLimits = new MatchTimeLimits(stepTime, reconnectionTime);
             _ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
         }
 
@@ -324,7 +332,8 @@ namespace Game.Services
             int matchId;
             try
             {
-                matchId = await _matchCoordinator.StartMatchAsync(new MatchOpening(room.RoomId, entrants), _stepTime, ruleSet);
+                MatchTimeLimits timeLimits = _timeLimits ?? throw new InvalidOperationException(RulesNotLoadedMessage);
+                matchId = await _matchCoordinator.StartMatchAsync(new MatchOpening(room.RoomId, entrants), timeLimits, ruleSet);
             }
             catch (NpgsqlException)
             {
@@ -376,12 +385,48 @@ namespace Game.Services
             return matchBan;
         }
 
-        private async Task<TimeSpan> ReadStepTimeAsync()
+        private async Task<TimeSpan> ReadSecondsAsync(string parameterCode)
         {
-            int turnSeconds = await _systemParameterReader.ReadPositiveAsync(TurnSecondsParameterCode);
-            TimeSpan stepTime = TimeSpan.FromSeconds(turnSeconds);
+            int parameterSeconds = await _systemParameterReader.ReadPositiveAsync(parameterCode);
+            TimeSpan parameterTime = TimeSpan.FromSeconds(parameterSeconds);
 
-            return stepTime;
+            return parameterTime;
+        }
+
+        private void SessionRegistryOnSessionLost(object? sender, SessionOwnerEventArgs e)
+        {
+            KeepSeatOf(e.OwnerId);
+        }
+
+        private void SessionRegistryOnSessionClosed(object? sender, SessionOwnerEventArgs e)
+        {
+            KeepSeatOf(e.OwnerId);
+        }
+
+        private void SessionRegistryOnSessionOpened(object? sender, SessionOwnerEventArgs e)
+        {
+            TakeSeatBack(e.OwnerId);
+        }
+
+        private void KeepSeatOf(int ownerId)
+        {
+            if (_matchCoordinator.OpenReconnectionWindow(ownerId))
+            {
+                _matchLog.InfoFormat(SeatKeptMessage, ownerId);
+            }
+
+            if (_sessionRegistry.HasOpenSession(ownerId))
+            {
+                TakeSeatBack(ownerId);
+            }
+        }
+
+        private void TakeSeatBack(int ownerId)
+        {
+            if (_matchCoordinator.CloseReconnectionWindow(ownerId))
+            {
+                _matchLog.InfoFormat(SeatTakenBackMessage, ownerId);
+            }
         }
     }
 }

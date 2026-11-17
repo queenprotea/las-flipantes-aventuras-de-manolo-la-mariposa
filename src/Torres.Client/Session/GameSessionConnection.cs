@@ -13,6 +13,7 @@ namespace Torres.Client.Session
     internal sealed class GameSessionConnection
     {
         private const string ClosedConnectionMessage = "The game session is not open.";
+        private const string NoSessionTokenMessage = "There is no session to reopen.";
 
         private static readonly TimeSpan _sessionCloseTimeout = TimeSpan.FromSeconds(2);
 
@@ -20,6 +21,7 @@ namespace Torres.Client.Session
         private readonly DuplexChannelFactory<IGameSessionService> _channelFactory;
 
         private IGameSessionService? _sessionChannel;
+        private string? _sessionToken;
         private Task<ConnectionCheckResponse>? _pendingConnectionCheck;
         private Task? _pendingUploadCancellation;
         private TimeSpan _connectionCheckPeriod;
@@ -39,14 +41,25 @@ namespace Torres.Client.Session
 
         internal bool WasConnectionLost { get; private set; }
 
+        internal TimeSpan ConnectionCheckPeriod => _connectionCheckPeriod;
+
         internal Task<OpenSessionResult> OpenAsync(string sessionToken)
         {
             ArgumentNullException.ThrowIfNull(sessionToken);
 
             AbortSessionChannel();
+            _sessionToken = sessionToken;
             IGameSessionService openingChannel = _channelFactory.CreateChannel();
             _sessionChannel = openingChannel;
             Task<OpenSessionResult> sessionOpening = new SessionCall<string, OpenSessionResult>(openingChannel.OpenSession, sessionToken).StartAsync();
+
+            return sessionOpening;
+        }
+
+        internal Task<OpenSessionResult> ReopenAsync()
+        {
+            string sessionToken = _sessionToken ?? throw new InvalidOperationException(NoSessionTokenMessage);
+            Task<OpenSessionResult> sessionOpening = OpenAsync(sessionToken);
 
             return sessionOpening;
         }
@@ -377,7 +390,13 @@ namespace Torres.Client.Session
                 Task.WaitAny(new Task[] { sessionClosing }, _sessionCloseTimeout);
             }
 
+            AbandonSession();
+        }
+
+        internal void AbandonSession()
+        {
             AbortSessionChannel();
+            _sessionToken = null;
         }
 
         internal void CloseSessionAndFactory()

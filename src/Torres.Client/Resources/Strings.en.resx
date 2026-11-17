@@ -778,6 +778,12 @@
   <data name="Room.LeaveDuringMatchNotice" xml:space="preserve">
     <value>You can't leave the room while the game is on.</value>
   </data>
+  <data name="Room.RetiredFromMatchNotice" xml:space="preserve">
+    <value>You're out of the match: your time to come back ran out.</value>
+  </data>
+  <data name="Room.MatchEndedWhileAwayNotice" xml:space="preserve">
+    <value>The match ended while you were offline.</value>
+  </data>
   <data name="Chat.NoMessages" xml:space="preserve">
     <value>No one has written yet.</value>
   </data>

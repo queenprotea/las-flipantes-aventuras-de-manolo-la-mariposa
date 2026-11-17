@@ -58,17 +58,35 @@ namespace Game.Match
             return isOnBoard;
         }
 
-        public Task<int> StartMatchAsync(MatchOpening matchOpening, TimeSpan stepTime, MatchRuleSet ruleSet)
+        public Task<int> StartMatchAsync(MatchOpening matchOpening, MatchTimeLimits timeLimits, MatchRuleSet ruleSet)
         {
             ArgumentNullException.ThrowIfNull(matchOpening);
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchOpening.RoomId, nameof(matchOpening));
             ArgumentNullException.ThrowIfNull(matchOpening.Entrants, nameof(matchOpening));
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(stepTime, TimeSpan.Zero);
+            ArgumentNullException.ThrowIfNull(timeLimits);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeLimits.StepTime, TimeSpan.Zero, nameof(timeLimits));
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeLimits.ReconnectionTime, TimeSpan.Zero, nameof(timeLimits));
             ArgumentNullException.ThrowIfNull(ruleSet);
 
-            Task<int> matchStart = StartRecordedMatchAsync(matchOpening, stepTime, ruleSet);
+            Task<int> matchStart = StartRecordedMatchAsync(matchOpening, timeLimits, ruleSet);
 
             return matchStart;
+        }
+
+        public bool OpenReconnectionWindow(int entrantId)
+        {
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            bool hasOpenedWindow = (liveMatch is not null) && liveMatch.OpenReconnectionWindow(entrantId);
+
+            return hasOpenedWindow;
+        }
+
+        public bool CloseReconnectionWindow(int entrantId)
+        {
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            bool isBackInMatch = (liveMatch is not null) && liveMatch.CloseReconnectionWindow(entrantId);
+
+            return isBackInMatch;
         }
 
         public MatchActionResult PlacePiece(int entrantId, MatchPiece piece, MatchCell destinationCell)
@@ -190,7 +208,7 @@ namespace Game.Match
             return flower;
         }
 
-        private async Task<int> StartRecordedMatchAsync(MatchOpening matchOpening, TimeSpan stepTime, MatchRuleSet ruleSet)
+        private async Task<int> StartRecordedMatchAsync(MatchOpening matchOpening, MatchTimeLimits timeLimits, MatchRuleSet ruleSet)
         {
             MatchRules matchRules = MatchRuleConversion.ToMatchRules(ruleSet);
             List<SeatedEntrant> seatedEntrants = SeatActiveEntrants(matchOpening.Entrants);
@@ -202,7 +220,7 @@ namespace Game.Match
             {
                 matchId = await _matchRecordRepository.CreateAsync(matchOpening.RoomId, seatedEntrants.Count);
                 await _matchParticipantRepository.AddAsync(matchId, MatchRecordConversion.ToSeatedPlayers(seatedEntrants));
-                var liveMatch = new LiveMatch(matchId, matchTable, seatedEntrants, _timeProvider, _matchListener, stepTime);
+                var liveMatch = new LiveMatch(matchId, matchTable, seatedEntrants, _timeProvider, _matchListener, timeLimits);
                 OpenMatch(liveMatch, entrantIds);
             }
             finally

@@ -2,9 +2,9 @@ using System;
 
 namespace Game.Services
 {
-    public sealed class SessionLostEventArgs : EventArgs
+    public sealed class SessionOwnerEventArgs : EventArgs
     {
-        public SessionLostEventArgs(int ownerId)
+        public SessionOwnerEventArgs(int ownerId)
         {
             OwnerId = ownerId;
         }

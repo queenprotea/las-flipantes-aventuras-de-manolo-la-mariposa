@@ -13,6 +13,10 @@ namespace Game.Match.Tests
 
         internal static TimeSpan StepTime { get; } = TimeSpan.FromSeconds(90);
 
+        internal static TimeSpan ReconnectionTime { get; } = TimeSpan.FromSeconds(40);
+
+        internal static MatchTimeLimits TimeLimits { get; } = new MatchTimeLimits(StepTime, ReconnectionTime);
+
         internal static RoundRule FourTurnRound { get; } = new RoundRule(new int[] { 3, 3, 3, 3 });
 
         internal static RoundRule OneTurnRound { get; } = new RoundRule(new int[] { 3 });

@@ -10,10 +10,14 @@ namespace Game.Match
     internal sealed class MatchViewFactory
     {
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
+        private readonly IReadOnlyCollection<int> _disconnectedSeatNumbers;
+        private readonly TimeSpan _reconnectionTime;
 
-        internal MatchViewFactory(IReadOnlyList<SeatedEntrant> seatedEntrants)
+        internal MatchViewFactory(IReadOnlyList<SeatedEntrant> seatedEntrants, IReadOnlyCollection<int> disconnectedSeatNumbers, TimeSpan reconnectionTime)
         {
             _seatedEntrants = seatedEntrants;
+            _disconnectedSeatNumbers = disconnectedSeatNumbers;
+            _reconnectionTime = reconnectionTime;
         }
 
         internal MatchView CreateForSeat(MatchTable matchTable, TimeSpan? stepTimeLeft, int viewerSeatNumber)
@@ -30,6 +34,7 @@ namespace Game.Match
                 ViewerSeatNumber = viewerSeatNumber,
                 ActiveSeatNumber = matchTable.ActiveSeatNumber,
                 StepTimeLeft = stepTimeLeft,
+                ReconnectionTime = _reconnectionTime,
                 ActionPointsLeft = matchTable.ActionPointsLeft,
                 BuildsLeft = matchTable.BuildsLeft,
                 CaterpillarsPerSeat = MatchTable.CaterpillarsPerSeat,
@@ -68,7 +73,7 @@ namespace Game.Match
             return matchPhase;
         }
 
-        private static MatchSeat ToMatchSeat(SeatedEntrant seatedEntrant, MatchTable matchTable)
+        private MatchSeat ToMatchSeat(SeatedEntrant seatedEntrant, MatchTable matchTable)
         {
             SeatStanding standing = matchTable.Standings[seatedEntrant.SeatNumber - MatchTable.FirstSeatNumber];
             var matchSeat = new MatchSeat
@@ -81,6 +86,7 @@ namespace Game.Match
                 RoundScores = standing.RoundScores.Select(ToMatchRoundScore).ToList(),
                 TotalScore = standing.TotalScore,
                 IsRetired = standing.IsRetired,
+                IsDisconnected = _disconnectedSeatNumbers.Contains(seatedEntrant.SeatNumber),
                 HandCount = matchTable.CardTable.SeatCards[seatedEntrant.SeatNumber - MatchTable.FirstSeatNumber].Hand.Count,
                 CardPoints = standing.CardPoints,
                 FinalScore = standing.FinalScore,

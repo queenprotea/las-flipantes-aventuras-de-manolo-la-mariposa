@@ -2366,6 +2366,8 @@ namespace Game.Contracts
         
         private System.Collections.Generic.List<int> RankedSeatNumbersField;
         
+        private System.TimeSpan ReconnectionTimeField;
+        
         private int RoundButterflyPointsField;
         
         private int RoundNumberField;
@@ -2626,6 +2628,19 @@ namespace Game.Contracts
             set
             {
                 this.RankedSeatNumbersField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.TimeSpan ReconnectionTime
+        {
+            get
+            {
+                return this.ReconnectionTimeField;
+            }
+            set
+            {
+                this.ReconnectionTimeField = value;
             }
         }
         
@@ -3008,6 +3023,8 @@ namespace Game.Contracts
         
         private int HandCountField;
         
+        private bool IsDisconnectedField;
+        
         private bool IsGuestField;
         
         private bool IsRetiredField;
@@ -3093,6 +3110,19 @@ namespace Game.Contracts
             set
             {
                 this.HandCountField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public bool IsDisconnected
+        {
+            get
+            {
+                return this.IsDisconnectedField;
+            }
+            set
+            {
+                this.IsDisconnectedField = value;
             }
         }
         

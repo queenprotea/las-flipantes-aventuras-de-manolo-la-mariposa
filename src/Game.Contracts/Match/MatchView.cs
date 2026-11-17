@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes a match as one of its players sees it: the phase, who plays and for how long, what the active player has left, the seats with their scores, the board, the legal targets, the viewer's own action cards and the final ranking. The viewer sees the cards in its own hand, which of them it can use now, whether it can draw and the flowers that can lose a level; of the other seats it only sees how many cards they hold.
+    /// Describes a match as one of its players sees it: the phase, who plays and for how long, how long a seat that loses the connection during the turn of another player is kept, what the active player has left, the seats with their scores, the board, the legal targets, the viewer's own action cards and the final ranking. The viewer sees the cards in its own hand, which of them it can use now, whether it can draw and the flowers that can lose a level; of the other seats it only sees how many cards they hold.
     /// </summary>
     [DataContract]
     public sealed class MatchView
@@ -33,6 +33,9 @@ namespace Game.Contracts
 
         [DataMember]
         public TimeSpan? StepTimeLeft { get; set; }
+
+        [DataMember]
+        public TimeSpan ReconnectionTime { get; set; }
 
         [DataMember]
         public int ActionPointsLeft { get; set; }

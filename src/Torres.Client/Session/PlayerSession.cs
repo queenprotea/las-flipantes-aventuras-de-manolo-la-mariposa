@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 using Game.Contracts;
 
@@ -18,6 +19,8 @@ namespace Torres.Client.Session
 
         internal DateTime? StepEndsAtUtc { get; private set; }
 
+        internal DateTime? ReconnectionEndsAtUtc { get; private set; }
+
         internal RoomChatLog RoomChat { get; } = new RoomChatLog();
 
         internal MatchHistorySelection MatchHistory { get; } = new MatchHistorySelection();
@@ -31,6 +34,8 @@ namespace Torres.Client.Session
         internal bool IsLoggedIn => HasAccount || IsGuest;
 
         internal string DisplayName => Player?.Username ?? GuestAlias ?? string.Empty;
+
+        internal bool IsPlayingMatch => (CurrentMatchView is MatchView matchView) && (matchView.Phase != MatchPhase.Finished) && !IsViewerRetired(matchView);
 
         internal void Start(PlayerIdentity player)
         {
@@ -82,10 +87,26 @@ namespace Torres.Client.Session
             }
         }
 
+        internal void LoseConnection(DateTime lostAtUtc)
+        {
+            ReconnectionEndsAtUtc = null;
+            if (CurrentMatchView is MatchView matchView)
+            {
+                bool isViewerStep = matchView.ActiveSeatNumber == matchView.ViewerSeatNumber;
+                ReconnectionEndsAtUtc = isViewerStep ? StepEndsAtUtc : lostAtUtc + matchView.ReconnectionTime;
+            }
+        }
+
+        internal void RecoverConnection()
+        {
+            ReconnectionEndsAtUtc = null;
+        }
+
         internal void LeaveMatch()
         {
             CurrentMatchView = null;
             StepEndsAtUtc = null;
+            ReconnectionEndsAtUtc = null;
         }
 
         internal void LeaveRoom()
@@ -93,7 +114,17 @@ namespace Torres.Client.Session
             CurrentRoom = null;
             CurrentMatchView = null;
             StepEndsAtUtc = null;
+            ReconnectionEndsAtUtc = null;
             RoomChat.Clear();
+        }
+
+        internal static bool IsViewerRetired(MatchView matchView)
+        {
+            ArgumentNullException.ThrowIfNull(matchView);
+
+            bool isRetired = matchView.Seats.Any(seat => (seat.SeatNumber == matchView.ViewerSeatNumber) && seat.IsRetired);
+
+            return isRetired;
         }
 
         internal void End()
@@ -104,6 +135,7 @@ namespace Torres.Client.Session
             CurrentRoom = null;
             CurrentMatchView = null;
             StepEndsAtUtc = null;
+            ReconnectionEndsAtUtc = null;
             RoomChat.Clear();
             MatchHistory.Clear();
             Invitations.Clear();

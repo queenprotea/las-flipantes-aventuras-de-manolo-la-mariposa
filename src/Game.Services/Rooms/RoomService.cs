@@ -547,7 +547,7 @@ namespace Game.Services
             }
         }
 
-        private void SessionRegistryOnSessionLost(object? sender, SessionLostEventArgs e)
+        private void SessionRegistryOnSessionLost(object? sender, SessionOwnerEventArgs e)
         {
             MarkMemberInactive(e.OwnerId);
         }

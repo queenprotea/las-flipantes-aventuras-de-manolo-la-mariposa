@@ -249,6 +249,10 @@ namespace Torres.Client.Screens
             {
                 playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag) { Font = Fonts.Label, TextColor = Theme.BlushInk });
             }
+            else if (seat.IsDisconnected)
+            {
+                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.DisconnectedTag) { Font = Fonts.Label, TextColor = Theme.ButterInk });
+            }
 
             if (seat.HandCount > 0)
             {

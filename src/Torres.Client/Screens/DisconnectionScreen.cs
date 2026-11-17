@@ -1,10 +1,17 @@
+using System;
+using System.Threading.Tasks;
+
 using FontStashSharp.RichText;
 
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
+
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -17,17 +24,71 @@ namespace Torres.Client.Screens
         private const float WithdrawnOpacity = 0.45f;
         private const float FullOpacity = 1f;
 
-        private static readonly DisconnectionPlayer[] _previewPlayers =
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _playerSession;
+        private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
+        private readonly Label _clockLabel = new Label
         {
-            new DisconnectionPlayer(PreviewSamples.SeatOnePlayer, true, false, true, false, Theme.MintBrush),
-            new DisconnectionPlayer(PreviewSamples.SeatTwoPlayer, false, false, false, false, Theme.LavenderBrush),
-            new DisconnectionPlayer(PreviewSamples.SeatThreePlayer, false, true, true, true, Theme.ButterBrush),
-            new DisconnectionPlayer(PreviewSamples.SeatFourPlayer, false, false, true, false, Theme.SkyBrush),
+            Font = Fonts.LargeClock,
+            TextColor = Theme.BlushInk,
+            HorizontalAlignment = HorizontalAlignment.Center,
         };
 
-        internal DisconnectionScreen()
+        private readonly LocalizedButton _retryButton = CreatePrimaryButton(TextKeys.Disconnection.RetryButton);
+
+        private Task<OpenSessionResult>? _sessionReopening;
+        private TimeSpan _sinceLastAttempt;
+        private bool _isWaitingForMatch;
+
+        internal DisconnectionScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Disconnection.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(playerSession);
+
+            _gameSessionConnection = gameSessionConnection;
+            _playerSession = playerSession;
+            _retryButton.Click += RetryButtonOnClick;
+        }
+
+        internal bool WasExitRequested { get; private set; }
+
+        internal bool WasSessionRefused { get; private set; }
+
+        internal bool HasMatchEndedWhileAway { get; private set; }
+
+        internal override void Open()
+        {
+            _noticeBox.Hide();
+            _sessionReopening = null;
+            _isWaitingForMatch = false;
+            ClearRequests();
+            ShowSeats();
+            StartReopening();
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            _clockLabel.Text = FormatReconnectionTimeLeft();
+            FollowReopening();
+            bool isWaitingToRetry = (_sessionReopening is null) && !_isWaitingForMatch;
+            if (isWaitingToRetry)
+            {
+                _sinceLastAttempt += gameTime.ElapsedGameTime;
+            }
+
+            if (isWaitingToRetry && (_sinceLastAttempt >= _gameSessionConnection.ConnectionCheckPeriod))
+            {
+                StartReopening();
+            }
+        }
+
+        internal void ClearRequests()
+        {
+            WasExitRequested = false;
+            WasSessionRefused = false;
+            HasMatchEndedWhileAway = false;
         }
 
         protected override Widget Build()
@@ -52,6 +113,8 @@ namespace Torres.Client.Screens
                 TextAlign = TextHorizontalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
+            _noticeBox.Width = Sizes.DisconnectionMessageWidth;
+            _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
 
             var centerPanel = new VerticalStackPanel
             {
@@ -74,14 +137,9 @@ namespace Torres.Client.Screens
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            centerPanel.Widgets.Add(new Label
-            {
-                Text = PreviewSamples.DisconnectionClock,
-                Font = Fonts.LargeClock,
-                TextColor = Theme.BlushInk,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
+            centerPanel.Widgets.Add(_clockLabel);
             centerPanel.Widgets.Add(resumeTurnMessage);
+            centerPanel.Widgets.Add(_noticeBox);
             centerPanel.Widgets.Add(BuildActions());
 
             return centerPanel;
@@ -89,46 +147,51 @@ namespace Torres.Client.Screens
 
         private HorizontalStackPanel BuildActions()
         {
-            LocalizedButton retryButton = CreatePrimaryButton(TextKeys.Disconnection.RetryButton);
             LocalizedButton exitButton = CreateSecondaryButton(TextKeys.Disconnection.ExitMatchButton);
-            retryButton.Click += RetryButtonOnClick;
             exitButton.Click += ExitButtonOnClick;
 
             HorizontalStackPanel actionButtons = CreateButtonRow();
             actionButtons.HorizontalAlignment = HorizontalAlignment.Center;
-            actionButtons.Widgets.Add(retryButton);
+            actionButtons.Widgets.Add(_retryButton);
             actionButtons.Widgets.Add(exitButton);
 
             return actionButtons;
         }
 
-        private static VerticalStackPanel BuildSideColumn()
+        private VerticalStackPanel BuildSideColumn()
         {
-            var playersPanel = new VerticalStackPanel();
-            foreach (DisconnectionPlayer player in _previewPlayers)
-            {
-                playersPanel.Widgets.Add(BuildPlayerRow(player));
-            }
-
             var sideColumn = new VerticalStackPanel
             {
                 Width = Sizes.DisconnectionSideWidth,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Disconnection.PlayersLabel, playersPanel));
+            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Disconnection.PlayersLabel, _playersPanel));
 
             return sideColumn;
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(DisconnectionPlayer player)
+        private void ShowSeats()
+        {
+            _playersPanel.Widgets.Clear();
+            MatchView? matchView = _playerSession.CurrentMatchView;
+            if (matchView is not null)
+            {
+                foreach (MatchSeat seat in matchView.Seats)
+                {
+                    _playersPanel.Widgets.Add(BuildPlayerRow(seat, seat.SeatNumber == matchView.ViewerSeatNumber));
+                }
+            }
+        }
+
+        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer)
         {
             var playerIdentity = new VerticalStackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            playerIdentity.Widgets.Add(CreatePlayerNameLabel(player.Name, Theme.Ink));
+            playerIdentity.Widgets.Add(CreatePlayerNameLabel(seat.DisplayName, Theme.Ink));
 
-            HorizontalStackPanel playerTags = BuildTags(player);
+            HorizontalStackPanel playerTags = BuildTags(seat, isViewer);
             if (playerTags.Widgets.Count > 0)
             {
                 playerIdentity.Widgets.Add(playerTags);
@@ -138,13 +201,13 @@ namespace Torres.Client.Screens
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
                 Padding = MatchLayout.PlayerRowPadding,
-                Opacity = player.HasWithdrawn ? WithdrawnOpacity : FullOpacity,
+                Opacity = seat.IsRetired ? WithdrawnOpacity : FullOpacity,
             };
             playerRow.Widgets.Add(new Panel
             {
                 Width = MatchLayout.PlayerIconSize,
                 Height = MatchLayout.PlayerIconSize,
-                Background = player.ColorBrush,
+                Background = SeatColors.BrushFor(seat.Color),
                 VerticalAlignment = VerticalAlignment.Center,
             });
             playerRow.Widgets.Add(playerIdentity);
@@ -153,46 +216,122 @@ namespace Torres.Client.Screens
             return playerRow;
         }
 
-        private static HorizontalStackPanel BuildTags(DisconnectionPlayer player)
+        private static HorizontalStackPanel BuildTags(MatchSeat seat, bool isViewer)
         {
             var playerTags = new HorizontalStackPanel
             {
                 Spacing = TagSpacing,
             };
 
-            if (player.IsYou)
+            if (isViewer)
             {
                 playerTags.Widgets.Add(CreateTag(TextKeys.Common.YouTag, Theme.MutedInk));
             }
 
-            if (player.IsGuest)
+            if (seat.IsGuest)
             {
                 playerTags.Widgets.Add(CreateTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
             }
 
-            if (!player.IsConnected)
-            {
-                playerTags.Widgets.Add(CreateTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
-            }
-
-            if (player.HasWithdrawn)
+            if (seat.IsRetired)
             {
                 playerTags.Widgets.Add(CreateTag(TextKeys.Common.WithdrewTag, Theme.BlushInk));
+            }
+            else if (isViewer || seat.IsDisconnected)
+            {
+                playerTags.Widgets.Add(CreateTag(TextKeys.Common.DisconnectedTag, Theme.ButterInk));
             }
 
             return playerTags;
         }
 
+        private string FormatReconnectionTimeLeft()
+        {
+            TimeSpan reconnectionTimeLeft = TimeSpan.Zero;
+            if (_playerSession.ReconnectionEndsAtUtc is DateTime reconnectionEndsAtUtc)
+            {
+                reconnectionTimeLeft = reconnectionEndsAtUtc - DateTime.UtcNow;
+            }
+
+            string clockText = DisplayFormats.FormatCountdown(reconnectionTimeLeft);
+
+            return clockText;
+        }
+
+        private void StartReopening()
+        {
+            _sinceLastAttempt = TimeSpan.Zero;
+            _retryButton.Enabled = false;
+            _sessionReopening = _gameSessionConnection.ReopenAsync();
+        }
+
+        private void FollowReopening()
+        {
+            if ((_sessionReopening is null) || !_sessionReopening.IsCompleted)
+            {
+                return;
+            }
+
+            Task<OpenSessionResult> completedReopening = _sessionReopening;
+            _sessionReopening = null;
+            _retryButton.Enabled = true;
+            if (!completedReopening.IsCompletedSuccessfully)
+            {
+                _gameSessionConnection.AbortSessionChannel();
+                ShowServerError();
+            }
+            else if (completedReopening.Result.Status == OpenSessionStatus.SessionOpened)
+            {
+                ResumeSession(completedReopening.Result);
+            }
+            else
+            {
+                _gameSessionConnection.AbortSessionChannel();
+                WasSessionRefused = true;
+            }
+        }
+
+        private void ResumeSession(OpenSessionResult opening)
+        {
+            _gameSessionConnection.BeginConnectionChecks(opening);
+            _playerSession.RecoverConnection();
+            _noticeBox.Hide();
+            _retryButton.Enabled = false;
+            if (opening.CurrentRoom is null)
+            {
+                _playerSession.LeaveRoom();
+                HasMatchEndedWhileAway = true;
+            }
+            else if (opening.CurrentRoom.State == RoomState.InMatch)
+            {
+                _playerSession.EnterRoom(opening.CurrentRoom);
+                _isWaitingForMatch = true;
+            }
+            else
+            {
+                _playerSession.EnterRoom(opening.CurrentRoom);
+                _playerSession.LeaveMatch();
+                HasMatchEndedWhileAway = true;
+            }
+        }
+
+        private void ShowServerError()
+        {
+            string[]? noDetailArguments = null;
+            _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
+        }
+
         private void RetryButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Resume;
+            if (_sessionReopening is null)
+            {
+                StartReopening();
+            }
         }
 
         private void ExitButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.MatchInProgress;
+            WasExitRequested = true;
         }
-
-        private sealed record DisconnectionPlayer(string Name, bool IsYou, bool IsGuest, bool IsConnected, bool HasWithdrawn, IBrush ColorBrush);
     }
 }

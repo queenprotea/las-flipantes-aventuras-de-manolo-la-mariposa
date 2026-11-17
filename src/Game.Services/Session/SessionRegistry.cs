@@ -35,7 +35,11 @@ namespace Game.Services
             _timeProvider = timeProvider;
         }
 
-        public event EventHandler<SessionLostEventArgs>? SessionLost;
+        public event EventHandler<SessionOwnerEventArgs>? SessionOpened;
+
+        public event EventHandler<SessionOwnerEventArgs>? SessionClosed;
+
+        public event EventHandler<SessionOwnerEventArgs>? SessionLost;
 
         internal PlayerSession Open(SessionOwner owner)
         {
@@ -58,6 +62,7 @@ namespace Game.Services
             EndReplacedSession(replacedSession, openedSession);
             openedSession.Watch();
             _log.InfoFormat(SessionOpenedMessage, owner.OwnerId);
+            OnSessionOpened(new SessionOwnerEventArgs(owner.OwnerId));
 
             return openedSession;
         }
@@ -100,6 +105,7 @@ namespace Game.Services
             if (wasRemoved)
             {
                 _log.InfoFormat(SessionClosedMessage, closedSession.Owner.OwnerId);
+                OnSessionClosed(new SessionOwnerEventArgs(closedSession.Owner.OwnerId));
             }
         }
 
@@ -112,7 +118,7 @@ namespace Game.Services
 
             lostSession.Drop();
             _log.InfoFormat(SessionLostMessage, lostSession.Owner.OwnerId);
-            OnSessionLost(new SessionLostEventArgs(lostSession.Owner.OwnerId));
+            OnSessionLost(new SessionOwnerEventArgs(lostSession.Owner.OwnerId));
         }
 
         internal IReadOnlyList<PlayerSession> FindSilentSessions()
@@ -174,7 +180,17 @@ namespace Game.Services
             return wasRemoved;
         }
 
-        private void OnSessionLost(SessionLostEventArgs e)
+        private void OnSessionOpened(SessionOwnerEventArgs e)
+        {
+            SessionOpened?.Invoke(this, e);
+        }
+
+        private void OnSessionClosed(SessionOwnerEventArgs e)
+        {
+            SessionClosed?.Invoke(this, e);
+        }
+
+        private void OnSessionLost(SessionOwnerEventArgs e)
         {
             SessionLost?.Invoke(this, e);
         }

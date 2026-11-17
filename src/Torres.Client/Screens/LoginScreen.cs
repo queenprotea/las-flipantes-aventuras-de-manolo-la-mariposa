@@ -93,7 +93,7 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _gameSessionConnection.AbortSessionChannel();
+                _gameSessionConnection.AbandonSession();
                 ShowError(TextKeys.Common.ServerErrorTitle);
             }
         }

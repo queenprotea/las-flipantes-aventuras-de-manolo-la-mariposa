@@ -322,6 +322,8 @@ namespace Torres.Client.Localization
             internal const string PlayerBannedNotice = "Room.PlayerBannedNotice";
             internal const string PlayerPermanentlyBannedNotice = "Room.PlayerPermanentlyBannedNotice";
             internal const string LeaveDuringMatchNotice = "Room.LeaveDuringMatchNotice";
+            internal const string RetiredFromMatchNotice = "Room.RetiredFromMatchNotice";
+            internal const string MatchEndedWhileAwayNotice = "Room.MatchEndedWhileAwayNotice";
         }
 
         internal static class Chat

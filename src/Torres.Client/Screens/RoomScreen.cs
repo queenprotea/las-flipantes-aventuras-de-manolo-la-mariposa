@@ -46,6 +46,11 @@ namespace Torres.Client.Screens
             _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);
         }
 
+        internal void ShowNotice(string noticeKey)
+        {
+            _noticeBox.ShowTitle(noticeKey);
+        }
+
         internal override void Open()
         {
             _noticeBox.Hide();

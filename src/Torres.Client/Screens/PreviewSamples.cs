@@ -13,7 +13,6 @@ namespace Torres.Client.Screens
         internal const string OrugaPlayer = "Oruga_23";
         internal const string LobbyRoomCode = "TR-8492";
         internal const string MatchRoomCode = "K7QM";
-        internal const string DisconnectionClock = "0:41";
         internal const string ResumeClock = "2:14";
     }
 }

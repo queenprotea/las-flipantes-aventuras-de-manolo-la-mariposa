@@ -165,6 +165,15 @@ namespace Torres.Client.Screens
                 });
             }
 
+            if (seat.IsRetired)
+            {
+                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag) { Font = Fonts.Label, TextColor = Theme.BlushInk });
+            }
+            else if (seat.IsDisconnected)
+            {
+                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.DisconnectedTag) { Font = Fonts.Label, TextColor = Theme.ButterInk });
+            }
+
             HorizontalStackPanel playerRow = BuildColorRow(SeatColors.BrushFor(seat.Color), MatchLayout.PlayerIconSize);
             playerRow.Widgets.Add(playerIdentity);
             StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
