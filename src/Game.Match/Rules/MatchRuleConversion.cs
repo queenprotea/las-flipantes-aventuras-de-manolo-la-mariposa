@@ -15,7 +15,7 @@ namespace Game.Match
 
             List<RoundTurnPlan> roundTurnPlans = ruleSet.RoundRules.Select(ToRoundTurnPlan).ToList();
             ActionPointCosts actionPointCosts = ruleSet.ActionPointCosts;
-            var actionCosts = new ActionCosts(actionPointCosts.CaterpillarPlacement, actionPointCosts.Movement, actionPointCosts.LevelClimb, actionPointCosts.FlowerLevelAddition);
+            var actionCosts = new ActionCosts(actionPointCosts.CaterpillarPlacement, actionPointCosts.Movement, actionPointCosts.LevelClimb, actionPointCosts.FlowerLevelAddition, actionPointCosts.CardDraw, actionPointCosts.CardPlay);
             var matchRules = new MatchRules(roundTurnPlans, actionCosts);
 
             return matchRules;

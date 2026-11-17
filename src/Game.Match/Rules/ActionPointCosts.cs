@@ -1,4 +1,4 @@
 namespace Game.Match
 {
-    public readonly record struct ActionPointCosts(int CaterpillarPlacement, int Movement, int LevelClimb, int FlowerLevelAddition);
+    public readonly record struct ActionPointCosts(int CaterpillarPlacement, int Movement, int LevelClimb, int FlowerLevelAddition, int CardDraw, int CardPlay);
 }

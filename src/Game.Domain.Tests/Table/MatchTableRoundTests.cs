@@ -19,6 +19,7 @@ namespace Game.Domain.Tests
         private const int TenPoints = 10;
         private const int OneScoredPlanter = 1;
         private const int TwoScoredPlanters = 2;
+        private const int NoCardPoints = 0;
 
         [Fact]
         public void Test_ExpireTurn_ClosingRoundOne_AddsEachSeatPlanterPoints()
@@ -123,7 +124,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithHigherTotal_PutsItFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(OnePoint, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(OnePoint, 0, OneScoredPlanter) }, false, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false, NoCardPoints));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 
@@ -133,7 +134,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithTiedTotals_PutsMoreScoredPlantersFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, TwoScoredPlanters) }, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, TwoScoredPlanters) }, false, NoCardPoints));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 
@@ -143,11 +144,31 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindRanking_WithFullTie_PutsTheLowerSeatFirst()
         {
-            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false));
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TwoPoints, 0, OneScoredPlanter) }, false, NoCardPoints));
 
             int winnerSeatNumber = table.FindRanking()[0].SeatNumber;
 
             Assert.Equal(SeatNumberOne, winnerSeatNumber);
+        }
+
+        [Fact]
+        public void Test_FindFinishingOrder_WithRetiredSeatOfHigherTotal_PutsItAfterTheSeatStillPlaying()
+        {
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(TenPoints, 0, OneScoredPlanter) }, true, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(OnePoint, 0, OneScoredPlanter) }, false, NoCardPoints));
+
+            List<int> finishingSeatNumbers = table.FindFinishingOrder().Select(standing => standing.SeatNumber).ToList();
+
+            Assert.Equal(new int[] { SeatNumberTwo, SeatNumberOne }, finishingSeatNumbers);
+        }
+
+        [Fact]
+        public void Test_FindFinishingOrder_WithTwoRetiredSeats_OrdersThemByFinalScore()
+        {
+            MatchTable table = CreateFinishedTable(new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(OnePoint, 0, OneScoredPlanter) }, true, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(TenPoints, 0, OneScoredPlanter) }, true, NoCardPoints));
+
+            List<int> finishingSeatNumbers = table.FindFinishingOrder().Select(standing => standing.SeatNumber).ToList();
+
+            Assert.Equal(new int[] { SeatNumberTwo, SeatNumberOne }, finishingSeatNumbers);
         }
 
         [Fact]
@@ -187,7 +208,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_RetireSeat_DuringItsCaterpillarPlacement_PassesThePlacement()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
 
             table.RetireSeat(SeatNumberOne);
 
@@ -225,7 +246,7 @@ namespace Game.Domain.Tests
             MatchTable table = CreatePlayedOpening();
             ExpireTurns(table, TwoSeatCount);
 
-            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.OneTurnPerRoundRules, SampleRules.CreateTieBreakRandom());
+            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
             restoredTable.ExpirePlacement();
             table.ExpirePlacement();
 
@@ -235,7 +256,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreatePlayedOpening()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.OneTurnPerRoundRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceButterfly(SeatNumberTwo, SampleLayouts.SouthEastFlower);
@@ -245,7 +266,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreatePlayedThreeSeatOpening()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
@@ -256,8 +277,8 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreateFinishedTable(SeatStanding seatOneStanding, SeatStanding seatTwoStanding)
         {
-            var snapshot = new MatchSnapshot(TablePhase.Finished, MatchRules.RoundCount, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, 0, 0, SampleLayouts.FiveStartingFlowers, new List<Caterpillar>(), null, new SeatStanding[] { seatOneStanding, seatTwoStanding }, Array.Empty<int>(), FinishCause.Completed);
-            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.OneTurnPerRoundRules, SampleRules.CreateTieBreakRandom());
+            var snapshot = new MatchSnapshot(TablePhase.Finished, MatchRules.RoundCount, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, 0, 0, SampleLayouts.FiveStartingFlowers, new List<Caterpillar>(), null, new SeatStanding[] { seatOneStanding, seatTwoStanding }, Array.Empty<SeatCards>(), Array.Empty<int>(), FinishCause.Completed);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
 
             return table;
         }

@@ -1036,6 +1036,66 @@
   <data name="Match.JoinsPlantersNotice" xml:space="preserve">
     <value>That flower would join two planters.</value>
   </data>
+  <data name="Match.CardsLabel" xml:space="preserve">
+    <value>Your cards</value>
+  </data>
+  <data name="Match.DeckCountLabel" xml:space="preserve">
+    <value>{0} left</value>
+  </data>
+  <data name="Match.CardsInHandTag" xml:space="preserve">
+    <value>{0} cards</value>
+  </data>
+  <data name="Match.SixActionPointsCard" xml:space="preserve">
+    <value>1 · 6 AP</value>
+  </data>
+  <data name="Match.SevenActionPointsCard" xml:space="preserve">
+    <value>2 · 7 AP</value>
+  </data>
+  <data name="Match.DoubleClimbCard" xml:space="preserve">
+    <value>3 · Double climb</value>
+  </data>
+  <data name="Match.GroundLeapCard" xml:space="preserve">
+    <value>4 · Leap</value>
+  </data>
+  <data name="Match.FlowerLevelMoveCard" xml:space="preserve">
+    <value>5 · Move a level</value>
+  </data>
+  <data name="Match.RelocationCard" xml:space="preserve">
+    <value>6 · Relocation</value>
+  </data>
+  <data name="Match.PlanterCrossingCard" xml:space="preserve">
+    <value>7 · Cross the planter</value>
+  </data>
+  <data name="Match.FlowerLevelRemovalCard" xml:space="preserve">
+    <value>8 · Remove levels</value>
+  </data>
+  <data name="Match.ChooseCardCaterpillarHint" xml:space="preserve">
+    <value>Choose the caterpillar that uses the card</value>
+  </data>
+  <data name="Match.ChooseCardDestinationHint" xml:space="preserve">
+    <value>Choose where the caterpillar goes</value>
+  </data>
+  <data name="Match.ChooseLevelSourceHint" xml:space="preserve">
+    <value>Choose the flower that loses its top level</value>
+  </data>
+  <data name="Match.ChooseLevelDestinationHint" xml:space="preserve">
+    <value>Choose where the level goes</value>
+  </data>
+  <data name="Match.ChooseRemovalHint" xml:space="preserve">
+    <value>Choose one or two flowers · press the card again to remove just one</value>
+  </data>
+  <data name="Match.DeckEmptyNotice" xml:space="preserve">
+    <value>You've drawn every card in your deck this round.</value>
+  </data>
+  <data name="Match.CardNotInHandNotice" xml:space="preserve">
+    <value>That card is no longer in your hand.</value>
+  </data>
+  <data name="Match.PointsCardUsedNotice" xml:space="preserve">
+    <value>You've already used a points card this turn.</value>
+  </data>
+  <data name="Match.WrongCardTargetNotice" xml:space="preserve">
+    <value>That card can't be used there.</value>
+  </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>end of round {0}</value>
   </data>

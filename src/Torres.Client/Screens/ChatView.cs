@@ -224,10 +224,19 @@ namespace Torres.Client.Screens
                 Border = null,
                 BorderThickness = new Thickness(0),
                 VerticalAlignment = VerticalAlignment.Top,
+                Tag = message,
             };
-            reportButton.Click += (sender, e) => StartReport(message);
+            reportButton.Click += ReportButtonOnClick;
 
             return reportButton;
+        }
+
+        private void ReportButtonOnClick(object sender, MyraEventArgs e)
+        {
+            if (sender is Widget { Tag: ChatMessage reportedMessage })
+            {
+                StartReport(reportedMessage);
+            }
         }
 
         private void StartReport(ChatMessage message)

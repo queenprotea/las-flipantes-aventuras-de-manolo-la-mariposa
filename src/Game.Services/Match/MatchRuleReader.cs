@@ -52,7 +52,9 @@ namespace Game.Services
             int movementCost = FindCost(actionCosts, ActionCostCodes.CaterpillarMovement);
             int levelClimbCost = FindCost(actionCosts, ActionCostCodes.LevelClimb);
             int flowerLevelAdditionCost = FindCost(actionCosts, ActionCostCodes.FlowerLevelAddition);
-            var actionPointCosts = new ActionPointCosts(caterpillarPlacementCost, movementCost, levelClimbCost, flowerLevelAdditionCost);
+            int cardDrawCost = FindCost(actionCosts, ActionCostCodes.CardDraw);
+            int cardPlayCost = FindCost(actionCosts, ActionCostCodes.CardPlay);
+            var actionPointCosts = new ActionPointCosts(caterpillarPlacementCost, movementCost, levelClimbCost, flowerLevelAdditionCost, cardDrawCost, cardPlayCost);
 
             return actionPointCosts;
         }

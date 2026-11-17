@@ -6,5 +6,7 @@ namespace Game.Persistence
         public const string CaterpillarMovement = "move_knight";
         public const string LevelClimb = "raise_knight_level";
         public const string FlowerLevelAddition = "place_building";
+        public const string CardDraw = "draw_action_card";
+        public const string CardPlay = "play_action_card";
     }
 }

@@ -4,7 +4,7 @@ namespace Game.Domain
 {
     public sealed record MatchSnapshot
     {
-        public MatchSnapshot(TablePhase phase, int roundNumber, int turnRoundNumber, int seatCount, int activeSeatNumber, int actionPointsLeft, int buildsLeft, IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars, BoardCell? butterflyCell, IReadOnlyList<SeatStanding> standings, IReadOnlyList<int> pendingButterflySeatNumbers, FinishCause? finishCause)
+        public MatchSnapshot(TablePhase phase, int roundNumber, int turnRoundNumber, int seatCount, int activeSeatNumber, int actionPointsLeft, int buildsLeft, IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars, BoardCell? butterflyCell, IReadOnlyList<SeatStanding> standings, IReadOnlyList<SeatCards> seatCards, IReadOnlyList<int> pendingButterflySeatNumbers, FinishCause? finishCause)
         {
             Phase = phase;
             RoundNumber = roundNumber;
@@ -17,6 +17,7 @@ namespace Game.Domain
             Caterpillars = caterpillars;
             ButterflyCell = butterflyCell;
             Standings = standings;
+            SeatCards = seatCards;
             PendingButterflySeatNumbers = pendingButterflySeatNumbers;
             FinishCause = finishCause;
         }
@@ -42,6 +43,8 @@ namespace Game.Domain
         public BoardCell? ButterflyCell { get; }
 
         public IReadOnlyList<SeatStanding> Standings { get; }
+
+        public IReadOnlyList<SeatCards> SeatCards { get; }
 
         public IReadOnlyList<int> PendingButterflySeatNumbers { get; }
 

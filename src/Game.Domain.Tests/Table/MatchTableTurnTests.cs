@@ -93,7 +93,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceCaterpillar_DuringCaterpillarPlacement_ReturnsWrongPhase()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
 
@@ -411,7 +411,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpireTurn_DuringCaterpillarPlacement_ThrowsInvalidOperationException()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             Assert.Throws<InvalidOperationException>(table.ExpireTurn);
         }
@@ -430,7 +430,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpireTurn_InTurnThreeWithThreeSeats_HandsOutTwoBuilds()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
@@ -448,7 +448,7 @@ namespace Game.Domain.Tests
             MatchTable table = CreatePlayedOpening();
             table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
 
-            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
+            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             Assert.Equal(table.ActionPointsLeft, restoredTable.ActionPointsLeft);
             Assert.Equal(table.BuildsLeft, restoredTable.BuildsLeft);
@@ -463,7 +463,7 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreatePlayedOpening(MatchRules rules)
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, rules, SampleRules.CreateTieBreakRandom());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, rules, SampleRules.CreateChanceSource());
             table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
             table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
             table.PlaceButterfly(SeatNumberTwo, SampleLayouts.SouthEastFlower);
@@ -473,8 +473,8 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreateTurnTable(IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars)
         {
-            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<int>(), null);
-            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateTieBreakRandom());
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<SeatCards>(), Array.Empty<int>(), null);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             return table;
         }

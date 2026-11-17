@@ -8,11 +8,12 @@ namespace Game.Domain
     {
         public const int CellsPerSide = 8;
         public const int MaximumFlowerLevel = 3;
+        internal const int LowestFlowerLevel = 1;
 
         private const int GroundLevel = 0;
-        private const int LowestFlowerLevel = 1;
         private const string RepeatedFlowerMessage = "Two flowers cannot stand on the same cell.";
         private const string FullFlowerMessage = "A flower cannot grow past its maximum level.";
+        private const string SingleLevelFlowerMessage = "A flower of a single level cannot lose its level.";
 
         private readonly int[,] _flowerLevels = new int[CellsPerSide, CellsPerSide];
 
@@ -80,6 +81,26 @@ namespace Game.Domain
             }
 
             _flowerLevels[buildCell.Row, buildCell.Column] = flowerLevel + 1;
+        }
+
+        public void RemoveFlowerLevel(BoardCell flowerCell)
+        {
+            int flowerLevel = GetFlowerLevel(flowerCell);
+            if (flowerLevel <= LowestFlowerLevel)
+            {
+                throw new InvalidOperationException(SingleLevelFlowerMessage);
+            }
+
+            _flowerLevels[flowerCell.Row, flowerCell.Column] = flowerLevel - 1;
+        }
+
+        public Planter? FindPlanterOf(BoardCell flowerCell)
+        {
+            ThrowIfOutside(flowerCell, nameof(flowerCell));
+
+            Planter? planter = FindPlanters().FirstOrDefault(examinedPlanter => examinedPlanter.Flowers.Any(flower => flower.Cell == flowerCell));
+
+            return planter;
         }
 
         public int CountPlantersAround(BoardCell examinedCell)

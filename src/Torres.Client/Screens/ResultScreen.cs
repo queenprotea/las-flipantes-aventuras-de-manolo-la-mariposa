@@ -118,7 +118,8 @@ namespace Torres.Client.Screens
             playerRow.Widgets.Add(playerCell);
             playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(planterPoints), Theme.SoftInk));
             playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(seat.TotalScore), Theme.Ink));
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(seat.CardPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(seat.FinalScore), Theme.Ink));
             StackPanel.SetProportionType(playerCell, ProportionType.Fill);
             if (isViewer)
             {
@@ -222,6 +223,7 @@ namespace Torres.Client.Screens
             headerRow.Widgets.Add(playerHeader);
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.PlantersColumn));
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.ButterflyColumn));
+            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.CardsColumn));
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.TotalColumn));
             StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
 

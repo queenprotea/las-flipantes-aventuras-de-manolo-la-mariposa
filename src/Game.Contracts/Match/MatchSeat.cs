@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Describes a seat of the match: its number, who sits there, the guest mark, the color kept from the room, the caterpillars still in hand, the points of each closed round and whether the player was retired.
+    /// Describes a seat of the match: its number, who sits there, the guest mark, the color kept from the room, the caterpillars still in hand, the points of each closed round, the cards it holds, the points earned with kept cards, the final score and whether the player was retired.
     /// </summary>
     [DataContract]
     public sealed class MatchSeat
@@ -32,5 +32,14 @@ namespace Game.Contracts
 
         [DataMember]
         public bool IsRetired { get; set; }
+
+        [DataMember]
+        public int HandCount { get; set; }
+
+        [DataMember]
+        public int CardPoints { get; set; }
+
+        [DataMember]
+        public int FinalScore { get; set; }
     }
 }

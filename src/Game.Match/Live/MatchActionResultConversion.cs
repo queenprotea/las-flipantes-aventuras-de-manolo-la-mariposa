@@ -40,6 +40,10 @@ namespace Game.Match
                 TurnActionOutcome.NoBuildsLeft => MatchActionResult.NoBuildsLeft,
                 TurnActionOutcome.NotNextToPlanter => MatchActionResult.NotNextToPlanter,
                 TurnActionOutcome.JoinsPlanters => MatchActionResult.JoinsPlanters,
+                TurnActionOutcome.DeckEmpty => MatchActionResult.DeckEmpty,
+                TurnActionOutcome.CardNotInHand => MatchActionResult.CardNotInHand,
+                TurnActionOutcome.PointsCardAlreadyUsed => MatchActionResult.PointsCardAlreadyUsed,
+                TurnActionOutcome.WrongCardTarget => MatchActionResult.WrongCardTarget,
                 _ => throw new ArgumentOutOfRangeException(nameof(turnActionOutcome)),
             };
 

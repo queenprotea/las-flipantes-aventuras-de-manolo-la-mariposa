@@ -19,5 +19,11 @@ namespace Game.Contracts
 
         [DataMember]
         public int FlowerLevelAddition { get; set; }
+
+        [DataMember]
+        public int CardDraw { get; set; }
+
+        [DataMember]
+        public int CardPlay { get; set; }
     }
 }

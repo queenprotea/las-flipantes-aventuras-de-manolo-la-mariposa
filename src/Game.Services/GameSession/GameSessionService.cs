@@ -246,6 +246,22 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
+        public MatchActionResult DrawCard()
+        {
+            MatchActionResult actionResult = _matchService.DrawCard();
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult PlayCard(MatchCardPlay cardPlay)
+        {
+            MatchActionResult actionResult = _matchService.PlayCard(cardPlay);
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
         public MatchActionResult EndTurn()
         {
             MatchActionResult actionResult = _matchService.EndTurn();

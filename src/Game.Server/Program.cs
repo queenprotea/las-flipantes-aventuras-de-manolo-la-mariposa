@@ -30,12 +30,16 @@ const string MetadataPublishedMessage = "Service metadata published on {0}";
 const string MetadataHostName = "localhost";
 const string StartupDatabaseFailedMessage = "The database could not be used while the server started; the server does not start.";
 const string AvatarFolderFailedMessage = "The avatar folder could not be created; the server does not start.";
+const string StartingBoardFailedMessage = "The starting board in the configuration is not valid; the server does not start.";
+const string StoredConfigurationFailedMessage = "The configuration stored in the database is not valid; the server does not start.";
+const string UnhandledFailureMessage = "An unexpected failure stopped the server.";
 
 Env.TraversePath().Load();
 XmlConfigurator.Configure(
     LogManager.GetRepository(typeof(ServerStatusService).Assembly),
     new FileInfo(Path.Combine(AppContext.BaseDirectory, LogConfigurationFile)));
 ILog hostLog = LogManager.GetLogger(typeof(ServerStatusService).Assembly, HostLoggerName);
+AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
 DatabaseSettings databaseSettings = DatabaseSettings.ReadFromEnvironment();
 byte[] sessionSigningKey = SessionSettings.ReadSigningKey();
@@ -124,6 +128,17 @@ builder.Services.AddSingleton<ConnectionSupervisor>();
 
 WebApplication app = builder.Build();
 
+MatchService matchService;
+try
+{
+    matchService = app.Services.GetRequiredService<MatchService>();
+}
+catch (ArgumentException exception)
+{
+    hostLog.Fatal(StartingBoardFailedMessage, exception);
+    return;
+}
+
 RoomStartup roomStartup = app.Services.GetRequiredService<RoomStartup>();
 TimeSpan roomInactivityLimit;
 ChatCapacity chatCapacity;
@@ -134,17 +149,22 @@ try
     roomInactivityLimit = await roomStartup.ReadInactivityLimitAsync();
     chatCapacity = await roomStartup.ReadChatCapacityAsync();
     sanctionPolicy = await roomStartup.ReadSanctionPolicyAsync();
+    await matchService.LoadRulesAsync();
 }
 catch (NpgsqlException exception)
 {
     hostLog.Fatal(StartupDatabaseFailedMessage, exception);
     return;
 }
+catch (InvalidOperationException exception)
+{
+    hostLog.Fatal(StoredConfigurationFailedMessage, exception);
+    return;
+}
 
 app.Services.GetRequiredService<ChatService>().Start(chatCapacity);
 app.Services.GetRequiredService<ReportRecorder>().Start(sanctionPolicy);
 
-app.Services.GetRequiredService<MatchService>();
 if (serverSettings.PublishesServiceMetadata)
 {
     ServiceMetadataBehavior metadataBehavior = app.Services.GetRequiredService<ServiceMetadataBehavior>();
@@ -159,6 +179,15 @@ connectionSupervisor.Start(roomInactivityLimit);
 hostLog.InfoFormat(ServerListeningMessage, serverSettings.NetTcpPort);
 await app.RunAsync();
 await connectionSupervisor.StopAsync();
+await matchService.FinishRecordingAsync();
+
+void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+{
+    if (e.ExceptionObject is Exception unhandledException)
+    {
+        hostLog.Fatal(UnhandledFailureMessage, unhandledException);
+    }
+}
 
 void AddEndpoints(IServiceBuilder serviceBuilder)
 {

@@ -16,5 +16,9 @@ namespace Game.Domain
         NoBuildsLeft,
         NotNextToPlanter,
         JoinsPlanters,
+        DeckEmpty,
+        CardNotInHand,
+        PointsCardAlreadyUsed,
+        WrongCardTarget,
     }
 }

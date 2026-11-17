@@ -28,6 +28,7 @@ namespace Torres.Client.Screens
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly CardHandView _cardHand = new CardHandView();
         private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
         private readonly HorizontalStackPanel _caterpillarPips = new HorizontalStackPanel { Spacing = MatchLayout.PipSpacing };
         private readonly HorizontalStackPanel _buildPips = new HorizontalStackPanel { Spacing = MatchLayout.PipSpacing };
@@ -78,6 +79,7 @@ namespace Torres.Client.Screens
             _shownMatchView = null;
             _actionMode = TurnActionMode.None;
             _moveOrigin = null;
+            _cardHand.CancelChoice();
             string roomCode = _playerSession.CurrentRoom?.Code ?? string.Empty;
             HeaderArguments = new string[] { roomCode };
             if (_playerSession.CurrentMatchView is null)
@@ -103,6 +105,7 @@ namespace Torres.Client.Screens
             _boardWidget.Advance(gameTime.ElapsedGameTime);
             _boardWidget.UpdateInput();
             FollowBoardClick(matchView);
+            FollowCardHand(matchView);
             FollowActionRequest();
             FollowEndMatchRequest();
             ScreenId? nextScreen = FindNextScreen(matchView);
@@ -178,6 +181,10 @@ namespace Torres.Client.Screens
                 MatchActionResult.NoBuildsLeft => TextKeys.Match.NoBuildsLeftNotice,
                 MatchActionResult.NotNextToPlanter => TextKeys.Match.NotNextToPlanterNotice,
                 MatchActionResult.JoinsPlanters => TextKeys.Match.JoinsPlantersNotice,
+                MatchActionResult.DeckEmpty => TextKeys.Match.DeckEmptyNotice,
+                MatchActionResult.CardNotInHand => TextKeys.Match.CardNotInHandNotice,
+                MatchActionResult.PointsCardAlreadyUsed => TextKeys.Match.PointsCardUsedNotice,
+                MatchActionResult.WrongCardTarget => TextKeys.Match.WrongCardTargetNotice,
                 MatchActionResult.NotInMatch or MatchActionResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
                 MatchActionResult.Applied => throw new ArgumentOutOfRangeException(nameof(actionRejection)),
                 _ => throw new ArgumentOutOfRangeException(nameof(actionRejection)),
@@ -243,6 +250,11 @@ namespace Torres.Client.Screens
                 playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag) { Font = Fonts.Label, TextColor = Theme.BlushInk });
             }
 
+            if (seat.HandCount > 0)
+            {
+                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Match.CardsInHandTag) { Font = Fonts.Label, TextColor = Theme.MutedInk, TextArguments = new string[] { DisplayFormats.FormatInteger(seat.HandCount) } });
+            }
+
             var playerRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
@@ -258,7 +270,7 @@ namespace Torres.Client.Screens
             playerRow.Widgets.Add(playerIdentity);
             playerRow.Widgets.Add(new Label
             {
-                Text = DisplayFormats.FormatInteger(seat.TotalScore),
+                Text = DisplayFormats.FormatInteger(seat.FinalScore),
                 Font = Fonts.Small,
                 TextColor = Theme.SoftInk,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -332,6 +344,9 @@ namespace Torres.Client.Screens
             sideBar.Widgets.Add(CreateDivider());
             sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.YourCaterpillarsLabel, _caterpillarPips));
             sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.BuildingsLabel, _buildPips));
+            sideBar.Widgets.Add(CreateDivider());
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.DeckLabel, _cardHand.DeckRoot));
+            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.CardsLabel, _cardHand.HandRoot));
 
             return sideBar;
         }
@@ -469,6 +484,7 @@ namespace Torres.Client.Screens
             _moveButton.Enabled = canAct && (matchView.MoveTargets.Count > 0);
             _buildButton.Enabled = canAct && (matchView.BuildTargets.Count > 0);
             _endTurnButton.Enabled = canAct;
+            _cardHand.Show(matchView, canAct);
 
             IReadOnlyList<BoardCell> targetCells = FindTargetCells(matchView);
             if (targetCells.Count == 0)
@@ -479,10 +495,16 @@ namespace Torres.Client.Screens
             _caterpillarButton.Background = _actionMode == TurnActionMode.NewCaterpillar ? Theme.MintTintBrush : Theme.SurfaceBrush;
             _moveButton.Background = _actionMode == TurnActionMode.Move ? Theme.MintTintBrush : Theme.SurfaceBrush;
             _buildButton.Background = _actionMode == TurnActionMode.Build ? Theme.MintTintBrush : Theme.SurfaceBrush;
-            _hintLabel.Visible = _actionMode != TurnActionMode.None;
-            _hintLabel.TextKey = FindHintKey();
-            _hintLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.LevelClimb) };
+            RefreshHint(matchView);
             _boardWidget.ShowPlacementTargets(FindTargetCells(matchView));
+        }
+
+        private void RefreshHint(MatchView matchView)
+        {
+            string? cardHintKey = _cardHand.FindHintKey();
+            _hintLabel.Visible = (_actionMode != TurnActionMode.None) || (cardHintKey is not null);
+            _hintLabel.TextKey = cardHintKey ?? FindHintKey();
+            _hintLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.LevelClimb) };
         }
 
         private string FindHintKey()
@@ -501,6 +523,13 @@ namespace Torres.Client.Screens
         }
 
         private IReadOnlyList<BoardCell> FindTargetCells(MatchView matchView)
+        {
+            IReadOnlyList<BoardCell> targetCells = _cardHand.IsChoosingCells ? _cardHand.FindTargetCells(matchView) : FindActionTargetCells(matchView);
+
+            return targetCells;
+        }
+
+        private IReadOnlyList<BoardCell> FindActionTargetCells(MatchView matchView)
         {
             IReadOnlyList<BoardCell> targetCells = _actionMode switch
             {
@@ -524,6 +553,18 @@ namespace Torres.Client.Screens
             }
 
             _noticeBox.Hide();
+            if (_cardHand.IsChoosingCells)
+            {
+                _cardHand.ChooseCell(clickedTargetCell);
+            }
+            else
+            {
+                ChooseActionCell(matchView, clickedTargetCell);
+            }
+        }
+
+        private void ChooseActionCell(MatchView matchView, BoardCell clickedTargetCell)
+        {
             MatchCell targetMatchCell = MatchCellConversion.ToMatchCell(clickedTargetCell);
             switch (_actionMode)
             {
@@ -565,6 +606,29 @@ namespace Torres.Client.Screens
             {
                 _moveOrigin = clickedTargetCell;
                 RefreshActionControls(matchView);
+            }
+        }
+
+        private void FollowCardHand(MatchView matchView)
+        {
+            if (_cardHand.TakeChoiceChange())
+            {
+                _noticeBox.Hide();
+                _actionMode = TurnActionMode.None;
+                _moveOrigin = null;
+                RefreshActionControls(matchView);
+            }
+
+            bool isDrawRequested = _cardHand.TakeDrawRequest();
+            MatchCardPlay? readyPlay = _cardHand.TakeReadyPlay();
+            bool canAct = (_actionRequest is null) && IsViewerPlaying(matchView);
+            if (canAct && isDrawRequested)
+            {
+                StartActionRequest(_gameSessionConnection.DrawCardAsync(), matchView);
+            }
+            else if (canAct && (readyPlay is not null))
+            {
+                StartActionRequest(_gameSessionConnection.PlayCardAsync(readyPlay), matchView);
             }
         }
 
@@ -618,6 +682,7 @@ namespace Torres.Client.Screens
         {
             _noticeBox.Hide();
             _moveOrigin = null;
+            _cardHand.CancelChoice();
             _actionMode = _actionMode == chosenMode ? TurnActionMode.None : chosenMode;
             if (_shownMatchView is not null)
             {
@@ -647,6 +712,7 @@ namespace Torres.Client.Screens
             {
                 _noticeBox.Hide();
                 _actionMode = TurnActionMode.None;
+                _cardHand.CancelChoice();
                 StartActionRequest(_gameSessionConnection.EndTurnAsync(), matchView);
             }
         }

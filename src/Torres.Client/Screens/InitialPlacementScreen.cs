@@ -136,7 +136,11 @@ namespace Torres.Client.Screens
                 MatchActionResult.TimeExpired => TextKeys.InitialPlacement.TimeExpiredNotice,
                 MatchActionResult.NotInMatch or MatchActionResult.NotIdentified => TextKeys.Common.ServerErrorTitle,
                 MatchActionResult.NotYourTurn or MatchActionResult.WrongPhase => TextKeys.InitialPlacement.NotYourPlacementNotice,
-                MatchActionResult.Applied or MatchActionResult.NotEnoughActionPoints or MatchActionResult.NoCaterpillarsLeft or MatchActionResult.NotYourCaterpillar or MatchActionResult.NotNeighborCell or MatchActionResult.ClimbTooHigh or MatchActionResult.FlowerAtMaximumLevel or MatchActionResult.NoBuildsLeft or MatchActionResult.NotNextToPlanter or MatchActionResult.JoinsPlanters => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.Applied or MatchActionResult.NotEnoughActionPoints or MatchActionResult.NoCaterpillarsLeft => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.NotYourCaterpillar or MatchActionResult.NotNeighborCell or MatchActionResult.ClimbTooHigh => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.FlowerAtMaximumLevel or MatchActionResult.NoBuildsLeft or MatchActionResult.NotNextToPlanter => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.JoinsPlanters or MatchActionResult.DeckEmpty or MatchActionResult.CardNotInHand => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
+                MatchActionResult.PointsCardAlreadyUsed or MatchActionResult.WrongCardTarget => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
                 _ => throw new ArgumentOutOfRangeException(nameof(placementRejection)),
             };
 

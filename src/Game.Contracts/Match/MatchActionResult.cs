@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Tells whether a placement or a turn action was applied, or why not.
+    /// Tells whether a placement, a turn action or the draw or use of an action card was applied, or why not.
     /// </summary>
     [DataContract]
     public enum MatchActionResult
@@ -61,5 +61,17 @@ namespace Game.Contracts
 
         [EnumMember]
         JoinsPlanters,
+
+        [EnumMember]
+        DeckEmpty,
+
+        [EnumMember]
+        CardNotInHand,
+
+        [EnumMember]
+        PointsCardAlreadyUsed,
+
+        [EnumMember]
+        WrongCardTarget,
     }
 }

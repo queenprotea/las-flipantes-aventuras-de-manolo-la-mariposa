@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Lets the host start a match with the active members of the room, and lets the seated players place their pieces, play their turns or end the match.
+    /// Lets the host start a match with the active members of the room, and lets the seated players place their pieces, play their turns, draw and use action cards or end the match.
     /// </summary>
     [ServiceContract(CallbackContract = typeof(IMatchNoticeReceiver))]
     public interface IMatchService
@@ -40,6 +40,21 @@ namespace Game.Contracts
         /// <returns>Whether the level was added, or why not.</returns>
         [OperationContract(Name = "AddFlowerLevel", IsInitiating = false)]
         MatchActionResult AddFlowerLevel(MatchCell buildCell);
+
+        /// <summary>
+        /// Draws a random card from the caller's own deck of the round into its hand during the caller's turn, for the action points that drawing costs.
+        /// </summary>
+        /// <returns>Whether a card was drawn, or why not.</returns>
+        [OperationContract(Name = "DrawCard", IsInitiating = false)]
+        MatchActionResult DrawCard();
+
+        /// <summary>
+        /// Uses an action card from the caller's hand during the caller's turn; the card leaves the hand only when its effect is applied.
+        /// </summary>
+        /// <param name="cardPlay">The card and the cells it acts on.</param>
+        /// <returns>Whether the card was used, or why not.</returns>
+        [OperationContract(Name = "PlayCard", IsInitiating = false)]
+        MatchActionResult PlayCard(MatchCardPlay cardPlay);
 
         /// <summary>
         /// Ends the caller's turn before its time runs out; the action points left are lost.

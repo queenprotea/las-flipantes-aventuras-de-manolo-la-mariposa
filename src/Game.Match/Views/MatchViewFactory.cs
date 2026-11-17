@@ -19,6 +19,7 @@ namespace Game.Match
         internal MatchView CreateForSeat(MatchTable matchTable, TimeSpan? stepTimeLeft, int viewerSeatNumber)
         {
             MatchCell butterflyCell = matchTable.ButterflyCell is BoardCell butterflyBoardCell ? MatchCellConversion.ToMatchCell(butterflyBoardCell) : new MatchCell();
+            SeatCards viewerCards = matchTable.CardTable.SeatCards[viewerSeatNumber - MatchTable.FirstSeatNumber];
             var matchView = new MatchView
             {
                 Phase = ToMatchPhase(matchTable.Phase),
@@ -43,6 +44,11 @@ namespace Game.Match
                 BuildTargets = matchTable.FindBuildTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
                 RankedSeatNumbers = CreateRankedSeatNumbers(matchTable),
                 WasAbandoned = matchTable.FinishCause == FinishCause.TooFewSeats,
+                Hand = viewerCards.Hand.Select(MatchCardConversion.ToMatchCard).ToList(),
+                DeckCount = viewerCards.Deck.Count,
+                PlayableCards = matchTable.CardTable.FindPlayableCards(viewerSeatNumber).Select(MatchCardConversion.ToMatchCard).ToList(),
+                CanDrawCard = matchTable.CardTable.CanDrawCard(viewerSeatNumber),
+                LevelRemovalTargets = matchTable.CardTable.FindLevelRemovalTargets().Select(MatchCellConversion.ToMatchCell).ToList(),
             };
 
             return matchView;
@@ -75,6 +81,9 @@ namespace Game.Match
                 RoundScores = standing.RoundScores.Select(ToMatchRoundScore).ToList(),
                 TotalScore = standing.TotalScore,
                 IsRetired = standing.IsRetired,
+                HandCount = matchTable.CardTable.SeatCards[seatedEntrant.SeatNumber - MatchTable.FirstSeatNumber].Hand.Count,
+                CardPoints = standing.CardPoints,
+                FinalScore = standing.FinalScore,
             };
 
             return matchSeat;
@@ -82,7 +91,7 @@ namespace Game.Match
 
         private static MatchActionCosts ToMatchActionCosts(ActionCosts actionCosts)
         {
-            var matchActionCosts = new MatchActionCosts { CaterpillarPlacement = actionCosts.CaterpillarPlacement, Movement = actionCosts.Movement, LevelClimb = actionCosts.LevelClimb, FlowerLevelAddition = actionCosts.FlowerLevelAddition };
+            var matchActionCosts = new MatchActionCosts { CaterpillarPlacement = actionCosts.CaterpillarPlacement, Movement = actionCosts.Movement, LevelClimb = actionCosts.LevelClimb, FlowerLevelAddition = actionCosts.FlowerLevelAddition, CardDraw = actionCosts.CardDraw, CardPlay = actionCosts.CardPlay };
 
             return matchActionCosts;
         }

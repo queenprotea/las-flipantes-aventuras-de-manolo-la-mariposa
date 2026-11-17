@@ -73,7 +73,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ActionCostsConstructor_WithNegativeCost_ThrowsArgumentOutOfRangeException()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ActionCosts(NegativeCost, SampleRules.MovementCost, SampleRules.ClimbCost, SampleRules.BuildingCost));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ActionCosts(NegativeCost, SampleRules.MovementCost, SampleRules.ClimbCost, SampleRules.BuildingCost, SampleRules.CardDrawCost, SampleRules.CardPlayCost));
         }
     }
 }

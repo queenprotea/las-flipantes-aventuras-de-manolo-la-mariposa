@@ -10,6 +10,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -20,6 +22,7 @@ namespace Game.Services
         private const string MatchStartedMessage = "Match {0} started in room {1} with {2} players.";
         private const string MatchEndedMessage = "Player {0} ended the match in room {1}.";
         private const string StartFailedMessage = "The database could not be used while a match was starting in room {0}.";
+        private const string RulesNotLoadedMessage = "The match rules were not loaded; LoadRulesAsync must run before a match starts.";
 
         private static readonly ILog _matchLog = LogManager.GetLogger(typeof(MatchService));
 
@@ -32,16 +35,21 @@ namespace Game.Services
         private readonly MatchCoordinator _matchCoordinator;
         private readonly MatchRoomReturn _matchRoomReturn;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, TimeProvider timeProvider, StartingBoard startingBoard, Random tieBreakRandom)
+        private TimeSpan _stepTime;
+        private IReadOnlyDictionary<int, MatchRuleSet>? _ruleSetsByPlayerCount;
+
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, TimeProvider timeProvider, StartingBoard startingBoard, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(systemParameterReader);
             ArgumentNullException.ThrowIfNull(matchRuleReader);
+            ArgumentNullException.ThrowIfNull(matchRecordRepository);
+            ArgumentNullException.ThrowIfNull(matchParticipantRepository);
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
-            ArgumentNullException.ThrowIfNull(tieBreakRandom);
+            ArgumentNullException.ThrowIfNull(chanceSource);
 
             _roomRegistry = roomRegistry;
             _roomService = roomService;
@@ -50,7 +58,20 @@ namespace Game.Services
             _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
             _matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), startingBoard.FlowerCells, tieBreakRandom);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), matchRecordRepository, matchParticipantRepository, startingBoard.FlowerCells, chanceSource);
+        }
+
+        public async Task LoadRulesAsync()
+        {
+            _stepTime = await ReadStepTimeAsync();
+            _ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
+        }
+
+        public Task FinishRecordingAsync()
+        {
+            Task pendingRecording = _matchCoordinator.FinishRecordingAsync();
+
+            return pendingRecording;
         }
 
         /// <inheritdoc/>
@@ -120,6 +141,32 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
+        public MatchActionResult DrawCard()
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCallArguments(callerOwnerId);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.DrawCard(ownerId);
+            }
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
+        public MatchActionResult PlayCard(MatchCardPlay cardPlay)
+        {
+            int? callerOwnerId = FindCallerOwnerId();
+            MatchActionResult actionResult = CheckCardPlayArguments(callerOwnerId, cardPlay);
+            if ((actionResult == MatchActionResult.Applied) && (callerOwnerId is int ownerId))
+            {
+                actionResult = _matchCoordinator.PlayCard(ownerId, cardPlay);
+            }
+
+            return actionResult;
+        }
+
+        /// <inheritdoc/>
         public MatchActionResult EndTurn()
         {
             int? callerOwnerId = FindCallerOwnerId();
@@ -175,6 +222,21 @@ namespace Game.Services
             return actionResult;
         }
 
+        private static MatchActionResult CheckCardPlayArguments(int? callerOwnerId, MatchCardPlay? cardPlay)
+        {
+            MatchActionResult actionResult;
+            if ((cardPlay is null) || (cardPlay.AffectedCells is null) || !Enum.IsDefined(cardPlay.Card))
+            {
+                actionResult = callerOwnerId is null ? MatchActionResult.NotIdentified : MatchActionResult.WrongCardTarget;
+            }
+            else
+            {
+                actionResult = CheckCallArguments(callerOwnerId, cardPlay.AffectedCells.ToArray());
+            }
+
+            return actionResult;
+        }
+
         private static bool IsOnBoard(MatchCell? examinedCell)
         {
             bool isOnBoard = (examinedCell is not null) && MatchCoordinator.BoardContains(examinedCell);
@@ -199,12 +261,23 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                string failureMessage = string.Format(CultureInfo.InvariantCulture, StartFailedMessage, room.RoomId);
-                _matchLog.Error(failureMessage, exception);
-                startResult = new StartMatchResult { Status = StartMatchStatus.DatabaseUnavailable };
+                startResult = LogStartFailure(room, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                startResult = LogStartFailure(room, exception);
             }
 
             return startResult;
+        }
+
+        private static StartMatchResult LogStartFailure(LiveRoom room, Exception exception)
+        {
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, StartFailedMessage, room.RoomId);
+            _matchLog.Error(failureMessage, exception);
+            var failedResult = new StartMatchResult { Status = StartMatchStatus.DatabaseUnavailable };
+
+            return failedResult;
         }
 
         private async Task<StartMatchResult> CheckAndStartMatchAsync(LiveRoom room, int callerOwnerId)
@@ -230,21 +303,46 @@ namespace Game.Services
 
         private async Task<StartMatchResult> StartCheckedMatchAsync(LiveRoom room, int callerOwnerId)
         {
-            TimeSpan stepTime = await ReadStepTimeAsync();
-            IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
+            IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = _ruleSetsByPlayerCount ?? throw new InvalidOperationException(RulesNotLoadedMessage);
             MatchStartCheck startCheck = room.StartMatch(callerOwnerId);
             if (startCheck.Status == StartMatchStatus.Started)
             {
+                int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
+                int matchId = await StartLiveMatchAsync(room, startCheck.Entrants, ruleSetsByPlayerCount[seatedCount]);
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
-                int seatedCount = startCheck.Entrants.Count(entrant => entrant.IsActive);
-                int matchId = await _matchCoordinator.StartMatchAsync(startCheck.Entrants, stepTime, ruleSetsByPlayerCount[seatedCount]);
                 _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 
             var startResult = new StartMatchResult { Status = startCheck.Status };
 
             return startResult;
+        }
+
+        private async Task<int> StartLiveMatchAsync(LiveRoom room, IReadOnlyList<MatchEntrant> entrants, MatchRuleSet ruleSet)
+        {
+            int matchId;
+            try
+            {
+                matchId = await _matchCoordinator.StartMatchAsync(new MatchOpening(room.RoomId, entrants), _stepTime, ruleSet);
+            }
+            catch (NpgsqlException)
+            {
+                room.EndMatch();
+                throw;
+            }
+            catch (DbUpdateException)
+            {
+                room.EndMatch();
+                throw;
+            }
+            catch (InvalidOperationException)
+            {
+                room.EndMatch();
+                throw;
+            }
+
+            return matchId;
         }
 
         private async Task<MatchBan?> FindFirstBanAsync(IReadOnlyList<MatchEntrant> entrants)

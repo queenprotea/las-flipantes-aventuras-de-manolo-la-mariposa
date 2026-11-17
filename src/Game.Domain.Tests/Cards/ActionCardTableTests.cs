@@ -1,0 +1,438 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Xunit;
+
+namespace Game.Domain.Tests
+{
+    public sealed class ActionCardTableTests
+    {
+        private const int TwoSeatCount = 2;
+        private const int SeatNumberOne = 1;
+        private const int SeatNumberTwo = 2;
+        private const int LevelOne = 1;
+        private const int LevelTwo = 2;
+        private const int LevelThree = 3;
+        private const int TwoActionPoints = 2;
+        private const int ThreeActionPoints = 3;
+        private const int FourActionPoints = 4;
+        private const int NoActionPoints = 0;
+        private const int SevenCardsLeft = 7;
+        private const int TwoKeptCards = 2;
+        private const int OneCardPoint = 1;
+        private const int NoCardPoints = 0;
+        private const int SamePoints = 5;
+        private const int OneScoredPlanter = 1;
+
+        private static BoardCell WestFlower { get; } = new BoardCell(3, 3);
+
+        private static BoardCell MiddleFlower { get; } = new BoardCell(3, 4);
+
+        private static BoardCell EastFlower { get; } = new BoardCell(3, 5);
+
+        private static BoardCell FarFlower { get; } = new BoardCell(6, 6);
+
+        private static BoardCell GroundAboveWestFlower { get; } = new BoardCell(2, 3);
+
+        private static BoardCell LeapOrigin { get; } = new BoardCell(5, 0);
+
+        private static BoardCell LeapMiddle { get; } = new BoardCell(5, 1);
+
+        private static BoardCell LeapLanding { get; } = new BoardCell(5, 2);
+
+        private static BoardCell FarGround { get; } = new BoardCell(7, 7);
+
+        [Fact]
+        public void Test_DrawCard_OnOwnTurn_MovesOneCardFromDeckToHandForOneActionPoint()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome drawOutcome = table.CardTable.DrawCard(SeatNumberOne);
+
+            Assert.Equal(TurnActionOutcome.Applied, drawOutcome);
+            Assert.Single(table.CardTable.SeatCards[0].Hand);
+            Assert.Equal(SevenCardsLeft, table.CardTable.SeatCards[0].Deck.Count);
+            Assert.Equal(FourActionPoints, table.ActionPointsLeft);
+        }
+
+        [Fact]
+        public void Test_DrawCard_OutOfTurn_ReturnsNotYourTurn()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome drawOutcome = table.CardTable.DrawCard(SeatNumberTwo);
+
+            Assert.Equal(TurnActionOutcome.NotYourTurn, drawOutcome);
+        }
+
+        [Fact]
+        public void Test_DrawCard_WithEmptyDeck_ReturnsDeckEmpty()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(ActionCardTable.FullDeck, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome drawOutcome = table.CardTable.DrawCard(SeatNumberOne);
+
+            Assert.Equal(TurnActionOutcome.DeckEmpty, drawOutcome);
+        }
+
+        [Fact]
+        public void Test_DrawCard_WithoutActionPoints_ReturnsNotEnoughActionPoints()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), NoActionPoints));
+
+            TurnActionOutcome drawOutcome = table.CardTable.DrawCard(SeatNumberOne);
+
+            Assert.Equal(TurnActionOutcome.NotEnoughActionPoints, drawOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_NotInHand_ReturnsCardNotInHand()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.SixActionPoints, Array.Empty<BoardCell>()));
+
+            Assert.Equal(TurnActionOutcome.CardNotInHand, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_SixActionPoints_AddsOnePointToWhatIsLeft()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.SixActionPoints }, TwoActionPoints));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.SixActionPoints, Array.Empty<BoardCell>()));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Equal(ThreeActionPoints, table.ActionPointsLeft);
+            Assert.Empty(table.CardTable.SeatCards[0].Hand);
+        }
+
+        [Fact]
+        public void Test_PlayCard_SevenActionPoints_AddsTwoPointsToWhatIsLeft()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.SevenActionPoints }, TwoActionPoints));
+
+            table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.SevenActionPoints, Array.Empty<BoardCell>()));
+
+            Assert.Equal(FourActionPoints, table.ActionPointsLeft);
+        }
+
+        [Fact]
+        public void Test_PlayCard_SecondPointsCardInTheSameTurn_ReturnsPointsCardAlreadyUsed()
+        {
+            var seatOneHand = new ActionCard[] { ActionCard.SevenActionPoints };
+            var seatCards = new SeatCards[]
+            {
+                new SeatCards(SeatNumberOne, seatOneHand, ActionCardTable.FullDeck.Except(seatOneHand).Except(new ActionCard[] { ActionCard.SixActionPoints }).ToList(), true),
+                new SeatCards(SeatNumberTwo, Array.Empty<ActionCard>(), ActionCardTable.FullDeck, false),
+            };
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, ThreeActionPoints, SampleRules.ThreeBuildings, CreateFlatPlanter(), Array.Empty<Caterpillar>(), null, Array.Empty<SeatStanding>(), seatCards, Array.Empty<int>(), null);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.SevenActionPoints, Array.Empty<BoardCell>()));
+
+            Assert.Equal(TurnActionOutcome.PointsCardAlreadyUsed, playOutcome);
+            Assert.Contains(ActionCard.SevenActionPoints, table.CardTable.SeatCards[0].Hand);
+        }
+
+        [Fact]
+        public void Test_PlayCard_DoubleClimbFromLevelOneToNeighborLevelThree_MovesTheCaterpillarForFree()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelThree) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.DoubleClimb }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.DoubleClimb, new BoardCell[] { WestFlower, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Caterpillar(SeatNumberOne, MiddleFlower), table.Caterpillars);
+            Assert.Equal(MatchTable.ActionPointsPerTurn, table.ActionPointsLeft);
+        }
+
+        [Fact]
+        public void Test_PlayCard_DoubleClimbToLevelTwo_ReturnsWrongCardTarget()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelTwo) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.DoubleClimb }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.DoubleClimb, new BoardCell[] { WestFlower, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.WrongCardTarget, playOutcome);
+            Assert.Contains(ActionCard.DoubleClimb, table.CardTable.SeatCards[0].Hand);
+        }
+
+        [Fact]
+        public void Test_PlayCard_GroundLeapOverCaterpillar_LandsTwoCellsAway()
+        {
+            var caterpillars = new Caterpillar[] { new Caterpillar(SeatNumberOne, LeapOrigin), new Caterpillar(SeatNumberTwo, LeapMiddle) };
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), caterpillars, new TurnHolding(new ActionCard[] { ActionCard.GroundLeap }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.GroundLeap, new BoardCell[] { LeapOrigin, LeapLanding }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Caterpillar(SeatNumberOne, LeapLanding), table.Caterpillars);
+        }
+
+        [Fact]
+        public void Test_PlayCard_GroundLeapOverEmptyCell_ReturnsWrongCardTarget()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), new Caterpillar[] { new Caterpillar(SeatNumberOne, LeapOrigin) }, new TurnHolding(new ActionCard[] { ActionCard.GroundLeap }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.GroundLeap, new BoardCell[] { LeapOrigin, LeapLanding }));
+
+            Assert.Equal(TurnActionOutcome.WrongCardTarget, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelMoveOntoAnotherFlower_MovesTheTopLevel()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelTwo), new Flower(MiddleFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelMove }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Flower(WestFlower, LevelOne), table.FindFlowers());
+            Assert.Contains(new Flower(MiddleFlower, LevelTwo), table.FindFlowers());
+            Assert.Equal(SampleRules.ThreeBuildings, table.BuildsLeft);
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelMoveOntoGroundNextToPlanter_PlantsANewFlower()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelTwo), new Flower(MiddleFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelMove }, MatchTable.ActionPointsPerTurn));
+
+            table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, GroundAboveWestFlower }));
+
+            Assert.Contains(new Flower(GroundAboveWestFlower, LevelOne), table.FindFlowers());
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelMoveFromSingleLevelFlower_ReturnsWrongCardTarget()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelMove }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.WrongCardTarget, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_RelocationToFarFreeCell_MovesTheCaterpillar()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), new Caterpillar[] { new Caterpillar(SeatNumberOne, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.Relocation }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.Relocation, new BoardCell[] { WestFlower, FarGround }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Caterpillar(SeatNumberOne, FarGround), table.Caterpillars);
+        }
+
+        [Fact]
+        public void Test_PlayCard_RelocationClimbingTwoLevels_ReturnsClimbTooHigh()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelTwo) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, FarGround) }, new TurnHolding(new ActionCard[] { ActionCard.Relocation }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.Relocation, new BoardCell[] { FarGround, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.ClimbTooHigh, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_PlanterCrossingWithinThePlanter_MovesForOneActionPoint()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelOne), new Flower(EastFlower, LevelTwo) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.PlanterCrossing }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.PlanterCrossing, new BoardCell[] { WestFlower, EastFlower }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Caterpillar(SeatNumberOne, EastFlower), table.Caterpillars);
+            Assert.Equal(FourActionPoints, table.ActionPointsLeft);
+        }
+
+        [Fact]
+        public void Test_PlayCard_PlanterCrossingFromGround_ClimbsOntoTheTouchingPlanter()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelOne), new Flower(EastFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, GroundAboveWestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.PlanterCrossing }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.PlanterCrossing, new BoardCell[] { GroundAboveWestFlower, EastFlower }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Caterpillar(SeatNumberOne, EastFlower), table.Caterpillars);
+        }
+
+        [Fact]
+        public void Test_PlayCard_PlanterCrossingToAnotherPlanter_ReturnsWrongCardTarget()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(FarFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberOne, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.PlanterCrossing }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.PlanterCrossing, new BoardCell[] { WestFlower, FarFlower }));
+
+            Assert.Equal(TurnActionOutcome.WrongCardTarget, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelRemovalOnTwoFlowers_RemovesOneLevelFromEach()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelThree), new Flower(MiddleFlower, LevelTwo) };
+            MatchTable table = CreateCardTable(flowers, Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelRemoval }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelRemoval, new BoardCell[] { WestFlower, MiddleFlower }));
+
+            Assert.Equal(TurnActionOutcome.Applied, playOutcome);
+            Assert.Contains(new Flower(WestFlower, LevelTwo), table.FindFlowers());
+            Assert.Contains(new Flower(MiddleFlower, LevelOne), table.FindFlowers());
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelRemovalTwiceOnTheSameFlower_ReturnsWrongCardTarget()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelThree), new Flower(MiddleFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelRemoval }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelRemoval, new BoardCell[] { WestFlower, WestFlower }));
+
+            Assert.Equal(TurnActionOutcome.WrongCardTarget, playOutcome);
+        }
+
+        [Fact]
+        public void Test_PlayCard_FlowerLevelRemovalUnderCaterpillar_ReturnsCellOccupied()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelTwo), new Flower(MiddleFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberTwo, WestFlower) }, new TurnHolding(new ActionCard[] { ActionCard.FlowerLevelRemoval }, MatchTable.ActionPointsPerTurn));
+
+            TurnActionOutcome playOutcome = table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelRemoval, new BoardCell[] { WestFlower }));
+
+            Assert.Equal(TurnActionOutcome.CellOccupied, playOutcome);
+        }
+
+        [Fact]
+        public void Test_CanDrawCard_OnOwnTurnWithCardsInTheDeck_ReturnsTrue()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            bool canDraw = table.CardTable.CanDrawCard(SeatNumberOne);
+
+            Assert.True(canDraw);
+        }
+
+        [Fact]
+        public void Test_CanDrawCard_OutOfTurn_ReturnsFalse()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            bool canDraw = table.CardTable.CanDrawCard(SeatNumberTwo);
+
+            Assert.False(canDraw);
+        }
+
+        [Fact]
+        public void Test_FindPlayableCards_WithoutActionPoints_LeavesOutTheCardThatCosts()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.SevenActionPoints, ActionCard.PlanterCrossing }, NoActionPoints));
+
+            IReadOnlyList<ActionCard> playableCards = table.CardTable.FindPlayableCards(SeatNumberOne);
+
+            Assert.Equal(new ActionCard[] { ActionCard.SevenActionPoints }, playableCards);
+        }
+
+        [Fact]
+        public void Test_FindPlayableCards_OutOfTurn_ReturnsNoCards()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(new ActionCard[] { ActionCard.SevenActionPoints }, MatchTable.ActionPointsPerTurn));
+
+            IReadOnlyList<ActionCard> playableCards = table.CardTable.FindPlayableCards(SeatNumberTwo);
+
+            Assert.Empty(playableCards);
+        }
+
+        [Fact]
+        public void Test_FindLevelRemovalTargets_WithOccupiedAndSingleLevelFlowers_ReturnsOnlyTheFreeTallFlower()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelTwo), new Flower(MiddleFlower, LevelThree), new Flower(EastFlower, LevelOne) };
+            MatchTable table = CreateCardTable(flowers, new Caterpillar[] { new Caterpillar(SeatNumberTwo, WestFlower) }, new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+
+            IReadOnlyList<BoardCell> removalTargets = table.CardTable.FindLevelRemovalTargets();
+
+            Assert.Equal(new BoardCell[] { MiddleFlower }, removalTargets);
+        }
+
+        [Fact]
+        public void Test_EndTurn_ClosingTheRoundWithKeptCards_TurnsEachIntoOnePointAndRefillsTheDeck()
+        {
+            var seatOneHand = new ActionCard[] { ActionCard.DoubleClimb, ActionCard.GroundLeap };
+            var seatCards = new SeatCards[]
+            {
+                new SeatCards(SeatNumberOne, seatOneHand, ActionCardTable.FullDeck.Except(seatOneHand).ToList(), false),
+                new SeatCards(SeatNumberTwo, Array.Empty<ActionCard>(), ActionCardTable.FullDeck, false),
+            };
+            var caterpillars = new Caterpillar[] { new Caterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower), new Caterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower) };
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberTwo, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, SampleLayouts.FiveStartingFlowers, caterpillars, SampleLayouts.SouthEastFlower, Array.Empty<SeatStanding>(), seatCards, Array.Empty<int>(), null);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
+
+            table.EndTurn(SeatNumberTwo);
+
+            Assert.Equal(TwoKeptCards, table.Standings[0].CardPoints);
+            Assert.Empty(table.CardTable.SeatCards[0].Hand);
+            Assert.Equal(ActionCardTable.FullDeck.Count, table.CardTable.SeatCards[0].Deck.Count);
+        }
+
+        [Fact]
+        public void Test_FindFinishingOrder_WithCardPoints_PutsTheHigherFinalScoreFirst()
+        {
+            var standings = new SeatStanding[] { new SeatStanding(SeatNumberOne, new SeatRoundScore[] { new SeatRoundScore(SamePoints, 0, OneScoredPlanter) }, false, NoCardPoints), new SeatStanding(SeatNumberTwo, new SeatRoundScore[] { new SeatRoundScore(SamePoints, 0, OneScoredPlanter) }, false, OneCardPoint) };
+            var snapshot = new MatchSnapshot(TablePhase.Finished, MatchRules.RoundCount, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, NoActionPoints, 0, CreateFlatPlanter(), Array.Empty<Caterpillar>(), null, standings, Array.Empty<SeatCards>(), Array.Empty<int>(), FinishCause.Completed);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+
+            int winnerSeatNumber = table.FindFinishingOrder()[0].SeatNumber;
+
+            Assert.Equal(SeatNumberTwo, winnerSeatNumber);
+        }
+
+        [Fact]
+        public void Test_TakeSnapshot_AfterADraw_KeepsTheHand()
+        {
+            MatchTable table = CreateCardTable(CreateFlatPlanter(), Array.Empty<Caterpillar>(), new TurnHolding(Array.Empty<ActionCard>(), MatchTable.ActionPointsPerTurn));
+            table.CardTable.DrawCard(SeatNumberOne);
+
+            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+
+            Assert.Equal(table.CardTable.SeatCards[0].Hand, restoredTable.CardTable.SeatCards[0].Hand);
+            Assert.Equal(SevenCardsLeft, restoredTable.CardTable.SeatCards[0].Deck.Count);
+        }
+
+        [Fact]
+        public void Test_RestoreFromSnapshot_WithCardsOfOneSeatOnly_ThrowsArgumentException()
+        {
+            var seatCards = new SeatCards[] { new SeatCards(SeatNumberOne, Array.Empty<ActionCard>(), ActionCardTable.FullDeck, false) };
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, CreateFlatPlanter(), Array.Empty<Caterpillar>(), null, Array.Empty<SeatStanding>(), seatCards, Array.Empty<int>(), null);
+
+            Assert.Throws<ArgumentException>(() => MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource()));
+        }
+
+        private static Flower[] CreateFlatPlanter()
+        {
+            var flowers = new Flower[] { new Flower(WestFlower, LevelOne), new Flower(MiddleFlower, LevelOne) };
+
+            return flowers;
+        }
+
+        private static MatchTable CreateCardTable(IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars, TurnHolding seatOneTurn)
+        {
+            var seatCards = new SeatCards[]
+            {
+                new SeatCards(SeatNumberOne, seatOneTurn.Hand, ActionCardTable.FullDeck.Except(seatOneTurn.Hand).ToList(), false),
+                new SeatCards(SeatNumberTwo, Array.Empty<ActionCard>(), ActionCardTable.FullDeck, false),
+            };
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, seatOneTurn.ActionPointsLeft, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), seatCards, Array.Empty<int>(), null);
+            MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+
+            return table;
+        }
+    }
+}

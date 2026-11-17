@@ -1036,6 +1036,66 @@
   <data name="Match.JoinsPlantersNotice" xml:space="preserve">
     <value>Esa flor uniría dos jardineras.</value>
   </data>
+  <data name="Match.CardsLabel" xml:space="preserve">
+    <value>Tus cartas</value>
+  </data>
+  <data name="Match.DeckCountLabel" xml:space="preserve">
+    <value>quedan {0}</value>
+  </data>
+  <data name="Match.CardsInHandTag" xml:space="preserve">
+    <value>{0} cartas</value>
+  </data>
+  <data name="Match.SixActionPointsCard" xml:space="preserve">
+    <value>1 · 6 PA</value>
+  </data>
+  <data name="Match.SevenActionPointsCard" xml:space="preserve">
+    <value>2 · 7 PA</value>
+  </data>
+  <data name="Match.DoubleClimbCard" xml:space="preserve">
+    <value>3 · Subida doble</value>
+  </data>
+  <data name="Match.GroundLeapCard" xml:space="preserve">
+    <value>4 · Salto</value>
+  </data>
+  <data name="Match.FlowerLevelMoveCard" xml:space="preserve">
+    <value>5 · Mover un nivel</value>
+  </data>
+  <data name="Match.RelocationCard" xml:space="preserve">
+    <value>6 · Traslado</value>
+  </data>
+  <data name="Match.PlanterCrossingCard" xml:space="preserve">
+    <value>7 · Recorrer la jardinera</value>
+  </data>
+  <data name="Match.FlowerLevelRemovalCard" xml:space="preserve">
+    <value>8 · Quitar niveles</value>
+  </data>
+  <data name="Match.ChooseCardCaterpillarHint" xml:space="preserve">
+    <value>Elige la oruga que usa la carta</value>
+  </data>
+  <data name="Match.ChooseCardDestinationHint" xml:space="preserve">
+    <value>Elige a dónde va la oruga</value>
+  </data>
+  <data name="Match.ChooseLevelSourceHint" xml:space="preserve">
+    <value>Elige la flor que pierde su nivel de arriba</value>
+  </data>
+  <data name="Match.ChooseLevelDestinationHint" xml:space="preserve">
+    <value>Elige dónde se pone el nivel</value>
+  </data>
+  <data name="Match.ChooseRemovalHint" xml:space="preserve">
+    <value>Elige una o dos flores · pulsa otra vez la carta para quitar solo una</value>
+  </data>
+  <data name="Match.DeckEmptyNotice" xml:space="preserve">
+    <value>Ya robaste todas las cartas de tu mazo en esta ronda.</value>
+  </data>
+  <data name="Match.CardNotInHandNotice" xml:space="preserve">
+    <value>Esa carta ya no está en tu mano.</value>
+  </data>
+  <data name="Match.PointsCardUsedNotice" xml:space="preserve">
+    <value>Ya usaste una carta de puntos en este turno.</value>
+  </data>
+  <data name="Match.WrongCardTargetNotice" xml:space="preserve">
+    <value>Esa carta no se puede usar ahí.</value>
+  </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>cierre de la ronda {0}</value>
   </data>

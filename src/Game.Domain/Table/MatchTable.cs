@@ -13,34 +13,37 @@ namespace Game.Domain
         public const int FirstTurnRoundNumber = 1;
         public const int ActionPointsPerTurn = 5;
         public const int CaterpillarsPerSeat = 5;
+        internal const int MaximumLevelsClimbedPerMove = 1;
 
-        private const int MaximumLevelsClimbedPerMove = 1;
         private const int SinglePlanterCount = 1;
         private const string NoPlacementOpenMessage = "There is no placement to expire outside the placements.";
         private const string NoTurnOpenMessage = "There is no turn to expire outside the players' turns.";
         private const string StandingCountMessage = "The snapshot must keep one standing per seat.";
+        private const string SeatCardsCountMessage = "The snapshot must keep the cards of every seat.";
+        private const int NoCardPoints = 0;
 
         private readonly Board _board;
         private readonly List<Caterpillar> _caterpillars;
         private readonly MatchRules _rules;
-        private readonly Random _tieBreakRandom;
+        private readonly Random _chanceSource;
         private readonly List<SeatStanding> _standings;
         private readonly List<int> _pendingButterflySeatNumbers;
 
-        public MatchTable(StartingLayout startingLayout, int seatCount, MatchRules rules, Random tieBreakRandom)
+        public MatchTable(StartingLayout startingLayout, int seatCount, MatchRules rules, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(startingLayout);
             ArgumentOutOfRangeException.ThrowIfLessThan(seatCount, MinimumSeatCount);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(seatCount, MaximumSeatCount);
             ArgumentNullException.ThrowIfNull(rules);
-            ArgumentNullException.ThrowIfNull(tieBreakRandom);
+            ArgumentNullException.ThrowIfNull(chanceSource);
 
             _board = new Board(startingLayout.Flowers);
             _caterpillars = new List<Caterpillar>();
             _rules = rules;
-            _tieBreakRandom = tieBreakRandom;
+            _chanceSource = chanceSource;
             _standings = CreateFreshStandings(seatCount);
             _pendingButterflySeatNumbers = new List<int>();
+            CardTable = new ActionCardTable(this, _board, Array.Empty<SeatCards>(), seatCount, chanceSource);
             SeatCount = seatCount;
             RoundNumber = FirstRoundNumber;
             TurnRoundNumber = FirstTurnRoundNumber;
@@ -48,14 +51,15 @@ namespace Game.Domain
             ActiveSeatNumber = FirstSeatNumber;
         }
 
-        private MatchTable(MatchSnapshot snapshot, MatchRules rules, Random tieBreakRandom)
+        private MatchTable(MatchSnapshot snapshot, MatchRules rules, Random chanceSource)
         {
             _board = new Board(snapshot.Flowers);
             _caterpillars = snapshot.Caterpillars.ToList();
             _rules = rules;
-            _tieBreakRandom = tieBreakRandom;
+            _chanceSource = chanceSource;
             _standings = snapshot.Standings.Count == 0 ? CreateFreshStandings(snapshot.SeatCount) : snapshot.Standings.ToList();
             _pendingButterflySeatNumbers = snapshot.PendingButterflySeatNumbers.ToList();
+            CardTable = new ActionCardTable(this, _board, snapshot.SeatCards, snapshot.SeatCount, chanceSource);
             FinishCause = snapshot.FinishCause;
             SeatCount = snapshot.SeatCount;
             RoundNumber = snapshot.RoundNumber;
@@ -93,11 +97,13 @@ namespace Game.Domain
 
         public IReadOnlyList<SeatStanding> Standings => _standings;
 
-        public static MatchTable RestoreFromSnapshot(MatchSnapshot snapshot, MatchRules rules, Random tieBreakRandom)
+        public ActionCardTable CardTable { get; }
+
+        public static MatchTable RestoreFromSnapshot(MatchSnapshot snapshot, MatchRules rules, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(snapshot);
             ArgumentNullException.ThrowIfNull(rules);
-            ArgumentNullException.ThrowIfNull(tieBreakRandom);
+            ArgumentNullException.ThrowIfNull(chanceSource);
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.SeatCount, MinimumSeatCount, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfGreaterThan(snapshot.SeatCount, MaximumSeatCount, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.ActiveSeatNumber, FirstSeatNumber, nameof(snapshot));
@@ -112,14 +118,20 @@ namespace Game.Domain
                 throw new ArgumentException(StandingCountMessage, nameof(snapshot));
             }
 
-            var restoredTable = new MatchTable(snapshot, rules, tieBreakRandom);
+            bool hasCardsPerSeat = (snapshot.SeatCards.Count == 0) || (snapshot.SeatCards.Count == snapshot.SeatCount);
+            if (!hasCardsPerSeat)
+            {
+                throw new ArgumentException(SeatCardsCountMessage, nameof(snapshot));
+            }
+
+            var restoredTable = new MatchTable(snapshot, rules, chanceSource);
 
             return restoredTable;
         }
 
         public MatchSnapshot TakeSnapshot()
         {
-            var snapshot = new MatchSnapshot(Phase, RoundNumber, TurnRoundNumber, SeatCount, ActiveSeatNumber, ActionPointsLeft, BuildsLeft, _board.FindFlowers(), _caterpillars.ToList(), ButterflyCell, _standings.ToList(), _pendingButterflySeatNumbers.ToList(), FinishCause);
+            var snapshot = new MatchSnapshot(Phase, RoundNumber, TurnRoundNumber, SeatCount, ActiveSeatNumber, ActionPointsLeft, BuildsLeft, _board.FindFlowers(), _caterpillars.ToList(), ButterflyCell, _standings.ToList(), CardTable.SeatCards.ToList(), _pendingButterflySeatNumbers.ToList(), FinishCause);
 
             return snapshot;
         }
@@ -181,9 +193,16 @@ namespace Game.Domain
 
         public IReadOnlyList<SeatStanding> FindRanking()
         {
-            List<SeatStanding> ranking = _standings.Where(standing => !standing.IsRetired).OrderByDescending(standing => standing.TotalScore).ThenByDescending(standing => standing.ScoredPlanterCount).ThenBy(standing => standing.SeatNumber).ToList();
+            List<SeatStanding> ranking = FindFinishingOrder().Where(standing => !standing.IsRetired).ToList();
 
             return ranking;
+        }
+
+        public IReadOnlyList<SeatStanding> FindFinishingOrder()
+        {
+            List<SeatStanding> finishingOrder = _standings.OrderBy(standing => standing.IsRetired).ThenByDescending(standing => standing.FinalScore).ThenByDescending(standing => standing.ScoredPlanterCount).ThenBy(standing => standing.SeatNumber).ToList();
+
+            return finishingOrder;
         }
 
         public bool IsSeatRetired(int seatNumber)
@@ -276,8 +295,7 @@ namespace Game.Domain
             if (actionOutcome == TurnActionOutcome.Applied)
             {
                 ActionPointsLeft -= CalculateMoveCost(move);
-                int caterpillarIndex = _caterpillars.FindIndex(caterpillar => caterpillar.Cell == move.Origin);
-                _caterpillars[caterpillarIndex] = new Caterpillar(seatNumber, move.Destination);
+                RelocateCaterpillar(seatNumber, move.Origin, move.Destination);
             }
 
             return actionOutcome;
@@ -377,6 +395,28 @@ namespace Game.Domain
             }
         }
 
+        internal void SpendActionPoints(int actionPoints)
+        {
+            ActionPointsLeft -= actionPoints;
+        }
+
+        internal void GrantActionPoints(int actionPoints)
+        {
+            ActionPointsLeft += actionPoints;
+        }
+
+        internal void RelocateCaterpillar(int seatNumber, BoardCell originCell, BoardCell destinationCell)
+        {
+            int caterpillarIndex = _caterpillars.FindIndex(caterpillar => caterpillar.Cell == originCell);
+            _caterpillars[caterpillarIndex] = new Caterpillar(seatNumber, destinationCell);
+        }
+
+        internal void AddCardPoints(int seatNumber, int cardPoints)
+        {
+            int standingIndex = seatNumber - FirstSeatNumber;
+            _standings[standingIndex] = _standings[standingIndex] with { CardPoints = _standings[standingIndex].CardPoints + cardPoints };
+        }
+
         private static List<SeatStanding> CreateFreshStandings(int seatCount)
         {
             List<SeatStanding> freshStandings = Enumerable.Range(FirstSeatNumber, seatCount).Select(CreateFreshStanding).ToList();
@@ -386,7 +426,7 @@ namespace Game.Domain
 
         private static SeatStanding CreateFreshStanding(int seatNumber)
         {
-            var freshStanding = new SeatStanding(seatNumber, Array.Empty<SeatRoundScore>(), false);
+            var freshStanding = new SeatStanding(seatNumber, Array.Empty<SeatRoundScore>(), false, NoCardPoints);
 
             return freshStanding;
         }
@@ -416,14 +456,14 @@ namespace Game.Domain
             return placementOutcome;
         }
 
-        private bool IsFreeOfCaterpillars(BoardCell examinedCell)
+        internal bool IsFreeOfCaterpillars(BoardCell examinedCell)
         {
             bool isFree = _caterpillars.All(caterpillar => caterpillar.Cell != examinedCell);
 
             return isFree;
         }
 
-        private bool HasCaterpillarOf(int seatNumber, BoardCell examinedCell)
+        internal bool HasCaterpillarOf(int seatNumber, BoardCell examinedCell)
         {
             bool hasCaterpillar = _caterpillars.Contains(new Caterpillar(seatNumber, examinedCell));
 
@@ -442,7 +482,7 @@ namespace Game.Domain
             return placementTargets;
         }
 
-        private TurnActionOutcome JudgeTurnOwner(int seatNumber)
+        internal TurnActionOutcome JudgeTurnOwner(int seatNumber)
         {
             TurnActionOutcome actionOutcome = TurnActionOutcome.Applied;
             if (Phase != TablePhase.PlayerTurn)
@@ -551,7 +591,7 @@ namespace Game.Domain
             return actionOutcome;
         }
 
-        private TurnActionOutcome JudgeBuildCell(BoardCell buildCell)
+        internal TurnActionOutcome JudgeBuildCell(BoardCell buildCell)
         {
             TurnActionOutcome actionOutcome = TurnActionOutcome.Applied;
             if (!IsFreeOfCaterpillars(buildCell))
@@ -703,6 +743,7 @@ namespace Game.Domain
         private void CloseRound()
         {
             ScoreRound();
+            CardTable.CloseRound();
             if (RoundNumber < MatchRules.RoundCount)
             {
                 RoundNumber++;
@@ -731,7 +772,7 @@ namespace Game.Domain
         private void OpenRoundButterflyPlacement()
         {
             SeatStanding[] activeStandings = _standings.Where(standing => !standing.IsRetired).ToArray();
-            _tieBreakRandom.Shuffle(activeStandings);
+            _chanceSource.Shuffle(activeStandings);
             List<int> placerOrder = activeStandings.OrderBy(standing => standing.TotalScore).Select(standing => standing.SeatNumber).ToList();
             _pendingButterflySeatNumbers.Clear();
             _pendingButterflySeatNumbers.AddRange(placerOrder);
@@ -746,12 +787,14 @@ namespace Game.Domain
             ActiveSeatNumber = seatNumber;
             ActionPointsLeft = ActionPointsPerTurn;
             BuildsLeft = _rules.GetBuildCount(RoundNumber, TurnRoundNumber);
+            CardTable.StartTurn();
         }
 
         private void FinishMatch(FinishCause finishCause)
         {
             Phase = TablePhase.Finished;
             FinishCause = finishCause;
+            CardTable.CashInHands();
             ActionPointsLeft = 0;
             BuildsLeft = 0;
             _pendingButterflySeatNumbers.Clear();

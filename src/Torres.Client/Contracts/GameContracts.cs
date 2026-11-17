@@ -1552,6 +1552,36 @@ namespace Game.Contracts
         }
     }
     
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="ReportChatMessageResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum ReportChatMessageResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Reported = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotIdentified = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        ReporterIsGuest = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotInRoom = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MessageNotFound = 4,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        AuthorIsGuest = 5,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        OwnMessage = 6,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 7,
+    }
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="MatchHistoryResponse", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
@@ -2159,6 +2189,18 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         JoinsPlanters = 17,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DeckEmpty = 18,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        CardNotInHand = 19,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        PointsCardAlreadyUsed = 20,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        WrongCardTarget = 21,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -2198,6 +2240,73 @@ namespace Game.Contracts
         }
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="MatchCardPlay", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class MatchCardPlay : object
+    {
+        
+        private System.Collections.Generic.List<Game.Contracts.MatchCell> AffectedCellsField;
+        
+        private Game.Contracts.MatchCard CardField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.MatchCell> AffectedCells
+        {
+            get
+            {
+                return this.AffectedCellsField;
+            }
+            set
+            {
+                this.AffectedCellsField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.MatchCard Card
+        {
+            get
+            {
+                return this.CardField;
+            }
+            set
+            {
+                this.CardField = value;
+            }
+        }
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="MatchCard", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum MatchCard : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        SixActionPoints = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        SevenActionPoints = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DoubleClimb = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        GroundLeap = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        FlowerLevelMove = 4,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Relocation = 5,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        PlanterCrossing = 6,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        FlowerLevelRemoval = 7,
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="EndMatchResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
     public enum EndMatchResult : int
@@ -2231,19 +2340,29 @@ namespace Game.Contracts
         
         private Game.Contracts.MatchCell ButterflyCellField;
         
+        private bool CanDrawCardField;
+        
         private System.Collections.Generic.List<Game.Contracts.MatchCaterpillar> CaterpillarsField;
         
         private int CaterpillarsPerSeatField;
         
+        private int DeckCountField;
+        
         private System.Collections.Generic.List<Game.Contracts.MatchFlower> FlowersField;
         
+        private System.Collections.Generic.List<Game.Contracts.MatchCard> HandField;
+        
         private bool HasButterflyField;
+        
+        private System.Collections.Generic.List<Game.Contracts.MatchCell> LevelRemovalTargetsField;
         
         private System.Collections.Generic.List<Game.Contracts.MatchMoveTarget> MoveTargetsField;
         
         private Game.Contracts.MatchPhase PhaseField;
         
         private System.Collections.Generic.List<Game.Contracts.MatchCell> PlacementTargetsField;
+        
+        private System.Collections.Generic.List<Game.Contracts.MatchCard> PlayableCardsField;
         
         private System.Collections.Generic.List<int> RankedSeatNumbersField;
         
@@ -2342,6 +2461,19 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public bool CanDrawCard
+        {
+            get
+            {
+                return this.CanDrawCardField;
+            }
+            set
+            {
+                this.CanDrawCardField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public System.Collections.Generic.List<Game.Contracts.MatchCaterpillar> Caterpillars
         {
             get
@@ -2368,6 +2500,19 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public int DeckCount
+        {
+            get
+            {
+                return this.DeckCountField;
+            }
+            set
+            {
+                this.DeckCountField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public System.Collections.Generic.List<Game.Contracts.MatchFlower> Flowers
         {
             get
@@ -2381,6 +2526,19 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.MatchCard> Hand
+        {
+            get
+            {
+                return this.HandField;
+            }
+            set
+            {
+                this.HandField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public bool HasButterfly
         {
             get
@@ -2390,6 +2548,19 @@ namespace Game.Contracts
             set
             {
                 this.HasButterflyField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.MatchCell> LevelRemovalTargets
+        {
+            get
+            {
+                return this.LevelRemovalTargetsField;
+            }
+            set
+            {
+                this.LevelRemovalTargetsField = value;
             }
         }
         
@@ -2429,6 +2600,19 @@ namespace Game.Contracts
             set
             {
                 this.PlacementTargetsField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.MatchCard> PlayableCards
+        {
+            get
+            {
+                return this.PlayableCardsField;
+            }
+            set
+            {
+                this.PlayableCardsField = value;
             }
         }
         
@@ -2556,6 +2740,10 @@ namespace Game.Contracts
     public partial class MatchActionCosts : object
     {
         
+        private int CardDrawField;
+        
+        private int CardPlayField;
+        
         private int CaterpillarPlacementField;
         
         private int FlowerLevelAdditionField;
@@ -2563,6 +2751,32 @@ namespace Game.Contracts
         private int LevelClimbField;
         
         private int MovementField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int CardDraw
+        {
+            get
+            {
+                return this.CardDrawField;
+            }
+            set
+            {
+                this.CardDrawField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int CardPlay
+        {
+            get
+            {
+                return this.CardPlayField;
+            }
+            set
+            {
+                this.CardPlayField = value;
+            }
+        }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public int CaterpillarPlacement
@@ -2782,11 +2996,17 @@ namespace Game.Contracts
     public partial class MatchSeat : object
     {
         
+        private int CardPointsField;
+        
         private int CaterpillarsLeftField;
         
         private Game.Contracts.SeatColor ColorField;
         
         private string DisplayNameField;
+        
+        private int FinalScoreField;
+        
+        private int HandCountField;
         
         private bool IsGuestField;
         
@@ -2797,6 +3017,19 @@ namespace Game.Contracts
         private int SeatNumberField;
         
         private int TotalScoreField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int CardPoints
+        {
+            get
+            {
+                return this.CardPointsField;
+            }
+            set
+            {
+                this.CardPointsField = value;
+            }
+        }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public int CaterpillarsLeft
@@ -2834,6 +3067,32 @@ namespace Game.Contracts
             set
             {
                 this.DisplayNameField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int FinalScore
+        {
+            get
+            {
+                return this.FinalScoreField;
+            }
+            set
+            {
+                this.FinalScoreField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int HandCount
+        {
+            get
+            {
+                return this.HandCountField;
+            }
+            set
+            {
+                this.HandCountField = value;
             }
         }
         
@@ -3302,7 +3561,10 @@ namespace Game.Contracts
         InvalidCredentials = 1,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 2,
+        AccountBanned = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 3,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3589,6 +3851,12 @@ namespace Game.Contracts
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IChatService/GetChatHistory", ReplyAction="http://tempuri.org/IChatService/GetChatHistoryResponse")]
         System.Threading.Tasks.Task<Game.Contracts.ChatHistoryResponse> GetChatHistoryAsync();
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IChatService/ReportChatMessage", ReplyAction="http://tempuri.org/IChatService/ReportChatMessageResponse")]
+        Game.Contracts.ReportChatMessageResult ReportChatMessage(int roomId, int messageId);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IChatService/ReportChatMessage", ReplyAction="http://tempuri.org/IChatService/ReportChatMessageResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.ReportChatMessageResult> ReportChatMessageAsync(int roomId, int messageId);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IHistoryService/GetMatchHistory", ReplyAction="http://tempuri.org/IHistoryService/GetMatchHistoryResponse")]
         Game.Contracts.MatchHistoryResponse GetMatchHistory(int pageNumber);
         
@@ -3624,6 +3892,18 @@ namespace Game.Contracts
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/AddFlowerLevel", ReplyAction="http://tempuri.org/IMatchService/AddFlowerLevelResponse")]
         System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> AddFlowerLevelAsync(Game.Contracts.MatchCell buildCell);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/DrawCard", ReplyAction="http://tempuri.org/IMatchService/DrawCardResponse")]
+        Game.Contracts.MatchActionResult DrawCard();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/DrawCard", ReplyAction="http://tempuri.org/IMatchService/DrawCardResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> DrawCardAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/PlayCard", ReplyAction="http://tempuri.org/IMatchService/PlayCardResponse")]
+        Game.Contracts.MatchActionResult PlayCard(Game.Contracts.MatchCardPlay cardPlay);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/PlayCard", ReplyAction="http://tempuri.org/IMatchService/PlayCardResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> PlayCardAsync(Game.Contracts.MatchCardPlay cardPlay);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/EndTurn", ReplyAction="http://tempuri.org/IMatchService/EndTurnResponse")]
         Game.Contracts.MatchActionResult EndTurn();
@@ -3957,6 +4237,16 @@ namespace Game.Contracts
             return base.Channel.GetChatHistoryAsync();
         }
         
+        public Game.Contracts.ReportChatMessageResult ReportChatMessage(int roomId, int messageId)
+        {
+            return base.Channel.ReportChatMessage(roomId, messageId);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.ReportChatMessageResult> ReportChatMessageAsync(int roomId, int messageId)
+        {
+            return base.Channel.ReportChatMessageAsync(roomId, messageId);
+        }
+        
         public Game.Contracts.MatchHistoryResponse GetMatchHistory(int pageNumber)
         {
             return base.Channel.GetMatchHistory(pageNumber);
@@ -4015,6 +4305,26 @@ namespace Game.Contracts
         public System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> AddFlowerLevelAsync(Game.Contracts.MatchCell buildCell)
         {
             return base.Channel.AddFlowerLevelAsync(buildCell);
+        }
+        
+        public Game.Contracts.MatchActionResult DrawCard()
+        {
+            return base.Channel.DrawCard();
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> DrawCardAsync()
+        {
+            return base.Channel.DrawCardAsync();
+        }
+        
+        public Game.Contracts.MatchActionResult PlayCard(Game.Contracts.MatchCardPlay cardPlay)
+        {
+            return base.Channel.PlayCard(cardPlay);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> PlayCardAsync(Game.Contracts.MatchCardPlay cardPlay)
+        {
+            return base.Channel.PlayCardAsync(cardPlay);
         }
         
         public Game.Contracts.MatchActionResult EndTurn()
@@ -4127,7 +4437,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IGameSessionService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/GameSession");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/GameSession");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4283,7 +4593,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IAccountService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/account");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/account");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4407,7 +4717,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IRankingService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/ranking");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/ranking");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4531,7 +4841,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IServerStatusService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/status");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/status");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }

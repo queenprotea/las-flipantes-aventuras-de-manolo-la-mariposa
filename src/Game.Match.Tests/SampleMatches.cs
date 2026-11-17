@@ -7,8 +7,9 @@ namespace Game.Match.Tests
 {
     internal static class SampleMatches
     {
-        internal const int TieBreakSeed = 7;
+        internal const int ChanceSeed = 7;
         internal const int CaterpillarPlacementCost = 2;
+        internal const int RoomId = 30;
 
         internal static TimeSpan StepTime { get; } = TimeSpan.FromSeconds(90);
 
@@ -16,9 +17,9 @@ namespace Game.Match.Tests
 
         internal static RoundRule OneTurnRound { get; } = new RoundRule(new int[] { 3 });
 
-        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1));
+        internal static MatchRuleSet OneTurnPerRoundRules { get; } = new MatchRuleSet(new RoundRule[] { OneTurnRound, OneTurnRound, OneTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1, 1, 0));
 
-        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1));
+        internal static MatchRuleSet Rules { get; } = new MatchRuleSet(new RoundRule[] { FourTurnRound, FourTurnRound, FourTurnRound }, new ActionPointCosts(CaterpillarPlacementCost, 1, 1, 1, 1, 0));
 
         internal static TimeSpan FirstPlacementTaken { get; } = TimeSpan.FromSeconds(60);
 

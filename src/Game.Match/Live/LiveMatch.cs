@@ -5,6 +5,7 @@ using System.Threading;
 
 using Game.Contracts;
 using Game.Domain;
+using Game.Persistence;
 
 namespace Game.Match
 {
@@ -54,6 +55,28 @@ namespace Game.Match
                 _hasEnded = true;
                 StopStepCountdown();
             }
+        }
+
+        internal IReadOnlyList<MatchParticipant> ReadPlayerResults()
+        {
+            List<MatchParticipant> playerResults;
+            lock (_matchLock)
+            {
+                playerResults = _matchTable.Phase == TablePhase.Finished ? MatchRecordConversion.ToPlayerResults(_matchTable, _seatedEntrants) : MatchRecordConversion.ToSeatedPlayers(_seatedEntrants);
+            }
+
+            return playerResults;
+        }
+
+        internal string ReadEndReason()
+        {
+            string endReason;
+            lock (_matchLock)
+            {
+                endReason = MatchRecordConversion.ToEndReason(_matchTable.FinishCause);
+            }
+
+            return endReason;
         }
 
         internal MatchActionResult PlacePiece(int entrantId, MatchPiece piece, BoardCell destinationCell)
@@ -109,6 +132,48 @@ namespace Game.Match
                 if (actionResult == MatchActionResult.Applied)
                 {
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.AddFlowerLevel(GetSeatNumber(entrantId), buildCell));
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
+            }
+
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
+        }
+
+        internal MatchActionResult DrawCard(int entrantId)
+        {
+            MatchActionResult actionResult;
+            bool hasJustFinished;
+            lock (_matchLock)
+            {
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.DrawCard(GetSeatNumber(entrantId)));
+                }
+
+                hasJustFinished = CompleteAction(actionResult, stepBefore);
+            }
+
+            ReportFinish(hasJustFinished);
+
+            return actionResult;
+        }
+
+        internal MatchActionResult PlayCard(int entrantId, CardPlay cardPlay)
+        {
+            MatchActionResult actionResult;
+            bool hasJustFinished;
+            lock (_matchLock)
+            {
+                TableStep stepBefore = ReadTableStep();
+                actionResult = JudgeOpenStep();
+                if (actionResult == MatchActionResult.Applied)
+                {
+                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.PlayCard(GetSeatNumber(entrantId), cardPlay));
                 }
 
                 hasJustFinished = CompleteAction(actionResult, stepBefore);

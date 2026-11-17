@@ -428,6 +428,26 @@ namespace Torres.Client.Localization
             internal const string NoBuildsLeftNotice = "Match.NoBuildsLeftNotice";
             internal const string NotNextToPlanterNotice = "Match.NotNextToPlanterNotice";
             internal const string JoinsPlantersNotice = "Match.JoinsPlantersNotice";
+            internal const string CardsLabel = "Match.CardsLabel";
+            internal const string DeckCountLabel = "Match.DeckCountLabel";
+            internal const string CardsInHandTag = "Match.CardsInHandTag";
+            internal const string SixActionPointsCard = "Match.SixActionPointsCard";
+            internal const string SevenActionPointsCard = "Match.SevenActionPointsCard";
+            internal const string DoubleClimbCard = "Match.DoubleClimbCard";
+            internal const string GroundLeapCard = "Match.GroundLeapCard";
+            internal const string FlowerLevelMoveCard = "Match.FlowerLevelMoveCard";
+            internal const string RelocationCard = "Match.RelocationCard";
+            internal const string PlanterCrossingCard = "Match.PlanterCrossingCard";
+            internal const string FlowerLevelRemovalCard = "Match.FlowerLevelRemovalCard";
+            internal const string ChooseCardCaterpillarHint = "Match.ChooseCardCaterpillarHint";
+            internal const string ChooseCardDestinationHint = "Match.ChooseCardDestinationHint";
+            internal const string ChooseLevelSourceHint = "Match.ChooseLevelSourceHint";
+            internal const string ChooseLevelDestinationHint = "Match.ChooseLevelDestinationHint";
+            internal const string ChooseRemovalHint = "Match.ChooseRemovalHint";
+            internal const string DeckEmptyNotice = "Match.DeckEmptyNotice";
+            internal const string CardNotInHandNotice = "Match.CardNotInHandNotice";
+            internal const string PointsCardUsedNotice = "Match.PointsCardUsedNotice";
+            internal const string WrongCardTargetNotice = "Match.WrongCardTargetNotice";
         }
 
         internal static class RoundSummary

@@ -8,12 +8,14 @@ namespace Game.Domain.Tests
         internal const int MovementCost = 1;
         internal const int ClimbCost = 1;
         internal const int BuildingCost = 1;
+        internal const int CardDrawCost = 1;
+        internal const int CardPlayCost = 0;
         internal const int ThreeBuildings = 3;
         internal const int TwoBuildings = 2;
 
-        private const int TieBreakSeed = 7;
+        private const int ChanceSeed = 7;
 
-        internal static ActionCosts Costs { get; } = new ActionCosts(PlacementCost, MovementCost, ClimbCost, BuildingCost);
+        internal static ActionCosts Costs { get; } = new ActionCosts(PlacementCost, MovementCost, ClimbCost, BuildingCost, CardDrawCost, CardPlayCost);
 
         internal static RoundTurnPlan FourTurnRound { get; } = new RoundTurnPlan(new int[] { ThreeBuildings, ThreeBuildings, ThreeBuildings, ThreeBuildings });
 
@@ -25,11 +27,11 @@ namespace Game.Domain.Tests
 
         internal static MatchRules OneTurnPerRoundRules { get; } = new MatchRules(new RoundTurnPlan[] { OneTurnRound, OneTurnRound, OneTurnRound }, Costs);
 
-        internal static Random CreateTieBreakRandom()
+        internal static Random CreateChanceSource()
         {
-            var tieBreakRandom = new Random(TieBreakSeed);
+            var seededChanceSource = new Random(ChanceSeed);
 
-            return tieBreakRandom;
+            return seededChanceSource;
         }
     }
 }

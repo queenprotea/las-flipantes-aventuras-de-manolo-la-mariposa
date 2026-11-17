@@ -308,6 +308,20 @@ namespace Torres.Client.Session
             return buildRequest;
         }
 
+        internal Task<MatchActionResult> DrawCardAsync()
+        {
+            Task<MatchActionResult> drawRequest = Task.Run(RequireChannel().DrawCard);
+
+            return drawRequest;
+        }
+
+        internal Task<MatchActionResult> PlayCardAsync(MatchCardPlay cardPlay)
+        {
+            Task<MatchActionResult> playRequest = new SessionCall<MatchCardPlay, MatchActionResult>(PlayCard, cardPlay).StartAsync();
+
+            return playRequest;
+        }
+
         internal Task<MatchActionResult> EndTurnAsync()
         {
             Task<MatchActionResult> endTurnRequest = Task.Run(RequireChannel().EndTurn);
@@ -418,6 +432,13 @@ namespace Torres.Client.Session
             FriendRequestResponseResult rejectionResult = RequireChannel().RespondFriendRequest(requesterPlayerId, false);
 
             return rejectionResult;
+        }
+
+        private MatchActionResult PlayCard(MatchCardPlay cardPlay)
+        {
+            MatchActionResult playResult = RequireChannel().PlayCard(cardPlay);
+
+            return playResult;
         }
 
         private MatchActionResult PlacePiece(PiecePlacement piecePlacement)

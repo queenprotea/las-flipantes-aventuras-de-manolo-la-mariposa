@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class MatchRecordRepository
+    public sealed class MatchRecordRepository : IMatchRecordRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 
@@ -45,6 +45,55 @@ namespace Game.Persistence
             Task<MatchRecord?> finding = ReadFinishedAsync(matchId);
 
             return finding;
+        }
+
+        public Task<int> CreateAsync(int roomId, int playerCount)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerCount);
+
+            Task<int> creation = CreateInProgressAsync(roomId, playerCount);
+
+            return creation;
+        }
+
+        public Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
+            ArgumentNullException.ThrowIfNull(endReason);
+
+            Task finishing = WriteFinishAsync(matchId, endReason, finishedAtUtc);
+
+            return finishing;
+        }
+
+        private async Task<int> CreateInProgressAsync(int roomId, int playerCount)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            var newMatch = new MatchRecord
+            {
+                RoomId = roomId,
+                Status = MatchStatusCodes.InProgress,
+                PlayerCount = (short)playerCount,
+            };
+            databaseContext.MatchRecords.Add(newMatch);
+            await databaseContext.SaveChangesAsync();
+            int createdMatchId = newMatch.MatchId;
+
+            return createdMatchId;
+        }
+
+        private async Task WriteFinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            await databaseContext.MatchRecords
+                .Where(storedMatch => (storedMatch.MatchId == matchId) && (storedMatch.Status == MatchStatusCodes.InProgress))
+                .ExecuteUpdateAsync(matchUpdate => matchUpdate
+                    .SetProperty(storedMatch => storedMatch.Status, MatchStatusCodes.Finished)
+                    .SetProperty(storedMatch => storedMatch.FinishedAt, finishedAtUtc)
+                    .SetProperty(storedMatch => storedMatch.EndReason, endReason));
         }
 
         private async Task<int> CountFinishedAsync(int playerId)
