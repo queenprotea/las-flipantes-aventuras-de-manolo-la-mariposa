@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Game.Contracts;
@@ -38,12 +39,15 @@ namespace Game.Services
             }
         }
 
-        public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds)
+        public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds, IReadOnlyList<EntrantStanding> entrantStandings)
         {
+            ArgumentNullException.ThrowIfNull(releasedEntrantIds);
+            ArgumentNullException.ThrowIfNull(entrantStandings);
+
             LiveRoom? returnedRoom = null;
             foreach (int releasedEntrantId in releasedEntrantIds)
             {
-                returnedRoom ??= _matchRoomReturn.ReturnRoomOf(releasedEntrantId, RoomChangeReason.MatchFinished);
+                returnedRoom ??= _matchRoomReturn.ReturnRoomOf(releasedEntrantId, RoomChangeReason.MatchFinished, entrantStandings);
             }
 
             if (returnedRoom is not null)

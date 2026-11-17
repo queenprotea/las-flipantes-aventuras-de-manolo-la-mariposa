@@ -1,5 +1,7 @@
 using FontStashSharp.RichText;
 
+using Game.Contracts;
+
 using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D;
@@ -115,7 +117,7 @@ namespace Torres.Client.Screens
             return title;
         }
 
-        protected static LocalizedLabel CreateHint(string textKey)
+        internal static LocalizedLabel CreateHint(string textKey)
         {
             var hint = new LocalizedLabel(textKey)
             {
@@ -422,6 +424,21 @@ namespace Torres.Client.Screens
             };
 
             return divider;
+        }
+
+        internal static Panel CreateSeatSwatch(SeatColor seatColor)
+        {
+            var seatSwatch = new Panel
+            {
+                Width = Sizes.SeatSwatchSize,
+                Height = Sizes.SeatSwatchSize,
+                Background = SeatColors.BrushFor(seatColor),
+                Border = Theme.LineBrush,
+                BorderThickness = Sizes.Border,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            return seatSwatch;
         }
 
         private static LocalizedButton CreateBaseButton(string textKey, Color labelColor)

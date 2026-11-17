@@ -183,7 +183,8 @@ namespace Game.Match
                     releasedEntrantIds = RemoveEntrantsOf(finishedMatch);
                 }
 
-                _matchListener.ReceiveMatchFinished(releasedEntrantIds);
+                IReadOnlyList<EntrantStanding> entrantStandings = finishedMatch.ReadStandings();
+                _matchListener.ReceiveMatchFinished(releasedEntrantIds, entrantStandings);
             }
         }
 

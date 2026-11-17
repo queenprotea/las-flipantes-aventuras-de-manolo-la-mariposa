@@ -28,7 +28,7 @@ namespace Game.Match.Tests
             _recordedNotices.Add(new RecordedNotice(RecordedNoticeKind.MatchStateChanged, recipientViews));
         }
 
-        public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds)
+        public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds, IReadOnlyList<EntrantStanding> entrantStandings)
         {
             FinishCount++;
             _releasedEntrantIds.AddRange(releasedEntrantIds);

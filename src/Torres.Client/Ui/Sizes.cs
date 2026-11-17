@@ -45,6 +45,8 @@ namespace Torres.Client.Ui
         internal const int RankingTableWidth = 1000;
         internal const int RankingRankColumnWidth = 40;
         internal const int RankingStatColumnWidth = 96;
+        internal const int RoomRankingRankColumnWidth = 28;
+        internal const int RoomRankingStatColumnWidth = 64;
 
         internal const int EmptyStateWidth = 360;
         internal const int EmptyStateMarkSize = 64;

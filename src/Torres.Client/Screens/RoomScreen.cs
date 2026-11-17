@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -19,11 +20,18 @@ namespace Torres.Client.Screens
     {
         private const int LoneMemberCount = 1;
 
+        private static readonly IReadOnlyList<RankingColumn> _rankingStatColumns = new RankingColumn[]
+        {
+            new RankingColumn(TextKeys.GlobalRanking.PointsColumn, Sizes.RoomRankingStatColumnWidth),
+            new RankingColumn(TextKeys.GlobalRanking.WinsColumn, Sizes.RoomRankingStatColumnWidth),
+        };
+
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly VerticalStackPanel _topBarPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
         private readonly VerticalStackPanel _playersPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
+        private readonly VerticalStackPanel _rankingPlaceholder = new VerticalStackPanel();
         private readonly ChatView _chatView;
         private readonly AvatarViewSet _avatarViews;
 
@@ -130,6 +138,8 @@ namespace Torres.Client.Screens
             {
                 _playersPlaceholder.Widgets.Add(CreateHint(TextKeys.Room.HostOnlyHint));
             }
+
+            ShowRanking(room);
         }
 
         private HorizontalStackPanel BuildTopBar(Room room, bool isViewerHost)
@@ -223,7 +233,7 @@ namespace Torres.Client.Screens
             HorizontalStackPanel itemRow = CreateButtonRow();
 
             HorizontalStackPanel nameLine = CreateButtonRow();
-            nameLine.Widgets.Add(BuildColorSwatch(member.Color));
+            nameLine.Widgets.Add(CreateSeatSwatch(member.Color));
             string? avatarReference = member.MemberId == room.ViewerMemberId ? _playerSession.AvatarReference : member.AvatarReference;
             nameLine.Widgets.Add(_avatarViews.Create(avatarReference).Root);
             nameLine.Widgets.Add(CreateUsernameLabel(member.DisplayName));
@@ -261,32 +271,54 @@ namespace Torres.Client.Screens
             return playerRow;
         }
 
-        private static Panel BuildColorSwatch(SeatColor color)
-        {
-            var colorSwatch = new Panel
-            {
-                Width = Sizes.SeatSwatchSize,
-                Height = Sizes.SeatSwatchSize,
-                Background = SeatColors.BrushFor(color),
-                Border = Theme.LineBrush,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return colorSwatch;
-        }
-
-        private static VerticalStackPanel BuildRoomRankingSection()
+        private VerticalStackPanel BuildRoomRankingSection()
         {
             var rankingSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             rankingSection.Widgets.Add(CreateTitle(TextKeys.Room.RoomRankingTitle));
+            rankingSection.Widgets.Add(_rankingPlaceholder);
 
+            return rankingSection;
+        }
+
+        private void ShowRanking(Room room)
+        {
+            _rankingPlaceholder.Widgets.Clear();
+            if (room.Ranking.Count == 0)
+            {
+                _rankingPlaceholder.Widgets.Add(CreateEmptyRankingState());
+            }
+            else
+            {
+                int? stretchedTableWidth = null;
+                var rankingTable = new RankingTableView(stretchedTableWidth, Sizes.RoomRankingRankColumnWidth, _rankingStatColumns, ToRankingRows(room));
+                _rankingPlaceholder.Widgets.Add(rankingTable.Root);
+            }
+        }
+
+        private static VerticalStackPanel CreateEmptyRankingState()
+        {
             VerticalStackPanel emptyRankingState = CreateEmptyState(TextKeys.Room.EmptyRankingTitle, TextKeys.Room.EmptyRankingHint);
             emptyRankingState.Width = null;
             emptyRankingState.HorizontalAlignment = HorizontalAlignment.Stretch;
-            rankingSection.Widgets.Add(emptyRankingState);
+            emptyRankingState.Padding = Metrics.EmptyRoomRankingPadding;
+            emptyRankingState.Background = Theme.SurfaceSunkenBrush;
+            emptyRankingState.Border = Theme.StrongLineBrush;
+            emptyRankingState.BorderThickness = Sizes.Border;
 
-            return rankingSection;
+            return emptyRankingState;
+        }
+
+        private static List<RankingRow> ToRankingRows(Room room)
+        {
+            var rankingRows = new List<RankingRow>();
+            for (var i = 0; i < room.Ranking.Count; i++)
+            {
+                RoomRankingEntry entry = room.Ranking[i];
+                bool isViewer = entry.MemberId == room.ViewerMemberId;
+                rankingRows.Add(new RankingRow(i + 1, entry.DisplayName, isViewer, entry.Color, new int[] { entry.Points, entry.Wins }));
+            }
+
+            return rankingRows;
         }
 
         private static LocalizedLabel CreateMutedLabel(string textKey, string[]? textArguments)

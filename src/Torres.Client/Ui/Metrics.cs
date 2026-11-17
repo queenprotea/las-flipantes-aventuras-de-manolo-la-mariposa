@@ -57,6 +57,8 @@ namespace Torres.Client.Ui
 
         internal static Thickness ChatPadding { get; } = new Thickness(12, 11);
 
+        internal static Thickness EmptyRoomRankingPadding { get; } = new Thickness(14, 20);
+
         internal static Thickness ChatReportButtonPadding { get; } = new Thickness(ChatReportButtonInset, 0, 0, 0);
 
         internal static Thickness ChipPadding { get; } = new Thickness(10, 3);

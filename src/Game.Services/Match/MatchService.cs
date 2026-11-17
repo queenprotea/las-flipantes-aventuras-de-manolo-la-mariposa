@@ -151,7 +151,8 @@ namespace Game.Services
         private EndMatchResult EndMatchOf(int ownerId)
         {
             EndMatchResult endResult = _matchCoordinator.EndMatch(ownerId);
-            LiveRoom? returnedRoom = endResult == EndMatchResult.Ended ? _matchRoomReturn.ReturnRoomOf(ownerId, RoomChangeReason.MatchEnded) : null;
+            IReadOnlyList<EntrantStanding> interruptedStandings = Array.Empty<EntrantStanding>();
+            LiveRoom? returnedRoom = endResult == EndMatchResult.Ended ? _matchRoomReturn.ReturnRoomOf(ownerId, RoomChangeReason.MatchEnded, interruptedStandings) : null;
             if (returnedRoom is not null)
             {
                 _matchLog.InfoFormat(MatchEndedMessage, ownerId, returnedRoom.RoomId);

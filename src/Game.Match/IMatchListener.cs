@@ -8,6 +8,6 @@ namespace Game.Match
 
         void ReceiveMatchStateChanged(IReadOnlyList<MatchRecipientView> recipientViews);
 
-        void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds);
+        void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds, IReadOnlyList<EntrantStanding> entrantStandings);
     }
 }

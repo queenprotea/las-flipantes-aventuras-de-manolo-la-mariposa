@@ -95,6 +95,8 @@ namespace Game.Contracts
         
         private System.Collections.Generic.List<Game.Contracts.RoomMember> MembersField;
         
+        private System.Collections.Generic.List<Game.Contracts.RoomRankingEntry> RankingField;
+        
         private int RoomIdField;
         
         private Game.Contracts.RoomState StateField;
@@ -165,6 +167,19 @@ namespace Game.Contracts
             set
             {
                 this.MembersField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.RoomRankingEntry> Ranking
+        {
+            get
+            {
+                return this.RankingField;
+            }
+            set
+            {
+                this.RankingField = value;
             }
         }
         
@@ -381,6 +396,103 @@ namespace Game.Contracts
             set
             {
                 this.MemberIdField = value;
+            }
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RoomRankingEntry", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class RoomRankingEntry : object
+    {
+        
+        private Game.Contracts.SeatColor ColorField;
+        
+        private string DisplayNameField;
+        
+        private bool IsGuestField;
+        
+        private int MemberIdField;
+        
+        private int PointsField;
+        
+        private int WinsField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.SeatColor Color
+        {
+            get
+            {
+                return this.ColorField;
+            }
+            set
+            {
+                this.ColorField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string DisplayName
+        {
+            get
+            {
+                return this.DisplayNameField;
+            }
+            set
+            {
+                this.DisplayNameField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public bool IsGuest
+        {
+            get
+            {
+                return this.IsGuestField;
+            }
+            set
+            {
+                this.IsGuestField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int MemberId
+        {
+            get
+            {
+                return this.MemberIdField;
+            }
+            set
+            {
+                this.MemberIdField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int Points
+        {
+            get
+            {
+                return this.PointsField;
+            }
+            set
+            {
+                this.PointsField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int Wins
+        {
+            get
+            {
+                return this.WinsField;
+            }
+            set
+            {
+                this.WinsField = value;
             }
         }
     }
@@ -1371,36 +1483,6 @@ namespace Game.Contracts
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="ReportChatMessageResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum ReportChatMessageResult : int
-    {
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Reported = 0,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        NotIdentified = 1,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        ReporterIsGuest = 2,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        NotInRoom = 3,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        MessageNotFound = 4,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        AuthorIsGuest = 5,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        OwnMessage = 6,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 7,
-    }
-    
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="SendChatMessageResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
     public enum SendChatMessageResult : int
     {
@@ -1583,6 +1665,36 @@ namespace Game.Contracts
                 this.TextField = value;
             }
         }
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="ReportChatMessageResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum ReportChatMessageResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Reported = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotIdentified = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        ReporterIsGuest = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotInRoom = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MessageNotFound = 4,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        AuthorIsGuest = 5,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        OwnMessage = 6,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 7,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3277,6 +3389,58 @@ namespace Game.Contracts
         }
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="PlayerIdentity", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class PlayerIdentity : object
+    {
+        
+        private string EmailField;
+        
+        private int PlayerIdField;
+        
+        private string UsernameField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Email
+        {
+            get
+            {
+                return this.EmailField;
+            }
+            set
+            {
+                this.EmailField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int PlayerId
+        {
+            get
+            {
+                return this.PlayerIdField;
+            }
+            set
+            {
+                this.PlayerIdField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Username
+        {
+            get
+            {
+                return this.UsernameField;
+            }
+            set
+            {
+                this.UsernameField = value;
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="RegistrationConfirmationStatus", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
     public enum RegistrationConfirmationStatus : int
@@ -3296,60 +3460,6 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         DatabaseUnavailable = 4,
-    }
-    
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeRequestResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum RecoveryCodeRequestResult : int
-    {
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        CodeSent = 0,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        InvalidEmail = 1,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        TooManyRequests = 2,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        MailDeliveryFailed = 3,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 4,
-    }
-    
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeVerificationResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum RecoveryCodeVerificationResult : int
-    {
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Valid = 0,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        InvalidCode = 1,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 2,
-    }
-    
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="PasswordResetResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum PasswordResetResult : int
-    {
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Reset = 0,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        InvalidCode = 1,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        InvalidPassword = 2,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 3,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3400,58 +3510,6 @@ namespace Game.Contracts
             set
             {
                 this.StatusField = value;
-            }
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="PlayerIdentity", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public partial class PlayerIdentity : object
-    {
-        
-        private string EmailField;
-        
-        private int PlayerIdField;
-        
-        private string UsernameField;
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public string Email
-        {
-            get
-            {
-                return this.EmailField;
-            }
-            set
-            {
-                this.EmailField = value;
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public int PlayerId
-        {
-            get
-            {
-                return this.PlayerIdField;
-            }
-            set
-            {
-                this.PlayerIdField = value;
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public string Username
-        {
-            get
-            {
-                return this.UsernameField;
-            }
-            set
-            {
-                this.UsernameField = value;
             }
         }
     }
@@ -3524,6 +3582,60 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         AliasTooLong = 2,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeRequestResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum RecoveryCodeRequestResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        CodeSent = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidEmail = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        TooManyRequests = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MailDeliveryFailed = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 4,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeVerificationResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum RecoveryCodeVerificationResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Valid = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidCode = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 2,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="PasswordResetResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum PasswordResetResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Reset = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidCode = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidPassword = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 3,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -4328,7 +4440,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IGameSessionService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/GameSession");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/GameSession");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4548,7 +4660,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IAccountService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/account");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/account");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4672,7 +4784,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IRankingService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/ranking");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/ranking");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4796,7 +4908,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IServerStatusService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/status");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/status");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
