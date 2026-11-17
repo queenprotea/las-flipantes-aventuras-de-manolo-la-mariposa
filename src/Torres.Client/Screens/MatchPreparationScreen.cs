@@ -144,6 +144,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Control,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
+                SupportsCommands = false,
             });
 
             return seatRow;

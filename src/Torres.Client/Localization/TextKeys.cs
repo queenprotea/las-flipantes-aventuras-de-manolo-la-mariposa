@@ -340,6 +340,7 @@ namespace Torres.Client.Localization
             internal const string ReportToolTip = "Chat.ReportToolTip";
             internal const string ReportSent = "Chat.ReportSent";
             internal const string ReportUnavailable = "Chat.ReportUnavailable";
+            internal const string SendToolTip = "Chat.SendToolTip";
         }
 
         internal static class Alerts

@@ -364,6 +364,7 @@ namespace Torres.Client.Screens
                 TextColor = textColor,
                 AutoEllipsisMethod = AutoEllipsisMethod.Character,
                 VerticalAlignment = VerticalAlignment.Center,
+                SupportsCommands = false,
             };
 
             return playerNameLabel;
@@ -522,6 +523,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
+                SupportsCommands = false,
             };
 
             return usernameLabel;

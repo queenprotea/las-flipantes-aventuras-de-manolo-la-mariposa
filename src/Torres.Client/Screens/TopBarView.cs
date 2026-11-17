@@ -13,7 +13,7 @@ namespace Torres.Client.Screens
     internal sealed class TopBarView
     {
         private readonly LocalizedLabel _headerLabel = new LocalizedLabel(TextKeys.MainMenu.HeaderLabel);
-        private readonly Label _usernameLabel = new Label();
+        private readonly Label _usernameLabel = new Label { SupportsCommands = false };
         private readonly LocalizedLabel _roleLabel = new LocalizedLabel(TextKeys.Common.RegisteredRole);
         private readonly Label _connectionDot = new Label();
         private readonly LocalizedLabel _connectionLabel = new LocalizedLabel(TextKeys.Common.OfflineStatus);

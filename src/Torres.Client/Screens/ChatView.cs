@@ -113,15 +113,20 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildRoot(int panelWidth)
         {
-            var inputArea = new Panel
+            var typingArea = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
+            typingArea.Widgets.Add(_inputHint);
+            typingArea.Widgets.Add(_inputBox);
+
+            var inputArea = new HorizontalStackPanel
             {
                 Background = Theme.SurfaceBrush,
                 Border = Theme.StrongLineBrush,
                 BorderThickness = Sizes.Border,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            inputArea.Widgets.Add(_inputHint);
-            inputArea.Widgets.Add(_inputBox);
+            inputArea.Widgets.Add(typingArea);
+            StackPanel.SetProportionType(typingArea, ProportionType.Fill);
+            inputArea.Widgets.Add(BuildSendButton());
 
             var chatPanel = new VerticalStackPanel
             {
@@ -139,6 +144,29 @@ namespace Torres.Client.Screens
             chatPanel.Widgets.Add(inputArea);
 
             return chatPanel;
+        }
+
+        private LocalizedSymbolButton BuildSendButton()
+        {
+            var arrowLabel = new Label
+            {
+                Text = DisplaySymbols.SendArrow,
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            };
+            var sendButton = new LocalizedSymbolButton(arrowLabel, TextKeys.Chat.SendToolTip)
+            {
+                Padding = Metrics.InputPadding,
+                Background = null,
+                OverBackground = null,
+                PressedBackground = null,
+                Border = null,
+                BorderThickness = new Thickness(0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            sendButton.Click += SendButtonOnClick;
+
+            return sendButton;
         }
 
         private void RenderMessages()
@@ -408,6 +436,11 @@ namespace Torres.Client.Screens
             string typedText = _inputBox.Text ?? string.Empty;
 
             return typedText;
+        }
+
+        private void SendButtonOnClick(object sender, MyraEventArgs e)
+        {
+            StartSend();
         }
 
         private void InputBoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)

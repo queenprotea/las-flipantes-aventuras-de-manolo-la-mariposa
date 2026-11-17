@@ -820,6 +820,9 @@
   <data name="Chat.ReportUnavailable" xml:space="preserve">
     <value>That message can no longer be reported.</value>
   </data>
+  <data name="Chat.SendToolTip" xml:space="preserve">
+    <value>Send</value>
+  </data>
   <data name="Alerts.HeaderLabel" xml:space="preserve">
     <value>notices</value>
   </data>
