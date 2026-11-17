@@ -8,6 +8,8 @@ using Game.Contracts;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -180,11 +182,22 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, ReportFailedMessage, reporterOwnerId, reportTarget.RoomId), exception);
-                reportResult = ReportChatMessageResult.DatabaseUnavailable;
+                reportResult = LogReportStorageFailure(reporterOwnerId, reportTarget, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                reportResult = LogReportStorageFailure(reporterOwnerId, reportTarget, exception);
             }
 
             return reportResult;
+        }
+
+        private static ReportChatMessageResult LogReportStorageFailure(int reporterOwnerId, ReportTarget reportTarget, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, ReportFailedMessage, reporterOwnerId, reportTarget.RoomId), exception);
+            ReportChatMessageResult failedResult = ReportChatMessageResult.DatabaseUnavailable;
+
+            return failedResult;
         }
 
         private static ReportChatMessageResult? FindResultWithoutRecording(int reporterOwnerId, ReportTarget reportTarget)

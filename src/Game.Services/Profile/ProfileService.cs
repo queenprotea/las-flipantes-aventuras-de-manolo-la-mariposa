@@ -10,6 +10,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -219,11 +221,22 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, ProfileWriteFailedMessage, playerId), exception);
-                saveResult = new UpdateProfileResult { Status = UpdateProfileStatus.DatabaseUnavailable };
+                saveResult = LogSaveFailure(playerId, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                saveResult = LogSaveFailure(playerId, exception);
             }
 
             return saveResult;
+        }
+
+        private static UpdateProfileResult LogSaveFailure(int playerId, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, ProfileWriteFailedMessage, playerId), exception);
+            var failedResult = new UpdateProfileResult { Status = UpdateProfileStatus.DatabaseUnavailable };
+
+            return failedResult;
         }
 
         private async Task<UpdateProfileResult> SaveWithNewAvatarAsync(PlayerSession callerSession, ProfileChange profileChange, CompletedAvatarUpload completedUpload)
@@ -242,6 +255,11 @@ namespace Game.Services
                 writeResult = await WriteProfileAsync(callerSession, profileChange with { NewReference = newReference });
             }
             catch (NpgsqlException)
+            {
+                DeleteAvatarFiles(newReference, playerId);
+                throw;
+            }
+            catch (DbUpdateException)
             {
                 DeleteAvatarFiles(newReference, playerId);
                 throw;

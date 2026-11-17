@@ -11,6 +11,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -198,19 +200,23 @@ namespace Game.Services
 
         private async Task<SendInvitationResult> StoreInvitationAsync(RoomInvitationRecord newInvitation, string roomCode)
         {
-            InvitationCreationOutcome creationOutcome;
+            InvitationCreationOutcome? creationOutcome = null;
             try
             {
                 creationOutcome = await _roomInvitationRepository.CreateAsync(newInvitation);
             }
             catch (NpgsqlException exception)
             {
-                string failureMessage = string.Format(CultureInfo.InvariantCulture, InvitationWriteFailedMessage, newInvitation.InviterPlayerId, newInvitation.InvitedPlayerId, newInvitation.RoomId);
-                _log.Error(failureMessage, exception);
-                return SendInvitationResult.DatabaseUnavailable;
+                LogInvitationWriteFailure(newInvitation, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                LogInvitationWriteFailure(newInvitation, exception);
             }
 
-            SendInvitationResult sendResult = ToSendResult(creationOutcome);
+            SendInvitationResult sendResult = creationOutcome is InvitationCreationOutcome storedOutcome
+                ? ToSendResult(storedOutcome)
+                : SendInvitationResult.DatabaseUnavailable;
             if (sendResult == SendInvitationResult.Sent)
             {
                 _log.InfoFormat(CultureInfo.InvariantCulture, InvitationSentMessage, newInvitation.InviterPlayerId, newInvitation.InvitedPlayerId, newInvitation.RoomId);
@@ -218,6 +224,12 @@ namespace Game.Services
             }
 
             return sendResult;
+        }
+
+        private static void LogInvitationWriteFailure(RoomInvitationRecord newInvitation, Exception exception)
+        {
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, InvitationWriteFailedMessage, newInvitation.InviterPlayerId, newInvitation.InvitedPlayerId, newInvitation.RoomId);
+            _log.Error(failureMessage, exception);
         }
 
         private async Task NotifyInviteeAsync(RoomInvitationRecord storedInvitation, string roomCode)

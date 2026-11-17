@@ -6,6 +6,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -74,8 +76,17 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, SanctionFailedMessage, recordedReport.ReportedPlayerId), exception);
+                LogSanctionFailure(recordedReport, exception);
             }
+            catch (DbUpdateException exception)
+            {
+                LogSanctionFailure(recordedReport, exception);
+            }
+        }
+
+        private static void LogSanctionFailure(Report recordedReport, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, SanctionFailedMessage, recordedReport.ReportedPlayerId), exception);
         }
 
         private async Task ApplySanctionIfThresholdReachedAsync(Report recordedReport, SanctionPolicy sanctionPolicy)

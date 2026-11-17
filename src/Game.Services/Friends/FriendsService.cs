@@ -10,6 +10,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -121,9 +123,11 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                string failureMessage = string.Format(CultureInfo.InvariantCulture, FriendResponseWriteFailedMessage, callerPlayerId);
-                _log.Error(failureMessage, exception);
-                responseResult = FriendRequestResponseResult.DatabaseUnavailable;
+                responseResult = LogResponseFailure(callerPlayerId, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                responseResult = LogResponseFailure(callerPlayerId, exception);
             }
 
             return responseResult;
@@ -199,12 +203,32 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                string failureMessage = string.Format(CultureInfo.InvariantCulture, FriendRequestWriteFailedMessage, callerPlayerId);
-                _log.Error(failureMessage, exception);
-                requestResult = FriendRequestResult.DatabaseUnavailable;
+                requestResult = LogRequestFailure(callerPlayerId, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                requestResult = LogRequestFailure(callerPlayerId, exception);
             }
 
             return requestResult;
+        }
+
+        private static FriendRequestResult LogRequestFailure(int callerPlayerId, Exception exception)
+        {
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, FriendRequestWriteFailedMessage, callerPlayerId);
+            _log.Error(failureMessage, exception);
+            FriendRequestResult failedResult = FriendRequestResult.DatabaseUnavailable;
+
+            return failedResult;
+        }
+
+        private static FriendRequestResponseResult LogResponseFailure(int callerPlayerId, Exception exception)
+        {
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, FriendResponseWriteFailedMessage, callerPlayerId);
+            _log.Error(failureMessage, exception);
+            FriendRequestResponseResult failedResult = FriendRequestResponseResult.DatabaseUnavailable;
+
+            return failedResult;
         }
 
         private FriendRequestResult StoreFriendRequest(int callerPlayerId, int targetPlayerId)

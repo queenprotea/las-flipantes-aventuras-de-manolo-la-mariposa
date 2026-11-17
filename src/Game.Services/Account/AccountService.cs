@@ -10,6 +10,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -102,17 +104,26 @@ namespace Game.Services
         private async Task<RegistrationResult> CreateAccountAsync(string username, string email, string password)
         {
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, PasswordWorkFactor);
-            PlayerCreationOutcome creationOutcome;
+            RegistrationResult registrationResult;
             try
             {
-                creationOutcome = await _playerRepository.CreateAsync(username, email, passwordHash);
+                registrationResult = await StoreAccountAsync(username, email, passwordHash);
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(RegistrationWriteFailedMessage, exception);
-                return RegistrationResult.DatabaseUnavailable;
+                registrationResult = LogRegistrationFailure(exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                registrationResult = LogRegistrationFailure(exception);
             }
 
+            return registrationResult;
+        }
+
+        private async Task<RegistrationResult> StoreAccountAsync(string username, string email, string passwordHash)
+        {
+            PlayerCreationOutcome creationOutcome = await _playerRepository.CreateAsync(username, email, passwordHash);
             RegistrationResult registrationResult = ToRegistrationResult(creationOutcome);
             if (registrationResult == RegistrationResult.Created)
             {
@@ -120,6 +131,14 @@ namespace Game.Services
             }
 
             return registrationResult;
+        }
+
+        private static RegistrationResult LogRegistrationFailure(Exception exception)
+        {
+            _log.Error(RegistrationWriteFailedMessage, exception);
+            RegistrationResult failedResult = RegistrationResult.DatabaseUnavailable;
+
+            return failedResult;
         }
 
         private static RegistrationResult ToRegistrationResult(PlayerCreationOutcome creationOutcome)

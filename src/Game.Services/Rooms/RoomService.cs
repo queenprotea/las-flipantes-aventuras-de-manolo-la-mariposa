@@ -10,6 +10,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -320,11 +322,22 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(string.Format(CultureInfo.InvariantCulture, CreationFailedMessage, owner.OwnerId), exception);
-                creation = new CreateRoomResult { Status = CreateRoomStatus.DatabaseUnavailable };
+                creation = LogCreationFailure(owner, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                creation = LogCreationFailure(owner, exception);
             }
 
             return creation;
+        }
+
+        private static CreateRoomResult LogCreationFailure(SessionOwner owner, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, CreationFailedMessage, owner.OwnerId), exception);
+            var failedCreation = new CreateRoomResult { Status = CreateRoomStatus.DatabaseUnavailable };
+
+            return failedCreation;
         }
 
         private async Task<CreateRoomResult> OpenRoomAsync(SessionOwner owner, RoomVisibility visibility)
