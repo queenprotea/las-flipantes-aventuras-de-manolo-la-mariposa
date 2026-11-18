@@ -384,34 +384,6 @@ namespace Torres.Client.Screens
             return gameSection;
         }
 
-        protected static VerticalStackPanel CreateChatPanel()
-        {
-            var chatPanel = new VerticalStackPanel
-            {
-                Spacing = Metrics.ChatSpacing,
-                Padding = Metrics.ChatPadding,
-                MinHeight = Metrics.ChatMinHeight,
-                Background = Theme.SurfaceSunkenBrush,
-            };
-
-            var spacer = new Panel();
-            chatPanel.Widgets.Add(new LocalizedLabel(TextKeys.Chat.NoMessages)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MutedInk,
-            });
-            chatPanel.Widgets.Add(spacer);
-            chatPanel.Widgets.Add(CreateDivider());
-            chatPanel.Widgets.Add(new LocalizedLabel(TextKeys.Chat.InputPlaceholder)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.MutedInk,
-            });
-            StackPanel.SetProportionType(spacer, ProportionType.Fill);
-
-            return chatPanel;
-        }
-
         internal static Panel CreateDivider()
         {
             var divider = new Panel

@@ -44,6 +44,7 @@ namespace Torres.Client.Screens
         private readonly Button _moveButton;
         private readonly Button _buildButton;
         private readonly LocalizedButton _endTurnButton;
+        private readonly ChatView _chatView;
 
         private MatchView? _shownMatchView;
         private TurnActionMode _actionMode;
@@ -59,6 +60,7 @@ namespace Torres.Client.Screens
 
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
             _caterpillarButton = CreateActionButton(TextKeys.Match.CaterpillarActionButton, _caterpillarCostLabel);
             _caterpillarButton.Click += CaterpillarButtonOnClick;
@@ -76,6 +78,7 @@ namespace Torres.Client.Screens
         internal override void Open()
         {
             _noticeBox.Hide();
+            _chatView.Open();
             _shownMatchView = null;
             _actionMode = TurnActionMode.None;
             _moveOrigin = null;
@@ -90,6 +93,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
+            _chatView.Update();
             MatchView? matchView = _playerSession.CurrentMatchView;
             if (matchView is null)
             {
@@ -319,19 +323,18 @@ namespace Torres.Client.Screens
             return moveDestinations;
         }
 
-        private static VerticalStackPanel CreateSideColumnPanel(LocalizedButton endTurnButton, LocalizedButton endMatchButton)
+        private static VerticalStackPanel CreateSideColumnPanel(Widget chatRoot, LocalizedButton endTurnButton, LocalizedButton endMatchButton)
         {
-            VerticalStackPanel chatPanel = CreateChatPanel();
             var sideColumn = new VerticalStackPanel
             {
                 Spacing = Metrics.ColumnSpacing,
                 Width = MatchLayout.SideColumnWidth,
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
-            sideColumn.Widgets.Add(chatPanel);
+            sideColumn.Widgets.Add(chatRoot);
             sideColumn.Widgets.Add(endTurnButton);
             sideColumn.Widgets.Add(CreateGameSection(TextKeys.Match.MatchLabel, endMatchButton));
-            StackPanel.SetProportionType(chatPanel, ProportionType.Fill);
+            StackPanel.SetProportionType(chatRoot, ProportionType.Fill);
 
             return sideColumn;
         }
@@ -397,7 +400,7 @@ namespace Torres.Client.Screens
             endMatchButton.Padding = Metrics.SmallButtonPadding;
             endMatchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
             endMatchButton.Click += EndMatchButtonOnClick;
-            VerticalStackPanel sideColumn = CreateSideColumnPanel(_endTurnButton, endMatchButton);
+            VerticalStackPanel sideColumn = CreateSideColumnPanel(_chatView.Root, _endTurnButton, endMatchButton);
 
             return sideColumn;
         }

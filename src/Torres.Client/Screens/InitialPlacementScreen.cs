@@ -28,6 +28,7 @@ namespace Torres.Client.Screens
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly ChatView _chatView;
         private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
         private readonly VerticalStackPanel _turnOrderPanel = new VerticalStackPanel();
         private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.MintInk, HorizontalAlignment = HorizontalAlignment.Center };
@@ -48,12 +49,14 @@ namespace Torres.Client.Screens
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _doomLauncher = doomLauncher;
+            _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }
 
         internal override void Open()
         {
             _noticeBox.Hide();
+            _chatView.Open();
             _shownMatchView = null;
             if (_playerSession.CurrentMatchView is null)
             {
@@ -63,6 +66,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
+            _chatView.Update();
             MatchView? matchView = _playerSession.CurrentMatchView;
             if (matchView is null)
             {
@@ -220,12 +224,11 @@ namespace Torres.Client.Screens
             return colorRow;
         }
 
-        private static VerticalStackPanel BuildSideColumn()
+        private VerticalStackPanel BuildSideColumn()
         {
-            VerticalStackPanel chatPanel = CreateChatPanel();
             var sideColumn = new VerticalStackPanel { Width = MatchLayout.SideColumnWidth, VerticalAlignment = VerticalAlignment.Stretch };
-            sideColumn.Widgets.Add(chatPanel);
-            StackPanel.SetProportionType(chatPanel, ProportionType.Fill);
+            sideColumn.Widgets.Add(_chatView.Root);
+            StackPanel.SetProportionType(_chatView.Root, ProportionType.Fill);
 
             return sideColumn;
         }
