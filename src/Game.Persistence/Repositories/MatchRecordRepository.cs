@@ -67,6 +67,27 @@ namespace Game.Persistence
             return finishing;
         }
 
+        public Task<List<int>> ListInProgressIdsAsync()
+        {
+            Task<List<int>> listing = ReadInProgressIdsAsync();
+
+            return listing;
+        }
+
+        private async Task<List<int>> ReadInProgressIdsAsync()
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            List<int> inProgressIds = await databaseContext.MatchRecords
+                .AsNoTracking()
+                .Where(storedMatch => storedMatch.Status == MatchStatusCodes.InProgress)
+                .OrderBy(storedMatch => storedMatch.MatchId)
+                .Select(storedMatch => storedMatch.MatchId)
+                .ToListAsync();
+
+            return inProgressIds;
+        }
+
         private async Task<int> CreateInProgressAsync(int roomId, int playerCount)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();

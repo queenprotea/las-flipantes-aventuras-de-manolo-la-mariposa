@@ -20,6 +20,8 @@ namespace Game.Contracts
         
         private int ConnectionCheckPeriodSecondsField;
         
+        private Game.Contracts.MatchSeating CurrentMatchField;
+        
         private Game.Contracts.Room CurrentRoomField;
         
         private Game.Contracts.SessionIdentity IdentityField;
@@ -36,6 +38,19 @@ namespace Game.Contracts
             set
             {
                 this.ConnectionCheckPeriodSecondsField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.MatchSeating CurrentMatch
+        {
+            get
+            {
+                return this.CurrentMatchField;
+            }
+            set
+            {
+                this.CurrentMatchField = value;
             }
         }
         
@@ -75,6 +90,43 @@ namespace Game.Contracts
             set
             {
                 this.StatusField = value;
+            }
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="MatchSeating", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class MatchSeating : object
+    {
+        
+        private bool IsAwaitingPlayersField;
+        
+        private string RoomCodeField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public bool IsAwaitingPlayers
+        {
+            get
+            {
+                return this.IsAwaitingPlayersField;
+            }
+            set
+            {
+                this.IsAwaitingPlayersField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string RoomCode
+        {
+            get
+            {
+                return this.RoomCodeField;
+            }
+            set
+            {
+                this.RoomCodeField = value;
             }
         }
     }
@@ -438,6 +490,8 @@ namespace Game.Contracts
         
         private System.DateTime ServerTimeUtcField;
         
+        private string SessionTokenField;
+        
         [System.Runtime.Serialization.DataMemberAttribute()]
         public System.DateTime ServerTimeUtc
         {
@@ -448,6 +502,19 @@ namespace Game.Contracts
             set
             {
                 this.ServerTimeUtcField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string SessionToken
+        {
+            get
+            {
+                return this.SessionTokenField;
+            }
+            set
+            {
+                this.SessionTokenField = value;
             }
         }
     }
@@ -871,28 +938,22 @@ namespace Game.Contracts
         YouWereKicked = 4,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        RoomClosed = 5,
+        MatchStarted = 5,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        MatchStarted = 6,
+        MemberWentInactive = 6,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        MemberWentInactive = 7,
+        MemberReturned = 7,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        MemberReturned = 8,
+        MemberTimedOut = 8,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        MemberTimedOut = 9,
+        MemberProfileChanged = 9,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        MatchEnded = 10,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        MemberProfileChanged = 11,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        MatchFinished = 12,
+        MatchFinished = 10,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -2308,15 +2369,30 @@ namespace Game.Contracts
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="EndMatchResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum EndMatchResult : int
+    [System.Runtime.Serialization.DataContractAttribute(Name="ForfeitResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum ForfeitResult : int
     {
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        Ended = 0,
+        Forfeited = 0,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         NotInMatch = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotIdentified = 2,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="ReturnToMatchResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum ReturnToMatchResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Returned = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NoMatchToResume = 1,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         NotIdentified = 2,
@@ -2367,6 +2443,8 @@ namespace Game.Contracts
         private System.Collections.Generic.List<int> RankedSeatNumbersField;
         
         private System.TimeSpan ReconnectionTimeField;
+        
+        private string RoomCodeField;
         
         private int RoundButterflyPointsField;
         
@@ -2641,6 +2719,19 @@ namespace Game.Contracts
             set
             {
                 this.ReconnectionTimeField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string RoomCode
+        {
+            get
+            {
+                return this.RoomCodeField;
+            }
+            set
+            {
+                this.RoomCodeField = value;
             }
         }
         
@@ -3003,6 +3094,9 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         Finished = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        AwaitingPlayers = 4,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3941,11 +4035,17 @@ namespace Game.Contracts
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/EndTurn", ReplyAction="http://tempuri.org/IMatchService/EndTurnResponse")]
         System.Threading.Tasks.Task<Game.Contracts.MatchActionResult> EndTurnAsync();
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/EndMatch", ReplyAction="http://tempuri.org/IMatchService/EndMatchResponse")]
-        Game.Contracts.EndMatchResult EndMatch();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/Forfeit", ReplyAction="http://tempuri.org/IMatchService/ForfeitResponse")]
+        Game.Contracts.ForfeitResult Forfeit();
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/EndMatch", ReplyAction="http://tempuri.org/IMatchService/EndMatchResponse")]
-        System.Threading.Tasks.Task<Game.Contracts.EndMatchResult> EndMatchAsync();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/Forfeit", ReplyAction="http://tempuri.org/IMatchService/ForfeitResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.ForfeitResult> ForfeitAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/ReturnToMatch", ReplyAction="http://tempuri.org/IMatchService/ReturnToMatchResponse")]
+        Game.Contracts.ReturnToMatchResult ReturnToMatch();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMatchService/ReturnToMatch", ReplyAction="http://tempuri.org/IMatchService/ReturnToMatchResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.ReturnToMatchResult> ReturnToMatchAsync();
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/GetProfile", ReplyAction="http://tempuri.org/IProfileService/GetProfileResponse")]
         Game.Contracts.ProfileResponse GetProfile();
@@ -4367,14 +4467,24 @@ namespace Game.Contracts
             return base.Channel.EndTurnAsync();
         }
         
-        public Game.Contracts.EndMatchResult EndMatch()
+        public Game.Contracts.ForfeitResult Forfeit()
         {
-            return base.Channel.EndMatch();
+            return base.Channel.Forfeit();
         }
         
-        public System.Threading.Tasks.Task<Game.Contracts.EndMatchResult> EndMatchAsync()
+        public System.Threading.Tasks.Task<Game.Contracts.ForfeitResult> ForfeitAsync()
         {
-            return base.Channel.EndMatchAsync();
+            return base.Channel.ForfeitAsync();
+        }
+        
+        public Game.Contracts.ReturnToMatchResult ReturnToMatch()
+        {
+            return base.Channel.ReturnToMatch();
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.ReturnToMatchResult> ReturnToMatchAsync()
+        {
+            return base.Channel.ReturnToMatchAsync();
         }
         
         public Game.Contracts.ProfileResponse GetProfile()
@@ -4467,7 +4577,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IGameSessionService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/GameSession");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/GameSession");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4623,7 +4733,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IAccountService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/account");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/account");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4747,7 +4857,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IRankingService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/ranking");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/ranking");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4871,7 +4981,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IServerStatusService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/status");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/status");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }

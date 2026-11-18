@@ -31,7 +31,6 @@ namespace Torres.Client.Screens
         private Task<LeaveRoomResult>? _leaveRequest;
         private Task<KickMemberResult>? _kickRequest;
         private Task<StartMatchResult>? _startMatchRequest;
-        private Task<EndMatchResult>? _endMatchRequest;
 
         internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
             : base(TextKeys.Room.HeaderLabel, true)
@@ -75,7 +74,6 @@ namespace Torres.Client.Screens
             FollowLeaveRequest();
             FollowKickRequest();
             FollowStartMatchRequest();
-            FollowEndMatchRequest();
             _chatView.Update();
             _avatarViews.Refresh();
         }
@@ -173,11 +171,6 @@ namespace Torres.Client.Screens
             leaveButton.Visible = room.State != RoomState.InMatch;
             leaveButton.Click += LeaveButtonOnClick;
             roomActionsBar.Widgets.Add(leaveButton);
-
-            LocalizedButton endMatchButton = CreateDestructiveButton(TextKeys.Common.EndMatchButton);
-            endMatchButton.Visible = room.State == RoomState.InMatch;
-            endMatchButton.Click += EndMatchButtonOnClick;
-            roomActionsBar.Widgets.Add(endMatchButton);
 
             LocalizedButton startMatchButton = CreatePrimaryButton(TextKeys.Room.StartMatchButton);
             startMatchButton.Visible = isViewerHost;
@@ -406,21 +399,6 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void FollowEndMatchRequest()
-        {
-            if ((_endMatchRequest is null) || !_endMatchRequest.IsCompleted)
-            {
-                return;
-            }
-
-            Task<EndMatchResult> completedEndMatch = _endMatchRequest;
-            _endMatchRequest = null;
-            if (!completedEndMatch.IsCompletedSuccessfully || (completedEndMatch.Result == EndMatchResult.NotIdentified))
-            {
-                ShowServerError();
-            }
-        }
-
         private void ShowStartMatchResult(StartMatchResult startResult)
         {
             switch (startResult.Status)
@@ -474,12 +452,6 @@ namespace Torres.Client.Screens
         {
             _noticeBox.Hide();
             _startMatchRequest ??= _gameSessionConnection.StartMatchAsync();
-        }
-
-        private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
-        {
-            _noticeBox.Hide();
-            _endMatchRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void CopyButtonOnClick(object sender, MyraEventArgs e)

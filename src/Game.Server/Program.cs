@@ -106,6 +106,7 @@ builder.Services.AddSingleton<FriendshipRepository>();
 builder.Services.AddSingleton<RoomInvitationRepository>();
 builder.Services.AddSingleton<MatchRecordRepository>();
 builder.Services.AddSingleton<MatchParticipantRepository>();
+builder.Services.AddSingleton<MatchStateRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
 builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<RankingService>();
@@ -150,6 +151,7 @@ try
     chatCapacity = await roomStartup.ReadChatCapacityAsync();
     sanctionPolicy = await roomStartup.ReadSanctionPolicyAsync();
     await matchService.LoadRulesAsync();
+    await matchService.ResumeInterruptedMatchesAsync();
 }
 catch (NpgsqlException exception)
 {

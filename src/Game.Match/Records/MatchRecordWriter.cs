@@ -18,19 +18,22 @@ namespace Game.Match
     {
         private const string FinishWrittenMessage = "Match {0} was recorded as {1}.";
         private const string FinishNotWrittenMessage = "The result of match {0} could not be written; the match stays in progress in the database.";
+        private const string CheckpointNotWrittenMessage = "The state of match {0} could not be saved; after a server restart the match would go on from an older step.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(MatchRecordWriter));
 
-        private readonly Channel<FinishedMatchRecord> _pendingRecords = Channel.CreateUnbounded<FinishedMatchRecord>(new UnboundedChannelOptions { SingleReader = true });
+        private readonly Channel<Func<Task>> _pendingWrites = Channel.CreateUnbounded<Func<Task>>(new UnboundedChannelOptions { SingleReader = true });
         private readonly IMatchRecordRepository _matchRecordRepository;
         private readonly IMatchParticipantRepository _matchParticipantRepository;
+        private readonly IMatchStateRepository _matchStateRepository;
         private readonly TimeProvider _timeProvider;
         private readonly Task _writerTask;
 
-        internal MatchRecordWriter(IMatchRecordRepository matchRecordRepository, IMatchParticipantRepository matchParticipantRepository, TimeProvider timeProvider)
+        internal MatchRecordWriter(MatchRepositories matchRepositories, TimeProvider timeProvider)
         {
-            _matchRecordRepository = matchRecordRepository;
-            _matchParticipantRepository = matchParticipantRepository;
+            _matchRecordRepository = matchRepositories.MatchRecordRepository;
+            _matchParticipantRepository = matchRepositories.MatchParticipantRepository;
+            _matchStateRepository = matchRepositories.MatchStateRepository;
             _timeProvider = timeProvider;
             _writerTask = Task.Run(WritePendingAsync);
         }
@@ -38,12 +41,26 @@ namespace Game.Match
         internal void RecordFinish(int matchId, string endReason, IReadOnlyList<MatchParticipant> playerResults)
         {
             var finishedMatch = new FinishedMatchRecord(matchId, endReason, _timeProvider.GetUtcNow().UtcDateTime, playerResults);
-            _pendingRecords.Writer.TryWrite(finishedMatch);
+            _pendingWrites.Writer.TryWrite(() => WriteFinishAsync(finishedMatch));
+        }
+
+        internal void RecordCheckpoint(int matchId, MatchCheckpoint checkpoint)
+        {
+            var savedState = new MatchState
+            {
+                MatchId = matchId,
+                RoundNumber = (short)checkpoint.RoundNumber,
+                TurnNumber = (short)checkpoint.TurnRoundNumber,
+                ActiveSeatNumber = (short)checkpoint.ActiveSeatNumber,
+                StateDocument = MatchCheckpointDocument.Write(checkpoint),
+                SavedAt = _timeProvider.GetUtcNow().UtcDateTime,
+            };
+            _pendingWrites.Writer.TryWrite(() => WriteCheckpointAsync(savedState));
         }
 
         internal Task FinishWritingAsync()
         {
-            _pendingRecords.Writer.TryComplete();
+            _pendingWrites.Writer.TryComplete();
             Task pendingWriting = _writerTask;
 
             return pendingWriting;
@@ -51,9 +68,9 @@ namespace Game.Match
 
         private async Task WritePendingAsync()
         {
-            await foreach (FinishedMatchRecord finishedMatch in _pendingRecords.Reader.ReadAllAsync())
+            await foreach (Func<Task> pendingWrite in _pendingWrites.Reader.ReadAllAsync())
             {
-                await WriteFinishAsync(finishedMatch);
+                await pendingWrite();
             }
         }
 
@@ -63,21 +80,38 @@ namespace Game.Match
             {
                 await _matchParticipantRepository.WriteResultsAsync(finishedMatch.MatchId, finishedMatch.PlayerResults);
                 await _matchRecordRepository.FinishAsync(finishedMatch.MatchId, finishedMatch.EndReason, finishedMatch.FinishedAtUtc);
+                await _matchStateRepository.DeleteAsync(finishedMatch.MatchId);
                 _log.InfoFormat(FinishWrittenMessage, finishedMatch.MatchId, finishedMatch.EndReason);
             }
             catch (NpgsqlException exception)
             {
-                LogWriteFailure(finishedMatch, exception);
+                LogWriteFailure(FinishNotWrittenMessage, finishedMatch.MatchId, exception);
             }
             catch (DbUpdateException exception)
             {
-                LogWriteFailure(finishedMatch, exception);
+                LogWriteFailure(FinishNotWrittenMessage, finishedMatch.MatchId, exception);
             }
         }
 
-        private static void LogWriteFailure(FinishedMatchRecord finishedMatch, Exception exception)
+        private async Task WriteCheckpointAsync(MatchState savedState)
         {
-            _log.Error(string.Format(CultureInfo.InvariantCulture, FinishNotWrittenMessage, finishedMatch.MatchId), exception);
+            try
+            {
+                await _matchStateRepository.SaveAsync(savedState);
+            }
+            catch (NpgsqlException exception)
+            {
+                LogWriteFailure(CheckpointNotWrittenMessage, savedState.MatchId, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                LogWriteFailure(CheckpointNotWrittenMessage, savedState.MatchId, exception);
+            }
+        }
+
+        private static void LogWriteFailure(string failureMessage, int matchId, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, failureMessage, matchId), exception);
         }
     }
 }

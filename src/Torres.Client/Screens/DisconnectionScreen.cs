@@ -58,6 +58,8 @@ namespace Torres.Client.Screens
 
         internal bool HasMatchEndedWhileAway { get; private set; }
 
+        internal bool IsMatchAwaitingPlayers { get; private set; }
+
         internal override void Open()
         {
             _noticeBox.Hide();
@@ -89,6 +91,7 @@ namespace Torres.Client.Screens
             WasExitRequested = false;
             WasSessionRefused = false;
             HasMatchEndedWhileAway = false;
+            IsMatchAwaitingPlayers = false;
         }
 
         protected override Widget Build()
@@ -297,21 +300,49 @@ namespace Torres.Client.Screens
             _playerSession.RecoverConnection();
             _noticeBox.Hide();
             _retryButton.Enabled = false;
-            if (opening.CurrentRoom is null)
-            {
-                _playerSession.LeaveRoom();
-                HasMatchEndedWhileAway = true;
-            }
-            else if (opening.CurrentRoom.State == RoomState.InMatch)
+            if (opening.CurrentRoom is not null)
             {
                 _playerSession.EnterRoom(opening.CurrentRoom);
-                _isWaitingForMatch = true;
+            }
+
+            if (opening.CurrentMatch is null)
+            {
+                LeaveEndedMatch(opening.CurrentRoom);
             }
             else
             {
-                _playerSession.EnterRoom(opening.CurrentRoom);
+                FollowSeatedMatch(opening.CurrentRoom, opening.CurrentMatch);
+            }
+        }
+
+        private void LeaveEndedMatch(Room? currentRoom)
+        {
+            if (currentRoom is null)
+            {
+                _playerSession.LeaveRoom();
+            }
+            else
+            {
                 _playerSession.LeaveMatch();
-                HasMatchEndedWhileAway = true;
+            }
+
+            HasMatchEndedWhileAway = true;
+        }
+
+        private void FollowSeatedMatch(Room? currentRoom, MatchSeating seatedMatch)
+        {
+            if (currentRoom is null)
+            {
+                _playerSession.EnterMatchWithoutRoom(seatedMatch.RoomCode);
+            }
+
+            if (seatedMatch.IsAwaitingPlayers)
+            {
+                IsMatchAwaitingPlayers = true;
+            }
+            else
+            {
+                _isWaitingForMatch = true;
             }
         }
 

@@ -14,6 +14,7 @@ namespace Game.Match
     internal sealed class LiveMatch
     {
         private const string SeatRetiredMessage = "Seat {0} of match {1} was retired: its reconnection window ran out.";
+        private const string SeatForfeitedMessage = "Seat {0} of match {1} forfeited.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(LiveMatch));
 
@@ -24,20 +25,23 @@ namespace Game.Match
         private readonly MatchViewFactory _viewFactory;
         private readonly TimeProvider _timeProvider;
         private readonly IMatchListener _matchListener;
+        private readonly MatchRecordWriter _recordWriter;
         private readonly TimeSpan _stepDuration;
         private readonly TimeSpan _reconnectionDuration;
 
         private CancellationTokenSource? _stepCountdown;
         private DateTime? _stepEndsAtUtc;
-        private bool _hasEnded;
+        private MatchSnapshot? _stepStartSnapshot;
         private bool _hasReportedFinish;
 
-        internal LiveMatch(int matchId, MatchTable matchTable, IReadOnlyList<SeatedEntrant> seatedEntrants, TimeProvider timeProvider, IMatchListener matchListener, MatchTimeLimits timeLimits)
+        internal LiveMatch(SeatedMatch seatedMatch, MatchTable matchTable, MatchRecordWriter recordWriter, TimeProvider timeProvider, IMatchListener matchListener, MatchTimeLimits timeLimits)
         {
-            MatchId = matchId;
+            MatchId = seatedMatch.MatchId;
+            RoomCode = seatedMatch.RoomCode;
             _matchTable = matchTable;
-            _seatedEntrants = seatedEntrants;
-            _viewFactory = new MatchViewFactory(seatedEntrants, _reconnectionCountdownsBySeat.Keys, timeLimits.ReconnectionTime);
+            _seatedEntrants = seatedMatch.SeatedEntrants;
+            _viewFactory = new MatchViewFactory(seatedMatch, _reconnectionCountdownsBySeat.Keys, timeLimits.ReconnectionTime);
+            _recordWriter = recordWriter;
             _timeProvider = timeProvider;
             _matchListener = matchListener;
             _stepDuration = timeLimits.StepTime;
@@ -48,6 +52,8 @@ namespace Game.Match
 
         internal int MatchId { get; }
 
+        internal string RoomCode { get; }
+
         internal void StartPlacement()
         {
             lock (_matchLock)
@@ -57,14 +63,42 @@ namespace Game.Match
             }
         }
 
-        internal void EndMatch()
+        internal void StartResumed(IReadOnlyCollection<int> absentSeatNumbers)
         {
             lock (_matchLock)
             {
-                _hasEnded = true;
-                StopStepCountdown();
-                StopReconnectionCountdowns();
+                RestartStepCountdown();
+                foreach (int absentSeatNumber in absentSeatNumbers.Where(IsSeatInPlay))
+                {
+                    StartReconnectionCountdown(absentSeatNumber, FindReconnectionTime(absentSeatNumber));
+                }
+
+                _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
             }
+        }
+
+        internal bool Forfeit(int entrantId)
+        {
+            bool hasForfeited;
+            bool hasJustFinished;
+            lock (_matchLock)
+            {
+                int seatNumber = GetSeatNumber(entrantId);
+                hasForfeited = IsSeatInPlay(seatNumber);
+                if (hasForfeited)
+                {
+                    StopReconnectionCountdown(seatNumber);
+                    RetireSeatOnTable(seatNumber);
+                    _log.InfoFormat(SeatForfeitedMessage, seatNumber, MatchId);
+                    _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
+                }
+
+                hasJustFinished = TakeFinishToReport();
+            }
+
+            ReportFinish(hasJustFinished);
+
+            return hasForfeited;
         }
 
         internal bool OpenReconnectionWindow(int entrantId)
@@ -111,7 +145,7 @@ namespace Game.Match
                 {
                     _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
                 }
-                else if (!_hasEnded)
+                else if (_matchTable.Phase != TablePhase.Finished)
                 {
                     _matchListener.ReceiveMatchStateChanged(BuildRetiredRecipientView(entrantId, seatNumber));
                 }
@@ -125,7 +159,7 @@ namespace Game.Match
             List<MatchParticipant> playerResults;
             lock (_matchLock)
             {
-                playerResults = _matchTable.Phase == TablePhase.Finished ? MatchRecordConversion.ToPlayerResults(_matchTable, _seatedEntrants) : MatchRecordConversion.ToAbandonedResults(_matchTable, _seatedEntrants);
+                playerResults = MatchRecordConversion.ToPlayerResults(_matchTable, _seatedEntrants);
             }
 
             return playerResults;
@@ -298,7 +332,7 @@ namespace Game.Match
         private MatchActionResult JudgeOpenStep(int entrantId)
         {
             MatchActionResult actionResult = MatchActionResult.Applied;
-            if (_hasEnded || _matchTable.IsSeatRetired(GetSeatNumber(entrantId)))
+            if (_matchTable.IsSeatRetired(GetSeatNumber(entrantId)))
             {
                 actionResult = MatchActionResult.NotInMatch;
             }
@@ -389,6 +423,27 @@ namespace Game.Match
         {
             StopStepCountdown();
             StartStepCountdown();
+            SaveStepStart();
+        }
+
+        private void SaveStepStart()
+        {
+            if (_matchTable.Phase != TablePhase.Finished)
+            {
+                _stepStartSnapshot = _matchTable.TakeSnapshot();
+                SaveCheckpoint();
+            }
+        }
+
+        private void SaveCheckpoint()
+        {
+            if ((_stepStartSnapshot is null) || (_matchTable.Phase == TablePhase.Finished))
+            {
+                return;
+            }
+
+            List<CheckpointSeat> checkpointSeats = _seatedEntrants.Select(seatedEntrant => MatchCheckpointConversion.ToCheckpointSeat(seatedEntrant, _matchTable.IsSeatRetired(seatedEntrant.SeatNumber))).ToList();
+            _recordWriter.RecordCheckpoint(MatchId, MatchCheckpointConversion.ToCheckpoint(_stepStartSnapshot, RoomCode, checkpointSeats));
         }
 
         private void StopStepCountdown()
@@ -412,7 +467,7 @@ namespace Game.Match
 
         private bool IsSeatInPlay(int seatNumber)
         {
-            bool isInPlay = !_hasEnded && (_matchTable.Phase != TablePhase.Finished) && !_matchTable.IsSeatRetired(seatNumber);
+            bool isInPlay = (_matchTable.Phase != TablePhase.Finished) && !_matchTable.IsSeatRetired(seatNumber);
 
             return isInPlay;
         }
@@ -456,14 +511,22 @@ namespace Game.Match
 
         private void RetireDisconnectedSeat(int seatNumber)
         {
+            RetireSeatOnTable(seatNumber);
+            _log.InfoFormat(SeatRetiredMessage, seatNumber, MatchId);
+        }
+
+        private void RetireSeatOnTable(int seatNumber)
+        {
             TableStep stepBefore = ReadTableStep();
             _matchTable.RetireSeat(seatNumber);
             if (ReadTableStep() != stepBefore)
             {
                 RestartStepCountdown();
             }
-
-            _log.InfoFormat(SeatRetiredMessage, seatNumber, MatchId);
+            else
+            {
+                SaveCheckpoint();
+            }
         }
 
         private void StopReconnectionCountdown(int seatNumber)

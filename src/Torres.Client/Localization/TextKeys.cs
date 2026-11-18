@@ -21,7 +21,6 @@ namespace Torres.Client.Localization
             internal const string BackToMenuButton = "Common.BackToMenuButton";
             internal const string BackToRoomButton = "Common.BackToRoomButton";
             internal const string CancelButton = "Common.CancelButton";
-            internal const string EndMatchButton = "Common.EndMatchButton";
             internal const string GotItButton = "Common.GotItButton";
             internal const string YouTag = "Common.YouTag";
             internal const string GuestTag = "Common.GuestTag";
@@ -496,6 +495,7 @@ namespace Torres.Client.Localization
             internal const string Title = "Resume.Title";
             internal const string WaitingStatus = "Resume.WaitingStatus";
             internal const string NoActionNeededMessage = "Resume.NoActionNeededMessage";
+            internal const string DiscardedTurnMessage = "Resume.DiscardedTurnMessage";
         }
 
         internal static class MatchInProgress

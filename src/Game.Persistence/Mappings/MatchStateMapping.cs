@@ -14,7 +14,7 @@ namespace Game.Persistence
         private const string ActiveSeatNumberColumn = "active_seat_number";
         private const string StateDocumentColumn = "state_document";
         private const string SavedAtColumn = "saved_at";
-        private const string JsonDocumentColumnType = "jsonb";
+        private const string XmlDocumentColumnType = "xml";
 
         public void Configure(EntityTypeBuilder<MatchState> builder)
         {
@@ -30,7 +30,7 @@ namespace Game.Persistence
             builder.Property(mappedState => mappedState.ActiveSeatNumber).HasColumnName(ActiveSeatNumberColumn);
             builder.Property(mappedState => mappedState.StateDocument)
                 .HasColumnName(StateDocumentColumn)
-                .HasColumnType(JsonDocumentColumnType);
+                .HasColumnType(XmlDocumentColumnType);
             builder.Property(mappedState => mappedState.SavedAt)
                 .HasColumnName(SavedAtColumn)
                 .ValueGeneratedOnAdd();

@@ -3,16 +3,16 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Tells whether the caller's match was ended, or why not.
+    /// Tells whether the caller took back its seat in a match that waits for its players after a server restart, or why not.
     /// </summary>
     [DataContract]
-    public enum EndMatchResult
+    public enum ReturnToMatchResult
     {
         [EnumMember]
-        Ended,
+        Returned,
 
         [EnumMember]
-        NotInMatch,
+        NoMatchToResume,
 
         [EnumMember]
         NotIdentified,

@@ -10,12 +10,14 @@ namespace Game.Match
     internal sealed class MatchViewFactory
     {
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
+        private readonly string _roomCode;
         private readonly IReadOnlyCollection<int> _disconnectedSeatNumbers;
         private readonly TimeSpan _reconnectionTime;
 
-        internal MatchViewFactory(IReadOnlyList<SeatedEntrant> seatedEntrants, IReadOnlyCollection<int> disconnectedSeatNumbers, TimeSpan reconnectionTime)
+        internal MatchViewFactory(SeatedMatch seatedMatch, IReadOnlyCollection<int> disconnectedSeatNumbers, TimeSpan reconnectionTime)
         {
-            _seatedEntrants = seatedEntrants;
+            _seatedEntrants = seatedMatch.SeatedEntrants;
+            _roomCode = seatedMatch.RoomCode;
             _disconnectedSeatNumbers = disconnectedSeatNumbers;
             _reconnectionTime = reconnectionTime;
         }
@@ -26,6 +28,7 @@ namespace Game.Match
             SeatCards viewerCards = matchTable.CardTable.SeatCards[viewerSeatNumber - MatchTable.FirstSeatNumber];
             var matchView = new MatchView
             {
+                RoomCode = _roomCode,
                 Phase = ToMatchPhase(matchTable.Phase),
                 RoundNumber = matchTable.RoundNumber,
                 TurnRoundNumber = matchTable.TurnRoundNumber,

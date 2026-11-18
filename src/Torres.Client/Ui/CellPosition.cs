@@ -1,4 +1,4 @@
 namespace Torres.Client.Ui
 {
-    internal sealed record CellPosition(int Row, int Column);
+    internal readonly record struct CellPosition(int Row, int Column);
 }

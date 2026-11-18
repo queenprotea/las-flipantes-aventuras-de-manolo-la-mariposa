@@ -44,11 +44,12 @@ namespace Game.Match.Tests
         private readonly RecordingMatchListener _listener = new RecordingMatchListener();
         private readonly RecordingMatchRecordRepository _recordRepository = new RecordingMatchRecordRepository();
         private readonly RecordingMatchParticipantRepository _participantRepository = new RecordingMatchParticipantRepository();
+        private readonly RecordingMatchStateRepository _stateRepository = new RecordingMatchStateRepository();
         private readonly MatchCoordinator _coordinator;
 
         public MatchCoordinatorTests()
         {
-            _coordinator = new MatchCoordinator(_fakeTimeProvider, _listener, _recordRepository, _participantRepository, SampleMatches.FiveFlowerCells, new Random(SampleMatches.ChanceSeed));
+            _coordinator = new MatchCoordinator(_fakeTimeProvider, _listener, new MatchRepositories(_recordRepository, _participantRepository, _stateRepository), SampleMatches.FiveFlowerCells, new Random(SampleMatches.ChanceSeed));
         }
 
         [Fact]
@@ -56,7 +57,7 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Dani, SampleMatches.Ana, SampleMatches.Beto };
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(SampleMatches.Ana.DisplayName, view.Seats[0].DisplayName);
@@ -69,7 +70,7 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.Beto, SampleMatches.InactiveEva };
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(TwoSeatCount, view.Seats.Count);
@@ -81,7 +82,7 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.CaroGuest };
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchSeat guestSeat = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).Seats[1];
             Assert.True(guestSeat.IsGuest);
@@ -93,7 +94,7 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.Beto };
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             Assert.Equal(SeatNumberOne, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ViewerSeatNumber);
             Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).ViewerSeatNumber);
@@ -104,7 +105,7 @@ namespace Game.Match.Tests
         {
             TimeSpan stepTime = SampleMatches.StepTime;
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(MatchPhase.CaterpillarPlacement, view.Phase);
@@ -118,13 +119,13 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.Ana };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules));
         }
 
         [Fact]
         public async Task Test_PlacePiece_CaterpillarOnFreeFlower_PassesPlacementToNextSeat()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -138,7 +139,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarOutOfTurn_ReturnsNotYourTurn()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -148,7 +149,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarOnGround_ReturnsNotAFlower()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.GroundCell);
 
@@ -176,7 +177,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarAfterDeadlineBeforeCountdownFires_ReturnsTimeExpired()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
             _fakeTimeProvider.AdjustTime(_fakeTimeProvider.GetUtcNow() + SampleMatches.StepTime);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
@@ -187,7 +188,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarOnActiveSeat_GivesNextSeatFullPlacementTime()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
             _fakeTimeProvider.Advance(SampleMatches.FirstPlacementTaken);
 
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
@@ -198,8 +199,8 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarInOneMatch_LeavesOtherMatchUnchanged()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.CaroAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.CaroAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -211,7 +212,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_CaterpillarOnActiveSeat_SendsChangeAfterStart()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -221,7 +222,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_ExpirePlacement_AtPlacementDeadline_PassesPlacementToNextSeat()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             _fakeTimeProvider.Advance(SampleMatches.StepTime);
 
@@ -234,7 +235,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_ExpirePlacement_JustBeforePlacementDeadline_DoesNotRun()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             _fakeTimeProvider.Advance(SampleMatches.JustBeforeDeadline);
 
@@ -244,7 +245,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_ExpirePlacement_AtFirstDeadlineAfterPlacing_KeepsNextSeatPlacing()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaBetoAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaBetoAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
             _fakeTimeProvider.Advance(SampleMatches.FirstPlacementTaken);
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -256,7 +257,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_ExpirePlacement_OfLastSeat_GivesButterflyToLastPlacer()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaBetoAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaBetoAndDani), SampleMatches.TimeLimits, SampleMatches.Rules);
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
             _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthEastFlower);
 
@@ -281,7 +282,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_ButterflyDuringCaterpillarPlacement_ReturnsWrongPhase()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Butterfly, SampleMatches.CenterFlower);
 
@@ -291,7 +292,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_PlacePiece_ButterflyByLastPlacer_StartsFirstTurnWithTheWholeTurnTime()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
             _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthEastFlower);
 
@@ -323,7 +324,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WhenEveryStepTimesOut_FinishesTheMatchOnce()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
 
             AdvanceUntilFinished();
 
@@ -334,7 +335,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WhenEveryStepTimesOut_ReleasesBothPlayers()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
 
             AdvanceUntilFinished();
 
@@ -345,7 +346,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_FinishedMatch_StopsItsClock()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
             AdvanceUntilFinished();
             int noticeCountAtFinish = _listener.NoticeCount;
 
@@ -357,32 +358,32 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_FinishedMatch_LetsBothPlayersStartAgain()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
             AdvanceUntilFinished();
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             Assert.Equal(MatchActionResult.Applied, _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower));
         }
 
         [Fact]
-        public async Task Test_EndMatch_BySeatedPlayer_LetsBothPlayersStartAgain()
+        public async Task Test_Forfeit_WithTwoSeats_LetsBothPlayersStartAgain()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            EndMatchResult endResult = _coordinator.EndMatch(SampleMatches.Beto.EntrantId);
+            ForfeitResult forfeitResult = _coordinator.Forfeit(SampleMatches.Beto.EntrantId);
             int noticeCountAtEnd = _listener.NoticeCount;
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            Assert.Equal(EndMatchResult.Ended, endResult);
+            Assert.Equal(ForfeitResult.Forfeited, forfeitResult);
             Assert.Equal(noticeCountAtEnd + StartNoticeOnly, _listener.NoticeCount);
         }
 
         [Fact]
-        public async Task Test_EndMatch_DuringPlacement_StopsPlacementCountdown()
+        public async Task Test_Forfeit_WithTwoSeatsDuringPlacement_StopsPlacementCountdown()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
-            _coordinator.EndMatch(SampleMatches.Ana.EntrantId);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
             int noticeCountAtEnd = _listener.NoticeCount;
 
             _fakeTimeProvider.Advance(SampleMatches.StepTime);
@@ -391,10 +392,10 @@ namespace Game.Match.Tests
         }
 
         [Fact]
-        public async Task Test_PlacePiece_CaterpillarAfterMatchEnded_ReturnsNotInMatch()
+        public async Task Test_PlacePiece_CaterpillarAfterTheOtherSeatForfeited_ReturnsNotInMatch()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
-            _coordinator.EndMatch(SampleMatches.Beto.EntrantId);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            _coordinator.Forfeit(SampleMatches.Beto.EntrantId);
 
             MatchActionResult placementResult = _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
@@ -402,11 +403,11 @@ namespace Game.Match.Tests
         }
 
         [Fact]
-        public void Test_EndMatch_WithoutMatch_ReturnsNotInMatch()
+        public void Test_Forfeit_WithoutMatch_ReturnsNotInMatch()
         {
-            EndMatchResult endResult = _coordinator.EndMatch(SampleMatches.Ana.EntrantId);
+            ForfeitResult forfeitResult = _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
 
-            Assert.Equal(EndMatchResult.NotInMatch, endResult);
+            Assert.Equal(ForfeitResult.NotInMatch, forfeitResult);
         }
 
         [Fact]
@@ -506,7 +507,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WhenEveryStepTimesOut_SendsTheRanking()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
 
             AdvanceUntilFinished();
 
@@ -578,7 +579,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WithCardCosts_SendsThemInTheView()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchActionCosts actionCosts = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ActionCosts;
             Assert.Equal(SampleMatches.Rules.ActionPointCosts.CardDraw, actionCosts.CardDraw);
@@ -587,7 +588,7 @@ namespace Game.Match.Tests
 
         private async Task StartPlayedOpeningAsync(MatchRuleSet ruleSet)
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, ruleSet);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, ruleSet);
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
             _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthEastFlower);
             _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Butterfly, SampleMatches.CenterFlower);
@@ -598,7 +599,7 @@ namespace Game.Match.Tests
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.CaroGuest };
 
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchParticipant seatedPlayer = Assert.Single(_participantRepository.LastSeatedPlayers);
             Assert.Equal(SampleMatches.RoomId, _recordRepository.LastRoomId);
@@ -610,7 +611,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WithTwoMembers_ReturnsTheRecordedMatchId()
         {
-            int matchId = await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            int matchId = await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             Assert.Equal(_recordRepository.LastMatchId, matchId);
         }
@@ -618,7 +619,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WhenEveryStepTimesOut_RecordsCompletedMatchWithPositions()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.OneTurnPerRoundRules);
 
             AdvanceUntilFinished();
 
@@ -648,24 +649,29 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WithEntrantAlreadySeated_WritesNoSecondMatch()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules));
 
             Assert.Equal(OneRecordedMatch, _recordRepository.LastMatchId);
         }
 
         [Fact]
-        public async Task Test_EndMatch_BySeatedPlayer_RecordsAbandonedMatchWithoutResults()
+        public async Task Test_Forfeit_WithTwoSeats_RecordsAbandonedMatchWithTheOtherPlayerFirst()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            _coordinator.EndMatch(SampleMatches.Ana.EntrantId);
+            _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
 
             RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(_recordWaitLimit);
             IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(_recordWaitLimit);
+            MatchParticipant anaResult = playerResults.Single(playerResult => playerResult.PlayerId == SampleMatches.Ana.EntrantId);
+            MatchParticipant betoResult = playerResults.Single(playerResult => playerResult.PlayerId == SampleMatches.Beto.EntrantId);
             Assert.Equal(MatchEndReasonCodes.Abandoned, recordedFinish.EndReason);
-            Assert.Equal(new short?[] { null, null }, playerResults.Select(playerResult => playerResult.FinalPosition));
+            Assert.True(anaResult.WasWithdrawn);
+            Assert.Equal(SecondPosition, anaResult.FinalPosition);
+            Assert.False(betoResult.WasWithdrawn);
+            Assert.Equal(FirstPosition, betoResult.FinalPosition);
         }
 
         [Fact]
@@ -821,7 +827,7 @@ namespace Game.Match.Tests
         [Fact]
         public async Task Test_StartMatchAsync_WithTimeLimits_SendsTheReconnectionTimeInTheView()
         {
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, SampleMatches.AnaAndBeto), SampleMatches.TimeLimits, SampleMatches.Rules);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(SampleMatches.ReconnectionTime, view.ReconnectionTime);
@@ -865,23 +871,78 @@ namespace Game.Match.Tests
         }
 
         [Fact]
-        public async Task Test_EndMatch_AfterARetirement_RecordsTheWithdrawal()
+        public async Task Test_Forfeit_AfterARetirementForTheReconnectionWindow_RecordsBothWithdrawals()
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.Beto, SampleMatches.Dani };
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
             _coordinator.OpenReconnectionWindow(SampleMatches.Dani.EntrantId);
             _fakeTimeProvider.Advance(SampleMatches.ReconnectionTime);
 
-            _coordinator.EndMatch(SampleMatches.Ana.EntrantId);
+            _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
 
             IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(_recordWaitLimit);
-            Assert.Equal(new bool[] { false, false, true }, playerResults.OrderBy(playerResult => playerResult.SeatNumber).Select(playerResult => playerResult.WasWithdrawn));
+            Assert.Equal(new bool[] { true, false, true }, playerResults.OrderBy(playerResult => playerResult.SeatNumber).Select(playerResult => playerResult.WasWithdrawn));
+        }
+
+        [Fact]
+        public async Task Test_Forfeit_OutOfTurnWithThreeSeats_KeepsTheMatchGoingWithoutTheCaterpillarsOfTheSeat()
+        {
+            await StartPlayedOpeningOfThreeAsync();
+
+            ForfeitResult forfeitResult = _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
+
+            MatchView anaView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(ForfeitResult.Forfeited, forfeitResult);
+            Assert.Equal(MatchPhase.PlayerTurn, anaView.Phase);
+            Assert.Equal(SeatNumberOne, anaView.ActiveSeatNumber);
+            Assert.True(anaView.Seats[ThirdSeatIndex].IsRetired);
+            Assert.DoesNotContain(anaView.Caterpillars, caterpillar => caterpillar.SeatNumber == SeatNumberThree);
+            Assert.Equal(0, _listener.FinishCount);
+        }
+
+        [Fact]
+        public async Task Test_Forfeit_OnOwnTurn_GivesTheNextSeatTheWholeTurnTime()
+        {
+            await StartPlayedOpeningOfThreeAsync();
+            _fakeTimeProvider.Advance(SampleMatches.FirstPlacementTaken);
+
+            _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
+
+            MatchView betoView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.True(betoView.Seats[0].IsRetired);
+            Assert.Equal(SeatNumberTwo, betoView.ActiveSeatNumber);
+            Assert.Equal(SampleMatches.StepTime, betoView.StepTimeLeft);
+        }
+
+        [Fact]
+        public async Task Test_Forfeit_Twice_ReturnsNotInMatchAndLeavesTheActionsOut()
+        {
+            await StartPlayedOpeningOfThreeAsync();
+            _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
+
+            ForfeitResult secondResult = _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
+
+            Assert.Equal(ForfeitResult.NotInMatch, secondResult);
+            Assert.Equal(MatchActionResult.NotInMatch, _coordinator.DrawCard(SampleMatches.Dani.EntrantId));
+        }
+
+        [Fact]
+        public async Task Test_Forfeit_DuringTheReconnectionWindow_StopsTheWindow()
+        {
+            await StartPlayedOpeningOfThreeAsync();
+            _coordinator.OpenReconnectionWindow(SampleMatches.Dani.EntrantId);
+            _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
+            int noticeCountAfterForfeit = _listener.NoticeCount;
+
+            _fakeTimeProvider.Advance(SampleMatches.ReconnectionTime);
+
+            Assert.Equal(noticeCountAfterForfeit, _listener.NoticeCount);
         }
 
         private async Task StartPlayedOpeningOfThreeAsync()
         {
             var entrants = new MatchEntrant[] { SampleMatches.Ana, SampleMatches.Beto, SampleMatches.Dani };
-            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
+            await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
             _coordinator.PlacePiece(SampleMatches.Beto.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthEastFlower);
             _coordinator.PlacePiece(SampleMatches.Dani.EntrantId, MatchPiece.Caterpillar, SampleMatches.SouthWestFlower);

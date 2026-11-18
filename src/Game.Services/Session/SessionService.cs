@@ -10,15 +10,17 @@ namespace Game.Services
         private readonly SessionRegistry _sessionRegistry;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly RoomService _roomService;
+        private readonly MatchService _matchService;
         private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly SessionTimings _sessionTimings;
         private readonly TimeProvider _timeProvider;
 
-        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings, TimeProvider timeProvider)
+        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, MatchService matchService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(roomService);
+            ArgumentNullException.ThrowIfNull(matchService);
             ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
             ArgumentNullException.ThrowIfNull(sessionTimings);
             ArgumentNullException.ThrowIfNull(timeProvider);
@@ -26,6 +28,7 @@ namespace Game.Services
             _sessionRegistry = sessionRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _roomService = roomService;
+            _matchService = matchService;
             _avatarUploadRegistry = avatarUploadRegistry;
             _sessionTimings = sessionTimings;
             _timeProvider = timeProvider;
@@ -50,12 +53,14 @@ namespace Game.Services
         public ConnectionCheckResponse IsAlive()
         {
             PlayerSession? caller = _sessionRegistry.FindCaller();
+            string renewedSessionToken = string.Empty;
             if (caller is not null)
             {
                 _sessionRegistry.Touch(caller);
+                renewedSessionToken = IssueTokenFor(caller.Owner);
             }
 
-            var connectionCheck = new ConnectionCheckResponse { ServerTimeUtc = _timeProvider.GetUtcNow().UtcDateTime };
+            var connectionCheck = new ConnectionCheckResponse { ServerTimeUtc = _timeProvider.GetUtcNow().UtcDateTime, SessionToken = renewedSessionToken };
 
             return connectionCheck;
         }
@@ -82,6 +87,13 @@ namespace Game.Services
             return owner;
         }
 
+        private string IssueTokenFor(SessionOwner owner)
+        {
+            string sessionToken = owner.IsGuest ? _sessionTokenIssuer.IssueForGuest(owner.OwnerId, owner.DisplayName) : _sessionTokenIssuer.Issue(owner.OwnerId, owner.DisplayName);
+
+            return sessionToken;
+        }
+
         private OpenSessionResult OpenFor(SessionOwner owner)
         {
             _sessionRegistry.Open(owner);
@@ -95,6 +107,7 @@ namespace Game.Services
                     PlayerId = owner.IsGuest ? null : owner.OwnerId,
                 },
                 CurrentRoom = _roomService.Reattach(owner.OwnerId),
+                CurrentMatch = _matchService.FindSeating(owner.OwnerId),
                 ConnectionCheckPeriodSeconds = (int)_sessionTimings.ConnectionCheckPeriod.TotalSeconds,
             };
 

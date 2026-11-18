@@ -239,22 +239,25 @@ CREATE INDEX ix_match_participant_player ON match_participant (player_id);
 -- 7. MATCH STATE
 -- =============================================================================
 
--- The live state of a match in progress, written when each turn closes and deleted
--- when the match ends. It exists only so that a match can be resumed after a crash.
+-- The live state of a match in progress, written when each step starts (a placement
+-- or a turn) and again when a seat is retired, and deleted when the match ends. It
+-- exists only so that a match can be resumed after a crash.
 --
 -- Only the server reads state_document, and it reads it whole: no query ever filters
 -- or joins on the board, so normalising it would buy nothing and would spread the
--- rules of the game across the schema. The board belongs to the domain layer.
+-- rules of the game across the schema. The board belongs to the domain layer. The
+-- document is the XML that DataContractSerializer writes for the class MatchCheckpoint
+-- of the server, readable and neither signed nor encrypted.
 --
--- "State only exists while the match is in progress" is enforced by the operation
--- that ends the match, not by the engine: it deletes this row in the same transaction.
+-- "State only exists while the match is in progress" is enforced by the server: right
+-- after writing the result of a match, it deletes this row.
 CREATE TABLE match_state
 (
     match_id           integer     PRIMARY KEY,
     round_number       smallint    NOT NULL,
     turn_number        smallint    NOT NULL,
     active_seat_number smallint    NOT NULL,
-    state_document     jsonb       NOT NULL,
+    state_document     xml         NOT NULL,
     saved_at           timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT fk_match_state_match
@@ -265,10 +268,10 @@ CREATE TABLE match_state
     CONSTRAINT ck_match_state_seat  CHECK (active_seat_number BETWEEN 1 AND 4)
 );
 
-COMMENT ON TABLE  match_state                IS 'Live state of a match in progress. Written at every turn close, deleted when the match ends.';
-COMMENT ON COLUMN match_state.round_number   IS 'Round the saved state is about to play.';
-COMMENT ON COLUMN match_state.state_document IS 'Towers and castles, knights, king, cards drawn and used, accumulated score, and the seats of the guests playing, with their alias and seat ticket.';
-COMMENT ON COLUMN match_state.saved_at       IS 'Last turn close. The turn clock is not stored: a resumed turn starts again with its full 90 seconds.';
+COMMENT ON TABLE  match_state                IS 'Live state of a match in progress. Written when every step starts and when a seat is retired, deleted when the match ends.';
+COMMENT ON COLUMN match_state.round_number   IS 'Round of the step the saved state starts.';
+COMMENT ON COLUMN match_state.state_document IS 'XML of the step start: flowers, caterpillars, butterfly, phase and active seat, action points and builds left, scores of the closed rounds, hand and deck of every seat, and every seat with its player or guest, color and retirement. A guest takes his seat back with the guest identifier of his session token.';
+COMMENT ON COLUMN match_state.saved_at       IS 'Last save. The step clock is not stored: a resumed step starts again with its whole time.';
 
 -- =============================================================================
 -- 8. PASSWORD RECOVERY

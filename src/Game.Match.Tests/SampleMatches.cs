@@ -10,6 +10,7 @@ namespace Game.Match.Tests
         internal const int ChanceSeed = 7;
         internal const int CaterpillarPlacementCost = 2;
         internal const int RoomId = 30;
+        internal const string RoomCode = "K7Q2PX";
 
         internal static TimeSpan StepTime { get; } = TimeSpan.FromSeconds(90);
 

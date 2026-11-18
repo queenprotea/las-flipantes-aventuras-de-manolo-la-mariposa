@@ -73,6 +73,11 @@ namespace Torres.Client.Screens
             _noticeBox?.ShowMessage(titleKey, bodyKey, bodyArguments);
         }
 
+        internal void ShowTitleNotice(string titleKey)
+        {
+            _noticeBox?.ShowTitle(titleKey);
+        }
+
         internal void FollowLanguage()
         {
             if (_languageButton is null)

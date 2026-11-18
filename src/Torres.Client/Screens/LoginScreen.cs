@@ -224,15 +224,31 @@ namespace Torres.Client.Screens
             _gameSessionConnection.BeginConnectionChecks(opening);
             _playerSession.Start(player);
             _passwordField.Box.Text = string.Empty;
-            if (opening.CurrentRoom is null)
-            {
-                RequestedScreen = ScreenId.MainMenu;
-            }
-            else
+            if (opening.CurrentRoom is not null)
             {
                 _playerSession.EnterRoom(opening.CurrentRoom);
-                RequestedScreen = ScreenId.Room;
             }
+            else if (opening.CurrentMatch is not null)
+            {
+                _playerSession.EnterMatchWithoutRoom(opening.CurrentMatch.RoomCode);
+            }
+
+            RequestedScreen = FindScreenAfterLogin(opening);
+        }
+
+        private static ScreenId FindScreenAfterLogin(OpenSessionResult opening)
+        {
+            ScreenId nextScreen = ScreenId.MainMenu;
+            if (opening.CurrentMatch?.IsAwaitingPlayers == true)
+            {
+                nextScreen = ScreenId.MatchInProgress;
+            }
+            else if (opening.CurrentRoom is not null)
+            {
+                nextScreen = ScreenId.Room;
+            }
+
+            return nextScreen;
         }
 
         private void ShowError(string textKey)

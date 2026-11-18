@@ -91,9 +91,6 @@
   <data name="Common.CancelButton" xml:space="preserve">
     <value>Cancelar</value>
   </data>
-  <data name="Common.EndMatchButton" xml:space="preserve">
-    <value>Terminar partida</value>
-  </data>
   <data name="Common.GotItButton" xml:space="preserve">
     <value>Entendido</value>
   </data>
@@ -1191,6 +1188,9 @@
   </data>
   <data name="Resume.NoActionNeededMessage" xml:space="preserve">
     <value>No tienes que hacer nada: en cuanto vuelvan dos, la partida sigue sola.</value>
+  </data>
+  <data name="Resume.DiscardedTurnMessage" xml:space="preserve">
+    <value>El turno que quedó a medias se juega de nuevo entero, con todo su tiempo.</value>
   </data>
   <data name="MatchInProgress.HeaderLabel" xml:space="preserve">
     <value>tu partida sigue en curso</value>

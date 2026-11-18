@@ -175,7 +175,7 @@ namespace Torres.Client.Screens
             return primaryButton;
         }
 
-        protected static LocalizedButton CreateSecondaryButton(string textKey)
+        internal static LocalizedButton CreateSecondaryButton(string textKey)
         {
             LocalizedButton secondaryButton = CreateBaseButton(textKey, Theme.Ink);
             secondaryButton.Background = Theme.SurfaceBrush;
@@ -195,7 +195,7 @@ namespace Torres.Client.Screens
             return smallSecondaryButton;
         }
 
-        protected static LocalizedButton CreateDestructiveButton(string textKey)
+        internal static LocalizedButton CreateDestructiveButton(string textKey)
         {
             LocalizedButton destructiveButton = CreateBaseButton(textKey, Theme.BlushInk);
             destructiveButton.Background = Theme.BlushTintBrush;
@@ -234,7 +234,7 @@ namespace Torres.Client.Screens
             return linkButton;
         }
 
-        protected static HorizontalStackPanel CreateButtonRow()
+        internal static HorizontalStackPanel CreateButtonRow()
         {
             var buttonRow = new HorizontalStackPanel { Spacing = Metrics.ButtonSpacing };
 

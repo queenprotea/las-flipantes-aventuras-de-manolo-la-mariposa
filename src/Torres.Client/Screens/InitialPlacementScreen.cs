@@ -9,7 +9,6 @@ using Game.Contracts;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -28,6 +27,7 @@ namespace Torres.Client.Screens
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly ForfeitView _forfeitView;
         private readonly ChatView _chatView;
         private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
         private readonly VerticalStackPanel _turnOrderPanel = new VerticalStackPanel();
@@ -37,7 +37,6 @@ namespace Torres.Client.Screens
 
         private MatchView? _shownMatchView;
         private Task<MatchActionResult>? _placementRequest;
-        private Task<EndMatchResult>? _endMatchRequest;
 
         internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession, DoomLauncher doomLauncher)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
@@ -49,6 +48,7 @@ namespace Torres.Client.Screens
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _doomLauncher = doomLauncher;
+            _forfeitView = new ForfeitView(gameSessionConnection, playerSession);
             _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }
@@ -56,6 +56,7 @@ namespace Torres.Client.Screens
         internal override void Open()
         {
             _noticeBox.Hide();
+            _forfeitView.Reset();
             _chatView.Open();
             _shownMatchView = null;
             if (_playerSession.CurrentMatchView is null)
@@ -83,8 +84,12 @@ namespace Torres.Client.Screens
             _boardWidget.UpdateInput();
             FollowBoardClick(matchView);
             FollowPlacementRequest();
-            FollowEndMatchRequest();
-            if (matchView.Phase == MatchPhase.PlayerTurn)
+            ScreenId? forfeitScreen = _forfeitView.TakeNextScreen();
+            if (forfeitScreen is not null)
+            {
+                RequestedScreen = forfeitScreen;
+            }
+            else if (matchView.Phase == MatchPhase.PlayerTurn)
             {
                 _doomLauncher.LaunchIfEnabled();
                 RequestedScreen = ScreenId.Match;
@@ -240,20 +245,9 @@ namespace Torres.Client.Screens
             sideBar.Widgets.Add(CreateDivider());
             sideBar.Widgets.Add(CreateGameSection(TextKeys.InitialPlacement.TurnOrderLabel, _turnOrderPanel));
             sideBar.Widgets.Add(CreateDivider());
-            sideBar.Widgets.Add(BuildEndMatchButton());
+            sideBar.Widgets.Add(_forfeitView.Root);
 
             return sideBar;
-        }
-
-        private LocalizedButton BuildEndMatchButton()
-        {
-            LocalizedButton endMatchButton = CreateDestructiveButton(TextKeys.Common.EndMatchButton);
-            endMatchButton.LabelFont = Fonts.Small;
-            endMatchButton.Padding = Metrics.SmallButtonPadding;
-            endMatchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
-            endMatchButton.Click += EndMatchButtonOnClick;
-
-            return endMatchButton;
         }
 
         private VerticalStackPanel BuildCenterPanel()
@@ -369,27 +363,6 @@ namespace Torres.Client.Screens
             {
                 _noticeBox.ShowTitle(ToPlacementRejectionKey(completedPlacement.Result));
             }
-        }
-
-        private void FollowEndMatchRequest()
-        {
-            if ((_endMatchRequest is null) || !_endMatchRequest.IsCompleted)
-            {
-                return;
-            }
-
-            Task<EndMatchResult> completedEndMatch = _endMatchRequest;
-            _endMatchRequest = null;
-            if (!completedEndMatch.IsCompletedSuccessfully || (completedEndMatch.Result == EndMatchResult.NotIdentified))
-            {
-                ShowServerError();
-            }
-        }
-
-        private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
-        {
-            _noticeBox.Hide();
-            _endMatchRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void ShowServerError()

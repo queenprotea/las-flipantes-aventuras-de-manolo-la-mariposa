@@ -24,9 +24,6 @@ namespace Game.Contracts
         YouWereKicked,
 
         [EnumMember]
-        RoomClosed,
-
-        [EnumMember]
         MatchStarted,
 
         [EnumMember]
@@ -37,9 +34,6 @@ namespace Game.Contracts
 
         [EnumMember]
         MemberTimedOut,
-
-        [EnumMember]
-        MatchEnded,
 
         [EnumMember]
         MemberProfileChanged,

@@ -44,13 +44,13 @@ namespace Torres.Client.Screens
         private readonly Button _moveButton;
         private readonly Button _buildButton;
         private readonly LocalizedButton _endTurnButton;
+        private readonly ForfeitView _forfeitView;
         private readonly ChatView _chatView;
 
         private MatchView? _shownMatchView;
         private TurnActionMode _actionMode;
         private BoardCell? _moveOrigin;
         private Task<MatchActionResult>? _actionRequest;
-        private Task<EndMatchResult>? _endMatchRequest;
 
         internal MatchScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Match.HeaderLabel, true)
@@ -60,6 +60,7 @@ namespace Torres.Client.Screens
 
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _forfeitView = new ForfeitView(gameSessionConnection, playerSession);
             _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
             _caterpillarButton = CreateActionButton(TextKeys.Match.CaterpillarActionButton, _caterpillarCostLabel);
@@ -78,6 +79,7 @@ namespace Torres.Client.Screens
         internal override void Open()
         {
             _noticeBox.Hide();
+            _forfeitView.Reset();
             _chatView.Open();
             _shownMatchView = null;
             _actionMode = TurnActionMode.None;
@@ -111,8 +113,7 @@ namespace Torres.Client.Screens
             FollowBoardClick(matchView);
             FollowCardHand(matchView);
             FollowActionRequest();
-            FollowEndMatchRequest();
-            ScreenId? nextScreen = FindNextScreen(matchView);
+            ScreenId? nextScreen = _forfeitView.TakeNextScreen() ?? FindNextScreen(matchView);
             if (nextScreen is not null)
             {
                 RequestedScreen = nextScreen;
@@ -323,7 +324,7 @@ namespace Torres.Client.Screens
             return moveDestinations;
         }
 
-        private static VerticalStackPanel CreateSideColumnPanel(Widget chatRoot, LocalizedButton endTurnButton, LocalizedButton endMatchButton)
+        private static VerticalStackPanel CreateSideColumnPanel(Widget chatRoot, LocalizedButton endTurnButton, Widget forfeitRoot)
         {
             var sideColumn = new VerticalStackPanel
             {
@@ -333,7 +334,7 @@ namespace Torres.Client.Screens
             };
             sideColumn.Widgets.Add(chatRoot);
             sideColumn.Widgets.Add(endTurnButton);
-            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Match.MatchLabel, endMatchButton));
+            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Match.MatchLabel, forfeitRoot));
             StackPanel.SetProportionType(chatRoot, ProportionType.Fill);
 
             return sideColumn;
@@ -395,12 +396,7 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildSideColumn()
         {
-            LocalizedButton endMatchButton = CreateDestructiveButton(TextKeys.Common.EndMatchButton);
-            endMatchButton.LabelFont = Fonts.Small;
-            endMatchButton.Padding = Metrics.SmallButtonPadding;
-            endMatchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
-            endMatchButton.Click += EndMatchButtonOnClick;
-            VerticalStackPanel sideColumn = CreateSideColumnPanel(_chatView.Root, _endTurnButton, endMatchButton);
+            VerticalStackPanel sideColumn = CreateSideColumnPanel(_chatView.Root, _endTurnButton, _forfeitView.Root);
 
             return sideColumn;
         }
@@ -670,21 +666,6 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void FollowEndMatchRequest()
-        {
-            if ((_endMatchRequest is null) || !_endMatchRequest.IsCompleted)
-            {
-                return;
-            }
-
-            Task<EndMatchResult> completedEndMatch = _endMatchRequest;
-            _endMatchRequest = null;
-            if (!completedEndMatch.IsCompletedSuccessfully || (completedEndMatch.Result == EndMatchResult.NotIdentified))
-            {
-                ShowServerError();
-            }
-        }
-
         private void ChooseActionMode(TurnActionMode chosenMode)
         {
             _noticeBox.Hide();
@@ -722,12 +703,6 @@ namespace Torres.Client.Screens
                 _cardHand.CancelChoice();
                 StartActionRequest(_gameSessionConnection.EndTurnAsync(), matchView);
             }
-        }
-
-        private void EndMatchButtonOnClick(object sender, MyraEventArgs e)
-        {
-            _noticeBox.Hide();
-            _endMatchRequest ??= _gameSessionConnection.EndMatchAsync();
         }
 
         private void ShowServerError()

@@ -1,10 +1,18 @@
+using System;
+using System.Threading.Tasks;
+
 using FontStashSharp.RichText;
+
+using Game.Contracts;
+
+using Microsoft.Xna.Framework;
 
 using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
+using Torres.Client.Session;
 using Torres.Client.Ui;
 
 namespace Torres.Client.Screens
@@ -14,9 +22,51 @@ namespace Torres.Client.Screens
         private const int TitleBottomSpacing = 6;
         private const int MessageBottomSpacing = 14;
         private const int HintTopSpacing = 12;
-        internal MatchInProgressScreen()
+
+        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly PlayerSession _playerSession;
+        private readonly NoticeBox _noticeBox = new NoticeBox();
+        private readonly LocalizedLabel _offlineMessage = CreateParagraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
+
+        private Task<ForfeitResult>? _forfeitRequest;
+
+        internal MatchInProgressScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MatchInProgress.HeaderLabel, true)
         {
+            ArgumentNullException.ThrowIfNull(gameSessionConnection);
+            ArgumentNullException.ThrowIfNull(playerSession);
+
+            _gameSessionConnection = gameSessionConnection;
+            _playerSession = playerSession;
+        }
+
+        internal override void Open()
+        {
+            _noticeBox.Hide();
+            _forfeitRequest = null;
+            _offlineMessage.TextArguments = new[] { _playerSession.MatchRoomCode ?? string.Empty };
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            if ((_forfeitRequest is null) || !_forfeitRequest.IsCompleted)
+            {
+                return;
+            }
+
+            Task<ForfeitResult> completedForfeit = _forfeitRequest;
+            _forfeitRequest = null;
+            bool hasLeftMatch = completedForfeit.IsCompletedSuccessfully && (completedForfeit.Result != ForfeitResult.NotIdentified);
+            if (hasLeftMatch)
+            {
+                _playerSession.ForfeitMatch();
+                RequestedScreen = ScreenId.MainMenu;
+            }
+            else
+            {
+                string[]? noDetailArguments = null;
+                _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
+            }
         }
 
         protected override Widget Build()
@@ -25,6 +75,7 @@ namespace Torres.Client.Screens
             abandonHint.TextAlign = TextHorizontalAlignment.Center;
             abandonHint.HorizontalAlignment = HorizontalAlignment.Center;
             abandonHint.Margin = new Thickness(0, HintTopSpacing, 0, 0);
+            _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
 
             var screenLayout = new VerticalStackPanel
             {
@@ -34,6 +85,7 @@ namespace Torres.Client.Screens
             };
             screenLayout.Widgets.Add(BuildDialog());
             screenLayout.Widgets.Add(abandonHint);
+            screenLayout.Widgets.Add(_noticeBox);
 
             return screenLayout;
         }
@@ -49,9 +101,7 @@ namespace Torres.Client.Screens
             dialogActions.Widgets.Add(returnButton);
             dialogActions.Widgets.Add(abandonButton);
 
-            LocalizedLabel offlineMessage = CreateParagraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
-            offlineMessage.Margin = new Thickness(0, 0, 0, MessageBottomSpacing);
-            offlineMessage.TextArguments = new[] { PreviewSamples.MatchRoomCode };
+            _offlineMessage.Margin = new Thickness(0, 0, 0, MessageBottomSpacing);
 
             VerticalStackPanel dialog = CreateCard(Sizes.DialogWidth);
             dialog.Spacing = 0;
@@ -62,7 +112,7 @@ namespace Torres.Client.Screens
                 TextColor = Theme.Ink,
                 Margin = new Thickness(0, 0, 0, TitleBottomSpacing),
             });
-            dialog.Widgets.Add(offlineMessage);
+            dialog.Widgets.Add(_offlineMessage);
             dialog.Widgets.Add(dialogActions);
 
             return dialog;
@@ -70,12 +120,16 @@ namespace Torres.Client.Screens
 
         private void ReturnButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Resume;
+            if (_forfeitRequest is null)
+            {
+                RequestedScreen = ScreenId.Resume;
+            }
         }
 
         private void AbandonButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.MainMenu;
+            _noticeBox.Hide();
+            _forfeitRequest ??= _gameSessionConnection.ForfeitAsync();
         }
     }
 }

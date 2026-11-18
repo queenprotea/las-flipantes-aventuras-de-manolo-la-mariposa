@@ -91,9 +91,6 @@
   <data name="Common.CancelButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="Common.EndMatchButton" xml:space="preserve">
-    <value>End match</value>
-  </data>
   <data name="Common.GotItButton" xml:space="preserve">
     <value>Got it</value>
   </data>
@@ -1191,6 +1188,9 @@
   </data>
   <data name="Resume.NoActionNeededMessage" xml:space="preserve">
     <value>You don't need to do anything: once two players return, the game continues on its own.</value>
+  </data>
+  <data name="Resume.DiscardedTurnMessage" xml:space="preserve">
+    <value>The turn that was cut short is played again from the start, with all its time.</value>
   </data>
   <data name="MatchInProgress.HeaderLabel" xml:space="preserve">
     <value>your match is still in progress</value>

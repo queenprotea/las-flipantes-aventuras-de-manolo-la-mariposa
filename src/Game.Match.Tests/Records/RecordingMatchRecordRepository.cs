@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -50,6 +51,8 @@ namespace Game.Match.Tests
 
         internal Task<RecordedFinish> FirstFinish => _firstFinish.Task;
 
+        internal List<int> InProgressMatchIds { get; } = new List<int>();
+
         public Task<int> CreateAsync(int roomId, int playerCount)
         {
             int createdMatchId;
@@ -64,6 +67,13 @@ namespace Game.Match.Tests
             Task<int> creation = Task.FromResult(createdMatchId);
 
             return creation;
+        }
+
+        public Task<List<int>> ListInProgressIdsAsync()
+        {
+            Task<List<int>> listing = Task.FromResult(new List<int>(InProgressMatchIds));
+
+            return listing;
         }
 
         public Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc)

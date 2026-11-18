@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Lets the host start a match with the active members of the room, and lets the seated players place their pieces, play their turns, draw and use action cards or end the match.
+    /// Lets the host start a match with the active members of the room, and lets the seated players place their pieces, play their turns, draw and use action cards, forfeit, or take back their seat in a match interrupted by a server restart.
     /// </summary>
     [ServiceContract(CallbackContract = typeof(IMatchNoticeReceiver))]
     public interface IMatchService
@@ -64,10 +64,17 @@ namespace Game.Contracts
         MatchActionResult EndTurn();
 
         /// <summary>
-        /// Ends the caller's match for every seated player before it finishes, and takes the room back to waiting.
+        /// Takes the caller out of its match at any moment, whether or not it is the caller's turn: its caterpillars leave the board, its flowers stay, and the others go on playing; when fewer than two players are left, the match finishes and the one left wins.
         /// </summary>
-        /// <returns>Whether the match was ended, or why not.</returns>
-        [OperationContract(Name = "EndMatch", IsInitiating = false)]
-        EndMatchResult EndMatch();
+        /// <returns>Whether the caller forfeited, or why not.</returns>
+        [OperationContract(Name = "Forfeit", IsInitiating = false)]
+        ForfeitResult Forfeit();
+
+        /// <summary>
+        /// Takes back the caller's seat in its match that was interrupted by a server restart; when two players are back, the match goes on from the start of the step that was interrupted, with the whole step time.
+        /// </summary>
+        /// <returns>Whether the caller is back in its match, or why not.</returns>
+        [OperationContract(Name = "ReturnToMatch", IsInitiating = false)]
+        ReturnToMatchResult ReturnToMatch();
     }
 }

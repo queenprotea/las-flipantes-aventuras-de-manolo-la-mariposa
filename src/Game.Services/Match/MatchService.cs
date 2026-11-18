@@ -20,10 +20,13 @@ namespace Game.Services
     {
         private const string TurnSecondsParameterCode = "turn_seconds";
         private const string ReconnectionSecondsParameterCode = "reconnection_seconds";
+        private const string ResumeMinutesParameterCode = "match_resume_minutes";
+        private const string MatchesRestoredMessage = "{0} players wait for the matches left in progress by the previous run.";
+        private const string SeatReturnedMessage = "Player {0} came back to the match interrupted by the server restart.";
         private const string SeatKeptMessage = "Player {0} lost the connection during a match; the seat waits for the reconnection window.";
         private const string SeatTakenBackMessage = "Player {0} came back to the match before the reconnection window ran out.";
         private const string MatchStartedMessage = "Match {0} started in room {1} with {2} players.";
-        private const string MatchEndedMessage = "Player {0} ended the match in room {1}.";
+        private const string MatchForfeitedMessage = "Player {0} forfeited the match.";
         private const string StartFailedMessage = "The database could not be used while a match was starting in room {0}.";
         private const string RulesNotLoadedMessage = "The match rules were not loaded; LoadRulesAsync must run before a match starts.";
 
@@ -35,13 +38,13 @@ namespace Game.Services
         private readonly SystemParameterReader _systemParameterReader;
         private readonly MatchRuleReader _matchRuleReader;
         private readonly TimeProvider _timeProvider;
+        private readonly GuestIdIssuer _guestIdIssuer;
         private readonly MatchCoordinator _matchCoordinator;
-        private readonly MatchRoomReturn _matchRoomReturn;
 
         private MatchTimeLimits? _timeLimits;
         private IReadOnlyDictionary<int, MatchRuleSet>? _ruleSetsByPlayerCount;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, TimeProvider timeProvider, StartingBoard startingBoard, Random chanceSource)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, MatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
@@ -50,8 +53,10 @@ namespace Game.Services
             ArgumentNullException.ThrowIfNull(matchRuleReader);
             ArgumentNullException.ThrowIfNull(matchRecordRepository);
             ArgumentNullException.ThrowIfNull(matchParticipantRepository);
+            ArgumentNullException.ThrowIfNull(matchStateRepository);
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
+            ArgumentNullException.ThrowIfNull(guestIdIssuer);
             ArgumentNullException.ThrowIfNull(chanceSource);
 
             _roomRegistry = roomRegistry;
@@ -60,8 +65,10 @@ namespace Game.Services
             _systemParameterReader = systemParameterReader;
             _matchRuleReader = matchRuleReader;
             _timeProvider = timeProvider;
-            _matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, _matchRoomReturn), matchRecordRepository, matchParticipantRepository, startingBoard.FlowerCells, chanceSource);
+            _guestIdIssuer = guestIdIssuer;
+            var matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
+            var matchRepositories = new MatchRepositories(matchRecordRepository, matchParticipantRepository, matchStateRepository);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, matchRoomReturn), matchRepositories, startingBoard.FlowerCells, chanceSource);
             _sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
             _sessionRegistry.SessionClosed += SessionRegistryOnSessionClosed;
             _sessionRegistry.SessionOpened += SessionRegistryOnSessionOpened;
@@ -73,6 +80,28 @@ namespace Game.Services
             TimeSpan reconnectionTime = await ReadSecondsAsync(ReconnectionSecondsParameterCode);
             _timeLimits = new MatchTimeLimits(stepTime, reconnectionTime);
             _ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
+        }
+
+        public async Task ResumeInterruptedMatchesAsync()
+        {
+            int resumeMinutes = await _systemParameterReader.ReadPositiveAsync(ResumeMinutesParameterCode);
+            MatchTimeLimits timeLimits = _timeLimits ?? throw new InvalidOperationException(RulesNotLoadedMessage);
+            IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = _ruleSetsByPlayerCount ?? throw new InvalidOperationException(RulesNotLoadedMessage);
+            var resumption = new MatchResumption(timeLimits, ruleSetsByPlayerCount, TimeSpan.FromMinutes(resumeMinutes));
+            IReadOnlyList<int> waitingEntrantIds = await _matchCoordinator.RestoreInterruptedMatchesAsync(resumption);
+            foreach (int waitingGuestId in waitingEntrantIds.Where(entrantId => entrantId < 0))
+            {
+                _guestIdIssuer.SkipPast(waitingGuestId);
+            }
+
+            _matchLog.InfoFormat(MatchesRestoredMessage, waitingEntrantIds.Count);
+        }
+
+        internal MatchSeating? FindSeating(int ownerId)
+        {
+            MatchSeating? seating = _matchCoordinator.FindSeating(ownerId);
+
+            return seating;
         }
 
         public Task FinishRecordingAsync()
@@ -188,12 +217,32 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public EndMatchResult EndMatch()
+        public ForfeitResult Forfeit()
         {
             PlayerSession? callerSession = _sessionRegistry.FindCaller();
-            EndMatchResult endResult = callerSession is null ? EndMatchResult.NotIdentified : EndMatchOf(callerSession.Owner.OwnerId);
+            ForfeitResult forfeitResult = callerSession is null ? ForfeitResult.NotIdentified : ForfeitFor(callerSession.Owner.OwnerId);
 
-            return endResult;
+            return forfeitResult;
+        }
+
+        /// <inheritdoc/>
+        public ReturnToMatchResult ReturnToMatch()
+        {
+            PlayerSession? callerSession = _sessionRegistry.FindCaller();
+            ReturnToMatchResult returnResult = callerSession is null ? ReturnToMatchResult.NotIdentified : ReturnToMatchFor(callerSession.Owner.OwnerId);
+
+            return returnResult;
+        }
+
+        private ReturnToMatchResult ReturnToMatchFor(int ownerId)
+        {
+            ReturnToMatchResult returnResult = _matchCoordinator.ReturnToMatch(ownerId);
+            if (returnResult == ReturnToMatchResult.Returned)
+            {
+                _matchLog.InfoFormat(SeatReturnedMessage, ownerId);
+            }
+
+            return returnResult;
         }
 
         private static StartMatchResult ToBannedResult(MatchBan ban)
@@ -203,16 +252,15 @@ namespace Game.Services
             return bannedResult;
         }
 
-        private EndMatchResult EndMatchOf(int ownerId)
+        private ForfeitResult ForfeitFor(int ownerId)
         {
-            EndMatchResult endResult = _matchCoordinator.EndMatch(ownerId);
-            LiveRoom? returnedRoom = endResult == EndMatchResult.Ended ? _matchRoomReturn.ReturnRoomOf(ownerId, RoomChangeReason.MatchEnded) : null;
-            if (returnedRoom is not null)
+            ForfeitResult forfeitResult = _matchCoordinator.Forfeit(ownerId);
+            if (forfeitResult == ForfeitResult.Forfeited)
             {
-                _matchLog.InfoFormat(MatchEndedMessage, ownerId, returnedRoom.RoomId);
+                _matchLog.InfoFormat(MatchForfeitedMessage, ownerId);
             }
 
-            return endResult;
+            return forfeitResult;
         }
 
         private static MatchActionResult CheckCallArguments(int? callerOwnerId, params MatchCell?[] examinedCells)
@@ -333,7 +381,7 @@ namespace Game.Services
             try
             {
                 MatchTimeLimits timeLimits = _timeLimits ?? throw new InvalidOperationException(RulesNotLoadedMessage);
-                matchId = await _matchCoordinator.StartMatchAsync(new MatchOpening(room.RoomId, entrants), timeLimits, ruleSet);
+                matchId = await _matchCoordinator.StartMatchAsync(new MatchOpening(room.RoomId, room.Code, entrants), timeLimits, ruleSet);
             }
             catch (NpgsqlException)
             {

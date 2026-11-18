@@ -270,11 +270,19 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public EndMatchResult EndMatch()
+        public ForfeitResult Forfeit()
         {
-            EndMatchResult endResult = _matchService.EndMatch();
+            ForfeitResult forfeitResult = _matchService.Forfeit();
 
-            return endResult;
+            return forfeitResult;
+        }
+
+        /// <inheritdoc/>
+        public ReturnToMatchResult ReturnToMatch()
+        {
+            ReturnToMatchResult returnResult = _matchService.ReturnToMatch();
+
+            return returnResult;
         }
 
         /// <inheritdoc/>

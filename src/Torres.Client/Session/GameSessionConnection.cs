@@ -293,11 +293,18 @@ namespace Torres.Client.Session
             return matchStart;
         }
 
-        internal Task<EndMatchResult> EndMatchAsync()
+        internal Task<ForfeitResult> ForfeitAsync()
         {
-            Task<EndMatchResult> matchEnding = Task.Run(RequireChannel().EndMatch);
+            Task<ForfeitResult> forfeitRequest = Task.Run(RequireChannel().Forfeit);
 
-            return matchEnding;
+            return forfeitRequest;
+        }
+
+        internal Task<ReturnToMatchResult> ReturnToMatchAsync()
+        {
+            Task<ReturnToMatchResult> returnRequest = Task.Run(RequireChannel().ReturnToMatch);
+
+            return returnRequest;
         }
 
         internal Task<MatchActionResult> PlacePieceAsync(PiecePlacement piecePlacement)
@@ -428,6 +435,11 @@ namespace Torres.Client.Session
             }
 
             WasConnectionLost = !_pendingConnectionCheck.IsCompletedSuccessfully;
+            if (!WasConnectionLost && !string.IsNullOrEmpty(_pendingConnectionCheck.Result.SessionToken))
+            {
+                _sessionToken = _pendingConnectionCheck.Result.SessionToken;
+            }
+
             _pendingConnectionCheck = null;
         }
 

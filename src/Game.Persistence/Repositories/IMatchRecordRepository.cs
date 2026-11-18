@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Game.Persistence
@@ -8,5 +9,7 @@ namespace Game.Persistence
         Task<int> CreateAsync(int roomId, int playerCount);
 
         Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc);
+
+        Task<List<int>> ListInProgressIdsAsync();
     }
 }
