@@ -31,6 +31,7 @@ namespace Game.Services
         private const string RulesNotLoadedMessage = "The match rules were not loaded; LoadRulesAsync must run before a match starts.";
 
         private static readonly ILog _matchLog = LogManager.GetLogger(typeof(MatchService));
+        private static readonly IReadOnlyList<EntrantStanding> _unplayedStandings = Array.Empty<EntrantStanding>();
 
         private readonly RoomRegistry _roomRegistry;
         private readonly RoomService _roomService;
@@ -385,17 +386,17 @@ namespace Game.Services
             }
             catch (NpgsqlException)
             {
-                room.EndMatch();
+                room.EndMatch(_unplayedStandings);
                 throw;
             }
             catch (DbUpdateException)
             {
-                room.EndMatch();
+                room.EndMatch(_unplayedStandings);
                 throw;
             }
             catch (InvalidOperationException)
             {
-                room.EndMatch();
+                room.EndMatch(_unplayedStandings);
                 throw;
             }
 

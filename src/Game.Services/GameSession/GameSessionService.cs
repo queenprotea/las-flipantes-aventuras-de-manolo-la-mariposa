@@ -170,6 +170,14 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
+        public Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
+        {
+            Task<SendInvitationResult> invitationSending = _invitationService.SendInvitationByEmailAsync(targetPlayerId);
+
+            return invitationSending;
+        }
+
+        /// <inheritdoc/>
         public Task<RespondInvitationResult> RespondInvitationAsync(int roomId, bool accept)
         {
             Task<RespondInvitationResult> invitationAnswer = _invitationService.RespondInvitationAsync(roomId, accept);

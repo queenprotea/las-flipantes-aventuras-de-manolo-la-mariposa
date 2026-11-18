@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+
 using Game.Contracts;
+using Game.Match;
 
 namespace Game.Services
 {
@@ -13,10 +16,10 @@ namespace Game.Services
             _roomService = roomService;
         }
 
-        internal LiveRoom? ReturnRoomOf(int ownerId, RoomChangeReason returnReason)
+        internal LiveRoom? ReturnRoomOf(int ownerId, RoomChangeReason returnReason, IReadOnlyList<EntrantStanding> entrantStandings)
         {
             LiveRoom? returnedRoom = _roomRegistry.FindRoomOf(ownerId);
-            if ((returnedRoom is not null) && returnedRoom.EndMatch())
+            if ((returnedRoom is not null) && returnedRoom.EndMatch(entrantStandings))
             {
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(returnedRoom, returnReason, noExcludedOwnerId);

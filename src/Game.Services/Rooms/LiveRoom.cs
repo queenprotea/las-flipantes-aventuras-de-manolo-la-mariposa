@@ -18,6 +18,7 @@ namespace Game.Services
         private readonly Lock _roomLock = new Lock();
         private readonly List<LiveRoomMember> _members = new List<LiveRoomMember>();
         private readonly RoomChat _chat;
+        private readonly RoomRanking _ranking = new RoomRanking();
 
         private int _hostMemberId;
         private int _lastMemberId;
@@ -227,7 +228,7 @@ namespace Game.Services
             return startCheck;
         }
 
-        internal bool EndMatch()
+        internal bool EndMatch(IReadOnlyList<EntrantStanding> entrantStandings)
         {
             bool wasInMatch;
             lock (_roomLock)
@@ -235,6 +236,10 @@ namespace Game.Services
                 wasInMatch = _isInMatch;
                 _isInMatch = false;
                 _members.ForEach(ApplyHeldProfile);
+                if (wasInMatch)
+                {
+                    AddToRanking(entrantStandings);
+                }
             }
 
             return wasInMatch;
@@ -347,6 +352,21 @@ namespace Game.Services
             return reportTarget;
         }
 
+        private void AddToRanking(IReadOnlyList<EntrantStanding> entrantStandings)
+        {
+            foreach (EntrantStanding entrantStanding in entrantStandings.Where(IsStandingOfMember))
+            {
+                _ranking.Add(entrantStanding);
+            }
+        }
+
+        private bool IsStandingOfMember(EntrantStanding entrantStanding)
+        {
+            bool isStandingOfMember = _members.Exists(member => member.MemberId == entrantStanding.MemberId);
+
+            return isStandingOfMember;
+        }
+
         private JoinRoomStatus JudgeAdmission()
         {
             JoinRoomStatus admission;
@@ -394,6 +414,7 @@ namespace Game.Services
         {
             int leavingIndex = _members.IndexOf(leavingMember);
             _members.RemoveAt(leavingIndex);
+            _ranking.Remove(leavingMember.MemberId);
             bool isRoomEmpty = _members.Count == 0;
             bool hasHostChanged = (leavingMember.MemberId == _hostMemberId) && !isRoomEmpty;
             if (hasHostChanged)
@@ -565,6 +586,7 @@ namespace Game.Services
                 ViewerMemberId = viewerMemberId,
                 CanViewerStartMatch = (viewerMemberId == _hostMemberId) && CanStartMatch(),
                 Members = members,
+                Ranking = _ranking.ListEntries(_members),
             };
 
             return view;

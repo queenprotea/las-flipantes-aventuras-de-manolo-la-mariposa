@@ -21,7 +21,7 @@ namespace Torres.Client.Screens
 
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
-        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Rooms.SearchPlaceholder, false);
+        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Rooms.SearchPlaceholder, false, AccountLimits.RoomCodeLength);
         private readonly VerticalStackPanel _roomsPlaceholder = new VerticalStackPanel { Spacing = Metrics.ListSpacing };
         private readonly NoticeBox _noticeBox = new NoticeBox();
 

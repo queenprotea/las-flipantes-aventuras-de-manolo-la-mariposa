@@ -176,6 +176,21 @@ namespace Game.Match
             return endReason;
         }
 
+        internal IReadOnlyList<EntrantStanding> ReadStandings()
+        {
+            var entrantStandings = new List<EntrantStanding>();
+            lock (_matchLock)
+            {
+                if (_matchTable.Phase == TablePhase.Finished)
+                {
+                    int? winnerSeatNumber = _matchTable.FindRanking().FirstOrDefault()?.SeatNumber;
+                    entrantStandings.AddRange(_seatedEntrants.Select(seatedEntrant => ToEntrantStanding(seatedEntrant, winnerSeatNumber)));
+                }
+            }
+
+            return entrantStandings;
+        }
+
         internal MatchActionResult PlacePiece(int entrantId, MatchPiece piece, BoardCell destinationCell)
         {
             MatchActionResult actionResult;
@@ -563,6 +578,15 @@ namespace Game.Match
             }
 
             return stepTimeLeft;
+        }
+
+        private EntrantStanding ToEntrantStanding(SeatedEntrant seatedEntrant, int? winnerSeatNumber)
+        {
+            SeatStanding seatStanding = _matchTable.Standings[seatedEntrant.SeatNumber - MatchTable.FirstSeatNumber];
+            bool isWinner = seatStanding.SeatNumber == winnerSeatNumber;
+            var entrantStanding = new EntrantStanding(seatedEntrant.Entrant.MemberId, seatStanding.FinalScore, isWinner);
+
+            return entrantStanding;
         }
 
         private int GetSeatNumber(int entrantId)

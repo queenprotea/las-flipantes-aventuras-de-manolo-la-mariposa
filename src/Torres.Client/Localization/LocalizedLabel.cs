@@ -10,6 +10,7 @@ namespace Torres.Client.Localization
         internal LocalizedLabel(string textKey)
         {
             _textKey = textKey;
+            SupportsCommands = false;
             RefreshText();
         }
 

@@ -1,6 +1,4 @@
 using System;
-using System.Globalization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using CoreWCF;
@@ -10,8 +8,6 @@ using Game.Persistence;
 
 using log4net;
 
-using Microsoft.EntityFrameworkCore;
-
 using Npgsql;
 
 namespace Game.Services
@@ -19,56 +15,82 @@ namespace Game.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public sealed class AccountService : IAccountService
     {
-        private const int PasswordWorkFactor = 11;
-        private const int LongestEmail = 254;
-        private const string PasswordFormat = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$";
-        private const string RegistrationWriteFailedMessage = "The database could not be written during a registration.";
-        private const string AccountCreatedMessage = "An account was created.";
-        private const string UnknownCreationOutcomeMessage = "Unknown creation outcome {0}.";
         private const string LoginReadFailedMessage = "The database could not be read during a log in.";
         private const string PlayerLoggedInMessage = "Player {0} logged in.";
         private const string BannedLoginRefusedMessage = "Player {0} was refused at log in because of a permanent ban.";
         private const string GuestEnteredMessage = "Guest {0} entered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
-        private static readonly Regex _passwordPattern =
-            new Regex(PasswordFormat);
 
         private readonly PlayerRepository _playerRepository;
         private readonly SanctionRepository _sanctionRepository;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly GuestIdIssuer _guestIdIssuer;
+        private readonly AccountRegistration _accountRegistration;
+        private readonly AccessRecovery _accessRecovery;
 
-        public AccountService(PlayerRepository playerRepository, SanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer)
+        public AccountService(PlayerRepository playerRepository, SanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer, AccountRegistration accountRegistration, AccessRecovery accessRecovery)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(sanctionRepository);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(guestIdIssuer);
+            ArgumentNullException.ThrowIfNull(accountRegistration);
+            ArgumentNullException.ThrowIfNull(accessRecovery);
 
             _playerRepository = playerRepository;
             _sanctionRepository = sanctionRepository;
             _sessionTokenIssuer = sessionTokenIssuer;
             _guestIdIssuer = guestIdIssuer;
+            _accountRegistration = accountRegistration;
+            _accessRecovery = accessRecovery;
         }
 
-        public async Task<RegistrationResult> RegisterAsync(string username, string email, string password)
+        /// <inheritdoc/>
+        public Task<RegistrationResult> RequestRegistrationCodeAsync(string username, string email, string password)
         {
-            RegistrationResult? invalidField = FindInvalidField(username, email, password);
-            if (invalidField is RegistrationResult rejectedField)
-            {
-                return rejectedField;
-            }
+            Task<RegistrationResult> codeRequest = _accountRegistration.RequestCodeAsync(username, email, password);
 
-            RegistrationResult registrationResult = await CreateAccountAsync(username, email, password);
-
-            return registrationResult;
+            return codeRequest;
         }
 
+        /// <inheritdoc/>
+        public Task<RegistrationConfirmationResult> ConfirmRegistrationAsync(string email, string code)
+        {
+            Task<RegistrationConfirmationResult> confirmation = _accountRegistration.ConfirmAsync(email, code);
+
+            return confirmation;
+        }
+
+        /// <inheritdoc/>
+        public Task<RecoveryCodeRequestResult> RequestRecoveryCodeAsync(string email)
+        {
+            Task<RecoveryCodeRequestResult> codeRequest = _accessRecovery.RequestCodeAsync(email);
+
+            return codeRequest;
+        }
+
+        /// <inheritdoc/>
+        public Task<RecoveryCodeVerificationResult> VerifyRecoveryCodeAsync(string email, string code)
+        {
+            Task<RecoveryCodeVerificationResult> verification = _accessRecovery.VerifyCodeAsync(email, code);
+
+            return verification;
+        }
+
+        /// <inheritdoc/>
+        public Task<PasswordResetResult> ResetPasswordAsync(string email, string code, string newPassword)
+        {
+            Task<PasswordResetResult> reset = _accessRecovery.ResetPasswordAsync(email, code, newPassword);
+
+            return reset;
+        }
+
+        /// <inheritdoc/>
         public async Task<LoginResult> LoginAsync(string username, string password)
         {
             LoginResult loginResult;
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
+            if (!AreUsableCredentials(username, password))
             {
                 loginResult = new LoginResult { Status = LoginStatus.InvalidCredentials };
             }
@@ -80,6 +102,7 @@ namespace Game.Services
             return loginResult;
         }
 
+        /// <inheritdoc/>
         public GuestAccessResult EnterAsGuest(string guestAlias)
         {
             string trimmedGuestAlias = (guestAlias ?? string.Empty).Trim();
@@ -101,57 +124,13 @@ namespace Game.Services
             return enteredResult;
         }
 
-        private async Task<RegistrationResult> CreateAccountAsync(string username, string email, string password)
+        private static bool AreUsableCredentials(string? username, string? password)
         {
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, PasswordWorkFactor);
-            RegistrationResult registrationResult;
-            try
-            {
-                registrationResult = await StoreAccountAsync(username, email, passwordHash);
-            }
-            catch (NpgsqlException exception)
-            {
-                registrationResult = LogRegistrationFailure(exception);
-            }
-            catch (DbUpdateException exception)
-            {
-                registrationResult = LogRegistrationFailure(exception);
-            }
+            bool hasUsableUsername = !string.IsNullOrWhiteSpace(username) && (username.Length <= AccountLimits.LongestUsername);
+            bool hasUsablePassword = !string.IsNullOrEmpty(password) && (password.Length <= AccountLimits.LongestPassword);
+            bool areUsable = hasUsableUsername && hasUsablePassword;
 
-            return registrationResult;
-        }
-
-        private async Task<RegistrationResult> StoreAccountAsync(string username, string email, string passwordHash)
-        {
-            PlayerCreationOutcome creationOutcome = await _playerRepository.CreateAsync(username, email, passwordHash);
-            RegistrationResult registrationResult = ToRegistrationResult(creationOutcome);
-            if (registrationResult == RegistrationResult.Created)
-            {
-                _log.Info(AccountCreatedMessage);
-            }
-
-            return registrationResult;
-        }
-
-        private static RegistrationResult LogRegistrationFailure(Exception exception)
-        {
-            _log.Error(RegistrationWriteFailedMessage, exception);
-            RegistrationResult failedResult = RegistrationResult.DatabaseUnavailable;
-
-            return failedResult;
-        }
-
-        private static RegistrationResult ToRegistrationResult(PlayerCreationOutcome creationOutcome)
-        {
-            RegistrationResult registrationResult = creationOutcome switch
-            {
-                PlayerCreationOutcome.Created => RegistrationResult.Created,
-                PlayerCreationOutcome.UsernameTaken => RegistrationResult.UsernameTaken,
-                PlayerCreationOutcome.EmailTaken => RegistrationResult.EmailTaken,
-                _ => throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, UnknownCreationOutcomeMessage, creationOutcome)),
-            };
-
-            return registrationResult;
+            return areUsable;
         }
 
         private async Task<LoginResult> AuthenticateAsync(string username, string password)
@@ -222,25 +201,6 @@ namespace Game.Services
             }
 
             return aliasRejection;
-        }
-
-        private static RegistrationResult? FindInvalidField(string username, string email, string password)
-        {
-            RegistrationResult? invalidField = null;
-            if (!UsernameRules.IsValid(username))
-            {
-                invalidField = RegistrationResult.InvalidUsername;
-            }
-            else if ((email is null) || (email.IndexOf('@') <= 0) || (email.Length > LongestEmail))
-            {
-                invalidField = RegistrationResult.InvalidEmail;
-            }
-            else if ((password is null) || !_passwordPattern.IsMatch(password))
-            {
-                invalidField = RegistrationResult.InvalidPassword;
-            }
-
-            return invalidField;
         }
     }
 }

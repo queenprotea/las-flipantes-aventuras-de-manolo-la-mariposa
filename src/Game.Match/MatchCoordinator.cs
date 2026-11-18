@@ -438,7 +438,8 @@ namespace Game.Match
             }
 
             _matchRecordWriter.RecordFinish(finishedMatch.SeatedMatch.MatchId, finishedMatch.ReadEndReason(), finishedMatch.ReadPlayerResults());
-            _matchListener.ReceiveMatchFinished(releasedEntrantIds);
+            IReadOnlyList<EntrantStanding> unplayedStandings = Array.Empty<EntrantStanding>();
+            _matchListener.ReceiveMatchFinished(releasedEntrantIds, unplayedStandings);
         }
 
         private void UnsubscribeAwaitingMatch(AwaitingMatch awaitingMatch)
@@ -485,7 +486,8 @@ namespace Game.Match
                     _matchRecordWriter.RecordFinish(finishedMatch.MatchId, finishedMatch.ReadEndReason(), finishedMatch.ReadPlayerResults());
                 }
 
-                _matchListener.ReceiveMatchFinished(releasedEntrantIds);
+                IReadOnlyList<EntrantStanding> entrantStandings = finishedMatch.ReadStandings();
+                _matchListener.ReceiveMatchFinished(releasedEntrantIds, entrantStandings);
             }
         }
 

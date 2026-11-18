@@ -147,6 +147,8 @@ namespace Game.Contracts
         
         private System.Collections.Generic.List<Game.Contracts.RoomMember> MembersField;
         
+        private System.Collections.Generic.List<Game.Contracts.RoomRankingEntry> RankingField;
+        
         private int RoomIdField;
         
         private Game.Contracts.RoomState StateField;
@@ -217,6 +219,19 @@ namespace Game.Contracts
             set
             {
                 this.MembersField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<Game.Contracts.RoomRankingEntry> Ranking
+        {
+            get
+            {
+                return this.RankingField;
+            }
+            set
+            {
+                this.RankingField = value;
             }
         }
         
@@ -433,6 +448,103 @@ namespace Game.Contracts
             set
             {
                 this.MemberIdField = value;
+            }
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RoomRankingEntry", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class RoomRankingEntry : object
+    {
+        
+        private Game.Contracts.SeatColor ColorField;
+        
+        private string DisplayNameField;
+        
+        private bool IsGuestField;
+        
+        private int MemberIdField;
+        
+        private int PointsField;
+        
+        private int WinsField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.SeatColor Color
+        {
+            get
+            {
+                return this.ColorField;
+            }
+            set
+            {
+                this.ColorField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string DisplayName
+        {
+            get
+            {
+                return this.DisplayNameField;
+            }
+            set
+            {
+                this.DisplayNameField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public bool IsGuest
+        {
+            get
+            {
+                return this.IsGuestField;
+            }
+            set
+            {
+                this.IsGuestField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int MemberId
+        {
+            get
+            {
+                return this.MemberIdField;
+            }
+            set
+            {
+                this.MemberIdField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int Points
+        {
+            get
+            {
+                return this.PointsField;
+            }
+            set
+            {
+                this.PointsField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int Wins
+        {
+            get
+            {
+                return this.WinsField;
+            }
+            set
+            {
+                this.WinsField = value;
             }
         }
     }
@@ -1343,7 +1455,10 @@ namespace Game.Contracts
         InvitationAlreadyPending = 4,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 5,
+        EmailNotSent = 5,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 6,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3548,7 +3663,7 @@ namespace Game.Contracts
     {
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        Created = 0,
+        CodeSent = 0,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         UsernameTaken = 1,
@@ -3566,20 +3681,26 @@ namespace Game.Contracts
         InvalidUsername = 5,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        DatabaseUnavailable = 6,
+        TooManyRequests = 6,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MailDeliveryFailed = 7,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 8,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="LoginResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public partial class LoginResult : object
+    [System.Runtime.Serialization.DataContractAttribute(Name="RegistrationConfirmationResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class RegistrationConfirmationResult : object
     {
         
         private Game.Contracts.PlayerIdentity PlayerField;
         
         private string SessionTokenField;
         
-        private Game.Contracts.LoginStatus StatusField;
+        private Game.Contracts.RegistrationConfirmationStatus StatusField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public Game.Contracts.PlayerIdentity Player
@@ -3608,7 +3729,7 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Game.Contracts.LoginStatus Status
+        public Game.Contracts.RegistrationConfirmationStatus Status
         {
             get
             {
@@ -3669,6 +3790,79 @@ namespace Game.Contracts
             set
             {
                 this.UsernameField = value;
+            }
+        }
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RegistrationConfirmationStatus", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum RegistrationConfirmationStatus : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Created = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidCode = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        UsernameTaken = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        EmailTaken = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 4,
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="LoginResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public partial class LoginResult : object
+    {
+        
+        private Game.Contracts.PlayerIdentity PlayerField;
+        
+        private string SessionTokenField;
+        
+        private Game.Contracts.LoginStatus StatusField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.PlayerIdentity Player
+        {
+            get
+            {
+                return this.PlayerField;
+            }
+            set
+            {
+                this.PlayerField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string SessionToken
+        {
+            get
+            {
+                return this.SessionTokenField;
+            }
+            set
+            {
+                this.SessionTokenField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public Game.Contracts.LoginStatus Status
+        {
+            get
+            {
+                return this.StatusField;
+            }
+            set
+            {
+                this.StatusField = value;
             }
         }
     }
@@ -3741,6 +3935,60 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         AliasTooLong = 2,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeRequestResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum RecoveryCodeRequestResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        CodeSent = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidEmail = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        TooManyRequests = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MailDeliveryFailed = 3,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 4,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="RecoveryCodeVerificationResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum RecoveryCodeVerificationResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Valid = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidCode = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 2,
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="PasswordResetResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum PasswordResetResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Reset = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidCode = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        InvalidPassword = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 3,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -3956,6 +4204,12 @@ namespace Game.Contracts
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IInvitationService/SendInvitation", ReplyAction="http://tempuri.org/IInvitationService/SendInvitationResponse")]
         System.Threading.Tasks.Task<Game.Contracts.SendInvitationResult> SendInvitationAsync(int targetPlayerId);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IInvitationService/SendInvitationByEmail", ReplyAction="http://tempuri.org/IInvitationService/SendInvitationByEmailResponse")]
+        Game.Contracts.SendInvitationResult SendInvitationByEmail(int targetPlayerId);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IInvitationService/SendInvitationByEmail", ReplyAction="http://tempuri.org/IInvitationService/SendInvitationByEmailResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IInvitationService/RespondInvitation", ReplyAction="http://tempuri.org/IInvitationService/RespondInvitationResponse")]
         Game.Contracts.RespondInvitationResult RespondInvitation(int roomId, bool accept);
@@ -4337,6 +4591,16 @@ namespace Game.Contracts
             return base.Channel.SendInvitationAsync(targetPlayerId);
         }
         
+        public Game.Contracts.SendInvitationResult SendInvitationByEmail(int targetPlayerId)
+        {
+            return base.Channel.SendInvitationByEmail(targetPlayerId);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
+        {
+            return base.Channel.SendInvitationByEmailAsync(targetPlayerId);
+        }
+        
         public Game.Contracts.RespondInvitationResult RespondInvitation(int roomId, bool accept)
         {
             return base.Channel.RespondInvitation(roomId, accept);
@@ -4577,7 +4841,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IGameSessionService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/GameSession");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/GameSession");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4604,11 +4868,17 @@ namespace Game.Contracts
     public interface IAccountService
     {
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/Register", ReplyAction="http://tempuri.org/IAccountService/RegisterResponse")]
-        Game.Contracts.RegistrationResult Register(string username, string email, string password);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/RequestRegistrationCode", ReplyAction="http://tempuri.org/IAccountService/RequestRegistrationCodeResponse")]
+        Game.Contracts.RegistrationResult RequestRegistrationCode(string username, string email, string password);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/Register", ReplyAction="http://tempuri.org/IAccountService/RegisterResponse")]
-        System.Threading.Tasks.Task<Game.Contracts.RegistrationResult> RegisterAsync(string username, string email, string password);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/RequestRegistrationCode", ReplyAction="http://tempuri.org/IAccountService/RequestRegistrationCodeResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.RegistrationResult> RequestRegistrationCodeAsync(string username, string email, string password);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/ConfirmRegistration", ReplyAction="http://tempuri.org/IAccountService/ConfirmRegistrationResponse")]
+        Game.Contracts.RegistrationConfirmationResult ConfirmRegistration(string email, string code);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/ConfirmRegistration", ReplyAction="http://tempuri.org/IAccountService/ConfirmRegistrationResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.RegistrationConfirmationResult> ConfirmRegistrationAsync(string email, string code);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/Login", ReplyAction="http://tempuri.org/IAccountService/LoginResponse")]
         Game.Contracts.LoginResult Login(string username, string password);
@@ -4621,6 +4891,24 @@ namespace Game.Contracts
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/EnterAsGuest", ReplyAction="http://tempuri.org/IAccountService/EnterAsGuestResponse")]
         System.Threading.Tasks.Task<Game.Contracts.GuestAccessResult> EnterAsGuestAsync(string guestAlias);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/RequestRecoveryCode", ReplyAction="http://tempuri.org/IAccountService/RequestRecoveryCodeResponse")]
+        Game.Contracts.RecoveryCodeRequestResult RequestRecoveryCode(string email);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/RequestRecoveryCode", ReplyAction="http://tempuri.org/IAccountService/RequestRecoveryCodeResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.RecoveryCodeRequestResult> RequestRecoveryCodeAsync(string email);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/VerifyRecoveryCode", ReplyAction="http://tempuri.org/IAccountService/VerifyRecoveryCodeResponse")]
+        Game.Contracts.RecoveryCodeVerificationResult VerifyRecoveryCode(string email, string code);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/VerifyRecoveryCode", ReplyAction="http://tempuri.org/IAccountService/VerifyRecoveryCodeResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.RecoveryCodeVerificationResult> VerifyRecoveryCodeAsync(string email, string code);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/ResetPassword", ReplyAction="http://tempuri.org/IAccountService/ResetPasswordResponse")]
+        Game.Contracts.PasswordResetResult ResetPassword(string email, string code, string newPassword);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IAccountService/ResetPassword", ReplyAction="http://tempuri.org/IAccountService/ResetPasswordResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.PasswordResetResult> ResetPasswordAsync(string email, string code, string newPassword);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
@@ -4673,14 +4961,24 @@ namespace Game.Contracts
         {
         }
         
-        public Game.Contracts.RegistrationResult Register(string username, string email, string password)
+        public Game.Contracts.RegistrationResult RequestRegistrationCode(string username, string email, string password)
         {
-            return base.Channel.Register(username, email, password);
+            return base.Channel.RequestRegistrationCode(username, email, password);
         }
         
-        public System.Threading.Tasks.Task<Game.Contracts.RegistrationResult> RegisterAsync(string username, string email, string password)
+        public System.Threading.Tasks.Task<Game.Contracts.RegistrationResult> RequestRegistrationCodeAsync(string username, string email, string password)
         {
-            return base.Channel.RegisterAsync(username, email, password);
+            return base.Channel.RequestRegistrationCodeAsync(username, email, password);
+        }
+        
+        public Game.Contracts.RegistrationConfirmationResult ConfirmRegistration(string email, string code)
+        {
+            return base.Channel.ConfirmRegistration(email, code);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.RegistrationConfirmationResult> ConfirmRegistrationAsync(string email, string code)
+        {
+            return base.Channel.ConfirmRegistrationAsync(email, code);
         }
         
         public Game.Contracts.LoginResult Login(string username, string password)
@@ -4701,6 +4999,36 @@ namespace Game.Contracts
         public System.Threading.Tasks.Task<Game.Contracts.GuestAccessResult> EnterAsGuestAsync(string guestAlias)
         {
             return base.Channel.EnterAsGuestAsync(guestAlias);
+        }
+        
+        public Game.Contracts.RecoveryCodeRequestResult RequestRecoveryCode(string email)
+        {
+            return base.Channel.RequestRecoveryCode(email);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.RecoveryCodeRequestResult> RequestRecoveryCodeAsync(string email)
+        {
+            return base.Channel.RequestRecoveryCodeAsync(email);
+        }
+        
+        public Game.Contracts.RecoveryCodeVerificationResult VerifyRecoveryCode(string email, string code)
+        {
+            return base.Channel.VerifyRecoveryCode(email, code);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.RecoveryCodeVerificationResult> VerifyRecoveryCodeAsync(string email, string code)
+        {
+            return base.Channel.VerifyRecoveryCodeAsync(email, code);
+        }
+        
+        public Game.Contracts.PasswordResetResult ResetPassword(string email, string code, string newPassword)
+        {
+            return base.Channel.ResetPassword(email, code, newPassword);
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.PasswordResetResult> ResetPasswordAsync(string email, string code, string newPassword)
+        {
+            return base.Channel.ResetPasswordAsync(email, code, newPassword);
         }
         
         public virtual System.Threading.Tasks.Task OpenAsync()
@@ -4733,7 +5061,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IAccountService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/account");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/account");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4857,7 +5185,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IRankingService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/ranking");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/ranking");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }
@@ -4981,7 +5309,7 @@ namespace Game.Contracts
         {
             if ((endpointConfiguration == EndpointConfiguration.NetTcpBinding_IServerStatusService))
             {
-                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8010/status");
+                return new System.ServiceModel.EndpointAddress("net.tcp://0.0.0.0:8000/status");
             }
             throw new System.InvalidOperationException(string.Format("No se pudo encontrar un punto de conexión con el nombre \"{0}\".", endpointConfiguration));
         }

@@ -30,6 +30,7 @@ const string MetadataPublishedMessage = "Service metadata published on {0}";
 const string MetadataHostName = "localhost";
 const string StartupDatabaseFailedMessage = "The database could not be used while the server started; the server does not start.";
 const string AvatarFolderFailedMessage = "The avatar folder could not be created; the server does not start.";
+const string EmailServerMessage = "Emails are delivered to {0}:{1}";
 const string StartingBoardFailedMessage = "The starting board in the configuration is not valid; the server does not start.";
 const string StoredConfigurationFailedMessage = "The configuration stored in the database is not valid; the server does not start.";
 const string UnhandledFailureMessage = "An unexpected failure stopped the server.";
@@ -70,6 +71,8 @@ catch (UnauthorizedAccessException exception)
     hostLog.Fatal(AvatarFolderFailedMessage, exception);
     return;
 }
+EmailSettings emailSettings = EmailSettings.Read(builder.Configuration);
+EmailSender emailSender = emailSettings.CreateSender();
 MatchBoardSettings matchBoardSettings = MatchBoardSettings.ReadFromConfiguration(builder.Configuration);
 List<MatchCell> startingFlowerCells = matchBoardSettings.StartingFlowers.Select(startingFlower => new MatchCell { Row = startingFlower.Row, Column = startingFlower.Column }).ToList();
 
@@ -90,6 +93,8 @@ builder.Services.AddSingleton(new SessionTokenIssuer(sessionSigningKey, TimeProv
 builder.Services.AddSingleton(new HistoryPaging(historySettings.MatchesPerPage));
 builder.Services.AddSingleton(new StartingBoard(startingFlowerCells));
 builder.Services.AddSingleton<GuestIdIssuer>();
+builder.Services.AddSingleton<IEmailSender>(emailSender);
+builder.Services.AddSingleton<PendingRegistrationRegistry>();
 builder.Services.AddSingleton<PlayerRepository>();
 builder.Services.AddSingleton<RankingRepository>();
 builder.Services.AddSingleton<RoomRecordRepository>();
@@ -104,10 +109,13 @@ builder.Services.AddSingleton<ActionCostRepository>();
 builder.Services.AddSingleton<MatchRuleReader>();
 builder.Services.AddSingleton<FriendshipRepository>();
 builder.Services.AddSingleton<RoomInvitationRepository>();
+builder.Services.AddSingleton<PasswordRecoveryRepository>();
 builder.Services.AddSingleton<MatchRecordRepository>();
 builder.Services.AddSingleton<MatchParticipantRepository>();
 builder.Services.AddSingleton<MatchStateRepository>();
 builder.Services.AddSingleton<ServerStatusService>();
+builder.Services.AddSingleton<AccountRegistration>();
+builder.Services.AddSingleton<AccessRecovery>();
 builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<RankingService>();
 builder.Services.AddSingleton<SessionRegistry>();
@@ -178,6 +186,7 @@ app.UseServiceModel(AddEndpoints);
 ConnectionSupervisor connectionSupervisor = app.Services.GetRequiredService<ConnectionSupervisor>();
 connectionSupervisor.Start(roomInactivityLimit);
 
+hostLog.InfoFormat(EmailServerMessage, emailSettings.ChosenHost, emailSettings.ChosenPort);
 hostLog.InfoFormat(ServerListeningMessage, serverSettings.NetTcpPort);
 await app.RunAsync();
 await connectionSupervisor.StopAsync();

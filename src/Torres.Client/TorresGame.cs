@@ -45,6 +45,7 @@ namespace Torres.Client
         private Desktop? _desktop;
         private TopBarView? _topBarView;
         private LoginScreen? _loginScreen;
+        private PasswordRecoveryScreen? _passwordRecoveryScreen;
         private GuestAccessScreen? _guestAccessScreen;
         private ProfileScreen? _profileScreen;
         private AvatarCache? _avatarCache;
@@ -128,8 +129,9 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Language, new LanguageScreen(_languagePreference));
             _loginScreen = new LoginScreen(_accountChannelFactory, _gameSessionConnection, _playerSession);
             _screensById.Add(ScreenId.Login, _loginScreen);
-            _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory));
-            _screensById.Add(ScreenId.PasswordRecovery, new PasswordRecoveryScreen());
+            _screensById.Add(ScreenId.Register, new RegisterScreen(_accountChannelFactory, _gameSessionConnection, _playerSession));
+            _passwordRecoveryScreen = new PasswordRecoveryScreen(_accountChannelFactory);
+            _screensById.Add(ScreenId.PasswordRecovery, _passwordRecoveryScreen);
             _guestAccessScreen = new GuestAccessScreen(_accountChannelFactory, _gameSessionConnection, _playerSession);
             _screensById.Add(ScreenId.GuestAccess, _guestAccessScreen);
             _profileScreen = new ProfileScreen(_gameSessionConnection, _playerSession, avatarCache);
@@ -499,6 +501,29 @@ namespace Torres.Client
                 _guestAccessScreen.ClearRequests();
                 ShowScreen(ScreenId.Login);
                 _loginScreen?.ShowNotice(TextKeys.Common.ServerErrorTitle);
+            }
+
+            FollowPasswordRecovery();
+        }
+
+        private void FollowPasswordRecovery()
+        {
+            if (_passwordRecoveryScreen is null)
+            {
+                return;
+            }
+
+            if (_passwordRecoveryScreen.WasServerUnreachable)
+            {
+                _passwordRecoveryScreen.ClearRequests();
+                ShowScreen(ScreenId.Login);
+                _loginScreen?.ShowNotice(TextKeys.Common.ServerErrorTitle);
+            }
+            else if (_passwordRecoveryScreen.WasPasswordReset)
+            {
+                _passwordRecoveryScreen.ClearRequests();
+                ShowScreen(ScreenId.Login);
+                _loginScreen?.ShowConfirmation(TextKeys.Login.PasswordChanged);
             }
         }
 

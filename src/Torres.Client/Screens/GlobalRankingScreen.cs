@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
-using FontStashSharp.RichText;
-
 using Game.Contracts;
 
 using Microsoft.Xna.Framework;
@@ -20,16 +18,12 @@ namespace Torres.Client.Screens
 {
     internal sealed class GlobalRankingScreen : Screen
     {
-        private const int HeaderRowIndex = 0;
-        private const int DividerRowIndex = 1;
-        private const int FirstEntryRowIndex = 2;
-        private const int ColumnSpanFullTable = 5;
-
-        private const int ColumnIndexRank = 0;
-        private const int ColumnIndexPlayer = 1;
-        private const int ColumnIndexWins = 2;
-        private const int ColumnIndexPoints = 3;
-        private const int ColumnIndexMatches = 4;
+        private static readonly IReadOnlyList<RankingColumn> _statColumns = new RankingColumn[]
+        {
+            new RankingColumn(TextKeys.GlobalRanking.WinsColumn, Sizes.RankingStatColumnWidth),
+            new RankingColumn(TextKeys.GlobalRanking.PointsColumn, Sizes.RankingStatColumnWidth),
+            new RankingColumn(TextKeys.GlobalRanking.MatchesColumn, Sizes.RankingStatColumnWidth),
+        };
 
         private readonly ChannelFactory<IRankingService> _rankingChannelFactory;
         private readonly PlayerSession _playerSession;
@@ -126,7 +120,8 @@ namespace Torres.Client.Screens
             }
             else
             {
-                _contentPlaceholder.Widgets.Add(BuildTable(entries));
+                var rankingTable = new RankingTableView(Sizes.RankingTableWidth, Sizes.RankingRankColumnWidth, _statColumns, ToRankingRows(entries));
+                _contentPlaceholder.Widgets.Add(rankingTable.Root);
             }
 
             _contentPlaceholder.Visible = true;
@@ -142,73 +137,23 @@ namespace Torres.Client.Screens
             return failureNotice;
         }
 
-        private Grid BuildTable(List<RankingEntry> entries)
+        private List<RankingRow> ToRankingRows(List<RankingEntry> entries)
         {
-            var rankingGrid = new Grid
+            var rankingRows = new List<RankingRow>();
+            for (var i = 0; i < entries.Count; i++)
             {
-                ColumnSpacing = Metrics.ColumnSpacing,
-                RowSpacing = Metrics.FieldSpacing,
-                Width = Sizes.RankingTableWidth,
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
-            rankingGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, Sizes.RankingRankColumnWidth));
-            rankingGrid.ColumnsProportions.Add(new Proportion(ProportionType.Fill));
-            rankingGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, Sizes.RankingStatColumnWidth));
-            rankingGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, Sizes.RankingStatColumnWidth));
-            rankingGrid.ColumnsProportions.Add(new Proportion(ProportionType.Pixels, Sizes.RankingStatColumnWidth));
-
-            AddHeaderRow(rankingGrid);
-            AddDivider(rankingGrid, DividerRowIndex);
-
-            for (var entryIndex = 0; entryIndex < entries.Count; entryIndex++)
-            {
-                AddEntryRow(rankingGrid, entryIndex, entries[entryIndex]);
+                rankingRows.Add(ToRankingRow(entries[i], i + 1));
             }
 
-            return rankingGrid;
+            return rankingRows;
         }
 
-        private static void AddHeaderRow(Grid rankingGrid)
+        private RankingRow ToRankingRow(RankingEntry entry, int rank)
         {
-            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexRank), AlignRight(CreateHint(TextKeys.GlobalRanking.RowNumberColumn)));
-            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexPlayer), CreateHint(TextKeys.GlobalRanking.PlayerColumn));
-            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexWins), AlignRight(CreateHint(TextKeys.GlobalRanking.WinsColumn)));
-            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexPoints), AlignRight(CreateHint(TextKeys.GlobalRanking.PointsColumn)));
-            AddCell(rankingGrid, new CellPosition(HeaderRowIndex, ColumnIndexMatches), AlignRight(CreateHint(TextKeys.GlobalRanking.MatchesColumn)));
-        }
+            SeatColor? noSeatColor = null;
+            var rankingRow = new RankingRow(rank, entry.PlayerName, IsCurrentPlayer(entry), noSeatColor, new int[] { entry.Wins, entry.Points, entry.Matches });
 
-        private static void AddDivider(Grid rankingGrid, int targetRowIndex)
-        {
-            Panel dividerPanel = CreateDivider();
-            Grid.SetRow(dividerPanel, targetRowIndex);
-            Grid.SetColumnSpan(dividerPanel, ColumnSpanFullTable);
-            rankingGrid.Widgets.Add(dividerPanel);
-        }
-
-        private void AddEntryRow(Grid rankingGrid, int entryIndex, RankingEntry entry)
-        {
-            int rowIndex = FirstEntryRowIndex + entryIndex;
-            int rank = entryIndex + 1;
-            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexRank), CreateNumericCell(rank));
-            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexPlayer), CreatePlayerCell(entry));
-            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexWins), CreateNumericCell(entry.Wins));
-            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexPoints), CreateNumericCell(entry.Points));
-            AddCell(rankingGrid, new CellPosition(rowIndex, ColumnIndexMatches), CreateNumericCell(entry.Matches));
-        }
-
-        private Widget CreatePlayerCell(RankingEntry entry)
-        {
-            if (!IsCurrentPlayer(entry))
-            {
-                Label otherPlayerLabel = CreateRowLabel(entry.PlayerName, Theme.Ink);
-                return otherPlayerLabel;
-            }
-
-            HorizontalStackPanel cellPanel = CreateButtonRow();
-            cellPanel.Widgets.Add(CreateRowLabel(entry.PlayerName, Theme.MintInk));
-            cellPanel.Widgets.Add(CreateYouTag());
-
-            return cellPanel;
+            return rankingRow;
         }
 
         private bool IsCurrentPlayer(RankingEntry entry)
@@ -217,61 +162,6 @@ namespace Torres.Client.Screens
                 && string.Equals(player.Username, entry.PlayerName, StringComparison.Ordinal);
 
             return isCurrentPlayer;
-        }
-
-        private static Panel CreateYouTag()
-        {
-            var tagPanel = new Panel
-            {
-                Padding = Metrics.SmallButtonPadding,
-                Background = Theme.MintTintBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            tagPanel.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MintInk,
-            });
-
-            return tagPanel;
-        }
-
-        private static Label CreateNumericCell(int numericValue)
-        {
-            string formattedValue = DisplayFormats.FormatThousands(numericValue);
-            Label numericCell = AlignRight(CreateRowLabel(formattedValue, Theme.SoftInk));
-
-            return numericCell;
-        }
-
-        private static Label CreateRowLabel(string labelText, Color labelColor)
-        {
-            var rowLabel = new Label
-            {
-                Text = labelText,
-                Font = Fonts.Body,
-                TextColor = labelColor,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return rowLabel;
-        }
-
-        private static TLabel AlignRight<TLabel>(TLabel targetLabel)
-            where TLabel : Label
-        {
-            targetLabel.TextAlign = TextHorizontalAlignment.Right;
-
-            return targetLabel;
-        }
-
-        private static void AddCell(Grid rankingGrid, CellPosition position, Widget cellWidget)
-        {
-            Grid.SetRow(cellWidget, position.Row);
-            Grid.SetColumn(cellWidget, position.Column);
-            rankingGrid.Widgets.Add(cellWidget);
         }
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)

@@ -29,6 +29,7 @@ namespace Torres.Client.Localization
             internal const string RequiredField = "Common.RequiredField";
             internal const string RankPosition = "Common.RankPosition";
             internal const string RemainingTime = "Common.RemainingTime";
+            internal const string TextLimitMessage = "Common.TextLimitMessage";
         }
 
         internal static class Startup
@@ -74,6 +75,7 @@ namespace Torres.Client.Localization
             internal const string ForgotAccessLink = "Login.ForgotAccessLink";
             internal const string PlayAsGuestLink = "Login.PlayAsGuestLink";
             internal const string SignedInElsewhere = "Login.SignedInElsewhere";
+            internal const string PasswordChanged = "Login.PasswordChanged";
         }
 
         internal static class Register
@@ -91,6 +93,11 @@ namespace Torres.Client.Localization
             internal const string UsernameInvalidFormat = "Register.UsernameInvalidFormat";
             internal const string EmailInvalidFormat = "Register.EmailInvalidFormat";
             internal const string PasswordInvalidFormat = "Register.PasswordInvalidFormat";
+            internal const string CodeStepTitle = "Register.CodeStepTitle";
+            internal const string CodeStepHint = "Register.CodeStepHint";
+            internal const string CodeLabel = "Register.CodeLabel";
+            internal const string ConfirmButton = "Register.ConfirmButton";
+            internal const string InvalidCode = "Register.InvalidCode";
         }
 
         internal static class PasswordRecovery
@@ -112,6 +119,8 @@ namespace Torres.Client.Localization
             internal const string RepeatPasswordLabel = "PasswordRecovery.RepeatPasswordLabel";
             internal const string SaveButton = "PasswordRecovery.SaveButton";
             internal const string BackToLoginButton = "PasswordRecovery.BackToLoginButton";
+            internal const string PasswordsDoNotMatch = "PasswordRecovery.PasswordsDoNotMatch";
+            internal const string PasswordInvalidFormat = "PasswordRecovery.PasswordInvalidFormat";
         }
 
         internal static class GuestAccess
@@ -332,6 +341,7 @@ namespace Torres.Client.Localization
             internal const string ReportToolTip = "Chat.ReportToolTip";
             internal const string ReportSent = "Chat.ReportSent";
             internal const string ReportUnavailable = "Chat.ReportUnavailable";
+            internal const string SendToolTip = "Chat.SendToolTip";
         }
 
         internal static class Alerts
@@ -369,6 +379,7 @@ namespace Torres.Client.Localization
             internal const string LogOutTitle = "Alerts.LogOutTitle";
             internal const string LogOutBody = "Alerts.LogOutBody";
             internal const string LogOutConfirmButton = "Alerts.LogOutConfirmButton";
+            internal const string TooManyCodesBody = "Alerts.TooManyCodesBody";
         }
 
         internal static class MatchPreparation

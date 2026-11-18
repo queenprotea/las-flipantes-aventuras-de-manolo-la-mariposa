@@ -26,7 +26,7 @@ namespace Torres.Client.Screens
         private readonly HorizontalStackPanel _tabsPlaceholder = CreateButtonRow();
         private readonly HorizontalStackPanel _searchRow = CreateButtonRow();
         private readonly VerticalStackPanel _tabContentPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
-        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false);
+        private readonly LabeledTextBox _searchField = new LabeledTextBox(TextKeys.Friends.SearchPlaceholder, false, AccountLimits.LongestUsername);
         private readonly LocalizedButton _searchButton = CreatePrimaryButton(TextKeys.Friends.SearchButton);
         private readonly LocalizedLabel _errorLabel = CreateErrorMessage(TextKeys.Common.ServerErrorTitle);
         private readonly HashSet<int> _invitedPlayerIds = new HashSet<int>();
@@ -226,6 +226,13 @@ namespace Torres.Client.Screens
                     RenderTab();
                     break;
 
+                case SendInvitationResult.EmailNotSent:
+                    _invitedPlayerIds.Add(_invitedPlayerId);
+                    RenderTab();
+                    _errorLabel.TextKey = TextKeys.Alerts.EmailFailedBody;
+                    _errorLabel.Visible = true;
+                    break;
+
                 case SendInvitationResult.AlreadyInThisRoom:
                     StartRefresh();
                     RenderTab();
@@ -281,14 +288,16 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void SendInvitation(int targetPlayerId)
+        private void SendInvitation(int targetPlayerId, bool isByEmail)
         {
             bool canSend = _gameSessionConnection.IsSessionOpen && (_invitationRequest is null);
             if (canSend)
             {
                 _errorLabel.Visible = false;
                 _invitedPlayerId = targetPlayerId;
-                _invitationRequest = _gameSessionConnection.SendInvitationAsync(targetPlayerId);
+                _invitationRequest = isByEmail
+                    ? _gameSessionConnection.SendInvitationByEmailAsync(targetPlayerId)
+                    : _gameSessionConnection.SendInvitationAsync(targetPlayerId);
             }
         }
 
@@ -403,23 +412,26 @@ namespace Torres.Client.Screens
             StackPanel.SetProportionType(spacer, ProportionType.Part);
             itemRow.Widgets.Add(spacer);
 
-            Widget invitationControl;
             if (IsRoomMember(player.Username))
             {
-                invitationControl = CreateStatusBadge(TextKeys.InvitePlayers.AlreadyInRoomBadge);
+                itemRow.Widgets.Add(CreateStatusBadge(TextKeys.InvitePlayers.AlreadyInRoomBadge));
+                return;
             }
-            else if (_invitedPlayerIds.Contains(player.PlayerId))
+
+            if (_invitedPlayerIds.Contains(player.PlayerId))
             {
-                invitationControl = CreateStatusBadge(TextKeys.InvitePlayers.InvitedBadge);
+                itemRow.Widgets.Add(CreateStatusBadge(TextKeys.InvitePlayers.InvitedBadge));
             }
             else
             {
                 LocalizedButton inviteButton = CreatePrimaryButton(TextKeys.InvitePlayers.InviteButton);
-                inviteButton.Click += (sender, e) => SendInvitation(player.PlayerId);
-                invitationControl = inviteButton;
+                inviteButton.Click += (sender, e) => SendInvitation(player.PlayerId, false);
+                itemRow.Widgets.Add(inviteButton);
             }
 
-            itemRow.Widgets.Add(invitationControl);
+            LocalizedButton emailButton = CreateSecondaryButton(TextKeys.InvitePlayers.InviteByEmailButton);
+            emailButton.Click += (sender, e) => SendInvitation(player.PlayerId, true);
+            itemRow.Widgets.Add(emailButton);
         }
 
         private bool IsRoomMember(string username)

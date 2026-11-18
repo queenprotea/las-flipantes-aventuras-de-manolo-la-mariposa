@@ -29,8 +29,8 @@ namespace Torres.Client.Screens
         private readonly PlayerSession _session;
         private readonly AvatarCache _avatarCache;
         private readonly AvatarView _avatarView;
-        private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Profile.UsernameLabel, false);
-        private readonly LabeledTextBox _emailField = new LabeledTextBox(TextKeys.Profile.EmailLabel, false);
+        private readonly LabeledTextBox _usernameField = new LabeledTextBox(TextKeys.Profile.UsernameLabel, false, AccountLimits.LongestUsername);
+        private readonly LabeledText _emailText = new LabeledText(TextKeys.Profile.EmailLabel);
         private readonly LocalizedLabel _avatarErrorLabel = CreateErrorMessage(TextKeys.Profile.AvatarInvalidFormat);
         private readonly LocalizedLabel _avatarMissingLabel = CreateHint(TextKeys.Profile.AvatarMissing);
         private readonly LocalizedLabel _usernameErrorLabel = CreateErrorMessage(TextKeys.Profile.UsernameUnavailable);
@@ -77,8 +77,6 @@ namespace Torres.Client.Screens
             _logOutButton = CreateSecondaryButton(TextKeys.Profile.LogOutButton);
             _backToMenuButton = CreateSecondaryButton(TextKeys.Common.BackToMenuButton);
             _backToRoomButton = CreateSecondaryButton(TextKeys.Common.BackToRoomButton);
-            _emailField.Box.Readonly = true;
-            _usernameField.Box.ValueChanging += UsernameBoxOnValueChanging;
         }
 
         internal bool WasLogOutRequested { get; private set; }
@@ -185,7 +183,7 @@ namespace Torres.Client.Screens
             card.Widgets.Add(CreateCardHeader(TextKeys.Profile.AccountTitle, TextKeys.Profile.AccountHint));
             card.Widgets.Add(_usernameField);
             card.Widgets.Add(_usernameErrorLabel);
-            card.Widgets.Add(_emailField);
+            card.Widgets.Add(_emailText);
 
             _saveButton.Click += SaveButtonOnClick;
             LocalizedButton settingsButton = CreateSecondaryButton(TextKeys.Profile.AccountSettingsButton);
@@ -228,7 +226,7 @@ namespace Torres.Client.Screens
         {
             _savedUsername = username;
             _usernameField.Box.Text = username;
-            _emailField.Box.Text = email;
+            _emailText.ValueLabel.Text = email;
             _avatarView.AvatarReference = avatarReference;
         }
 
@@ -432,7 +430,7 @@ namespace Torres.Client.Screens
             _upload = null;
             _preparedAvatar = null;
             _avatarView.PreviewImage = null;
-            ShowProfile(savedUsername, _emailField.Value, avatarReference);
+            ShowProfile(savedUsername, _emailText.ValueLabel.Text, avatarReference);
             _session.ApplyProfile(savedUsername, avatarReference);
             _savedLabel.Visible = true;
         }
@@ -531,14 +529,6 @@ namespace Torres.Client.Screens
         private void SaveButtonOnClick(object sender, MyraEventArgs e)
         {
             RequestSave();
-        }
-
-        private void UsernameBoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)
-        {
-            if ((e.NewValue is not null) && (e.NewValue.Length > AccountLimits.LongestUsername))
-            {
-                e.Cancel = true;
-            }
         }
 
         private void LogOutButtonOnClick(object sender, MyraEventArgs e)
