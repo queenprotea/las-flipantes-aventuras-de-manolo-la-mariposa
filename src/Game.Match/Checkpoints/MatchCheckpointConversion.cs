@@ -94,10 +94,10 @@ namespace Game.Match
             return retiredSeatNumbers;
         }
 
-        private static T Require<T>(T? checkpointPart)
-            where T : class
+        private static TCheckpointPart Require<TCheckpointPart>(TCheckpointPart? checkpointPart)
+            where TCheckpointPart : class
         {
-            T requiredPart = checkpointPart ?? throw new SerializationException(MissingPartMessage);
+            TCheckpointPart requiredPart = checkpointPart ?? throw new SerializationException(MissingPartMessage);
 
             return requiredPart;
         }
