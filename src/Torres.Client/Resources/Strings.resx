@@ -124,6 +124,9 @@
   <data name="Startup.ReadyStatus" xml:space="preserve">
     <value>Listo</value>
   </data>
+  <data name="Startup.SettingsError" xml:space="preserve">
+    <value>Falta el archivo de configuración del juego o está mal escrito.</value>
+  </data>
   <data name="MainMenu.HeaderLabel" xml:space="preserve">
     <value>menú principal</value>
   </data>
@@ -165,6 +168,9 @@
   </data>
   <data name="Language.SavedHint" xml:space="preserve">
     <value>La preferencia se guarda en este equipo, no en tu cuenta.</value>
+  </data>
+  <data name="Language.SaveError" xml:space="preserve">
+    <value>El idioma se cambió, pero no se pudo guardar para la próxima vez.</value>
   </data>
   <data name="Login.HeaderLabel" xml:space="preserve">
     <value>iniciar sesión</value>

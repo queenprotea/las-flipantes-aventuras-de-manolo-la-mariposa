@@ -1,5 +1,7 @@
 using System;
 
+using Microsoft.Xna.Framework;
+
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -17,6 +19,7 @@ namespace Torres.Client.Screens
         private readonly LocalizedButton _englishOption = CreateLanguageOptionButton(LanguagePreference.English.NameKey);
         private readonly Label _spanishMark;
         private readonly Label _englishMark;
+        private readonly LocalizedLabel _saveErrorMessage = CreateErrorMessage(TextKeys.Language.SaveError);
 
         internal LanguageScreen(LanguagePreference languagePreference)
             : base(TextKeys.Language.HeaderLabel, true)
@@ -26,6 +29,11 @@ namespace Torres.Client.Screens
             _languagePreference = languagePreference;
             _spanishMark = _spanishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);
             _englishMark = _englishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);
+        }
+
+        internal override void Update(GameTime gameTime)
+        {
+            _saveErrorMessage.Visible = _languagePreference.HasSaveFailed;
         }
 
         protected override Widget Build()
@@ -44,6 +52,7 @@ namespace Torres.Client.Screens
             LocalizedLabel savedHint = CreateHint(TextKeys.Language.SavedHint);
             savedHint.Margin = new Thickness(0, NoteSpacing, 0, 0);
             card.Widgets.Add(savedHint);
+            card.Widgets.Add(_saveErrorMessage);
 
             LocalizedButton backButton = CreateSecondaryButton(TextKeys.Common.BackButton);
             backButton.Click += BackButtonOnClick;

@@ -56,7 +56,7 @@ namespace Torres.Client
         private KeyboardState _previousKeyboardState;
         private Point _windowedClientSize = new Point(Sizes.WindowWidth, Sizes.WindowHeight);
 
-        internal TorresGame()
+        internal TorresGame(ClientSettings clientSettings)
         {
             _graphicsDeviceManager = new GraphicsDeviceManager(this);
             _graphicsDeviceManager.PreferredBackBufferWidth = Sizes.WindowWidth;
@@ -68,7 +68,6 @@ namespace Torres.Client
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += WindowOnClientSizeChanged;
 
-            ClientSettings clientSettings = ClientSettings.Load();
             _statusChannelFactory = new ChannelFactory<IServerStatusService>(
                 new NetTcpBinding(SecurityMode.None),
                 clientSettings.CreateEndpointAddress(clientSettings.ServicePaths.ServerStatus));
@@ -87,7 +86,7 @@ namespace Torres.Client
 
         protected override void Initialize()
         {
-            _languagePreference.LoadSavedPreference();
+            _languagePreference.StartLoadingSavedPreference();
             _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
             MyraEnvironment.Game = this;
             WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
@@ -163,6 +162,7 @@ namespace Torres.Client
 
         protected override void Update(GameTime gameTime)
         {
+            _languagePreference.Update();
             _gameSessionConnection.CheckConnection(gameTime);
             FollowGameSession();
             _ownProfileReader?.Update();

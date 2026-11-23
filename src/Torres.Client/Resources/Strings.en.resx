@@ -124,6 +124,9 @@
   <data name="Startup.ReadyStatus" xml:space="preserve">
     <value>Ready</value>
   </data>
+  <data name="Startup.SettingsError" xml:space="preserve">
+    <value>The game settings file is missing or badly written.</value>
+  </data>
   <data name="MainMenu.HeaderLabel" xml:space="preserve">
     <value>main menu</value>
   </data>
@@ -165,6 +168,9 @@
   </data>
   <data name="Language.SavedHint" xml:space="preserve">
     <value>The preference is saved on this device, not in your account.</value>
+  </data>
+  <data name="Language.SaveError" xml:space="preserve">
+    <value>The language was changed, but it could not be saved for next time.</value>
   </data>
   <data name="Login.HeaderLabel" xml:space="preserve">
     <value>log in</value>

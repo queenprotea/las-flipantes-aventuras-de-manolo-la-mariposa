@@ -36,6 +36,7 @@ namespace Torres.Client.Localization
         {
             internal const string ConnectingStatus = "Startup.ConnectingStatus";
             internal const string ReadyStatus = "Startup.ReadyStatus";
+            internal const string SettingsError = "Startup.SettingsError";
         }
 
         internal static class MainMenu
@@ -58,6 +59,7 @@ namespace Torres.Client.Localization
             internal const string SpanishOption = "Language.SpanishOption";
             internal const string EnglishOption = "Language.EnglishOption";
             internal const string SavedHint = "Language.SavedHint";
+            internal const string SaveError = "Language.SaveError";
         }
 
         internal static class Login

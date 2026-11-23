@@ -1,8 +1,8 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.ServiceModel;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Torres.Client
 {
@@ -10,9 +10,6 @@ namespace Torres.Client
     {
         private const string SettingsFileName = "appsettings.json";
         private const string LocalSettingsFileName = "appsettings.Local.json";
-        private const string MissingSettingsMessage = "The client settings file {0} was not found.";
-        private const string InvalidAddressMessage = "The appsettings.json file has no valid ServerAddress.";
-        private const string InvalidServicePathsMessage = "The appsettings.json file needs the four ServicePaths: ServerStatus, Account, Ranking and GameSession.";
 
         public string ServerAddress { get; set; } = string.Empty;
 
@@ -24,41 +21,33 @@ namespace Torres.Client
 
         public string DoomWadPath { get; set; } = string.Empty;
 
-        internal static ClientSettings Load()
+        internal static Task<ClientSettings?> ReadAsync()
+        {
+            Task<ClientSettings?> settingsReading = Task.Run(Read);
+
+            return settingsReading;
+        }
+
+        private static ClientSettings? Read()
         {
             string settingsPath = Path.Combine(AppContext.BaseDirectory, SettingsFileName);
-            if (!File.Exists(settingsPath))
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, MissingSettingsMessage, settingsPath));
-            }
-
-            ClientSettings? settings = ReadSettingsFile(settingsPath);
+            ClientSettings? settings = File.Exists(settingsPath) ? ReadSettingsFile(settingsPath) : null;
             if (settings is null)
             {
-                throw new InvalidOperationException(InvalidAddressMessage);
+                return null;
             }
 
             string localSettingsPath = Path.Combine(AppContext.BaseDirectory, LocalSettingsFileName);
-            if (File.Exists(localSettingsPath))
+            ClientSettings? localSettings = File.Exists(localSettingsPath) ? ReadSettingsFile(localSettingsPath) : null;
+            if (!string.IsNullOrWhiteSpace(localSettings?.ServerAddress))
             {
-                ClientSettings? localSettings = ReadSettingsFile(localSettingsPath);
-                if (!string.IsNullOrWhiteSpace(localSettings?.ServerAddress))
-                {
-                    settings.ServerAddress = localSettings.ServerAddress;
-                }
+                settings.ServerAddress = localSettings.ServerAddress;
             }
 
-            if (!Uri.IsWellFormedUriString(settings.ServerAddress, UriKind.Absolute))
-            {
-                throw new InvalidOperationException(InvalidAddressMessage);
-            }
+            bool isValid = Uri.IsWellFormedUriString(settings.ServerAddress, UriKind.Absolute) && settings.ServicePaths.IsComplete();
+            ClientSettings? validSettings = isValid ? settings : null;
 
-            if (!settings.ServicePaths.IsComplete())
-            {
-                throw new InvalidOperationException(InvalidServicePathsMessage);
-            }
-
-            return settings;
+            return validSettings;
         }
 
         private static ClientSettings? ReadSettingsFile(string settingsPath)

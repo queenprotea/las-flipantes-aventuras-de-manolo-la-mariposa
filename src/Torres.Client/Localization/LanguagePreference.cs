@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
+
+using Torres.Client.Session;
 
 namespace Torres.Client.Localization
 {
@@ -15,6 +18,10 @@ namespace Torres.Client.Localization
         private const string EnglishFormatCulture = "en-US";
 
         private readonly string _preferencePath;
+
+        private Task<string>? _savedPreferenceReading;
+        private Task _preferenceSaving = Task.CompletedTask;
+        private bool _wasLanguageChosen;
 
         internal LanguagePreference()
         {
@@ -34,16 +41,27 @@ namespace Torres.Client.Localization
 
         internal LanguageOption CurrentLanguage { get; private set; } = Spanish;
 
-        internal void LoadSavedPreference()
+        internal bool HasSaveFailed => _preferenceSaving.IsCompleted && !_preferenceSaving.IsCompletedSuccessfully;
+
+        internal void StartLoadingSavedPreference()
         {
-            LanguageOption savedLanguage = Spanish;
-            if (File.Exists(_preferencePath))
+            ApplyCulture(Spanish);
+            _savedPreferenceReading = new SessionCall<string, string>(ReadSavedUiCultureName, _preferencePath).StartAsync();
+        }
+
+        internal void Update()
+        {
+            if ((_savedPreferenceReading is null) || !_savedPreferenceReading.IsCompleted)
             {
-                string savedUiCultureName = File.ReadAllText(_preferencePath).Trim();
-                savedLanguage = FindByUiCultureName(savedUiCultureName) ?? Spanish;
+                return;
             }
 
-            ApplyCulture(savedLanguage);
+            LanguageOption? savedLanguage = _savedPreferenceReading.IsCompletedSuccessfully ? FindByUiCultureName(_savedPreferenceReading.Result) : null;
+            _savedPreferenceReading = null;
+            if ((savedLanguage is not null) && !_wasLanguageChosen)
+            {
+                ApplyCulture(savedLanguage);
+            }
         }
 
         internal bool Change(LanguageOption language)
@@ -55,8 +73,9 @@ namespace Torres.Client.Localization
                 return false;
             }
 
+            _wasLanguageChosen = true;
             ApplyCulture(language);
-            SavePreference(language);
+            _preferenceSaving = new BackgroundWork<LanguageOption>(SavePreference, language).StartAsync();
 
             return true;
         }
@@ -68,6 +87,13 @@ namespace Torres.Client.Localization
             bool isCurrentLanguage = language.UiCultureName == CurrentLanguage.UiCultureName;
 
             return isCurrentLanguage;
+        }
+
+        private static string ReadSavedUiCultureName(string preferencePath)
+        {
+            string savedUiCultureName = File.Exists(preferencePath) ? File.ReadAllText(preferencePath).Trim() : string.Empty;
+
+            return savedUiCultureName;
         }
 
         private static LanguageOption? FindByUiCultureName(string uiCultureName)
