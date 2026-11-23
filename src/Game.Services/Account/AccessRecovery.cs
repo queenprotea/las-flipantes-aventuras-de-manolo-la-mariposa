@@ -18,31 +18,37 @@ namespace Game.Services
         private const string ResetFailedMessage = "The database could not be used while a password was reset with a recovery code.";
         private const string RecoveryCodeSentMessage = "A recovery code was sent to the email of player {0}.";
         private const string PasswordResetMessage = "Player {0} set a new password with a recovery code.";
+        private const string NotStartedMessage = "The verification code lifetime was not set; Start must run before passwords are recovered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccessRecovery));
 
         private readonly PlayerRepository _playerRepository;
         private readonly PasswordRecoveryRepository _passwordRecoveryRepository;
-        private readonly SystemParameterReader _systemParameterReader;
         private readonly IEmailSender _emailSender;
         private readonly TimeProvider _timeProvider;
         private readonly EmailSendingPacer _emailSendingPacer;
         private readonly CodeAttemptCounter _codeAttemptCounter = new CodeAttemptCounter();
+        private int? _codeLifetimeMinutes;
 
-        public AccessRecovery(PlayerRepository playerRepository, PasswordRecoveryRepository passwordRecoveryRepository, SystemParameterReader systemParameterReader, IEmailSender emailSender, TimeProvider timeProvider)
+        public AccessRecovery(PlayerRepository playerRepository, PasswordRecoveryRepository passwordRecoveryRepository, IEmailSender emailSender, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(passwordRecoveryRepository);
-            ArgumentNullException.ThrowIfNull(systemParameterReader);
             ArgumentNullException.ThrowIfNull(emailSender);
             ArgumentNullException.ThrowIfNull(timeProvider);
 
             _playerRepository = playerRepository;
             _passwordRecoveryRepository = passwordRecoveryRepository;
-            _systemParameterReader = systemParameterReader;
             _emailSender = emailSender;
             _timeProvider = timeProvider;
             _emailSendingPacer = new EmailSendingPacer(timeProvider);
+        }
+
+        public void Start(int codeLifetimeMinutes)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(codeLifetimeMinutes);
+
+            _codeLifetimeMinutes = codeLifetimeMinutes;
         }
 
         internal async Task<RecoveryCodeRequestResult> RequestCodeAsync(string email)
@@ -133,7 +139,7 @@ namespace Game.Services
 
         private async Task<RecoveryCodeRequestResult> IssueCodeAsync(Player owner)
         {
-            int codeLifetimeMinutes = await _systemParameterReader.ReadPositiveAsync(VerificationCodeLimits.LifetimeParameterCode);
+            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
             var newRecovery = new PasswordRecovery
             {
                 PlayerId = owner.PlayerId,
@@ -203,7 +209,7 @@ namespace Game.Services
             }
 
             PasswordRecovery? recovery = await _passwordRecoveryRepository.FindAsync(owner.PlayerId);
-            bool isUsable = (recovery is not null) && await IsUsableAsync(recovery, code);
+            bool isUsable = (recovery is not null) && IsUsable(recovery, code);
             if (!isUsable)
             {
                 _codeAttemptCounter.RecordFailure(owner.PlayerId);
@@ -214,9 +220,9 @@ namespace Game.Services
             return verifiedOwner;
         }
 
-        private async Task<bool> IsUsableAsync(PasswordRecovery recovery, string code)
+        private bool IsUsable(PasswordRecovery recovery, string code)
         {
-            int codeLifetimeMinutes = await _systemParameterReader.ReadPositiveAsync(VerificationCodeLimits.LifetimeParameterCode);
+            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
             DateTime expiresAt = recovery.CreatedAt.AddMinutes(codeLifetimeMinutes);
             bool isCurrent = _timeProvider.GetUtcNow().UtcDateTime < expiresAt;
             bool isUsable = isCurrent
@@ -224,6 +230,13 @@ namespace Game.Services
                 && _codeAttemptCounter.HasAttemptsLeft(recovery.PlayerId);
 
             return isUsable;
+        }
+
+        private int RequireCodeLifetimeMinutes()
+        {
+            int codeLifetimeMinutes = _codeLifetimeMinutes ?? throw new InvalidOperationException(NotStartedMessage);
+
+            return codeLifetimeMinutes;
         }
     }
 }

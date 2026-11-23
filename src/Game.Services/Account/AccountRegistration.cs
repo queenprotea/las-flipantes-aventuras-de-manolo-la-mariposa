@@ -19,33 +19,39 @@ namespace Game.Services
         private const string AccountWriteFailedMessage = "The database could not be written while a registration was confirmed; the registration stays pending.";
         private const string RegistrationCodeSentMessage = "A registration code was sent.";
         private const string AccountCreatedMessage = "Account {0} was created after its email was confirmed.";
+        private const string NotStartedMessage = "The verification code lifetime was not set; Start must run before accounts are registered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountRegistration));
 
         private readonly PlayerRepository _playerRepository;
-        private readonly SystemParameterReader _systemParameterReader;
         private readonly IEmailSender _emailSender;
         private readonly PendingRegistrationRegistry _pendingRegistrationRegistry;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly TimeProvider _timeProvider;
         private readonly EmailSendingPacer _emailSendingPacer;
+        private int? _codeLifetimeMinutes;
 
-        public AccountRegistration(PlayerRepository playerRepository, SystemParameterReader systemParameterReader, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider)
+        public AccountRegistration(PlayerRepository playerRepository, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(systemParameterReader);
             ArgumentNullException.ThrowIfNull(emailSender);
             ArgumentNullException.ThrowIfNull(pendingRegistrationRegistry);
             ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(timeProvider);
 
             _playerRepository = playerRepository;
-            _systemParameterReader = systemParameterReader;
             _emailSender = emailSender;
             _pendingRegistrationRegistry = pendingRegistrationRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _timeProvider = timeProvider;
             _emailSendingPacer = new EmailSendingPacer(timeProvider);
+        }
+
+        public void Start(int codeLifetimeMinutes)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(codeLifetimeMinutes);
+
+            _codeLifetimeMinutes = codeLifetimeMinutes;
         }
 
         internal async Task<RegistrationResult> RequestCodeAsync(string username, string email, string password)
@@ -144,7 +150,7 @@ namespace Game.Services
 
         private async Task<RegistrationResult> IssueCodeAsync(string username, string email, string password)
         {
-            int codeLifetimeMinutes = await _systemParameterReader.ReadPositiveAsync(VerificationCodeLimits.LifetimeParameterCode);
+            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
             DateTimeOffset expiresAt = _timeProvider.GetUtcNow().AddMinutes(codeLifetimeMinutes);
             var registration = new PendingRegistration(username, email, PasswordRules.Hash(password), VerificationCodeIssuer.Issue(), expiresAt);
             EmailMessage codeEmail = EmailComposer.ComposeRegistrationCode(email, registration.Code, codeLifetimeMinutes);
@@ -207,6 +213,13 @@ namespace Game.Services
                 };
                 confirmation.SessionToken = _sessionTokenIssuer.Issue(createdPlayer.PlayerId, createdPlayer.Username);
             }
+        }
+
+        private int RequireCodeLifetimeMinutes()
+        {
+            int codeLifetimeMinutes = _codeLifetimeMinutes ?? throw new InvalidOperationException(NotStartedMessage);
+
+            return codeLifetimeMinutes;
         }
 
         private static RegistrationConfirmationStatus ToConfirmationStatus(PlayerCreationOutcome creationOutcome)

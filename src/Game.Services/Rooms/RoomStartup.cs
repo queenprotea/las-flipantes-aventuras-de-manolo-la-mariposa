@@ -54,6 +54,13 @@ namespace Game.Services
             return inactivityLimit;
         }
 
+        public async Task<int> ReadCodeLifetimeMinutesAsync()
+        {
+            int codeLifetimeMinutes = await _systemParameterReader.ReadPositiveAsync(VerificationCodeLimits.LifetimeParameterCode);
+
+            return codeLifetimeMinutes;
+        }
+
         public async Task<ChatCapacity> ReadChatCapacityAsync()
         {
             int messageMaxLength = await _systemParameterReader.ReadPositiveAsync(MessageMaxLengthParameterCode);

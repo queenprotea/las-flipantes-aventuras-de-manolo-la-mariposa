@@ -8,7 +8,7 @@ namespace Game.Services
 {
     public sealed class SessionTokenIssuer
     {
-        private const int ShortestSigningKeyBytes = 32;
+        public const int ShortestSigningKeyBytes = 32;
         private const char PartSeparator = '.';
         private const char FieldSeparator = '|';
         private const int TokenPartCount = 2;
