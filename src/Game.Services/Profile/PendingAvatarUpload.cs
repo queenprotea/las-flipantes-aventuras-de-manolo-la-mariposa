@@ -50,6 +50,7 @@ namespace Game.Services
                 bool[] receivedParts = receivedPart.FileKind == AvatarFileKind.Thumbnail ? _receivedThumbnailParts : _receivedOriginalParts;
                 receivedParts[receivedPart.Offset / ProfileLimits.AvatarPartBytes] = true;
                 LastActivityUtc = nowUtc;
+                writeResult = CheckCompletedThumbnail(receivedPart.FileKind);
             }
 
             return writeResult;
@@ -90,6 +91,18 @@ namespace Game.Services
         private static bool IsReceived(bool isPartReceived)
         {
             return isPartReceived;
+        }
+
+        private SendAvatarPartResult CheckCompletedThumbnail(AvatarFileKind writtenFileKind)
+        {
+            bool isThumbnailComplete = (writtenFileKind == AvatarFileKind.Thumbnail) && Array.TrueForAll(_receivedThumbnailParts, IsReceived);
+            SendAvatarPartResult completionResult = SendAvatarPartResult.Accepted;
+            if (isThumbnailComplete && !AvatarImageCheck.IsDecodableThumbnail(_thumbnail))
+            {
+                completionResult = SendAvatarPartResult.ThumbnailInvalid;
+            }
+
+            return completionResult;
         }
 
         private SendAvatarPartResult CheckFileStart(ReceivedAvatarPart receivedPart)

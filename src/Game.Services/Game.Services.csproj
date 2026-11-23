@@ -12,6 +12,7 @@
     <PackageReference Include="CoreWCF.Primitives" Version="1.9.1" />
     <PackageReference Include="log4net" Version="3.4.0" />
     <PackageReference Include="MailKit" Version="4.18.0" />
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
   </ItemGroup>

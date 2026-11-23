@@ -1,6 +1,11 @@
 using System;
+using System.IO;
 
 using Game.Contracts;
+
+using log4net;
+
+using StbImageSharp;
 
 namespace Game.Services
 {
@@ -14,6 +19,9 @@ namespace Game.Services
         private const int PngHeaderBytes = 24;
         private const int BitsPerByte = 8;
         private const int BytesPerSide = 4;
+        private const string UndecodableThumbnailMessage = "A completed avatar thumbnail could not be decoded; the upload is rejected.";
+
+        private static readonly ILog _log = LogManager.GetLogger(typeof(AvatarImageCheck));
 
         private static readonly byte[] _pngSignature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         private static readonly byte[] _jpgSignature = new byte[] { 0xFF, 0xD8, 0xFF };
@@ -41,6 +49,30 @@ namespace Game.Services
                 && (ReadSide(thumbnailStart, PngHeightOffset) == ProfileLimits.ThumbnailSide);
 
             return isValidStart;
+        }
+
+        internal static bool IsDecodableThumbnail(byte[] thumbnail)
+        {
+            bool isDecodable = false;
+            try
+            {
+                ImageResult decodedThumbnail = ImageResult.FromMemory(thumbnail, ColorComponents.RedGreenBlueAlpha);
+                isDecodable = (decodedThumbnail.Width == ProfileLimits.ThumbnailSide) && (decodedThumbnail.Height == ProfileLimits.ThumbnailSide);
+            }
+            catch (InvalidOperationException exception)
+            {
+                _log.Warn(UndecodableThumbnailMessage, exception);
+            }
+            catch (IOException exception)
+            {
+                _log.Warn(UndecodableThumbnailMessage, exception);
+            }
+            catch (ArgumentException exception)
+            {
+                _log.Warn(UndecodableThumbnailMessage, exception);
+            }
+
+            return isDecodable;
         }
 
         private static bool StartsWith(byte[] fileStart, byte[] signature)

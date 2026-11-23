@@ -13,7 +13,7 @@ namespace Game.Services
     {
         private const string UploadDiscardedMessage = "The unfinished avatar upload of player {0} was discarded: {1}.";
         private const string CancelledReason = "cancelled by the player";
-        private const string RejectedStartReason = "its first part was not an accepted image";
+        private const string RejectedImageReason = "it was not an accepted image";
         private const string SessionLostReason = "the session was lost";
         private const string SessionClosedReason = "the session was closed";
         private const string MatchInProgressReason = "the room of the player is in a match";
@@ -64,9 +64,9 @@ namespace Game.Services
                 }
             }
 
-            if (IsRejectedStart(partResult))
+            if (IsRejectedImage(partResult))
             {
-                Discard(ownerId, RejectedStartReason);
+                Discard(ownerId, RejectedImageReason);
             }
 
             return partResult;
@@ -144,12 +144,12 @@ namespace Game.Services
             return sizeCheckResult;
         }
 
-        private static bool IsRejectedStart(SendAvatarPartResult partResult)
+        private static bool IsRejectedImage(SendAvatarPartResult partResult)
         {
-            bool isRejectedStart = (partResult == SendAvatarPartResult.AvatarInvalidFormat)
+            bool isRejectedImage = (partResult == SendAvatarPartResult.AvatarInvalidFormat)
                 || (partResult == SendAvatarPartResult.ThumbnailInvalid);
 
-            return isRejectedStart;
+            return isRejectedImage;
         }
 
         private void Discard(int ownerId, string discardReason)
