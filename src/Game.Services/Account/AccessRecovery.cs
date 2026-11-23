@@ -7,6 +7,8 @@ using Game.Persistence;
 
 using log4net;
 
+using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
 
 namespace Game.Services
@@ -117,10 +119,21 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(CodeRequestFailedMessage, exception);
-                _emailSendingPacer.Release(email);
-                requestResult = RecoveryCodeRequestResult.DatabaseUnavailable;
+                requestResult = ReportCodeRequestFailure(email, exception);
             }
+            catch (DbUpdateException exception)
+            {
+                requestResult = ReportCodeRequestFailure(email, exception);
+            }
+
+            return requestResult;
+        }
+
+        private RecoveryCodeRequestResult ReportCodeRequestFailure(string email, Exception exception)
+        {
+            _log.Error(CodeRequestFailedMessage, exception);
+            _emailSendingPacer.Release(email);
+            RecoveryCodeRequestResult requestResult = RecoveryCodeRequestResult.DatabaseUnavailable;
 
             return requestResult;
         }
@@ -179,9 +192,20 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                _log.Error(ResetFailedMessage, exception);
-                resetResult = PasswordResetResult.DatabaseUnavailable;
+                resetResult = ReportResetFailure(exception);
             }
+            catch (DbUpdateException exception)
+            {
+                resetResult = ReportResetFailure(exception);
+            }
+
+            return resetResult;
+        }
+
+        private static PasswordResetResult ReportResetFailure(Exception exception)
+        {
+            _log.Error(ResetFailedMessage, exception);
+            PasswordResetResult resetResult = PasswordResetResult.DatabaseUnavailable;
 
             return resetResult;
         }

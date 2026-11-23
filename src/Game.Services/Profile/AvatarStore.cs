@@ -3,6 +3,8 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 
+using log4net;
+
 namespace Game.Services
 {
     public sealed class AvatarStore
@@ -10,6 +12,9 @@ namespace Game.Services
         private const string ReferenceFormat = "avatars/{0}";
         private const string OriginalFileNameFormat = "{0}-{1:N}.{2}";
         private const string ThumbnailFileNameFormat = "{0}-mini.png";
+        private const string OrphanOriginalKeptMessage = "The original avatar file {0} could not be deleted after its thumbnail failed to save; the file is left in the folder.";
+
+        private static readonly ILog _log = LogManager.GetLogger(typeof(AvatarStore));
 
         private readonly string _folderPath;
 
@@ -36,12 +41,12 @@ namespace Game.Services
             }
             catch (IOException)
             {
-                File.Delete(originalPath);
+                DeleteOrphanOriginal(originalPath);
                 throw;
             }
             catch (UnauthorizedAccessException)
             {
-                File.Delete(originalPath);
+                DeleteOrphanOriginal(originalPath);
                 throw;
             }
 
@@ -73,6 +78,22 @@ namespace Game.Services
 
             File.Delete(Path.Combine(_folderPath, originalFileName));
             File.Delete(ToThumbnailPath(originalFileName));
+        }
+
+        private static void DeleteOrphanOriginal(string originalPath)
+        {
+            try
+            {
+                File.Delete(originalPath);
+            }
+            catch (IOException exception)
+            {
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, OrphanOriginalKeptMessage, originalPath), exception);
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, OrphanOriginalKeptMessage, originalPath), exception);
+            }
         }
 
         private static string? ToFileName(string avatarReference)

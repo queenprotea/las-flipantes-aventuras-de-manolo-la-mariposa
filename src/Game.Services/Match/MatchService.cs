@@ -394,11 +394,6 @@ namespace Game.Services
                 room.EndMatch(_unplayedStandings);
                 throw;
             }
-            catch (InvalidOperationException)
-            {
-                room.EndMatch(_unplayedStandings);
-                throw;
-            }
 
             return matchId;
         }
