@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
+
+using Torres.Client.Session;
 
 namespace Torres.Client
 {
@@ -9,6 +12,8 @@ namespace Torres.Client
 
         private readonly ClientSettings _clientSettings;
 
+        private Task _doomLaunch = Task.CompletedTask;
+
         internal DoomLauncher(ClientSettings clientSettings)
         {
             _clientSettings = clientSettings;
@@ -17,7 +22,7 @@ namespace Torres.Client
         internal void LaunchIfEnabled()
         {
             bool canLaunch = _clientSettings.LaunchesDoomAfterPlacement && File.Exists(_clientSettings.DoomProgramPath) && File.Exists(_clientSettings.DoomWadPath);
-            if (!canLaunch)
+            if (!canLaunch || !_doomLaunch.IsCompleted)
             {
                 return;
             }
@@ -28,6 +33,11 @@ namespace Torres.Client
             };
             doomStartInfo.ArgumentList.Add(WadArgument);
             doomStartInfo.ArgumentList.Add(_clientSettings.DoomWadPath);
+            _doomLaunch = new BackgroundWork<ProcessStartInfo>(StartDoom, doomStartInfo).StartAsync();
+        }
+
+        private static void StartDoom(ProcessStartInfo doomStartInfo)
+        {
             using Process? doomProcess = Process.Start(doomStartInfo);
         }
     }
