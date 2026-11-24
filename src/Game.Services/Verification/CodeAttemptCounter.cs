@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -11,8 +10,6 @@ namespace Game.Services
 
         internal bool HasAttemptsLeft(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             bool hasAttemptsLeft;
             lock (_attemptsLock)
             {
@@ -25,8 +22,6 @@ namespace Game.Services
 
         internal void RecordFailure(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             lock (_attemptsLock)
             {
                 _failedAttemptsByPlayerId[playerId] = _failedAttemptsByPlayerId.GetValueOrDefault(playerId) + 1;
@@ -35,8 +30,6 @@ namespace Game.Services
 
         internal void Forget(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             lock (_attemptsLock)
             {
                 _failedAttemptsByPlayerId.Remove(playerId);

@@ -25,8 +25,6 @@ namespace Torres.Client.Ui
 
         internal static void ApplyMinimum(GameWindow gameWindow, int minimumWidth, int minimumHeight)
         {
-            ArgumentNullException.ThrowIfNull(gameWindow);
-
             SetWindowMinimumSizeFunction? setWindowMinimumSize = ResolveSetWindowMinimumSize();
             setWindowMinimumSize?.Invoke(gameWindow.Handle, minimumWidth, minimumHeight);
         }

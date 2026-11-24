@@ -69,9 +69,6 @@ namespace Torres.Client.Screens
         internal HistoryScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.History.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _loadingLabel = CreateHint(TextKeys.History.LoadingLabel);

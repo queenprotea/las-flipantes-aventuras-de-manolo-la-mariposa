@@ -66,8 +66,6 @@ namespace Torres.Client.Localization
 
         internal bool Change(LanguageOption language)
         {
-            ArgumentNullException.ThrowIfNull(language);
-
             if (language.UiCultureName == CurrentLanguage.UiCultureName)
             {
                 return false;
@@ -82,8 +80,6 @@ namespace Torres.Client.Localization
 
         internal bool IsCurrent(LanguageOption language)
         {
-            ArgumentNullException.ThrowIfNull(language);
-
             bool isCurrentLanguage = language.UiCultureName == CurrentLanguage.UiCultureName;
 
             return isCurrentLanguage;

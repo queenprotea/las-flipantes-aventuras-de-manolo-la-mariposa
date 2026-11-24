@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -36,10 +35,6 @@ namespace Torres.Client.Screens
         internal MainMenuScreen(LanguagePreference languagePreference, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MainMenu.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(languagePreference);
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _languagePreference = languagePreference;
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

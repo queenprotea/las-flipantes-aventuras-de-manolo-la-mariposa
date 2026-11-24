@@ -31,8 +31,6 @@ namespace Torres.Client.Session
 
         internal GameSessionConnection(ClientSettings clientSettings)
         {
-            ArgumentNullException.ThrowIfNull(clientSettings);
-
             _channelFactory = new DuplexChannelFactory<IGameSessionService>(
                 new InstanceContext(_noticeQueue),
                 CreateSessionBinding(),
@@ -47,8 +45,6 @@ namespace Torres.Client.Session
 
         internal Task<OpenSessionResult> OpenAsync(string sessionToken)
         {
-            ArgumentNullException.ThrowIfNull(sessionToken);
-
             AbortSessionChannel();
             _sessionToken = sessionToken;
             IGameSessionService openingChannel = _channelFactory.CreateChannel();
@@ -68,8 +64,6 @@ namespace Torres.Client.Session
 
         internal void BeginConnectionChecks(OpenSessionResult openedSession)
         {
-            ArgumentNullException.ThrowIfNull(openedSession);
-
             _connectionCheckPeriod = TimeSpan.FromSeconds(openedSession.ConnectionCheckPeriodSeconds);
             _sinceLastConnectionCheck = TimeSpan.Zero;
             IsSessionOpen = true;

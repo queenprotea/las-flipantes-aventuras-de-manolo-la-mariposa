@@ -49,8 +49,6 @@ namespace Torres.Client.Screens
         internal RoundSummaryScreen(PlayerSession playerSession)
             : base(TextKeys.RoundSummary.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _playerSession = playerSession;
         }
 

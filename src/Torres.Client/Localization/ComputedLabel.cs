@@ -10,8 +10,6 @@ namespace Torres.Client.Localization
 
         internal ComputedLabel(Func<string> textProvider)
         {
-            ArgumentNullException.ThrowIfNull(textProvider);
-
             _textProvider = textProvider;
             RefreshText();
         }

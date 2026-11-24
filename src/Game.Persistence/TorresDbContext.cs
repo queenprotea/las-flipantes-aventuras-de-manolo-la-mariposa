@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
@@ -45,8 +43,6 @@ namespace Game.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            ArgumentNullException.ThrowIfNull(modelBuilder);
-
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(TorresDbContext).Assembly);
         }
     }

@@ -1,4 +1,3 @@
-using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -32,8 +31,6 @@ namespace Torres.Client.Screens
         internal StartupScreen(ChannelFactory<IServerStatusService> statusChannelFactory)
             : base(TextKeys.Startup.ConnectingStatus, false)
         {
-            ArgumentNullException.ThrowIfNull(statusChannelFactory);
-
             _statusChannelFactory = statusChannelFactory;
         }
 

@@ -45,10 +45,6 @@ namespace Torres.Client.Screens
         internal InvitePlayersScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
             : base(TextKeys.InvitePlayers.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _avatarViews = new AvatarViewSet(avatarCache, Sizes.SmallAvatarSize);

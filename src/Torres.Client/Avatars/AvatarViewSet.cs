@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Torres.Client.Avatars
@@ -11,8 +10,6 @@ namespace Torres.Client.Avatars
 
         internal AvatarViewSet(AvatarCache avatarCache, int avatarSize)
         {
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _avatarCache = avatarCache;
             _avatarSize = avatarSize;
         }

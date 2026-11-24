@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using FontStashSharp.RichText;
@@ -29,10 +28,6 @@ namespace Torres.Client.Screens
 
         internal RankingTableView(int? tableWidth, int rankColumnWidth, IReadOnlyList<RankingColumn> statColumns, IReadOnlyList<RankingRow> rows)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rankColumnWidth);
-            ArgumentNullException.ThrowIfNull(statColumns);
-            ArgumentNullException.ThrowIfNull(rows);
-
             _tableWidth = tableWidth;
             _rankColumnWidth = rankColumnWidth;
             _statColumns = statColumns;

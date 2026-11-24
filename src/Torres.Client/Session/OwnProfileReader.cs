@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -15,9 +14,6 @@ namespace Torres.Client.Session
 
         internal OwnProfileReader(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }

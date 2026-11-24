@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,8 +37,6 @@ namespace Torres.Client.Screens
         internal ResultScreen(PlayerSession playerSession)
             : base(TextKeys.Result.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _playerSession = playerSession;
         }
 

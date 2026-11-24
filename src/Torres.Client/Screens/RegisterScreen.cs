@@ -44,10 +44,6 @@ namespace Torres.Client.Screens
         internal RegisterScreen(ChannelFactory<IAccountService> accountChannelFactory, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Register.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(accountChannelFactory);
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _accountChannelFactory = accountChannelFactory;
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

@@ -1,5 +1,3 @@
-using System;
-
 namespace Torres.Client.Session
 {
     internal sealed class MatchHistorySelection
@@ -12,9 +10,6 @@ namespace Torres.Client.Session
 
         internal void Select(int matchId, int pageNumber)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageNumber);
-
             SelectedMatchId = matchId;
             _pageToResume = pageNumber;
         }

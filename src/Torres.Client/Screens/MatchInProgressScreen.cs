@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using FontStashSharp.RichText;
@@ -33,9 +32,6 @@ namespace Torres.Client.Screens
         internal MatchInProgressScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MatchInProgress.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }

@@ -62,10 +62,6 @@ namespace Torres.Client.Screens
         internal ProfileScreen(GameSessionConnection gameSessionConnection, PlayerSession session, AvatarCache avatarCache)
             : base(TextKeys.Profile.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(session);
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _gameSessionConnection = gameSessionConnection;
             _session = session;
             _avatarCache = avatarCache;

@@ -1,5 +1,3 @@
-using System;
-
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -14,8 +12,6 @@ namespace Torres.Client.Avatars
 
         internal AvatarView(AvatarCache avatarCache, int avatarSize)
         {
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _avatarCache = avatarCache;
             _image = new Image
             {

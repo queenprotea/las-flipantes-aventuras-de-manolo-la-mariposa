@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using Game.Contracts;
@@ -15,8 +14,6 @@ namespace Torres.Client.Session
 
         internal void Load(PendingInvitationsResponse pendingInvitations)
         {
-            ArgumentNullException.ThrowIfNull(pendingInvitations);
-
             _invitations.Clear();
             _invitations.AddRange(pendingInvitations.Invitations);
             Revision++;
@@ -24,8 +21,6 @@ namespace Torres.Client.Session
 
         internal void Add(RoomInvitation invitation)
         {
-            ArgumentNullException.ThrowIfNull(invitation);
-
             _invitations.RemoveAll(keptInvitation => keptInvitation.RoomId == invitation.RoomId);
             _invitations.Insert(0, invitation);
             Revision++;

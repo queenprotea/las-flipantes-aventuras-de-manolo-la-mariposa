@@ -51,9 +51,6 @@ namespace Torres.Client.Avatars
 
         internal AvatarCache(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-
             _graphicsDevice = graphicsDevice;
             _gameSessionConnection = gameSessionConnection;
             _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationFolderName, AvatarsFolderName);
@@ -107,17 +104,12 @@ namespace Torres.Client.Avatars
 
         internal void Put(string avatarReference, byte[] thumbnail)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(avatarReference);
-            ArgumentNullException.ThrowIfNull(thumbnail);
-
             ShowImage(avatarReference, LoadImage(thumbnail));
             QueueCacheWrite(avatarReference, thumbnail);
         }
 
         internal IImage CreatePreview(byte[] thumbnail)
         {
-            ArgumentNullException.ThrowIfNull(thumbnail);
-
             _previewTexture?.Dispose();
             using var thumbnailStream = new MemoryStream(thumbnail);
             _previewTexture = Texture2D.FromStream(_graphicsDevice, thumbnailStream);

@@ -41,10 +41,6 @@ namespace Torres.Client.Screens
         internal InitialPlacementScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession, DoomLauncher doomLauncher)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-            ArgumentNullException.ThrowIfNull(doomLauncher);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _doomLauncher = doomLauncher;

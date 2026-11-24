@@ -60,8 +60,6 @@ namespace Game.Services
 
         internal SessionTokenReading Read(string sessionToken)
         {
-            ArgumentNullException.ThrowIfNull(sessionToken);
-
             string[] tokenParts = sessionToken.Split(PartSeparator);
             bool isSigned = (tokenParts.Length == TokenPartCount) && HasValidSignature(tokenParts[0], tokenParts[1]);
             SessionTokenReading tokenReading = isSigned ? ReadPayload(tokenParts[0]) : _invalidReading;

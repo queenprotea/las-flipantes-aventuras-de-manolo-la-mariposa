@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D;
@@ -24,8 +22,6 @@ namespace Torres.Client.Screens
         internal LanguageScreen(LanguagePreference languagePreference)
             : base(TextKeys.Language.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(languagePreference);
-
             _languagePreference = languagePreference;
             _spanishMark = _spanishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);
             _englishMark = _englishOption.SetTrailingMark(DisplaySymbols.CheckMark, Theme.MintInk);

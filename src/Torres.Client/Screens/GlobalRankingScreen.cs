@@ -38,9 +38,6 @@ namespace Torres.Client.Screens
         internal GlobalRankingScreen(ChannelFactory<IRankingService> rankingChannelFactory, PlayerSession playerSession)
             : base(TextKeys.GlobalRanking.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(rankingChannelFactory);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _rankingChannelFactory = rankingChannelFactory;
             _playerSession = playerSession;
             _failureNotice = BuildFailureNotice();

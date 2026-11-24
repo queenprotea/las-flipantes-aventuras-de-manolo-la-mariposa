@@ -17,15 +17,11 @@ namespace Game.Services
 
         internal EmailSendingPacer(TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _timeProvider = timeProvider;
         }
 
         internal bool Admit(string emailAddress)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(emailAddress);
-
             DateTimeOffset requestTime = _timeProvider.GetUtcNow();
             bool isAdmitted;
             lock (_requestsLock)
@@ -43,8 +39,6 @@ namespace Game.Services
 
         internal void Release(string emailAddress)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(emailAddress);
-
             lock (_requestsLock)
             {
                 _lastRequestTimesByEmail.Remove(emailAddress);

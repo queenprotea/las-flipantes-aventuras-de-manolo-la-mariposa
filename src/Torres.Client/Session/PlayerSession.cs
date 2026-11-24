@@ -43,8 +43,6 @@ namespace Torres.Client.Session
 
         internal void Start(PlayerIdentity player)
         {
-            ArgumentNullException.ThrowIfNull(player);
-
             Player = player;
             GuestAlias = null;
             AvatarReference = null;
@@ -52,8 +50,6 @@ namespace Torres.Client.Session
 
         internal void StartAsGuest(string guestAlias)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(guestAlias);
-
             Player = null;
             GuestAlias = guestAlias;
             AvatarReference = null;
@@ -61,8 +57,6 @@ namespace Torres.Client.Session
 
         internal void ApplyProfile(string username, string? avatarReference)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-
             if (Player is not null)
             {
                 Player.Username = username;
@@ -73,16 +67,12 @@ namespace Torres.Client.Session
 
         internal void EnterRoom(Room room)
         {
-            ArgumentNullException.ThrowIfNull(room);
-
             CurrentRoom = room;
             RoomChat.Follow(room.RoomId);
         }
 
         internal void EnterMatchWithoutRoom(string roomCode)
         {
-            ArgumentNullException.ThrowIfNull(roomCode);
-
             CurrentRoom = null;
             MatchRoomCode = roomCode;
             RoomChat.Clear();
@@ -90,8 +80,6 @@ namespace Torres.Client.Session
 
         internal void ApplyMatchChange(MatchChange matchChange)
         {
-            ArgumentNullException.ThrowIfNull(matchChange);
-
             if (matchChange.Kind == MatchChangeKind.Started)
             {
                 HasForfeitedMatch = false;
@@ -148,8 +136,6 @@ namespace Torres.Client.Session
 
         internal static bool HasViewerReturned(MatchView matchView)
         {
-            ArgumentNullException.ThrowIfNull(matchView);
-
             bool hasReturned = (matchView.Phase == MatchPhase.AwaitingPlayers) && matchView.Seats.Any(seat => (seat.SeatNumber == matchView.ViewerSeatNumber) && !seat.IsDisconnected && !seat.IsRetired);
 
             return hasReturned;
@@ -157,8 +143,6 @@ namespace Torres.Client.Session
 
         internal static bool IsViewerRetired(MatchView matchView)
         {
-            ArgumentNullException.ThrowIfNull(matchView);
-
             bool isRetired = matchView.Seats.Any(seat => (seat.SeatNumber == matchView.ViewerSeatNumber) && seat.IsRetired);
 
             return isRetired;

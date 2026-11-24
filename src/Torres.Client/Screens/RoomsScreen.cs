@@ -32,9 +32,6 @@ namespace Torres.Client.Screens
         internal RoomsScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Rooms.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }

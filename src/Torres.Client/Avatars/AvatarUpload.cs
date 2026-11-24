@@ -23,9 +23,6 @@ namespace Torres.Client.Avatars
 
         internal AvatarUpload(GameSessionConnection gameSessionConnection, PreparedAvatar preparedAvatar)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(preparedAvatar);
-
             _gameSessionConnection = gameSessionConnection;
             QueueParts(AvatarFileKind.Thumbnail, preparedAvatar.Thumbnail);
             QueueParts(AvatarFileKind.Original, preparedAvatar.Original);

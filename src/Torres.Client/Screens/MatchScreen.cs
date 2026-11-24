@@ -55,9 +55,6 @@ namespace Torres.Client.Screens
         internal MatchScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Match.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _forfeitView = new ForfeitView(gameSessionConnection, playerSession);

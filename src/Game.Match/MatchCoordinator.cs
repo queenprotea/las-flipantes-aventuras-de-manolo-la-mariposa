@@ -247,7 +247,6 @@ namespace Game.Match
 
         private static void ThrowIfOffBoard(MatchCell examinedCell)
         {
-            ArgumentNullException.ThrowIfNull(examinedCell);
             ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Row, nameof(examinedCell));
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Row, Board.CellsPerSide, nameof(examinedCell));
             ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Column, nameof(examinedCell));

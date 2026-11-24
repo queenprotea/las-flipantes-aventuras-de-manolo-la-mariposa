@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using FontStashSharp.RichText;
@@ -36,8 +35,6 @@ namespace Torres.Client.Screens
         internal MatchPreparationScreen(PlayerSession playerSession)
             : base(TextKeys.MatchPreparation.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _playerSession = playerSession;
         }
 

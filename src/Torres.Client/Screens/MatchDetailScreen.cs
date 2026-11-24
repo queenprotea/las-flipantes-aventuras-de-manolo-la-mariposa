@@ -53,9 +53,6 @@ namespace Torres.Client.Screens
         internal MatchDetailScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.MatchDetail.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _loadingLabel = CreateHint(TextKeys.MatchDetail.LoadingLabel);

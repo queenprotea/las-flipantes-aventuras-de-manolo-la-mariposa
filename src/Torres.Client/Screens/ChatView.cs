@@ -45,10 +45,6 @@ namespace Torres.Client.Screens
 
         internal ChatView(GameSessionConnection gameSessionConnection, PlayerSession playerSession, int panelWidth)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(panelWidth);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _messageList.Width = panelWidth - Metrics.ChatPadding.Left - Metrics.ChatPadding.Right - Metrics.ChatScrollbarAllowance;

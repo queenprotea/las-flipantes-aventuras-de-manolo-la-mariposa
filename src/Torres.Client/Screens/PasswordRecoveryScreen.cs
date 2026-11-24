@@ -41,8 +41,6 @@ namespace Torres.Client.Screens
         internal PasswordRecoveryScreen(ChannelFactory<IAccountService> accountChannelFactory)
             : base(TextKeys.PasswordRecovery.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(accountChannelFactory);
-
             _accountChannelFactory = accountChannelFactory;
         }
 

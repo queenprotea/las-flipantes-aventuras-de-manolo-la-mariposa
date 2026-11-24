@@ -1,5 +1,3 @@
-using System;
-
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
@@ -24,9 +22,6 @@ namespace Torres.Client.Screens
 
         internal TopBarView(PlayerSession playerSession, AvatarCache avatarCache)
         {
-            ArgumentNullException.ThrowIfNull(playerSession);
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _playerSession = playerSession;
             _avatarView = new AvatarView(avatarCache, Sizes.AppBarAvatarSize);
             _logInButton = BuildLogInButton();

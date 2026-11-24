@@ -42,9 +42,6 @@ namespace Torres.Client.Screens
         internal ResumeScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Resume.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }

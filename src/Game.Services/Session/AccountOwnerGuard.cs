@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 
 using CoreWCF;
@@ -22,10 +21,6 @@ namespace Game.Services
 
         internal static PlayerSession RequireAccountSession(SessionRegistry sessionRegistry, ILog featureLog, string featureName)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(featureLog);
-            ArgumentException.ThrowIfNullOrWhiteSpace(featureName);
-
             PlayerSession? caller = sessionRegistry.FindCaller();
             if (caller is null)
             {

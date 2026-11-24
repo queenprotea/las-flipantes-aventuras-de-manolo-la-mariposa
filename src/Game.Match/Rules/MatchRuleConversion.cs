@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,9 +9,6 @@ namespace Game.Match
     {
         internal static MatchRules ToMatchRules(MatchRuleSet ruleSet)
         {
-            ArgumentNullException.ThrowIfNull(ruleSet);
-            ArgumentNullException.ThrowIfNull(ruleSet.RoundRules, nameof(ruleSet));
-
             List<RoundTurnPlan> roundTurnPlans = ruleSet.RoundRules.Select(ToRoundTurnPlan).ToList();
             ActionPointCosts actionPointCosts = ruleSet.ActionPointCosts;
             var actionCosts = new ActionCosts(actionPointCosts.CaterpillarPlacement, actionPointCosts.Movement, actionPointCosts.LevelClimb, actionPointCosts.FlowerLevelAddition, actionPointCosts.CardDraw, actionPointCosts.CardPlay);

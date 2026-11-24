@@ -9,8 +9,6 @@ namespace Torres.Client.Localization
     {
         internal static int Refresh(Widget rootWidget)
         {
-            ArgumentNullException.ThrowIfNull(rootWidget);
-
             int refreshedWidgetCount = 0;
             if (rootWidget is ILocalizedWidget localizedWidget)
             {

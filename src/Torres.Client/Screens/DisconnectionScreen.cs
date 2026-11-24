@@ -44,9 +44,6 @@ namespace Torres.Client.Screens
         internal DisconnectionScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Disconnection.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _retryButton.Click += RetryButtonOnClick;

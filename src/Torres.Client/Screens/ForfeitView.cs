@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using Game.Contracts;
@@ -23,9 +22,6 @@ namespace Torres.Client.Screens
 
         internal ForfeitView(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             LocalizedButton forfeitButton = CreateSmallButton(Screen.CreateDestructiveButton(TextKeys.Match.ForfeitButton));

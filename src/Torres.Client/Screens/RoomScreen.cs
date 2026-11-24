@@ -43,10 +43,6 @@ namespace Torres.Client.Screens
         internal RoomScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
             : base(TextKeys.Room.HeaderLabel, true)
         {
-            ArgumentNullException.ThrowIfNull(gameSessionConnection);
-            ArgumentNullException.ThrowIfNull(playerSession);
-            ArgumentNullException.ThrowIfNull(avatarCache);
-
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _chatView = new ChatView(gameSessionConnection, playerSession, Sizes.RoomSideColumnWidth);
