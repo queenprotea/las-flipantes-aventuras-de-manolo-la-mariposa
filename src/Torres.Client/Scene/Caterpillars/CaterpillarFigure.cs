@@ -24,6 +24,8 @@ namespace Torres.Client.Scene
         private const float FullScale = 1f;
         private const int SingleCaterpillarCount = 1;
         private const int NeighborDistance = 1;
+        private const float OutlineGrowth = 1.08f;
+        private const float OutlineShade = 0.45f;
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly StaticMesh _sphereMesh;
@@ -79,6 +81,13 @@ namespace Torres.Client.Scene
                 }
             }
 
+            sceneEffect.DiffuseColor = Vector3.One;
+            sceneEffect.World = Matrix.Identity;
+        }
+
+        internal void DrawStill(BasicEffect sceneEffect, Vector3 bodyOrigin, float headingDegrees, Color bodyColor)
+        {
+            DrawPose(sceneEffect, new CaterpillarPose(bodyOrigin, headingDegrees, bodyColor, 0f, FullScale));
             sceneEffect.DiffuseColor = Vector3.One;
             sceneEffect.World = Matrix.Identity;
         }
@@ -218,6 +227,16 @@ namespace Torres.Client.Scene
             _parts.Clear();
             CaterpillarShapes.AddParts(_parts, pose);
             Matrix poseScaling = Matrix.CreateTranslation(-pose.BodyOrigin) * Matrix.CreateScale(pose.Scale) * Matrix.CreateTranslation(pose.BodyOrigin);
+            RasterizerState frontRasterizerState = _graphicsDevice.RasterizerState;
+            _graphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+            sceneEffect.DiffuseColor = pose.BodyColor.ToVector3() * OutlineShade;
+            foreach (CaterpillarPart part in _parts.Where(part => part.IsOutlined))
+            {
+                sceneEffect.World = Matrix.CreateScale(OutlineGrowth) * part.Transform * poseScaling;
+                _sphereMesh.Draw(_graphicsDevice, sceneEffect);
+            }
+
+            _graphicsDevice.RasterizerState = frontRasterizerState;
             foreach (CaterpillarPart part in _parts)
             {
                 sceneEffect.World = part.Transform * poseScaling;

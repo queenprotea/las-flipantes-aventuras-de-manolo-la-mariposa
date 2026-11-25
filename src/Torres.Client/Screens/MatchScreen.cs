@@ -7,9 +7,9 @@ using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -21,29 +21,29 @@ namespace Torres.Client.Screens
 {
     internal sealed class MatchScreen : Screen, IDisposable
     {
-        private const float SpentPipOpacity = 0.28f;
-
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
+        private readonly FigureIcons _figureIcons;
+        private readonly VolumeTextures _volumeTextures;
         private readonly NoticeBox _noticeBox = new NoticeBox();
-        private readonly CardHandView _cardHand = new CardHandView();
-        private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
-        private readonly HorizontalStackPanel _caterpillarPips = new HorizontalStackPanel { Spacing = MatchLayout.PipSpacing };
-        private readonly HorizontalStackPanel _buildPips = new HorizontalStackPanel { Spacing = MatchLayout.PipSpacing };
-        private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.MintInk, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly Label _actionPointsLabel = new Label { Font = Fonts.ActionPoints, TextColor = Theme.Ink };
-        private readonly Label _caterpillarCostLabel = CreateCostLabel();
-        private readonly Label _moveCostLabel = CreateCostLabel();
-        private readonly Label _buildCostLabel = CreateCostLabel();
-        private readonly LocalizedLabel _roundTurnLabel = new LocalizedLabel(TextKeys.Match.RoundTurnInstruction) { Font = Fonts.Small, TextColor = Theme.MutedInk };
-        private readonly LocalizedLabel _turnStatusLabel = new LocalizedLabel(TextKeys.Match.YourTurnStatus) { Font = Fonts.Small, TextColor = Theme.Ink };
-        private readonly LocalizedLabel _hintLabel = new LocalizedLabel(TextKeys.Match.ChoosePlacementHint) { Font = Fonts.Small, TextColor = Theme.SoftInk, HorizontalAlignment = HorizontalAlignment.Center, Visible = false };
-        private readonly Button _caterpillarButton;
-        private readonly Button _moveButton;
-        private readonly Button _buildButton;
-        private readonly LocalizedButton _endTurnButton;
+        private readonly CardHandView _cardHand;
+        private readonly LocalizedLabel _hintLabel = new LocalizedLabel(TextKeys.Match.ChoosePlacementHint) { Font = Fonts.Small, TextColor = Theme.Surface };
+        private readonly Panel _hintPill;
+        private readonly MatchPlayersBarView _playersBar;
+        private readonly MatchClockView _clockView;
+        private readonly LocalizedLabel _reserveCaterpillarsLabel = new LocalizedLabel(TextKeys.Match.YourCaterpillarsLabel) { Font = Fonts.Small, TextColor = Theme.Ink };
+        private readonly Label _reserveCaterpillarsCount = new Label { Font = Fonts.Small, TextColor = Theme.Ink };
+        private readonly Label _reserveBuildsCount = new Label { Font = Fonts.Small, TextColor = Theme.Ink };
+        private readonly Label _pointsLabel = new Label { Font = Fonts.Title, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
+        private readonly Panel _reserveTag;
+        private readonly Panel _pointsTag;
+        private readonly Panel _deckTag;
+        private readonly ActionBarView _actionBar;
+        private readonly Button _endTurnButton;
+        private readonly Button _chatTabButton;
+        private readonly Panel _chatOverlay;
         private readonly ForfeitView _forfeitView;
         private readonly ChatView _chatView;
 
@@ -51,27 +51,76 @@ namespace Torres.Client.Screens
         private TurnActionMode _actionMode;
         private BoardCell? _moveOrigin;
         private Task<MatchActionResult>? _actionRequest;
+        private TimeSpan _shownStepTime;
+        private bool _wasEscapeDown;
+        private bool _isShowingCardEffect;
 
         internal MatchScreen(GraphicsDevice graphicsDevice, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
             : base(TextKeys.Match.HeaderLabel, true)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
-            _forfeitView = new ForfeitView(gameSessionConnection, playerSession);
+            _forfeitView = new ForfeitView(gameSessionConnection, playerSession, TextKeys.Common.ExitButton);
             _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
-            _caterpillarButton = CreateActionButton(TextKeys.Match.CaterpillarActionButton, _caterpillarCostLabel);
-            _caterpillarButton.Click += CaterpillarButtonOnClick;
-            _moveButton = CreateActionButton(TextKeys.Match.MoveActionButton, _moveCostLabel);
-            _moveButton.Click += MoveButtonOnClick;
-            _buildButton = CreateActionButton(TextKeys.Match.BuildActionButton, _buildCostLabel);
-            _buildButton.Click += BuildButtonOnClick;
-            _endTurnButton = CreatePrimaryButton(TextKeys.Match.EndTurnButton);
-            _endTurnButton.Padding = MatchLayout.EndTurnPadding;
-            _endTurnButton.HorizontalAlignment = HorizontalAlignment.Stretch;
-            _endTurnButton.LabelAlignment = HorizontalAlignment.Center;
+            _figureIcons = new FigureIcons(graphicsDevice);
+            _volumeTextures = new VolumeTextures(graphicsDevice);
+            _cardHand = new CardHandView(_volumeTextures);
+            _playersBar = new MatchPlayersBarView(_figureIcons, _volumeTextures);
+            _clockView = new MatchClockView(_volumeTextures);
+            _reserveTag = BuildReserveTag();
+            _pointsTag = BuildPointsTag();
+            _deckTag = CreateTableTag(_cardHand.DeckRoot);
+            _actionBar = new ActionBarView(_figureIcons, _volumeTextures);
+            _hintPill = new Panel
+            {
+                Padding = MatchLayout.HintPillPadding,
+                Background = _volumeTextures.HintPillBrush,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = MatchLayout.HintMargin,
+                Visible = false,
+            };
+            _hintPill.Widgets.Add(_hintLabel);
+            _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
+            _noticeBox.VerticalAlignment = VerticalAlignment.Top;
+            _noticeBox.Width = MatchLayout.NoticeWidth;
+            _noticeBox.Margin = MatchLayout.NoticeMargin;
+            _endTurnButton = new Button
+            {
+                Content = new LocalizedLabel(TextKeys.Match.EndTurnButton) { Font = Fonts.Body, TextColor = Theme.Surface, HorizontalAlignment = HorizontalAlignment.Center },
+                Padding = MatchLayout.EndTurnPillPadding,
+                Background = _volumeTextures.ChosenPillBrush,
+                OverBackground = _volumeTextures.ChosenPillBrush,
+                PressedBackground = _volumeTextures.ChosenPillBrush,
+                DisabledBackground = _volumeTextures.ChosenPillBrush,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
             _endTurnButton.Click += EndTurnButtonOnClick;
+            _chatTabButton = new Button
+            {
+                Content = new Label { Text = DisplaySymbols.ChatTab, Font = Fonts.Body, TextColor = Theme.ChosenAction, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+                Width = MatchLayout.ChatTabWidth,
+                Height = MatchLayout.ChatTabHeight,
+                Background = _volumeTextures.PillBrush,
+                OverBackground = _volumeTextures.HoveredPillBrush,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+            _chatOverlay = new Panel
+            {
+                Width = MatchLayout.ChatOverlayWidth + MatchLayout.ChatOverlayMargin.Right,
+                Padding = MatchLayout.TableLabelPadding,
+                Background = _volumeTextures.CardBrush,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Margin = MatchLayout.ChatOverlayMargin,
+                Visible = false,
+            };
+            _chatOverlay.Widgets.Add(_chatView.Root);
+            _chatTabButton.Click += (_, _) => _chatOverlay.Visible = !_chatOverlay.Visible;
         }
+
+        internal override bool KeepsEscapeKey => true;
 
         internal override void Open()
         {
@@ -82,6 +131,8 @@ namespace Torres.Client.Screens
             _actionMode = TurnActionMode.None;
             _moveOrigin = null;
             _cardHand.CancelChoice();
+            _boardWidget.RefreshCardFaces();
+            _wasEscapeDown = Keyboard.GetState().IsKeyDown(Keys.Escape);
             string roomCode = _playerSession.CurrentRoom?.Code ?? string.Empty;
             HeaderArguments = new string[] { roomCode };
             if (_playerSession.CurrentMatchView is null)
@@ -104,9 +155,15 @@ namespace Torres.Client.Screens
                 ShowMatchView(matchView);
             }
 
-            _clockLabel.Text = FormatStepTimeLeft();
+            ShowClock();
             _boardWidget.Advance(gameTime.ElapsedGameTime);
+            ShowActionPoints(matchView, _actionBar.HoveredCost);
+            PlaceTableTags();
+            ShowCardEffect(matchView);
             _boardWidget.UpdateInput();
+            FollowEscapeKey(matchView);
+            FollowActionBar();
+            FollowCardClick();
             FollowBoardClick(matchView);
             FollowCardHand(matchView);
             FollowActionRequest();
@@ -119,31 +176,47 @@ namespace Torres.Client.Screens
 
         internal override void RenderScene()
         {
+            _figureIcons.RenderOnce();
             _boardWidget.RenderScene();
         }
 
         public void Dispose()
         {
             _boardWidget.Dispose();
+            _figureIcons.Dispose();
+            _volumeTextures.Dispose();
         }
 
         protected override Widget Build()
         {
-            HorizontalStackPanel screenColumns = CreateColumns();
-            VerticalStackPanel centerPanel = BuildCenterPanel();
-            screenColumns.Widgets.Add(BuildSideBar());
-            screenColumns.Widgets.Add(centerPanel);
-            screenColumns.Widgets.Add(BuildSideColumn());
-            StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
+            var topBar = new HorizontalStackPanel
+            {
+                Spacing = MatchLayout.TopBarSpacing,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = MatchLayout.TableEdgeMargin,
+            };
+            topBar.Widgets.Add(_playersBar.Root);
+            topBar.Widgets.Add(_clockView.Root);
 
-            VerticalStackPanel page = CreatePage();
-            page.Spacing = MatchLayout.HudSpacing;
-            page.Widgets.Add(screenColumns);
-            page.Widgets.Add(CreateDivider());
-            page.Widgets.Add(BuildActionPoints());
-            StackPanel.SetProportionType(screenColumns, ProportionType.Fill);
 
-            return page;
+            var table = new Panel
+            {
+                Background = Theme.MatchBackgroundBrush,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            table.Widgets.Add(_boardWidget);
+            table.Widgets.Add(_reserveTag);
+            table.Widgets.Add(_pointsTag);
+            table.Widgets.Add(_deckTag);
+            table.Widgets.Add(topBar);
+            table.Widgets.Add(_hintPill);
+            table.Widgets.Add(_noticeBox);
+            table.Widgets.Add(BuildRightColumn());
+            table.Widgets.Add(_chatOverlay);
+
+            return table;
         }
 
         private static bool IsViewerPlaying(MatchView matchView)
@@ -195,118 +268,6 @@ namespace Torres.Client.Screens
             return rejectionKey;
         }
 
-        private static Label CreateCostLabel()
-        {
-            var costLabel = new Label
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return costLabel;
-        }
-
-        private static Button CreateActionButton(string textKey, Label costLabel)
-        {
-            var buttonContent = new HorizontalStackPanel
-            {
-                Spacing = Metrics.FieldLabelSpacing,
-            };
-            buttonContent.Widgets.Add(new LocalizedLabel(textKey)
-            {
-                Font = Fonts.Small,
-                TextColor = Theme.SoftInk,
-            });
-            buttonContent.Widgets.Add(costLabel);
-
-            var actionButton = new Button
-            {
-                Content = buttonContent,
-                Padding = Metrics.SmallButtonPadding,
-                Background = Theme.SurfaceBrush,
-                OverBackground = Theme.SurfaceSunkenBrush,
-                PressedBackground = Theme.SurfaceSunkenBrush,
-                Border = Theme.StrongLineBrush,
-                BorderThickness = Sizes.Border,
-            };
-
-            return actionButton;
-        }
-
-        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer, bool isPlaying)
-        {
-            var playerIdentity = new VerticalStackPanel
-            {
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            Color nameColor = isPlaying ? Theme.MintInk : Theme.Ink;
-            playerIdentity.Widgets.Add(CreatePlayerNameLabel(seat.DisplayName, nameColor));
-            if (isViewer)
-            {
-                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag) { Font = Fonts.Label, TextColor = Theme.MutedInk });
-            }
-
-            if (seat.IsRetired)
-            {
-                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag) { Font = Fonts.Label, TextColor = Theme.BlushInk });
-            }
-            else if (seat.IsDisconnected)
-            {
-                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Common.DisconnectedTag) { Font = Fonts.Label, TextColor = Theme.ButterInk });
-            }
-
-            if (seat.HandCount > 0)
-            {
-                playerIdentity.Widgets.Add(new LocalizedLabel(TextKeys.Match.CardsInHandTag) { Font = Fonts.Label, TextColor = Theme.MutedInk, TextArguments = new string[] { DisplayFormats.FormatInteger(seat.HandCount) } });
-            }
-
-            var playerRow = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.PlayerRowSpacing,
-                Padding = MatchLayout.PlayerRowPadding,
-            };
-            playerRow.Widgets.Add(new Panel
-            {
-                Width = MatchLayout.PlayerIconSize,
-                Height = MatchLayout.PlayerIconSize,
-                Background = SeatColors.BrushFor(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            playerRow.Widgets.Add(playerIdentity);
-            playerRow.Widgets.Add(new Label
-            {
-                Text = DisplayFormats.FormatInteger(seat.FinalScore),
-                Font = Fonts.Small,
-                TextColor = Theme.SoftInk,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
-            if (isPlaying)
-            {
-                playerRow.Background = Theme.MintTintBrush;
-            }
-
-            return playerRow;
-        }
-
-        private static void ShowPips(HorizontalStackPanel pipRow, PipRowContent pipRowContent, IBrush pipBrush)
-        {
-            pipRow.Widgets.Clear();
-            for (var i = 0; i < pipRowContent.Total; i++)
-            {
-                pipRow.Widgets.Add(new Panel
-                {
-                    Width = pipRowContent.PipSize,
-                    Height = pipRowContent.PipSize,
-                    Background = pipBrush,
-                    Border = Theme.StrongLineBrush,
-                    BorderThickness = Sizes.Border,
-                    Opacity = i < pipRowContent.Available ? 1f : SpentPipOpacity,
-                });
-            }
-        }
-
         private static List<BoardCell> FindMoveOrigins(MatchView matchView)
         {
             List<BoardCell> moveOrigins = matchView.MoveTargets.Select(moveTarget => MatchCellConversion.ToBoardCell(moveTarget.Origin)).Distinct().ToList();
@@ -321,103 +282,92 @@ namespace Torres.Client.Screens
             return moveDestinations;
         }
 
-        private static VerticalStackPanel CreateSideColumnPanel(Widget chatRoot, LocalizedButton endTurnButton, Widget forfeitRoot)
+        private VerticalStackPanel BuildRightColumn()
         {
-            var sideColumn = new VerticalStackPanel
+            _forfeitView.Root.HorizontalAlignment = HorizontalAlignment.Right;
+            var lowerSpace = new Panel();
+            var rightColumn = new VerticalStackPanel
             {
-                Spacing = Metrics.ColumnSpacing,
-                Width = MatchLayout.SideColumnWidth,
+                Spacing = MatchLayout.RightColumnSpacing,
+                Width = MatchLayout.ActionColumnWidth,
+                HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Stretch,
+                Margin = MatchLayout.RightColumnMargin,
             };
-            sideColumn.Widgets.Add(chatRoot);
-            sideColumn.Widgets.Add(endTurnButton);
-            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Match.MatchLabel, forfeitRoot));
-            StackPanel.SetProportionType(chatRoot, ProportionType.Fill);
+            rightColumn.Widgets.Add(_forfeitView.Root);
+            rightColumn.Widgets.Add(_actionBar.Root);
+            rightColumn.Widgets.Add(_chatTabButton);
+            rightColumn.Widgets.Add(lowerSpace);
+            rightColumn.Widgets.Add(_endTurnButton);
+            StackPanel.SetProportionType(lowerSpace, ProportionType.Fill);
 
-            return sideColumn;
+            return rightColumn;
         }
 
-        private VerticalStackPanel BuildSideBar()
+        private Panel CreateTableTag(Widget tagContent)
         {
-            var sideBar = new VerticalStackPanel
+            var tableTag = new Panel
             {
-                Spacing = Metrics.ColumnSpacing,
-                Width = MatchLayout.SidebarWidth,
+                Padding = MatchLayout.TableLabelPadding,
+                Background = _volumeTextures.PillBrush,
+                HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.PlayersLabel, _playersPanel));
-            sideBar.Widgets.Add(CreateDivider());
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.YourCaterpillarsLabel, _caterpillarPips));
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.BuildingsLabel, _buildPips));
-            sideBar.Widgets.Add(CreateDivider());
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.DeckLabel, _cardHand.DeckRoot));
-            sideBar.Widgets.Add(CreateGameSection(TextKeys.Match.CardsLabel, _cardHand.HandRoot));
+            tableTag.Widgets.Add(tagContent);
 
-            return sideBar;
+            return tableTag;
         }
 
-        private VerticalStackPanel BuildCenterPanel()
+        private Panel BuildReserveTag()
         {
-            var turnStatus = new HorizontalStackPanel
-            {
-                Spacing = Metrics.FieldLabelSpacing,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            turnStatus.Widgets.Add(_roundTurnLabel);
-            turnStatus.Widgets.Add(_turnStatusLabel);
+            var caterpillarsRow = new HorizontalStackPanel();
+            caterpillarsRow.Widgets.Add(_reserveCaterpillarsLabel);
+            caterpillarsRow.Widgets.Add(_reserveCaterpillarsCount);
+            var buildsRow = new HorizontalStackPanel();
+            buildsRow.Widgets.Add(new LocalizedLabel(TextKeys.Match.BuildingsLabel) { Font = Fonts.Small, TextColor = Theme.Ink });
+            buildsRow.Widgets.Add(_reserveBuildsCount);
+            var reserveLines = new VerticalStackPanel { Spacing = MatchLayout.TableLabelSpacing };
+            reserveLines.Widgets.Add(caterpillarsRow);
+            reserveLines.Widgets.Add(buildsRow);
+            Panel reserveTag = CreateTableTag(reserveLines);
 
-            var actionRow = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.ActionSpacing,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            actionRow.Widgets.Add(_caterpillarButton);
-            actionRow.Widgets.Add(_moveButton);
-            actionRow.Widgets.Add(_buildButton);
-
-            var centerPanel = new VerticalStackPanel
-            {
-                Spacing = MatchLayout.CenterSpacing,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            centerPanel.Widgets.Add(_noticeBox);
-            centerPanel.Widgets.Add(_clockLabel);
-            centerPanel.Widgets.Add(turnStatus);
-            centerPanel.Widgets.Add(_boardWidget);
-            centerPanel.Widgets.Add(_hintLabel);
-            centerPanel.Widgets.Add(actionRow);
-            StackPanel.SetProportionType(_boardWidget, ProportionType.Fill);
-
-            return centerPanel;
+            return reserveTag;
         }
 
-        private VerticalStackPanel BuildSideColumn()
+        private Panel BuildPointsTag()
         {
-            VerticalStackPanel sideColumn = CreateSideColumnPanel(_chatView.Root, _endTurnButton, _forfeitView.Root);
+            var pointsRow = new HorizontalStackPanel { Spacing = MatchLayout.TableLabelSpacing };
+            pointsRow.Widgets.Add(_pointsLabel);
+            pointsRow.Widgets.Add(new LocalizedLabel(TextKeys.Match.ActionPointsLabel) { Font = Fonts.Title, TextColor = Theme.PointsInk, VerticalAlignment = VerticalAlignment.Center });
+            Panel pointsTag = CreateTableTag(pointsRow);
 
-            return sideColumn;
+            return pointsTag;
         }
 
-        private HorizontalStackPanel BuildActionPoints()
+        private void PlaceTableTags()
         {
-            var actionPoints = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.ActionPointsSpacing,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            actionPoints.Widgets.Add(_actionPointsLabel);
-            actionPoints.Widgets.Add(new LocalizedLabel(TextKeys.Match.ActionPointsLabel)
-            {
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                VerticalAlignment = VerticalAlignment.Bottom,
-            });
-
-            return actionPoints;
+            PlaceTableTag(_reserveTag, ReserveFigure.LabelAnchor, true, false);
+            PlaceTableTag(_pointsTag, DewLeafFigure.LabelAnchor, false, false);
+            PlaceTableTag(_deckTag, DeckFigure.LabelAnchor, false, true);
         }
 
-        private string FormatStepTimeLeft()
+        private void PlaceTableTag(Widget tableTag, Vector3 tagAnchor, bool isAboveAnchor, bool isOnHandLayer)
+        {
+            if (_boardWidget.ProjectToWidget(tagAnchor, isOnHandLayer) is Point anchorPoint)
+            {
+                tableTag.Left = anchorPoint.X - (tableTag.ActualBounds.Width / 2);
+                tableTag.Top = isAboveAnchor ? anchorPoint.Y - tableTag.ActualBounds.Height : anchorPoint.Y;
+            }
+        }
+
+        private void ShowActionPoints(MatchView matchView, int previewCost)
+        {
+            bool isPreviewShown = (previewCost > 0) && (previewCost <= matchView.ActionPointsLeft);
+            _boardWidget.ShowActionPoints(matchView.ActionPointsLeft, isPreviewShown ? previewCost : 0);
+            _pointsLabel.Text = isPreviewShown ? DisplayFormats.FormatPointsPreview(matchView.ActionPointsLeft, matchView.ActionPointsLeft - previewCost) : DisplayFormats.FormatInteger(matchView.ActionPointsLeft);
+        }
+
+        private void ShowClock()
         {
             TimeSpan stepTimeLeft = TimeSpan.Zero;
             if (_playerSession.StepEndsAtUtc is DateTime stepEndsAtUtc)
@@ -425,31 +375,27 @@ namespace Torres.Client.Screens
                 stepTimeLeft = stepEndsAtUtc - DateTime.UtcNow;
             }
 
-            string clockText = DisplayFormats.FormatCountdown(stepTimeLeft);
-
-            return clockText;
+            float remainingShare = _shownStepTime > TimeSpan.Zero ? (float)(stepTimeLeft / _shownStepTime) : 0f;
+            _clockView.ShowClock(stepTimeLeft, remainingShare);
         }
 
         private void ShowMatchView(MatchView matchView)
         {
             bool isFirstView = _shownMatchView is null;
             _shownMatchView = matchView;
+            _shownStepTime = matchView.StepTimeLeft ?? TimeSpan.Zero;
             _moveOrigin = null;
             if (!IsViewerPlaying(matchView))
             {
                 _actionMode = TurnActionMode.None;
             }
 
-            MatchSeat activeSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber);
             MatchSeat viewerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ViewerSeatNumber);
-            _roundTurnLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.RoundNumber), DisplayFormats.FormatInteger(matchView.TurnRoundNumber), DisplayFormats.FormatInteger(matchView.RoundTurnCount) };
-            _turnStatusLabel.TextKey = IsViewerPlaying(matchView) ? TextKeys.Match.YourTurnStatus : TextKeys.Match.OtherPlayerTurnStatus;
-            _turnStatusLabel.TextArguments = new string[] { activeSeat.DisplayName };
-            _actionPointsLabel.Text = DisplayFormats.FormatInteger(matchView.ActionPointsLeft);
-            _caterpillarCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.CaterpillarPlacement);
-            _moveCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.Movement);
-            _buildCostLabel.Text = DisplayFormats.FormatActionCost(matchView.ActionCosts.FlowerLevelAddition);
-
+            _clockView.Show(matchView, IsViewerPlaying(matchView));
+            _playersBar.Show(matchView);
+            _boardWidget.ShowReserve(viewerSeat.CaterpillarsLeft, SeatColors.ColorFor(viewerSeat.Color), matchView.BuildsLeft);
+            _reserveCaterpillarsCount.Text = DisplayFormats.FormatLabeledCount(viewerSeat.CaterpillarsLeft);
+            _reserveBuildsCount.Text = DisplayFormats.FormatLabeledCount(matchView.BuildsLeft);
             BoardLayout boardLayout = _layoutFactory.Create(matchView);
             if (isFirstView)
             {
@@ -459,6 +405,7 @@ namespace Torres.Client.Screens
             {
                 _boardWidget.ShowLayout(boardLayout);
             }
+
             BoardCell? butterflyCell = null;
             if (matchView.HasButterfly)
             {
@@ -466,43 +413,49 @@ namespace Torres.Client.Screens
             }
 
             _boardWidget.ShowButterflyCell(butterflyCell);
-            _playersPanel.Widgets.Clear();
-            foreach (MatchSeat seat in matchView.Seats)
-            {
-                _playersPanel.Widgets.Add(BuildPlayerRow(seat, seat.SeatNumber == matchView.ViewerSeatNumber, seat.SeatNumber == matchView.ActiveSeatNumber));
-            }
-
-            ShowPips(_caterpillarPips, new PipRowContent(matchView.CaterpillarsPerSeat, viewerSeat.CaterpillarsLeft, MatchLayout.CaterpillarPipSize), SeatColors.BrushFor(viewerSeat.Color));
-            ShowPips(_buildPips, new PipRowContent(matchView.BuildsLeft, matchView.BuildsLeft, MatchLayout.BuildingPipSize), Theme.SurfaceAltBrush);
             RefreshActionControls(matchView);
         }
 
         private void RefreshActionControls(MatchView matchView)
         {
             bool canAct = IsViewerPlaying(matchView) && (_actionRequest is null);
-            _caterpillarButton.Enabled = canAct && (matchView.PlacementTargets.Count > 0);
-            _moveButton.Enabled = canAct && (matchView.MoveTargets.Count > 0);
-            _buildButton.Enabled = canAct && (matchView.BuildTargets.Count > 0);
             _endTurnButton.Enabled = canAct;
+            _endTurnButton.Opacity = canAct ? 1f : MatchLayout.DisabledPillOpacity;
             _cardHand.Show(matchView, canAct);
-
+            _boardWidget.ShowHand(_cardHand.HandStates, matchView.DeckCount);
             IReadOnlyList<BoardCell> targetCells = FindTargetCells(matchView);
             if (targetCells.Count == 0)
             {
                 _actionMode = TurnActionMode.None;
             }
 
-            _caterpillarButton.Background = _actionMode == TurnActionMode.NewCaterpillar ? Theme.MintTintBrush : Theme.SurfaceBrush;
-            _moveButton.Background = _actionMode == TurnActionMode.Move ? Theme.MintTintBrush : Theme.SurfaceBrush;
-            _buildButton.Background = _actionMode == TurnActionMode.Build ? Theme.MintTintBrush : Theme.SurfaceBrush;
+            MatchSeat viewerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ViewerSeatNumber);
+            _actionBar.Show(matchView, viewerSeat.Color, canAct, _actionMode);
             RefreshHint(matchView);
             _boardWidget.ShowPlacementTargets(FindTargetCells(matchView));
+        }
+
+        private void ShowCardEffect(MatchView matchView)
+        {
+            string? effectKey = _boardWidget.HoveredCard is MatchCard hoveredCard ? CardTexts.ToEffectKey(hoveredCard) : null;
+            if (effectKey is not null)
+            {
+                _hintPill.Visible = true;
+                _hintLabel.TextArguments = null;
+                _hintLabel.TextKey = effectKey;
+                _isShowingCardEffect = true;
+            }
+            else if (_isShowingCardEffect)
+            {
+                _isShowingCardEffect = false;
+                RefreshHint(matchView);
+            }
         }
 
         private void RefreshHint(MatchView matchView)
         {
             string? cardHintKey = _cardHand.FindHintKey();
-            _hintLabel.Visible = (_actionMode != TurnActionMode.None) || (cardHintKey is not null);
+            _hintPill.Visible = (_actionMode != TurnActionMode.None) || (cardHintKey is not null);
             _hintLabel.TextKey = cardHintKey ?? FindHintKey();
             _hintLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.LevelClimb) };
         }
@@ -547,12 +500,27 @@ namespace Torres.Client.Screens
         private void FollowBoardClick(MatchView matchView)
         {
             BoardCell? clickedCell = _boardWidget.TakeClickedCell();
-            if ((clickedCell is not BoardCell clickedTargetCell) || !CanChooseCell(matchView, clickedTargetCell))
+            if (clickedCell is not BoardCell clickedTargetCell)
             {
                 return;
             }
 
-            _noticeBox.Hide();
+            if (IsShortcutToMove(matchView, clickedTargetCell))
+            {
+                _noticeBox.Hide();
+                _actionMode = TurnActionMode.Move;
+                _moveOrigin = clickedTargetCell;
+                RefreshActionControls(matchView);
+            }
+            else if (CanChooseCell(matchView, clickedTargetCell))
+            {
+                _noticeBox.Hide();
+                ChooseClickedCell(matchView, clickedTargetCell);
+            }
+        }
+
+        private void ChooseClickedCell(MatchView matchView, BoardCell clickedTargetCell)
+        {
             if (_cardHand.IsChoosingCells)
             {
                 _cardHand.ChooseCell(clickedTargetCell);
@@ -560,6 +528,48 @@ namespace Torres.Client.Screens
             else
             {
                 ChooseActionCell(matchView, clickedTargetCell);
+            }
+        }
+
+        private bool IsShortcutToMove(MatchView matchView, BoardCell clickedCell)
+        {
+            bool isShortcutToMove = (_actionMode == TurnActionMode.None)
+                && !_cardHand.IsChoosingCells
+                && (_actionRequest is null)
+                && IsViewerPlaying(matchView)
+                && FindMoveOrigins(matchView).Contains(clickedCell);
+
+            return isShortcutToMove;
+        }
+
+        private void FollowCardClick()
+        {
+            if ((_boardWidget.TakeClickedCard() is MatchCard clickedCard) && (_actionRequest is null))
+            {
+                _cardHand.ChooseCardOnTable(clickedCard);
+            }
+        }
+
+        private void FollowEscapeKey(MatchView matchView)
+        {
+            bool isEscapeDown = Keyboard.GetState().IsKeyDown(Keys.Escape);
+            bool isEscapePressed = isEscapeDown && !_wasEscapeDown;
+            _wasEscapeDown = isEscapeDown;
+            if (isEscapePressed)
+            {
+                _noticeBox.Hide();
+                _actionMode = TurnActionMode.None;
+                _moveOrigin = null;
+                _cardHand.CancelChoice();
+                RefreshActionControls(matchView);
+            }
+        }
+
+        private void FollowActionBar()
+        {
+            if (_actionBar.TakeChosenMode() is TurnActionMode chosenMode)
+            {
+                ChooseActionMode(chosenMode);
             }
         }
 
@@ -675,21 +685,6 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void CaterpillarButtonOnClick(object sender, MyraEventArgs e)
-        {
-            ChooseActionMode(TurnActionMode.NewCaterpillar);
-        }
-
-        private void MoveButtonOnClick(object sender, MyraEventArgs e)
-        {
-            ChooseActionMode(TurnActionMode.Move);
-        }
-
-        private void BuildButtonOnClick(object sender, MyraEventArgs e)
-        {
-            ChooseActionMode(TurnActionMode.Build);
-        }
-
         private void EndTurnButtonOnClick(object sender, MyraEventArgs e)
         {
             bool canEndTurn = (_actionRequest is null) && (_shownMatchView is not null) && IsViewerPlaying(_shownMatchView);
@@ -707,7 +702,5 @@ namespace Torres.Client.Screens
             string[]? noDetailArguments = null;
             _noticeBox.ShowMessage(TextKeys.Common.ServerErrorTitle, TextKeys.Common.ServerErrorDetail, noDetailArguments);
         }
-
-        private readonly record struct PipRowContent(int Total, int Available, int PipSize);
     }
 }

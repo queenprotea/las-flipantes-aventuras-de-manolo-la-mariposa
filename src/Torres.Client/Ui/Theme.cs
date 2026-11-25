@@ -40,12 +40,26 @@ namespace Torres.Client.Ui
         internal static Color BlushTint { get; } = new Color(0xFB, 0xEA, 0xE8);
         internal static Color BlushInk { get; } = new Color(0x8E, 0x4B, 0x47);
 
-        internal static Color SeatGreen { get; } = new Color(0x5F, 0xB3, 0x7F);
+        internal static Color ChosenActionTop { get; } = new Color(0x7C, 0xC7, 0x9A);
+        internal static Color ChosenAction { get; } = new Color(0x5F, 0xB3, 0x7F);
+        internal static Color ChosenActionLine { get; } = new Color(0x4E, 0x9C, 0x6C);
+        internal static Color HintPill { get; } = new Color(0x4E, 0x5D, 0x53);
+        internal static Color PanelShadow { get; } = new Color(0x37, 0x47, 0x3C);
+        internal static Color ClockTrack { get; } = new Color(0xE3, 0xEF, 0xD8);
+        internal static Color MatchBackground { get; } = new Color(0xF7, 0xFA, 0xF3);
+        internal static Color PointsInk { get; } = new Color(0x3A, 0x7C, 0xA8);
+        internal static Color CardLine { get; } = new Color(0xCF, 0xDC, 0xC4);
+        internal static Color CaterpillarCardStripe { get; } = new Color(0xA7, 0x9D, 0xDD);
+        internal static Color PointsCardStripe { get; } = new Color(0xF2, 0xC4, 0x6B);
+        internal static Color FlowerCardStripe { get; } = new Color(0xE8, 0xA1, 0xA8);
+
+        internal static Color SeatGreen { get; } = new Color(0x2F, 0x8A, 0x55);
         internal static Color SeatBlue { get; } = new Color(0x5E, 0x9B, 0xD6);
-        internal static Color SeatRed { get; } = new Color(0xD9, 0x5F, 0x5F);
+        internal static Color SeatRed { get; } = new Color(0xE8, 0x74, 0x6B);
         internal static Color SeatYellow { get; } = new Color(0xE8, 0xC1, 0x3E);
 
         internal static IBrush SurfaceBrush { get; } = new SolidBrush(Surface);
+        internal static IBrush MatchBackgroundBrush { get; } = new SolidBrush(MatchBackground);
         internal static IBrush SurfaceAltBrush { get; } = new SolidBrush(SurfaceAlt);
         internal static IBrush SurfaceSunkenBrush { get; } = new SolidBrush(SurfaceSunken);
         internal static IBrush LineBrush { get; } = new SolidBrush(Line);

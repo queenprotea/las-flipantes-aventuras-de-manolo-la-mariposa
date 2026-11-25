@@ -5,9 +5,6 @@ namespace Torres.Client.Scene
     internal static class BoardShapes
     {
         private const int CheckerPeriod = 2;
-        private const float BoardBaseThickness = 0.16f;
-        private const float BoardBaseMargin = 0.3f;
-        private const float BoardBaseSpan = (BoardLayout.CellsPerSide * BoardGeometry.CellSideLength) + BoardBaseMargin;
         private const float RimThickness = 0.12f;
 
         private const float RimOverhang = 0.005f;
@@ -23,18 +20,10 @@ namespace Torres.Client.Scene
 
         internal static void AddBoard(MeshBuilder meshBuilder, BoardLayout layout)
         {
-            AddBoardBase(meshBuilder);
             foreach (BoardCell drawnCell in BoardLayout.EnumerateCells())
             {
                 AddCellGround(meshBuilder, layout, drawnCell);
             }
-        }
-
-        private static void AddBoardBase(MeshBuilder meshBuilder)
-        {
-            Matrix baseTransform = Matrix.CreateScale(BoardBaseSpan, BoardBaseThickness, BoardBaseSpan)
-                * Matrix.CreateTranslation(0f, -BoardBaseThickness, 0f);
-            meshBuilder.AddBox(baseTransform, GardenPalette.BoardBase);
         }
 
         private static void AddCellGround(MeshBuilder meshBuilder, BoardLayout layout, BoardCell drawnCell)

@@ -1088,28 +1088,28 @@
     <value>{0} cards</value>
   </data>
   <data name="Match.SixActionPointsCard" xml:space="preserve">
-    <value>1 · 6 AP</value>
+    <value>6 AP</value>
   </data>
   <data name="Match.SevenActionPointsCard" xml:space="preserve">
-    <value>2 · 7 AP</value>
+    <value>7 AP</value>
   </data>
   <data name="Match.DoubleClimbCard" xml:space="preserve">
-    <value>3 · Double climb</value>
+    <value>Double climb</value>
   </data>
   <data name="Match.GroundLeapCard" xml:space="preserve">
-    <value>4 · Leap</value>
+    <value>Leap</value>
   </data>
   <data name="Match.FlowerLevelMoveCard" xml:space="preserve">
-    <value>5 · Move a level</value>
+    <value>Move a level</value>
   </data>
   <data name="Match.RelocationCard" xml:space="preserve">
-    <value>6 · Relocation</value>
+    <value>Relocation</value>
   </data>
   <data name="Match.PlanterCrossingCard" xml:space="preserve">
-    <value>7 · Cross the planter</value>
+    <value>Cross the planter</value>
   </data>
   <data name="Match.FlowerLevelRemovalCard" xml:space="preserve">
-    <value>8 · Remove levels</value>
+    <value>Remove levels</value>
   </data>
   <data name="Match.ChooseCardCaterpillarHint" xml:space="preserve">
     <value>Choose the caterpillar that uses the card</value>
@@ -1137,6 +1137,30 @@
   </data>
   <data name="Match.WrongCardTargetNotice" xml:space="preserve">
     <value>That card can't be used there.</value>
+  </data>
+  <data name="Match.SixActionPointsEffect" xml:space="preserve">
+    <value>This turn you get 6 AP instead of 5.</value>
+  </data>
+  <data name="Match.SevenActionPointsEffect" xml:space="preserve">
+    <value>This turn you get 7 AP instead of 5.</value>
+  </data>
+  <data name="Match.DoubleClimbEffect" xml:space="preserve">
+    <value>Your caterpillar climbs from a level 1 flower to a neighboring level 3 one.</value>
+  </data>
+  <data name="Match.GroundLeapEffect" xml:space="preserve">
+    <value>Your caterpillar leaps over another caterpillar on the ground.</value>
+  </data>
+  <data name="Match.FlowerLevelMoveEffect" xml:space="preserve">
+    <value>Move a level from a flower to another cell where you could build.</value>
+  </data>
+  <data name="Match.RelocationEffect" xml:space="preserve">
+    <value>Take your caterpillar to any free cell, climbing at most one level.</value>
+  </data>
+  <data name="Match.PlanterCrossingEffect" xml:space="preserve">
+    <value>Your caterpillar crosses its planter to another flower, climbing at most one level (1 AP).</value>
+  </data>
+  <data name="Match.FlowerLevelRemovalEffect" xml:space="preserve">
+    <value>Remove one level from up to two different flowers.</value>
   </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>end of round {0}</value>

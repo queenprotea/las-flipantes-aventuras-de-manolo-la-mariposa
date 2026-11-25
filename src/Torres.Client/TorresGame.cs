@@ -454,11 +454,16 @@ namespace Torres.Client
             LanguageRefresher.Refresh(registeredScreen.Root);
         }
 
+        private bool IsExitKeyPressed(Screen openScreen, KeyboardState keyboardState)
+        {
+            bool isExitKeyPressed = keyboardState.IsKeyDown(Keys.Escape) && _previousKeyboardState.IsKeyUp(Keys.Escape) && !openScreen.KeepsEscapeKey;
+
+            return isExitKeyPressed;
+        }
+
         private void FollowNavigation(Screen openScreen, KeyboardState keyboardState)
         {
-            bool isEscapePressed = keyboardState.IsKeyDown(Keys.Escape) && _previousKeyboardState.IsKeyUp(Keys.Escape);
-
-            if (_mainMenuScreen.WasExitRequested || _startupScreen.WasExitRequested || isEscapePressed)
+            if (_mainMenuScreen.WasExitRequested || _startupScreen.WasExitRequested || IsExitKeyPressed(openScreen, keyboardState))
             {
                 Exit();
                 return;

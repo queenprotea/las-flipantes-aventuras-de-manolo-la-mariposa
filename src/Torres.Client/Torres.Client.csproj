@@ -32,6 +32,9 @@
     <EmbeddedResource Include="Resources\DejaVuSans.ttf">
       <LogicalName>DejaVuSans.ttf</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Cards\*.png">
+      <LogicalName>Cards.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

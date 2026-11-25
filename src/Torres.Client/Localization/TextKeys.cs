@@ -462,6 +462,14 @@ namespace Torres.Client.Localization
             internal const string CardNotInHandNotice = "Match.CardNotInHandNotice";
             internal const string PointsCardUsedNotice = "Match.PointsCardUsedNotice";
             internal const string WrongCardTargetNotice = "Match.WrongCardTargetNotice";
+            internal const string SixActionPointsEffect = "Match.SixActionPointsEffect";
+            internal const string SevenActionPointsEffect = "Match.SevenActionPointsEffect";
+            internal const string DoubleClimbEffect = "Match.DoubleClimbEffect";
+            internal const string GroundLeapEffect = "Match.GroundLeapEffect";
+            internal const string FlowerLevelMoveEffect = "Match.FlowerLevelMoveEffect";
+            internal const string RelocationEffect = "Match.RelocationEffect";
+            internal const string PlanterCrossingEffect = "Match.PlanterCrossingEffect";
+            internal const string FlowerLevelRemovalEffect = "Match.FlowerLevelRemovalEffect";
         }
 
         internal static class RoundSummary

@@ -1088,28 +1088,28 @@
     <value>{0} cartas</value>
   </data>
   <data name="Match.SixActionPointsCard" xml:space="preserve">
-    <value>1 · 6 PA</value>
+    <value>6 PA</value>
   </data>
   <data name="Match.SevenActionPointsCard" xml:space="preserve">
-    <value>2 · 7 PA</value>
+    <value>7 PA</value>
   </data>
   <data name="Match.DoubleClimbCard" xml:space="preserve">
-    <value>3 · Subida doble</value>
+    <value>Subida doble</value>
   </data>
   <data name="Match.GroundLeapCard" xml:space="preserve">
-    <value>4 · Salto</value>
+    <value>Salto</value>
   </data>
   <data name="Match.FlowerLevelMoveCard" xml:space="preserve">
-    <value>5 · Mover un nivel</value>
+    <value>Mover un nivel</value>
   </data>
   <data name="Match.RelocationCard" xml:space="preserve">
-    <value>6 · Traslado</value>
+    <value>Traslado</value>
   </data>
   <data name="Match.PlanterCrossingCard" xml:space="preserve">
-    <value>7 · Recorrer la jardinera</value>
+    <value>Recorrer la jardinera</value>
   </data>
   <data name="Match.FlowerLevelRemovalCard" xml:space="preserve">
-    <value>8 · Quitar niveles</value>
+    <value>Quitar niveles</value>
   </data>
   <data name="Match.ChooseCardCaterpillarHint" xml:space="preserve">
     <value>Elige la oruga que usa la carta</value>
@@ -1137,6 +1137,30 @@
   </data>
   <data name="Match.WrongCardTargetNotice" xml:space="preserve">
     <value>Esa carta no se puede usar ahí.</value>
+  </data>
+  <data name="Match.SixActionPointsEffect" xml:space="preserve">
+    <value>Este turno tienes 6 PA en lugar de 5.</value>
+  </data>
+  <data name="Match.SevenActionPointsEffect" xml:space="preserve">
+    <value>Este turno tienes 7 PA en lugar de 5.</value>
+  </data>
+  <data name="Match.DoubleClimbEffect" xml:space="preserve">
+    <value>Tu oruga sube de una flor de nivel 1 a una vecina de nivel 3.</value>
+  </data>
+  <data name="Match.GroundLeapEffect" xml:space="preserve">
+    <value>Tu oruga salta por el suelo por encima de otra oruga.</value>
+  </data>
+  <data name="Match.FlowerLevelMoveEffect" xml:space="preserve">
+    <value>Mueve un nivel de una flor a otra casilla donde se pueda construir.</value>
+  </data>
+  <data name="Match.RelocationEffect" xml:space="preserve">
+    <value>Lleva tu oruga a cualquier casilla libre, subiendo como mucho un nivel.</value>
+  </data>
+  <data name="Match.PlanterCrossingEffect" xml:space="preserve">
+    <value>Tu oruga cruza su jardinera hasta otra flor, subiendo como mucho un nivel (1 PA).</value>
+  </data>
+  <data name="Match.FlowerLevelRemovalEffect" xml:space="preserve">
+    <value>Quita un nivel de hasta dos flores distintas.</value>
   </data>
   <data name="RoundSummary.HeaderLabel" xml:space="preserve">
     <value>cierre de la ronda {0}</value>

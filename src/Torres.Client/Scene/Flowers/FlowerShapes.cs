@@ -1,82 +1,65 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
 {
     internal static class FlowerShapes
     {
-        private const float StemRadius = 0.035f;
-        private const float LeafHeightOffset = 0.12f;
-        private const float LeafDistance = 0.13f;
-        private const float LeafTiltDegrees = 20f;
-        private const float FirstLeafHeadingDegrees = 35f;
-        private const float LeafHeadingStepDegrees = 90f;
-        private const int PetalCount = 6;
-        private const float FullTurnDegrees = 360f;
-        private const float PetalDistance = 0.11f;
-        private const float HeartLift = 0.02f;
+        private static readonly IReadOnlyList<FlowerSpecies> _speciesByPlanter = new FlowerSpecies[]
+        {
+            FlowerSpecies.Allium, FlowerSpecies.Lavender, FlowerSpecies.Protea, FlowerSpecies.Coneflower, FlowerSpecies.Narcissus,
+        };
 
-        private static readonly Vector3 _leafScale = new Vector3(0.14f, 0.022f, 0.055f);
-        private static readonly Vector3 _petalScale = new Vector3(0.094f, 0.03f, 0.068f);
-        private static readonly Vector3 _heartScale = new Vector3(0.075f, 0.045f, 0.075f);
-
-        internal static void AddFlowers(MeshBuilder meshBuilder, BoardLayout layout)
+        internal static void AddFlowers(MeshBuilder meshBuilder, BoardLayout layout, IReadOnlyCollection<BoardCell> skippedCells)
         {
             foreach (BoardCell drawnCell in BoardLayout.EnumerateCells())
             {
                 int flowerLevel = layout.GetFlowerLevel(drawnCell);
-                if (flowerLevel > 0)
+                if ((flowerLevel > 0) && !skippedCells.Contains(drawnCell))
                 {
-                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(drawnCell), flowerLevel);
+                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(drawnCell), flowerLevel, FindSpecies(layout.GetPlanterNumber(drawnCell)));
                 }
             }
         }
 
-        private static void AddFlower(MeshBuilder meshBuilder, Vector3 cellCenter, int flowerLevel)
+        internal static void AddCenteredFlower(MeshBuilder meshBuilder, BoardLayout layout, BoardCell flowerCell)
         {
-            float flowerTop = BoardGeometry.GetFlowerTop(flowerLevel);
-            float stemLength = flowerTop - BoardGeometry.SoilTop;
-            Matrix stemTransform = Matrix.CreateScale(StemRadius, stemLength, StemRadius)
-                * Matrix.CreateTranslation(cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f));
-            meshBuilder.AddCylinder(stemTransform, GardenPalette.Stem);
-            for (var levelIndex = 0; levelIndex < flowerLevel; levelIndex++)
-            {
-                AddLeafPair(meshBuilder, cellCenter, levelIndex);
-            }
-
-            AddBlossom(meshBuilder, cellCenter + new Vector3(0f, flowerTop, 0f));
+            AddFlower(meshBuilder, Vector3.Zero, layout.GetFlowerLevel(flowerCell), FindSpecies(layout.GetPlanterNumber(flowerCell)));
         }
 
-        private static void AddLeafPair(MeshBuilder meshBuilder, Vector3 cellCenter, int levelIndex)
+        private static FlowerSpecies FindSpecies(int planterNumber)
         {
-            float leafHeight = BoardGeometry.PlanterTop + LeafHeightOffset + (BoardGeometry.FlowerLevelHeight * levelIndex);
-            float leafHeadingDegrees = FirstLeafHeadingDegrees + (LeafHeadingStepDegrees * levelIndex);
-            Matrix leafHeadingRotation = BoardGeometry.CreateHeadingRotation(leafHeadingDegrees);
-            Vector3 leafDirection = BoardGeometry.GetHeadingDirection(leafHeadingDegrees);
-            foreach (float sideSign in BoardGeometry.MirroredSideSigns)
-            {
-                Vector3 leafCenter = cellCenter + (leafDirection * LeafDistance * sideSign) + new Vector3(0f, leafHeight, 0f);
-                Matrix leafTransform = Matrix.CreateScale(_leafScale)
-                    * Matrix.CreateRotationZ(MathHelper.ToRadians(LeafTiltDegrees * sideSign))
-                    * leafHeadingRotation
-                    * Matrix.CreateTranslation(leafCenter);
-                meshBuilder.AddSphere(leafTransform, GardenPalette.Leaf);
-            }
+            int speciesIndex = (planterNumber - BoardLayout.FirstPlanterNumber) % _speciesByPlanter.Count;
+            FlowerSpecies flowerSpecies = _speciesByPlanter[speciesIndex];
+
+            return flowerSpecies;
         }
 
-        private static void AddBlossom(MeshBuilder meshBuilder, Vector3 blossomCenter)
+        private static void AddFlower(MeshBuilder meshBuilder, Vector3 cellCenter, int flowerLevel, FlowerSpecies flowerSpecies)
         {
-            for (var petalIndex = 0; petalIndex < PetalCount; petalIndex++)
+            switch (flowerSpecies)
             {
-                float petalHeadingDegrees = FullTurnDegrees * petalIndex / PetalCount;
-                Vector3 petalCenter = blossomCenter + (BoardGeometry.GetHeadingDirection(petalHeadingDegrees) * PetalDistance);
-                Matrix petalTransform = Matrix.CreateScale(_petalScale)
-                    * BoardGeometry.CreateHeadingRotation(petalHeadingDegrees)
-                    * Matrix.CreateTranslation(petalCenter);
-                meshBuilder.AddSphere(petalTransform, GardenPalette.Petal);
+                case FlowerSpecies.Allium:
+                    AlliumShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    break;
+                case FlowerSpecies.Lavender:
+                    LavenderShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    break;
+                case FlowerSpecies.Protea:
+                    ProteaShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    break;
+                case FlowerSpecies.Coneflower:
+                    ConeflowerShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    break;
+                case FlowerSpecies.Narcissus:
+                    NarcissusShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(flowerSpecies));
             }
-
-            Matrix heartTransform = Matrix.CreateScale(_heartScale) * Matrix.CreateTranslation(blossomCenter + new Vector3(0f, HeartLift, 0f));
-            meshBuilder.AddSphere(heartTransform, GardenPalette.BlossomHeart);
         }
     }
 }

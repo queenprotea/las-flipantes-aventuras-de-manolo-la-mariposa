@@ -37,6 +37,8 @@ namespace Torres.Client.Screens
 
         internal bool IsBuilt => _rootWidget is not null;
 
+        internal virtual bool KeepsEscapeKey => false;
+
         internal virtual void Update(GameTime gameTime)
         {
         }
@@ -370,7 +372,7 @@ namespace Torres.Client.Screens
             return playerNameLabel;
         }
 
-        protected static VerticalStackPanel CreateGameSection(string labelKey, Widget sectionContent)
+        internal static VerticalStackPanel CreateGameSection(string labelKey, Widget sectionContent)
         {
             var gameSection = new VerticalStackPanel
             {

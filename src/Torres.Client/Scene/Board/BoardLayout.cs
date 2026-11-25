@@ -10,6 +10,8 @@ namespace Torres.Client.Scene
 
         internal const char GroundSymbol = '.';
         internal const char LevelZeroSymbol = '0';
+        internal const char FirstPlanterSymbol = 'A';
+        internal const int FirstPlanterNumber = 1;
 
         private static readonly string _groundRow = new string(GroundSymbol, CellsPerSide);
 
@@ -63,6 +65,13 @@ namespace Torres.Client.Scene
             }
 
             return flowerLevel;
+        }
+
+        internal int GetPlanterNumber(BoardCell examinedCell)
+        {
+            int planterNumber = GetPlanterSymbol(examinedCell) - FirstPlanterSymbol + FirstPlanterNumber;
+
+            return planterNumber;
         }
 
         internal bool HasCaterpillar(BoardCell examinedCell)

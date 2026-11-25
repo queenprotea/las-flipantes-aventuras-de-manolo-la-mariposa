@@ -44,7 +44,7 @@ namespace Torres.Client.Screens
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
             _doomLauncher = doomLauncher;
-            _forfeitView = new ForfeitView(gameSessionConnection, playerSession);
+            _forfeitView = new ForfeitView(gameSessionConnection, playerSession, TextKeys.Match.ForfeitButton);
             _chatView = new ChatView(gameSessionConnection, playerSession, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
         }

@@ -16,32 +16,32 @@ namespace Torres.Client.Screens
     internal sealed class CardHandView
     {
         private const int CardCellCount = 2;
+        private const float DisabledOpacity = 0.5f;
 
         private static readonly IReadOnlyList<BoardCell> _allBoardCells = CreateAllBoardCells();
 
-        private readonly VerticalStackPanel _handPanel = new VerticalStackPanel { Spacing = MatchLayout.HandSpacing };
-        private readonly LocalizedLabel _drawLabel = new LocalizedLabel(TextKeys.Match.DrawButton) { Font = Fonts.Small, TextColor = Theme.SoftInk };
-        private readonly LocalizedLabel _deckCountLabel = new LocalizedLabel(TextKeys.Match.DeckCountLabel) { Font = Fonts.Label, TextColor = Theme.MutedInk };
+        private readonly LocalizedLabel _drawLabel = new LocalizedLabel(TextKeys.Match.DrawButton) { Font = Fonts.Small, TextColor = Theme.Ink };
+        private readonly LocalizedLabel _deckCountLabel = new LocalizedLabel(TextKeys.Match.DeckCountLabel) { Font = Fonts.Small, TextColor = Theme.MutedInk };
         private readonly Button _drawButton;
         private readonly List<BoardCell> _chosenCells = new List<BoardCell>();
+        private readonly List<HandCardState> _handStates = new List<HandCardState>();
 
         private MatchCard? _chosenCard;
         private MatchCardPlay? _readyPlay;
         private bool _isDrawRequested;
         private bool _hasChoiceChanged;
 
-        internal CardHandView()
+        internal CardHandView(VolumeTextures volumeTextures)
         {
             _drawButton = new Button
             {
                 Content = _drawLabel,
-                Padding = Metrics.SmallButtonPadding,
-                Background = Theme.SurfaceBrush,
-                OverBackground = Theme.SurfaceSunkenBrush,
-                PressedBackground = Theme.SurfaceSunkenBrush,
-                Border = Theme.StrongLineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Padding = MatchLayout.ActionPillPadding,
+                Background = volumeTextures.PillBrush,
+                OverBackground = volumeTextures.HoveredPillBrush,
+                PressedBackground = volumeTextures.ChosenPillBrush,
+                DisabledBackground = volumeTextures.PillBrush,
+                HorizontalAlignment = HorizontalAlignment.Center,
             };
             _drawButton.Click += DrawButtonOnClick;
             DeckRoot = BuildDeckRoot();
@@ -49,9 +49,9 @@ namespace Torres.Client.Screens
 
         internal Widget DeckRoot { get; }
 
-        internal Widget HandRoot => _handPanel;
-
         internal bool IsChoosingCells => _chosenCard is not null;
+
+        internal IReadOnlyList<HandCardState> HandStates => _handStates;
 
         internal void Show(MatchView matchView, bool canAct)
         {
@@ -64,11 +64,20 @@ namespace Torres.Client.Screens
             _drawLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.CardDraw) };
             _deckCountLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.DeckCount) };
             _drawButton.Enabled = canAct && matchView.CanDrawCard;
-            _handPanel.Widgets.Clear();
+            _drawButton.Opacity = _drawButton.Enabled ? 1f : DisabledOpacity;
+            _handStates.Clear();
             foreach (MatchCard handCard in matchView.Hand)
             {
                 bool isPlayable = canAct && matchView.PlayableCards.Contains(handCard);
-                _handPanel.Widgets.Add(BuildHandCardButton(handCard, isPlayable));
+                _handStates.Add(new HandCardState(handCard, isPlayable, _chosenCard == handCard));
+            }
+        }
+
+        internal void ChooseCardOnTable(MatchCard clickedCard)
+        {
+            if (_handStates.Exists(handState => (handState.Card == clickedCard) && handState.IsPlayable))
+            {
+                ChooseCard(clickedCard);
             }
         }
 
@@ -183,24 +192,6 @@ namespace Torres.Client.Screens
             return isCaterpillarCard;
         }
 
-        private static string ToCardKey(MatchCard card)
-        {
-            string cardKey = card switch
-            {
-                MatchCard.SixActionPoints => TextKeys.Match.SixActionPointsCard,
-                MatchCard.SevenActionPoints => TextKeys.Match.SevenActionPointsCard,
-                MatchCard.DoubleClimb => TextKeys.Match.DoubleClimbCard,
-                MatchCard.GroundLeap => TextKeys.Match.GroundLeapCard,
-                MatchCard.FlowerLevelMove => TextKeys.Match.FlowerLevelMoveCard,
-                MatchCard.Relocation => TextKeys.Match.RelocationCard,
-                MatchCard.PlanterCrossing => TextKeys.Match.PlanterCrossingCard,
-                MatchCard.FlowerLevelRemoval => TextKeys.Match.FlowerLevelRemovalCard,
-                _ => throw new ArgumentOutOfRangeException(nameof(card)),
-            };
-
-            return cardKey;
-        }
-
         private static List<BoardCell> FindLevelRemovalTargets(MatchView matchView)
         {
             List<BoardCell> removalTargets = matchView.LevelRemovalTargets.Select(MatchCellConversion.ToBoardCell).ToList();
@@ -220,35 +211,15 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildDeckRoot()
         {
-            var deckRoot = new VerticalStackPanel
-            {
-                Spacing = MatchLayout.HandSpacing,
-            };
+            var deckTitle = new HorizontalStackPanel { Spacing = MatchLayout.TableLabelSpacing, HorizontalAlignment = HorizontalAlignment.Center };
+            deckTitle.Widgets.Add(new LocalizedLabel(TextKeys.Match.DeckLabel) { Font = Fonts.Small, TextColor = Theme.MutedInk });
+            deckTitle.Widgets.Add(new Label { Text = DisplaySymbols.InlineSeparator, Font = Fonts.Small, TextColor = Theme.MutedInk });
+            deckTitle.Widgets.Add(_deckCountLabel);
+            var deckRoot = new VerticalStackPanel { Spacing = MatchLayout.HandSpacing };
+            deckRoot.Widgets.Add(deckTitle);
             deckRoot.Widgets.Add(_drawButton);
-            deckRoot.Widgets.Add(_deckCountLabel);
 
             return deckRoot;
-        }
-
-        private LocalizedButton BuildHandCardButton(MatchCard handCard, bool isPlayable)
-        {
-            var cardButton = new LocalizedButton(ToCardKey(handCard))
-            {
-                LabelFont = Fonts.Small,
-                LabelColor = Theme.Ink,
-                Padding = Metrics.SmallButtonPadding,
-                Background = _chosenCard == handCard ? Theme.MintTintBrush : Theme.SurfaceBrush,
-                OverBackground = Theme.SurfaceSunkenBrush,
-                PressedBackground = Theme.SurfaceSunkenBrush,
-                Border = Theme.StrongLineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                Enabled = isPlayable,
-                Tag = handCard,
-            };
-            cardButton.Click += CardButtonOnClick;
-
-            return cardButton;
         }
 
         private MatchCardPlay CreatePlay(MatchCard playedCard)
@@ -286,14 +257,6 @@ namespace Torres.Client.Screens
             }
 
             _hasChoiceChanged = true;
-        }
-
-        private void CardButtonOnClick(object sender, MyraEventArgs e)
-        {
-            if (sender is Widget { Tag: MatchCard clickedCard })
-            {
-                ChooseCard(clickedCard);
-            }
         }
 
         private void DrawButtonOnClick(object sender, MyraEventArgs e)

@@ -20,11 +20,11 @@ namespace Torres.Client.Screens
 
         private Task<ForfeitResult>? _forfeitRequest;
 
-        internal ForfeitView(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal ForfeitView(GameSessionConnection gameSessionConnection, PlayerSession playerSession, string forfeitButtonKey)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
-            LocalizedButton forfeitButton = CreateSmallButton(Screen.CreateDestructiveButton(TextKeys.Match.ForfeitButton));
+            LocalizedButton forfeitButton = CreateSmallButton(Screen.CreateDestructiveButton(forfeitButtonKey));
             forfeitButton.HorizontalAlignment = HorizontalAlignment.Stretch;
             forfeitButton.Click += ForfeitButtonOnClick;
             LocalizedButton confirmButton = CreateSmallButton(Screen.CreateDestructiveButton(TextKeys.Alerts.ForfeitConfirmButton));

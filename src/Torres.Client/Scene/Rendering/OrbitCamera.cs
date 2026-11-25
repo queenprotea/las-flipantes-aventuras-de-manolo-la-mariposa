@@ -10,19 +10,20 @@ namespace Torres.Client.Scene
         private const float NearPlaneDistance = 0.1f;
         private const float FarPlaneDistance = 100f;
         private const float InitialYawDegrees = 0f;
-        private const float InitialPitchDegrees = 42f;
-        private const float InitialDistanceToCenter = 15.5f;
+        private const float InitialPitchDegrees = 41.6f;
+        private const float InitialDistanceToCenter = 17.5f;
         private const float MinimumPitchDegrees = 15f;
         private const float MaximumPitchDegrees = 85f;
         private const float MinimumDistanceToCenter = 6f;
-        private const float MaximumDistanceToCenter = 22f;
+        private const float MaximumDistanceToCenter = 24f;
         private const float YawDegreesPerPixel = 0.46f;
         private const float PitchDegreesPerPixel = 0.34f;
         private const float ZoomPerWheelUnit = 0.001f;
         private const float UnchangedDistanceFactor = 1f;
-        private const float OrbitCenterHeight = 0.3f;
+        private const float OrbitCenterHeight = 0f;
+        private const float OrbitCenterForward = 1.15f;
 
-        private static readonly Vector3 _orbitCenter = new Vector3(0f, OrbitCenterHeight, 0f);
+        private static readonly Vector3 _orbitCenter = new Vector3(0f, OrbitCenterHeight, OrbitCenterForward);
 
         private float _yawDegrees = InitialYawDegrees;
         private float _pitchDegrees = InitialPitchDegrees;

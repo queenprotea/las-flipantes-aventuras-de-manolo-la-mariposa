@@ -10,6 +10,8 @@ namespace Torres.Client.Ui
         private const string ThousandsSeparatedPattern = "N0";
         private const string ClockPattern = "{0}:{1:00}";
         private const string ActionCostPattern = "· {0}";
+        private const string PointsPreviewPattern = "{0} → {1}";
+        private const string LabeledCountPattern = ": {0}";
         private const int SecondsPerMinute = 60;
         private const int ExpiredClockSeconds = 0;
         private const string MegabytesPattern = "0.0";
@@ -41,6 +43,20 @@ namespace Torres.Client.Ui
             string costText = string.Format(CultureInfo.CurrentCulture, ActionCostPattern, actionPointCost);
 
             return costText;
+        }
+
+        internal static string FormatPointsPreview(int currentPoints, int remainingPoints)
+        {
+            string previewText = string.Format(CultureInfo.CurrentCulture, PointsPreviewPattern, currentPoints, remainingPoints);
+
+            return previewText;
+        }
+
+        internal static string FormatLabeledCount(int count)
+        {
+            string countText = string.Format(CultureInfo.CurrentCulture, LabeledCountPattern, count);
+
+            return countText;
         }
 
         internal static string FormatChatAuthor(string displayName)

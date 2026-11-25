@@ -8,7 +8,6 @@ namespace Torres.Client.Scene
 {
     internal sealed class MatchBoardLayoutFactory
     {
-        private const char FirstPlanterSymbol = 'A';
         private const float FirstSeatHeadingDegrees = 290f;
         private const float SeatHeadingStepDegrees = 90f;
 
@@ -33,7 +32,7 @@ namespace Torres.Client.Scene
             var planterRow = new StringBuilder(new string(BoardLayout.GroundSymbol, BoardLayout.CellsPerSide));
             foreach (MatchFlower flower in flowers.Where(flower => flower.Cell.Row == row))
             {
-                planterRow[flower.Cell.Column] = (char)(FirstPlanterSymbol + flower.PlanterNumber - 1);
+                planterRow[flower.Cell.Column] = (char)(BoardLayout.FirstPlanterSymbol + flower.PlanterNumber - BoardLayout.FirstPlanterNumber);
             }
 
             string planterText = planterRow.ToString();

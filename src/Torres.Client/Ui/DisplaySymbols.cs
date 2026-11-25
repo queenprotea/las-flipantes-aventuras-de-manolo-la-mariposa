@@ -14,5 +14,7 @@ namespace Torres.Client.Ui
         internal const string ChatAuthorSeparator = ":";
         internal const string ReportFlag = "⚑";
         internal const string SendArrow = "➤";
+        internal const string MoveArrow = "↷";
+        internal const string ChatTab = "✉";
     }
 }
