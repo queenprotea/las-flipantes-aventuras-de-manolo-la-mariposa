@@ -9,7 +9,11 @@ namespace Game.Match
 {
     internal sealed class MatchViewFactory
     {
+        private const int FirstPlanterNumber = 1;
+        private const int MissingIndex = -1;
+
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
+        private readonly List<BoardCell> _startingFlowerCells;
         private readonly string _roomCode;
         private readonly IReadOnlyCollection<int> _disconnectedSeatNumbers;
         private readonly TimeSpan _reconnectionTime;
@@ -18,6 +22,7 @@ namespace Game.Match
         {
             _seatedEntrants = seatedMatch.SeatedEntrants;
             _roomCode = seatedMatch.RoomCode;
+            _startingFlowerCells = seatedMatch.StartingLayout.Flowers.Select(startingFlower => startingFlower.Cell).ToList();
             _disconnectedSeatNumbers = disconnectedSeatNumbers;
             _reconnectionTime = reconnectionTime;
         }
@@ -60,6 +65,34 @@ namespace Game.Match
             };
 
             return matchView;
+        }
+
+        private List<MatchFlower> CreateFlowers(MatchTable matchTable)
+        {
+            var matchFlowers = new List<MatchFlower>();
+            int nextUnmatchedPlanterNumber = FirstPlanterNumber + _startingFlowerCells.Count;
+            foreach (Planter planter in matchTable.FindPlanters())
+            {
+                int startingIndex = FindStartingIndex(planter);
+                if (startingIndex == MissingIndex)
+                {
+                    AddPlanterFlowers(planter, nextUnmatchedPlanterNumber, matchFlowers);
+                    nextUnmatchedPlanterNumber++;
+                }
+                else
+                {
+                    AddPlanterFlowers(planter, FirstPlanterNumber + startingIndex, matchFlowers);
+                }
+            }
+
+            return matchFlowers;
+        }
+
+        private int FindStartingIndex(Planter planter)
+        {
+            int startingIndex = _startingFlowerCells.FindIndex(startingCell => planter.Flowers.Any(flower => flower.Cell == startingCell));
+
+            return startingIndex;
         }
 
         private static MatchPhase ToMatchPhase(TablePhase phase)
@@ -144,18 +177,6 @@ namespace Game.Match
             }
 
             return rankedSeatNumbers;
-        }
-
-        private static List<MatchFlower> CreateFlowers(MatchTable matchTable)
-        {
-            IReadOnlyList<Planter> planters = matchTable.FindPlanters();
-            var matchFlowers = new List<MatchFlower>();
-            for (var i = 0; i < planters.Count; i++)
-            {
-                AddPlanterFlowers(planters[i], i + 1, matchFlowers);
-            }
-
-            return matchFlowers;
         }
 
         private static void AddPlanterFlowers(Planter planter, int planterNumber, List<MatchFlower> matchFlowers)

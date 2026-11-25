@@ -286,7 +286,7 @@ namespace Game.Match
             {
                 matchId = await _matchRepositories.MatchRecordRepository.CreateAsync(matchOpening.RoomId, seatedEntrants.Count);
                 await _matchRepositories.MatchParticipantRepository.AddAsync(matchId, MatchRecordConversion.ToSeatedPlayers(seatedEntrants));
-                var liveMatch = new LiveMatch(new SeatedMatch(matchId, matchOpening.RoomCode, seatedEntrants), matchTable, _matchRecordWriter, _timeProvider, _matchListener, timeLimits);
+                var liveMatch = new LiveMatch(new SeatedMatch(matchId, matchOpening.RoomCode, seatedEntrants, _startingLayout), matchTable, _matchRecordWriter, _timeProvider, _matchListener, timeLimits);
                 OpenMatch(liveMatch, entrantIds);
             }
             finally
@@ -376,7 +376,7 @@ namespace Game.Match
                 throw new ArgumentException(StateUnreadableMessage, nameof(checkpoint));
             }
 
-            var seatedMatch = new SeatedMatch(matchId, checkpoint.RoomCode ?? string.Empty, seatedEntrants);
+            var seatedMatch = new SeatedMatch(matchId, checkpoint.RoomCode ?? string.Empty, seatedEntrants, _startingLayout);
             var awaitingMatch = new AwaitingMatch(seatedMatch, matchTable, _matchRecordWriter, _timeProvider, _matchListener, resumption.TimeLimits);
 
             return awaitingMatch;

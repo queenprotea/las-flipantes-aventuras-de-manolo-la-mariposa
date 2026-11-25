@@ -20,6 +20,8 @@ namespace Game.Match.Tests
         private const int UnknownMatchId = 9;
         private const short FirstPosition = 1;
         private const int FullTurnActionPoints = 5;
+        private const int NorthWestPlanterNumber = 1;
+        private const int NorthEastPlanterNumber = 2;
         private const string BrokenStateDocument = "<MatchCheckpoint>roto</MatchCheckpoint>";
 
         private static readonly TimeSpan _recordWaitLimit = TimeSpan.FromSeconds(5);
@@ -118,6 +120,23 @@ namespace Game.Match.Tests
             Assert.Equal(FullTurnActionPoints, resumedView.ActionPointsLeft);
             Assert.Empty(resumedView.Hand);
             Assert.False(_coordinator.FindSeating(SampleMatches.Ana.EntrantId)?.IsAwaitingPlayers);
+        }
+
+        [Fact]
+        public async Task Test_ReturnToMatch_AfterAPlanterGrewUpwards_KeepsEveryPlanterNumber()
+        {
+            await PlayOpeningAsync(SampleMatches.AnaAndBeto);
+            _firstRun.AddFlowerLevel(SampleMatches.Ana.EntrantId, SampleMatches.NorthOfNorthEast);
+            _firstRun.EndTurn(SampleMatches.Ana.EntrantId);
+            await RestartAsync();
+
+            _coordinator.ReturnToMatch(SampleMatches.Ana.EntrantId);
+            _coordinator.ReturnToMatch(SampleMatches.Beto.EntrantId);
+
+            MatchView resumedView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(NorthWestPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthWestFlower));
+            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthOfNorthEast));
+            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthEastFlower));
         }
 
         [Fact]

@@ -35,6 +35,8 @@ namespace Game.Match.Tests
         private const int OneRecordedMatch = 1;
         private const int SeatNumberThree = 3;
         private const int SecondSeatIndex = 1;
+        private const int NorthWestPlanterNumber = 1;
+        private const int NorthEastPlanterNumber = 2;
 
         private static readonly TimeSpan _recordWaitLimit = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan _oneTick = TimeSpan.FromTicks(1);
@@ -468,6 +470,20 @@ namespace Game.Match.Tests
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(MatchActionResult.Applied, actionResult);
             Assert.Contains(view.Flowers, flower => (flower.Cell.Row == SampleMatches.SouthWestFlower.Row) && (flower.Cell.Column == SampleMatches.SouthWestFlower.Column) && (flower.Level == LevelTwo));
+        }
+
+        [Fact]
+        public async Task Test_AddFlowerLevel_AboveAPlanter_KeepsEveryPlanterNumber()
+        {
+            await StartPlayedOpeningAsync(SampleMatches.Rules);
+
+            MatchActionResult actionResult = _coordinator.AddFlowerLevel(SampleMatches.Ana.EntrantId, SampleMatches.NorthOfNorthEast);
+
+            MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(MatchActionResult.Applied, actionResult);
+            Assert.Equal(NorthWestPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthWestFlower));
+            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthOfNorthEast));
+            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthEastFlower));
         }
 
         [Fact]

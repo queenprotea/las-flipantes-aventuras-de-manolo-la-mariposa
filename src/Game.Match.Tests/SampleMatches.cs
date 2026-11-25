@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Game.Contracts;
 
@@ -46,6 +47,8 @@ namespace Game.Match.Tests
 
         internal static MatchCell SouthOfNorthEast { get; } = new MatchCell { Row = 2, Column = 6 };
 
+        internal static MatchCell NorthOfNorthEast { get; } = new MatchCell { Row = 0, Column = 6 };
+
         internal static MatchCell GroundCell { get; } = new MatchCell { Row = 4, Column = 4 };
 
         internal static MatchCell OutsideCell { get; } = new MatchCell { Row = 8, Column = 0 };
@@ -67,5 +70,12 @@ namespace Game.Match.Tests
         internal static IReadOnlyList<MatchEntrant> AnaBetoAndDani { get; } = new MatchEntrant[] { Ana, Beto, Dani };
 
         internal static IReadOnlyList<MatchEntrant> CaroAndDani { get; } = new MatchEntrant[] { CaroGuest, Dani };
+
+        internal static int FindPlanterNumber(MatchView view, MatchCell flowerCell)
+        {
+            int planterNumber = view.Flowers.First(flower => (flower.Cell.Row == flowerCell.Row) && (flower.Cell.Column == flowerCell.Column)).PlanterNumber;
+
+            return planterNumber;
+        }
     }
 }
