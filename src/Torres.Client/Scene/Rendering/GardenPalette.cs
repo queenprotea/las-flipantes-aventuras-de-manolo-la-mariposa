@@ -50,6 +50,11 @@ namespace Torres.Client.Scene
         internal static Color DewLeafEdge { get; } = new Color(0x5E, 0x9C, 0x78);
         internal static Color DewLeafCream { get; } = new Color(0xF1, 0xF3, 0xD2);
         internal static Color DewLeafRib { get; } = new Color(0xD6, 0xEB, 0xCF);
+        internal static Color SproutStemBase { get; } = new Color(0x4A, 0x84, 0x5E);
+        internal static Color SproutStemTip { get; } = new Color(0x8C, 0xC4, 0x9E);
+        internal static Color SproutSepal { get; } = new Color(0x6F, 0xAF, 0x8B);
+        internal static Color SproutBud { get; } = new Color(0xE8, 0xA1, 0xA8);
+        internal static Color SproutBudTip { get; } = new Color(0xD7, 0xA3, 0xA0);
         internal static Color DewDrop { get; } = new Color(0x8E, 0xC5, 0xE8);
         internal static Color ExtraDewDrop { get; } = new Color(0xF2, 0xD2, 0x7A);
         internal static Color CardEdge { get; } = new Color(0xCF, 0xDC, 0xC4);

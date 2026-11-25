@@ -19,6 +19,7 @@ namespace Torres.Client.Scene
         private const int SproutIconWidth = 64;
         private const int MultiSampleCount = 4;
         private const float CaterpillarHeadingDegrees = 0f;
+        private const float CaterpillarScale = 1f;
         private const float CaterpillarViewWidth = 1.05f;
         private const float CaterpillarViewHeight = 0.525f;
         private const float SproutViewSize = 0.5f;
@@ -136,7 +137,7 @@ namespace Torres.Client.Scene
             _graphicsDevice.Viewport = new Viewport(iconBounds);
             _iconEffect.View = Matrix.CreateLookAt(_caterpillarFocus + _caterpillarCameraOffset, _caterpillarFocus, Vector3.Up);
             _iconEffect.Projection = Matrix.CreateOrthographic(CaterpillarViewWidth, CaterpillarViewHeight, NearPlaneDistance, FarPlaneDistance);
-            _caterpillarFigure.DrawStill(_iconEffect, Vector3.Zero, CaterpillarHeadingDegrees, bodyColor);
+            _caterpillarFigure.DrawStill(_iconEffect, Vector3.Zero, CaterpillarHeadingDegrees, bodyColor, CaterpillarScale);
         }
 
         private void RenderSprout(Rectangle iconBounds)

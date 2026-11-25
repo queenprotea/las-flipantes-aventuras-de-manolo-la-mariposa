@@ -37,7 +37,8 @@ namespace Torres.Client.Screens
         private readonly Label _reserveCaterpillarsCount = new Label { Font = Fonts.Small, TextColor = Theme.Ink };
         private readonly Label _reserveBuildsCount = new Label { Font = Fonts.Small, TextColor = Theme.Ink };
         private readonly Label _pointsLabel = new Label { Font = Fonts.Title, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
-        private readonly Panel _reserveTag;
+        private readonly Panel _caterpillarsTag;
+        private readonly Panel _buildsTag;
         private readonly Panel _pointsTag;
         private readonly Panel _deckTag;
         private readonly ActionBarView _actionBar;
@@ -68,7 +69,8 @@ namespace Torres.Client.Screens
             _cardHand = new CardHandView(_volumeTextures);
             _playersBar = new MatchPlayersBarView(_figureIcons, _volumeTextures);
             _clockView = new MatchClockView(_volumeTextures);
-            _reserveTag = BuildReserveTag();
+            _caterpillarsTag = BuildCountTag(_reserveCaterpillarsLabel, _reserveCaterpillarsCount);
+            _buildsTag = BuildCountTag(new LocalizedLabel(TextKeys.Match.BuildingsLabel) { Font = Fonts.Small, TextColor = Theme.Ink }, _reserveBuildsCount);
             _pointsTag = BuildPointsTag();
             _deckTag = CreateTableTag(_cardHand.DeckRoot);
             _actionBar = new ActionBarView(_figureIcons, _volumeTextures);
@@ -207,7 +209,8 @@ namespace Torres.Client.Screens
                 VerticalAlignment = VerticalAlignment.Stretch,
             };
             table.Widgets.Add(_boardWidget);
-            table.Widgets.Add(_reserveTag);
+            table.Widgets.Add(_caterpillarsTag);
+            table.Widgets.Add(_buildsTag);
             table.Widgets.Add(_pointsTag);
             table.Widgets.Add(_deckTag);
             table.Widgets.Add(topBar);
@@ -318,20 +321,14 @@ namespace Torres.Client.Screens
             return tableTag;
         }
 
-        private Panel BuildReserveTag()
+        private Panel BuildCountTag(Widget countLabel, Widget countValue)
         {
-            var caterpillarsRow = new HorizontalStackPanel();
-            caterpillarsRow.Widgets.Add(_reserveCaterpillarsLabel);
-            caterpillarsRow.Widgets.Add(_reserveCaterpillarsCount);
-            var buildsRow = new HorizontalStackPanel();
-            buildsRow.Widgets.Add(new LocalizedLabel(TextKeys.Match.BuildingsLabel) { Font = Fonts.Small, TextColor = Theme.Ink });
-            buildsRow.Widgets.Add(_reserveBuildsCount);
-            var reserveLines = new VerticalStackPanel { Spacing = MatchLayout.TableLabelSpacing };
-            reserveLines.Widgets.Add(caterpillarsRow);
-            reserveLines.Widgets.Add(buildsRow);
-            Panel reserveTag = CreateTableTag(reserveLines);
+            var countRow = new HorizontalStackPanel();
+            countRow.Widgets.Add(countLabel);
+            countRow.Widgets.Add(countValue);
+            Panel countTag = CreateTableTag(countRow);
 
-            return reserveTag;
+            return countTag;
         }
 
         private Panel BuildPointsTag()
@@ -346,8 +343,9 @@ namespace Torres.Client.Screens
 
         private void PlaceTableTags()
         {
-            PlaceTableTag(_reserveTag, ReserveFigure.LabelAnchor, true, false);
-            PlaceTableTag(_pointsTag, DewLeafFigure.LabelAnchor, false, false);
+            PlaceTableTag(_caterpillarsTag, SproutFigure.CaterpillarsLabelAnchor, false, true);
+            PlaceTableTag(_buildsTag, SproutFigure.BuildsLabelAnchor, false, true);
+            PlaceTableTag(_pointsTag, SproutFigure.PointsLabelAnchor, false, true);
             PlaceTableTag(_deckTag, DeckFigure.LabelAnchor, false, true);
         }
 

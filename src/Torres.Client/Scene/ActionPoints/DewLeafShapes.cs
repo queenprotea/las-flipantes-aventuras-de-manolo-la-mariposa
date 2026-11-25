@@ -8,6 +8,7 @@ namespace Torres.Client.Scene
     internal static class DewLeafShapes
     {
         internal const float LeafLength = 2.1f;
+        internal const float PetioleReach = (LeafLength * HalfLength) + StemLength;
 
         private const float LeafHalfWidth = 0.46f;
         private const float ArchHeight = 0.16f;
@@ -18,7 +19,6 @@ namespace Torres.Client.Scene
         private const float ArchPower = 1.2f;
         private const int LengthSteps = 90;
         private const int WidthSteps = 28;
-        private const int VariegationSeed = 4;
         private const int SmoothingPasses = 4;
         private const int SmoothingWindow = 3;
         private const float EdgeShadeStart = 0.7f;
@@ -43,9 +43,19 @@ namespace Torres.Client.Scene
             return ribPoint;
         }
 
-        internal static void AddLeaf(MeshBuilder meshBuilder)
+        internal static Vector3 FindSurfacePoint(float lengthShare, float sideShare)
         {
-            IReadOnlyList<float> variegationReach = CreateVariegationReach();
+            float halfWidth = LeafHalfWidth * MathF.Pow(Math.Max(MathF.Sin(MathF.PI * MathF.Pow(lengthShare, WidthShapePower)), 0f), WidthRoundPower);
+            float archLift = ArchHeight * MathF.Pow(MathF.Sin(MathF.PI * lengthShare), ArchPower);
+            float foldLift = FoldSlope * Math.Abs(sideShare) * halfWidth;
+            var surfacePoint = new Vector3((lengthShare - HalfLength) * LeafLength, archLift + foldLift + SurfaceLift, sideShare * halfWidth);
+
+            return surfacePoint;
+        }
+
+        internal static void AddLeaf(MeshBuilder meshBuilder, int variegationSeed)
+        {
+            IReadOnlyList<float> variegationReach = CreateVariegationReach(variegationSeed);
             var gridPositions = new List<Vector3>();
             var gridColors = new List<Color>();
             for (var lengthIndex = 0; lengthIndex <= LengthSteps; lengthIndex++)
@@ -64,16 +74,6 @@ namespace Torres.Client.Scene
                 * Matrix.CreateRotationZ(MathHelper.PiOver2)
                 * Matrix.CreateTranslation(-LeafLength * HalfLength, StemLift, 0f);
             meshBuilder.AddCylinder(stemTransform, GardenPalette.Stem);
-        }
-
-        private static Vector3 FindSurfacePoint(float lengthShare, float sideShare)
-        {
-            float halfWidth = LeafHalfWidth * MathF.Pow(Math.Max(MathF.Sin(MathF.PI * MathF.Pow(lengthShare, WidthShapePower)), 0f), WidthRoundPower);
-            float archLift = ArchHeight * MathF.Pow(MathF.Sin(MathF.PI * lengthShare), ArchPower);
-            float foldLift = FoldSlope * Math.Abs(sideShare) * halfWidth;
-            var surfacePoint = new Vector3((lengthShare - HalfLength) * LeafLength, archLift + foldLift + SurfaceLift, sideShare * halfWidth);
-
-            return surfacePoint;
         }
 
         private static Color FindLeafColor(float lengthShare, float sideDistance, float reachFactor)
@@ -97,9 +97,9 @@ namespace Torres.Client.Scene
             return leafColor;
         }
 
-        private static IReadOnlyList<float> CreateVariegationReach()
+        private static IReadOnlyList<float> CreateVariegationReach(int variegationSeed)
         {
-            var variegationSource = new Random(VariegationSeed);
+            var variegationSource = new Random(variegationSeed);
             var reachFactors = new float[LengthSteps + 1];
             for (var lengthIndex = 0; lengthIndex <= LengthSteps; lengthIndex++)
             {

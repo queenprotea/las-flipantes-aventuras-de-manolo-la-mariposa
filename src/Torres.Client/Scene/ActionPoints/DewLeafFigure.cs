@@ -10,45 +10,42 @@ namespace Torres.Client.Scene
     {
         private const int LeafDropSpots = 5;
         private const float FirstDropShare = 0.24f;
-        private const float DropShareStep = 0.09f;
+        private const float DropShareStep = 0.11f;
         private const float DropLift = 0.055f;
         private const float DropEmission = 0.35f;
-        private const float LeafHeadingDegrees = -12f;
-        private const float LeafScale = 0.85f;
         private const float TrembleHeight = 0.02f;
         private const double TremblePeriodSeconds = 0.18;
-        private const float LabelDistance = 0.75f;
         private const double RollSeconds = 0.4;
         private const double FallSeconds = 0.35;
         private const double FallStaggerSeconds = 0.18;
         private const float TipShare = 0.97f;
         private const float FullScale = 1f;
+        private const float FallDepth = -1.1f;
+        private const int VariegationSeed = 4;
 
         private static readonly Vector3 _dropScale = new Vector3(0.1f, 0.085f, 0.1f);
-        private static readonly Vector3 _leafPosition = new Vector3(-3.6f, TableShapes.TableTop, 5.4f);
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly StaticMesh _leafMesh;
         private readonly StaticMesh _dropMesh;
-        private readonly Matrix _leafWorld = Matrix.CreateScale(LeafScale) * BoardGeometry.CreateHeadingRotation(LeafHeadingDegrees) * Matrix.CreateTranslation(_leafPosition);
+        private readonly Matrix _leafWorld;
 
         private readonly List<FallingDrop> _fallingDrops = new List<FallingDrop>();
 
         private int _shownActionPoints;
         private int _previewCost;
 
-        internal DewLeafFigure(GraphicsDevice graphicsDevice)
+        internal DewLeafFigure(GraphicsDevice graphicsDevice, Matrix leafWorld)
         {
             _graphicsDevice = graphicsDevice;
+            _leafWorld = leafWorld;
             var leafBuilder = new MeshBuilder();
-            DewLeafShapes.AddLeaf(leafBuilder);
+            DewLeafShapes.AddLeaf(leafBuilder, VariegationSeed);
             _leafMesh = leafBuilder.BuildMesh(graphicsDevice);
             var dropBuilder = new MeshBuilder();
             dropBuilder.AddSphere(Matrix.Identity, Color.White);
             _dropMesh = dropBuilder.BuildMesh(graphicsDevice);
         }
-
-        internal static Vector3 LabelAnchor { get; } = _leafPosition + new Vector3(0f, 0f, LabelDistance);
 
         internal void ShowActionPoints(int actionPoints, int previewCost, TimeSpan sceneTime)
         {
@@ -96,6 +93,7 @@ namespace Torres.Client.Scene
             _leafMesh.Dispose();
             _dropMesh.Dispose();
         }
+
         private static float FindDropShare(int dropIndex)
         {
             float dropShare = FirstDropShare + (DropShareStep * dropIndex);
@@ -110,7 +108,7 @@ namespace Torres.Client.Scene
             float fallProgress = SceneTiming.FindProgress(sceneTime, fallStart, FallSeconds);
             float ribShare = MathHelper.Lerp(FindDropShare(fallingDrop.DropIndex), TipShare, MathHelper.SmoothStep(0f, FullScale, rollProgress));
             Vector3 dropCenter = DewLeafShapes.FindRibPoint(ribShare) + new Vector3(0f, DropLift, 0f);
-            dropCenter.Y = MathHelper.Lerp(dropCenter.Y, 0f, fallProgress * fallProgress);
+            dropCenter.Y = MathHelper.Lerp(dropCenter.Y, FallDepth, fallProgress * fallProgress);
             float dropScale = FullScale - fallProgress;
             Color dropColor = fallingDrop.DropIndex < LeafDropSpots ? GardenPalette.DewDrop : GardenPalette.ExtraDewDrop;
             sceneEffect.World = Matrix.CreateScale(_dropScale * dropScale) * Matrix.CreateTranslation(dropCenter) * _leafWorld;

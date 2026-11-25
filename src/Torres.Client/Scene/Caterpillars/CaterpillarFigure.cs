@@ -85,9 +85,9 @@ namespace Torres.Client.Scene
             sceneEffect.World = Matrix.Identity;
         }
 
-        internal void DrawStill(BasicEffect sceneEffect, Vector3 bodyOrigin, float headingDegrees, Color bodyColor)
+        internal void DrawStill(BasicEffect sceneEffect, Vector3 bodyOrigin, float headingDegrees, Color bodyColor, float bodyScale)
         {
-            DrawPose(sceneEffect, new CaterpillarPose(bodyOrigin, headingDegrees, bodyColor, 0f, FullScale));
+            DrawPose(sceneEffect, new CaterpillarPose(bodyOrigin, headingDegrees, bodyColor, 0f, bodyScale));
             sceneEffect.DiffuseColor = Vector3.One;
             sceneEffect.World = Matrix.Identity;
         }

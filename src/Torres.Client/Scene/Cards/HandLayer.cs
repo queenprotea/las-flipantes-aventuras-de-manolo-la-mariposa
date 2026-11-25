@@ -21,6 +21,9 @@ namespace Torres.Client.Scene
         private readonly CardImages _cardImages;
         private readonly CardFaceTextures _cardFaces;
         private readonly BasicEffect _textureEffect;
+        private readonly SproutFigure _sproutFigure;
+
+        private TimeSpan _sceneTime;
 
         internal HandLayer(GraphicsDevice graphicsDevice)
         {
@@ -38,6 +41,7 @@ namespace Torres.Client.Scene
                 LightingEnabled = true,
             };
             SceneLighting.ApplyTo(_textureEffect);
+            _sproutFigure = new SproutFigure(graphicsDevice);
         }
 
         internal Matrix ViewMatrix => _handCamera.CreateViewMatrix();
@@ -59,6 +63,21 @@ namespace Torres.Client.Scene
             _handFigure.ForgetHand();
         }
 
+        internal void ShowActionPoints(int actionPoints, int previewCost)
+        {
+            _sproutFigure.ShowActionPoints(actionPoints, previewCost, _sceneTime);
+        }
+
+        internal void ForgetActionPoints()
+        {
+            _sproutFigure.ForgetActionPoints();
+        }
+
+        internal void ShowReserve(int caterpillarsLeft, Color caterpillarColor, int buildsLeft)
+        {
+            _sproutFigure.ShowReserve(caterpillarsLeft, caterpillarColor, buildsLeft);
+        }
+
         internal void RefreshCardFaces()
         {
             _cardFaces.Invalidate();
@@ -66,6 +85,7 @@ namespace Torres.Client.Scene
 
         internal void Advance(TimeSpan sceneTime)
         {
+            _sceneTime = sceneTime;
             _handFigure.SceneTime = sceneTime;
         }
 
@@ -90,6 +110,7 @@ namespace Torres.Client.Scene
             sceneEffect.View = ViewMatrix;
             sceneEffect.World = Matrix.Identity;
             sceneEffect.LightingEnabled = true;
+            _sproutFigure.Draw(sceneEffect, _sceneTime);
             _deckFigure.DrawBodies(sceneEffect);
             _handFigure.DrawBodies(sceneEffect);
             _textureEffect.View = sceneEffect.View;
@@ -108,6 +129,7 @@ namespace Torres.Client.Scene
             _cardFaces.Dispose();
             _cardImages.Dispose();
             _textureEffect.Dispose();
+            _sproutFigure.Dispose();
         }
     }
 }

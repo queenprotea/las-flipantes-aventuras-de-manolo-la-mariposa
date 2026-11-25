@@ -81,7 +81,7 @@ namespace Torres.Client.Scene
             _growingFlowers.Clear();
             _handLayer.ForgetHand();
             _cellMarkers.ClearArrivals();
-            _tableFigures.ForgetActionPoints();
+            _handLayer.ForgetActionPoints();
             _isSkippingNextFlight = true;
             ReplaceLayout(layout);
         }
@@ -131,12 +131,12 @@ namespace Torres.Client.Scene
 
         internal void ShowActionPoints(int actionPoints, int previewCost)
         {
-            _tableFigures.ShowActionPoints(actionPoints, previewCost, _sceneTime);
+            _handLayer.ShowActionPoints(actionPoints, previewCost);
         }
 
         internal void ShowReserve(int caterpillarsLeft, Color caterpillarColor, int buildsLeft)
         {
-            _tableFigures.ShowReserve(caterpillarsLeft, caterpillarColor, buildsLeft);
+            _handLayer.ShowReserve(caterpillarsLeft, caterpillarColor, buildsLeft);
         }
 
         internal Point? ProjectToWidget(Vector3 worldPoint, bool isOnHandLayer)
@@ -207,7 +207,6 @@ namespace Torres.Client.Scene
             _tableFigures.DrawTable(_sceneEffect);
             _gardenMesh.Draw(_graphicsDevice, _sceneEffect);
             _growingFlowers.Draw(_sceneEffect, _sceneTime);
-            _tableFigures.DrawObjects(_sceneEffect, _sceneTime);
             _caterpillarFigure.Draw(_sceneEffect, _shownLayout, _sceneTime);
             if (_butterflyFigure.IsShown)
             {
