@@ -63,7 +63,7 @@ el `README.md`.
 | | |
 |---|---|
 | **Trabajo** | Arrancar el proceso: cargar `.env`, configurar log4net, leer `appsettings.json`, registrar todo en la inyección de dependencias y abrir net.tcp con un extremo por servicio |
-| **Contiene hoy** | `Program.cs`, `ServerSettings.cs`, `appsettings.json` (puerto 8000), `log4net.config` |
+| **Contiene hoy** | En la raíz, `Program.cs` (punto de entrada), `appsettings.json` (puerto 8000) y `log4net.config`. En `Settings/`, `HostSettings` y las clases `…Settings` que leen cada sección de la configuración. En `Hosting/`, `ServerHost` (orden de las fases), `ServiceRegistration` (inyección), `ServerEndpoints` (extremos net.tcp) y `ServerStartup` (arranque con la base y cierre) |
 | **Es el único que** | Conoce todos los proyectos del servidor, porque los registra. Por eso puede referenciarlos a todos sin que eso cree acoplamiento entre los demás |
 | **No contiene** | Validaciones, reglas ni consultas |
 
@@ -240,8 +240,9 @@ Ejemplo: recuperar la contraseña (CU-03), que se usa sin estar identificado.
    esquema ya están mapeadas (§7.3).
 3. **`Game.Services`:** impleméntalo en la clase del servicio. Valida los argumentos, llama al
    repositorio, captura `NpgsqlException` y devuelve el código correspondiente.
-4. **`Game.Server`:** si es un **servicio nuevo**, registra la clase y su repositorio en
-   `Program.cs` (`AddSingleton`), añade el extremo en `AddEndpoints` y la ruta en
+4. **`Game.Server`:** si es un **servicio nuevo**, registra la clase en `AddGameServices` y su repositorio
+   en `AddRepositories` (`Hosting/ServiceRegistration.cs`), añade el extremo en `AddEndpoints`
+   (`Hosting/ServerEndpoints.cs`) y la ruta en
    `Game.Contracts/ServiceEndpointPaths`. Si es una operación de un servicio existente, no hay que
    tocar nada.
 5. **`Torres.Client`:** regenera `Contracts/GameContracts.cs` (ver el `README.md`); si el servicio es
@@ -271,7 +272,7 @@ cliente modificado podría hacerse pasar por otro (`RES-05`). La referencia de c
      singleton. Si una operación puede salir de varias formas esperables, devuelve un enumerado de
      resultado junto al repositorio, como `PlayerCreationOutcome`, en lugar de lanzar una excepción.
    - El espacio de nombres sigue siendo `Game.Persistence`.
-3. **`Game.Server`:** registra el repositorio en `Program.cs`.
+3. **`Game.Server`:** registra el repositorio en `AddRepositories` (`Hosting/ServiceRegistration.cs`).
 4. **No** se usan migraciones ni `EnsureCreated`.
 
 ### 7.4 Una regla del juego
@@ -313,7 +314,7 @@ coincidir con la carpeta.
 | `Game.Contracts` | Por área: `Account/`, `Ranking/`, `Status/` y las que vengan |
 | `Game.Persistence` | Por tipo de pieza: `Entities/`, `Mappings/`, `Repositories/` |
 | `Game.Services` | Ninguna por ahora; por área, igual que los contratos, al llegar la sesión |
-| `Game.Server` | Ninguna: si necesita carpetas, algo está en el proyecto equivocado |
+| `Game.Server` | Por papel dentro del host: `Settings/` para leer la configuración y `Hosting/` para arrancar, registrar, publicar los extremos y cerrar. `Program.cs` y los archivos de configuración quedan en la raíz. Una carpeta nueva solo se justifica si es otra parte del arranque; si lo que se quiere guardar es una validación, una regla o una consulta, va en otro proyecto |
 | `Game.Match`, `Game.Domain` | Se decidirán con su primer código; no se crean carpetas vacías |
 | `Torres.Client` | Ya tiene las suyas, y ahí el espacio de nombres **sí** sigue a la carpeta (`Torres.Client.Screens`…). Dividir `Screens/` por área, si se hace, debe acordarse con quien trabaja en las pantallas, para no provocar conflictos al integrar ramas |
 

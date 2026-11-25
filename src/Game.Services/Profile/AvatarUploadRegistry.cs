@@ -26,14 +26,14 @@ namespace Game.Services
         private readonly TimeProvider _timeProvider;
         private readonly TimeSpan _idleLimit;
 
-        public AvatarUploadRegistry(SessionRegistry sessionRegistry, TimeProvider timeProvider, TimeSpan idleLimit)
+        public AvatarUploadRegistry(SessionRegistry sessionRegistry, TimeProvider timeProvider, AvatarUploadTiming uploadTiming)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(idleLimit, TimeSpan.Zero);
+            ArgumentNullException.ThrowIfNull(uploadTiming);
 
             _timeProvider = timeProvider;
-            _idleLimit = idleLimit;
+            _idleLimit = uploadTiming.IdleLimit;
             sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
         }
 
