@@ -5,7 +5,6 @@ namespace Torres.Client.Ui
     internal static class MatchLayout
     {
         internal const float DisabledPillOpacity = 0.5f;
-        internal const int SidebarWidth = 176;
         internal const int PlayerPillWidth = 150;
         internal const int TopBarSpacing = 8;
         internal const int ActionColumnWidth = 150;
@@ -23,13 +22,11 @@ namespace Torres.Client.Ui
         internal const int ActionPillSpacing = 7;
         internal const int NoticeWidth = 420;
         internal const int SideColumnWidth = 194;
-        internal const int CenterSpacing = 12;
         internal const int SectionLabelSpacing = 8;
         internal const int PlayerRowSpacing = 8;
         internal const int PlayerIconSize = 20;
         internal const int PlayerIconWidth = 40;
         internal const int PlayerIconHeight = 20;
-        internal const int TurnOrderIconSize = 18;
         internal const int HandSpacing = 6;
 
         internal static Thickness PlayerRowPadding { get; } = new Thickness(6, 4);
