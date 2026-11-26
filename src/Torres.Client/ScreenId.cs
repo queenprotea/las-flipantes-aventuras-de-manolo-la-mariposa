@@ -1,0 +1,57 @@
+namespace Torres.Client
+{
+    internal enum ScreenId
+    {
+        Startup,
+
+        MainMenu,
+
+        Login,
+
+        Register,
+
+        PasswordRecovery,
+
+        GuestAccess,
+
+        Profile,
+
+        AccountSettings,
+
+        Language,
+
+        Rooms,
+
+        Match,
+
+        GlobalRanking,
+
+        Friends,
+
+        Invitations,
+
+        Room,
+
+        InvitePlayers,
+
+        CreateRoom,
+
+        History,
+
+        MatchPreparation,
+
+        InitialPlacement,
+
+        RoundSummary,
+
+        Result,
+
+        Disconnection,
+
+        Resume,
+
+        MatchInProgress,
+
+        MatchDetail,
+    }
+}

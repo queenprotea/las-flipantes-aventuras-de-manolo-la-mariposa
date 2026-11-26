@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 
-using Torres.Client.Session;
+using Torres.Client.Threading;
 
 namespace Torres.Client.Localization
 {
@@ -46,7 +46,7 @@ namespace Torres.Client.Localization
         internal void StartLoadingSavedPreference()
         {
             ApplyCulture(Spanish);
-            _savedPreferenceReading = new SessionCall<string, string>(ReadSavedUiCultureName, _preferencePath).StartAsync();
+            _savedPreferenceReading = new BackgroundCall<string, string>(ReadSavedUiCultureName, _preferencePath).StartAsync();
         }
 
         internal void Update()

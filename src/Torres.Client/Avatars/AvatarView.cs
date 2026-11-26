@@ -1,7 +1,7 @@
 using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
-using Torres.Client.Ui;
+using Torres.Client.UI;
 
 namespace Torres.Client.Avatars
 {

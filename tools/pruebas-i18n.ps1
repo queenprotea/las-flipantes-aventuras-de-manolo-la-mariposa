@@ -140,7 +140,7 @@ Registrar ''
 
 Registrar '## P7. No hay textos fijos internacionalizables en el codigo de UI'
 Registrar ''
-$carpetas = @('src\Torres.Client\Screens', 'src\Torres.Client\Localization', 'src\Torres.Client\Ui')
+$carpetas = @('src\Torres.Client\Screens', 'src\Torres.Client\Flows', 'src\Torres.Client\Widgets', 'src\Torres.Client\Localization', 'src\Torres.Client\UI')
 $literales = New-Object System.Collections.Generic.List[string]
 $fuentes = @()
 foreach ($c in $carpetas) { $fuentes += Get-ChildItem (Join-Path $Raiz $c) -Filter *.cs -Recurse }

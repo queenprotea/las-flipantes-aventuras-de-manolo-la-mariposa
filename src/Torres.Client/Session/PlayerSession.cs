@@ -3,6 +3,8 @@ using System.Linq;
 
 using Game.Contracts;
 
+using Torres.Client.Connection;
+
 namespace Torres.Client.Session
 {
     internal sealed class PlayerSession

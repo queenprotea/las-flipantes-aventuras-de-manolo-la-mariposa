@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using Torres.Client.Ui;
+using Torres.Client.UI;
 
 namespace Torres.Client.Avatars
 {

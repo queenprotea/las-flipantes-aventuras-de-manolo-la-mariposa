@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
-using Torres.Client.Session;
+using Torres.Client.Threading;
 
 namespace Torres.Client
 {

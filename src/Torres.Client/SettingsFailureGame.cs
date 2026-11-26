@@ -5,7 +5,7 @@ using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
 using Torres.Client.Screens;
-using Torres.Client.Ui;
+using Torres.Client.UI;
 
 namespace Torres.Client
 {

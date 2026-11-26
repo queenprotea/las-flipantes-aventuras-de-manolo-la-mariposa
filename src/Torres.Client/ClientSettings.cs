@@ -21,6 +21,18 @@ namespace Torres.Client
 
         public string DoomWadPath { get; set; } = string.Empty;
 
+        public double FriendshipListRefreshSeconds { get; set; }
+
+        public double InvitationStateRefreshSeconds { get; set; }
+
+        public double SessionCloseTimeoutSeconds { get; set; }
+
+        internal TimeSpan FriendshipListRefreshPeriod => TimeSpan.FromSeconds(FriendshipListRefreshSeconds);
+
+        internal TimeSpan InvitationStateRefreshPeriod => TimeSpan.FromSeconds(InvitationStateRefreshSeconds);
+
+        internal TimeSpan SessionCloseTimeout => TimeSpan.FromSeconds(SessionCloseTimeoutSeconds);
+
         internal static Task<ClientSettings?> ReadAsync()
         {
             Task<ClientSettings?> settingsReading = Task.Run(Read);
@@ -44,10 +56,17 @@ namespace Torres.Client
                 settings.ServerAddress = localSettings.ServerAddress;
             }
 
-            bool isValid = Uri.IsWellFormedUriString(settings.ServerAddress, UriKind.Absolute) && settings.ServicePaths.IsComplete();
+            bool isValid = Uri.IsWellFormedUriString(settings.ServerAddress, UriKind.Absolute) && settings.ServicePaths.IsComplete() && settings.HasPositiveTimes();
             ClientSettings? validSettings = isValid ? settings : null;
 
             return validSettings;
+        }
+
+        private bool HasPositiveTimes()
+        {
+            bool hasPositiveTimes = (FriendshipListRefreshSeconds > 0) && (InvitationStateRefreshSeconds > 0) && (SessionCloseTimeoutSeconds > 0);
+
+            return hasPositiveTimes;
         }
 
         private static ClientSettings? ReadSettingsFile(string settingsPath)

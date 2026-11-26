@@ -14,7 +14,8 @@ using Myra.Graphics2D.TextureAtlases;
 
 using StbImageSharp;
 
-using Torres.Client.Session;
+using Torres.Client.Connection;
+using Torres.Client.Threading;
 
 namespace Torres.Client.Avatars
 {
@@ -169,7 +170,7 @@ namespace Torres.Client.Avatars
             {
                 _waitingReferences.Add(avatarReference);
                 _downloadedThumbnailsByReference[avatarReference] = thumbnail;
-                _decodingsByReference[avatarReference] = new SessionCall<byte[], ImageResult>(DecodeThumbnail, thumbnail).StartAsync();
+                _decodingsByReference[avatarReference] = new BackgroundCall<byte[], ImageResult>(DecodeThumbnail, thumbnail).StartAsync();
             }
             else
             {
@@ -197,7 +198,7 @@ namespace Torres.Client.Avatars
         {
             if (IsCached(avatarReference, cachedPath))
             {
-                _decodingsByReference[avatarReference] = new SessionCall<string, ImageResult>(ReadCachedThumbnail, cachedPath).StartAsync();
+                _decodingsByReference[avatarReference] = new BackgroundCall<string, ImageResult>(ReadCachedThumbnail, cachedPath).StartAsync();
             }
             else
             {

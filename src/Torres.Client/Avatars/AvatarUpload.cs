@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using Game.Contracts;
 
-using Torres.Client.Session;
+using Torres.Client.Connection;
 
 namespace Torres.Client.Avatars
 {

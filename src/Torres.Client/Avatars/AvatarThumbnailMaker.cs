@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 
 using StbImageSharp;
 
-using Torres.Client.Ui;
+using Torres.Client.UI;
 
 namespace Torres.Client.Avatars
 {

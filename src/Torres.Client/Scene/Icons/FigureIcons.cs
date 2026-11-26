@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 using Myra.Graphics2D.TextureAtlases;
 
-using Torres.Client.Ui;
+using Torres.Client.UI;
 
 namespace Torres.Client.Scene
 {
