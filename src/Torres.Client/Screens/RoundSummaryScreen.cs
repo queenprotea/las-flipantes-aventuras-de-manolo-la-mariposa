@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 
-using FontStashSharp;
 using FontStashSharp.RichText;
 
 using Game.Contracts;
@@ -9,7 +8,6 @@ using Game.Contracts;
 using Microsoft.Xna.Framework;
 
 using Myra.Events;
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -20,42 +18,32 @@ namespace Torres.Client.Screens
 {
     internal sealed class RoundSummaryScreen : Screen
     {
-        private const int TitleBottomSpacing = 20;
-        private const int TableCellSpacing = 9;
-        private const int PlayerCellSpacing = 8;
-        private const int PlayerColorSize = 20;
-        private const int ButterflyTopSpacing = 24;
-        private const int ButterflySpacing = 12;
-        private const int ButterflyVerticalPadding = 14;
-        private const int ButterflyIconSize = 34;
-        private const int ButterflyNameTopSpacing = 3;
-        private const int RulesTopSpacing = 14;
-        private const int ContinueTopSpacing = 18;
-
-        private static readonly Thickness _headerRowPadding = new Thickness(0, 0, 0, TableCellSpacing);
-        private static readonly Thickness _playerRowPadding = new Thickness(0, TableCellSpacing);
-        private static readonly Thickness _butterflyPadding = new Thickness(0, ButterflyVerticalPadding);
-
         private readonly PlayerSession _playerSession;
+        private readonly MatchPause _matchPause;
         private readonly LocalizedLabel _titleLabel = new LocalizedLabel(TextKeys.RoundSummary.RoundFinishedTitle) { Font = Fonts.Headline, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel();
-        private readonly VerticalStackPanel _placerPanel = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
-        private readonly Label _clockLabel = new Label { Font = Fonts.Body, TextColor = Theme.MintInk, VerticalAlignment = VerticalAlignment.Center };
+        private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
+        private readonly HorizontalStackPanel _placerSection = new HorizontalStackPanel();
+        private readonly VerticalStackPanel _placerPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing, VerticalAlignment = VerticalAlignment.Center };
+        private readonly CountdownView _countdownView;
         private LocalizedLabel? _gardenStaysLabel;
         private LocalizedLabel? _rulesLabel;
 
         private MatchView? _shownMatchView;
 
-        internal RoundSummaryScreen(PlayerSession playerSession)
+        internal RoundSummaryScreen(PlayerSession playerSession, MatchPause matchPause)
             : base(TextKeys.RoundSummary.HeaderLabel, true)
         {
             _playerSession = playerSession;
+            _matchPause = matchPause;
+            _countdownView = new CountdownView(matchPause.VolumeTextures, Fonts.Clock, Theme.Ink);
         }
 
         internal override void Open()
         {
             _shownMatchView = null;
+            _countdownView.Restart();
             MatchView? matchView = _playerSession.CurrentMatchView;
+            _matchPause.ShowTable(Root, matchView);
             if (matchView is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
@@ -69,6 +57,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
+            _matchPause.Advance(gameTime.ElapsedGameTime);
             MatchView? matchView = _playerSession.CurrentMatchView;
             if (matchView is null)
             {
@@ -80,7 +69,7 @@ namespace Torres.Client.Screens
                 ShowMatchView(matchView);
             }
 
-            _clockLabel.Text = FormatStepTimeLeft();
+            _countdownView.Show(FindStepTimeLeft());
             if (matchView.Phase == MatchPhase.PlayerTurn)
             {
                 RequestedScreen = ScreenId.Match;
@@ -91,92 +80,50 @@ namespace Torres.Client.Screens
             }
         }
 
+        internal override void RenderScene()
+        {
+            _matchPause.RenderScene();
+        }
+
         protected override Widget Build()
         {
-            _gardenStaysLabel = CreateHint(TextKeys.RoundSummary.GardenStaysInstruction);
-            _gardenStaysLabel.Font = Fonts.Body;
-            _gardenStaysLabel.TextAlign = TextHorizontalAlignment.Center;
-            _gardenStaysLabel.HorizontalAlignment = HorizontalAlignment.Center;
-            _gardenStaysLabel.Margin = new Thickness(0, 0, 0, TitleBottomSpacing);
+            _gardenStaysLabel = CreateCenteredHint(TextKeys.RoundSummary.GardenStaysInstruction);
+            _rulesLabel = CreateCenteredHint(TextKeys.RoundSummary.NextRoundRulesInstruction);
 
-            _rulesLabel = CreateHint(TextKeys.RoundSummary.NextRoundRulesInstruction);
-            _rulesLabel.TextAlign = TextHorizontalAlignment.Center;
-            _rulesLabel.HorizontalAlignment = HorizontalAlignment.Center;
-            _rulesLabel.Margin = new Thickness(0, RulesTopSpacing, 0, 0);
+            var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
+            cardContent.Widgets.Add(_titleLabel);
+            cardContent.Widgets.Add(_gardenStaysLabel);
+            cardContent.Widgets.Add(BuildTable());
+            cardContent.Widgets.Add(BuildButterflyPlacer());
+            cardContent.Widgets.Add(_rulesLabel);
+            cardContent.Widgets.Add(BuildContinueRow());
+            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.RoundSummaryCardWidth);
 
-            var screenLayout = new VerticalStackPanel
-            {
-                Width = Sizes.RoundSummaryWidth,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            screenLayout.Widgets.Add(_titleLabel);
-            screenLayout.Widgets.Add(_gardenStaysLabel);
-            screenLayout.Widgets.Add(BuildTable());
-            screenLayout.Widgets.Add(BuildButterflyPlacer());
-            screenLayout.Widgets.Add(_rulesLabel);
-            screenLayout.Widgets.Add(BuildContinueRow());
+            return cardLayer;
+        }
 
-            return screenLayout;
+        private static LocalizedLabel CreateCenteredHint(string textKey)
+        {
+            LocalizedLabel centeredHint = CreateHint(textKey);
+            centeredHint.Width = MatchLayout.RoundSummaryCardWidth;
+            centeredHint.Wrap = true;
+            centeredHint.TextAlign = TextHorizontalAlignment.Center;
+            centeredHint.HorizontalAlignment = HorizontalAlignment.Center;
+
+            return centeredHint;
         }
 
         private static LocalizedLabel BuildHeaderCell(string textKey)
         {
             var headerCell = new LocalizedLabel(textKey)
             {
-                Width = Sizes.RankingStatColumnWidth,
+                Width = MatchLayout.PauseStatColumnWidth,
                 Font = Fonts.Label,
                 TextColor = Theme.MutedInk,
+                TextAlign = TextHorizontalAlignment.Center,
             };
 
             return headerCell;
-        }
-
-        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, MatchRoundScore roundScore, bool isViewer)
-        {
-            HorizontalStackPanel playerCell = BuildPlayerCell(seat, Fonts.Control);
-            string butterflyText = DisplaySymbols.MissingValue;
-            if (roundScore.ButterflyPoints > 0)
-            {
-                butterflyText = DisplayFormats.FormatBonus(roundScore.ButterflyPoints);
-            }
-
-            var playerRow = new HorizontalStackPanel
-            {
-                Padding = _playerRowPadding,
-            };
-            playerRow.Widgets.Add(playerCell);
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints), Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints + roundScore.ButterflyPoints), Theme.Ink));
-            StackPanel.SetProportionType(playerCell, ProportionType.Fill);
-            if (isViewer)
-            {
-                playerRow.Background = Theme.MintTintBrush;
-            }
-
-            return playerRow;
-        }
-
-        private static HorizontalStackPanel BuildPlayerCell(MatchSeat seat, SpriteFontBase font)
-        {
-            Label nameLabel = CreatePlayerNameLabel(seat.DisplayName, Theme.Ink);
-            nameLabel.Font = font;
-
-            var playerCell = new HorizontalStackPanel
-            {
-                Spacing = PlayerCellSpacing,
-            };
-            playerCell.Widgets.Add(new Panel
-            {
-                Width = PlayerColorSize,
-                Height = PlayerColorSize,
-                Background = SeatColors.BrushFor(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            playerCell.Widgets.Add(nameLabel);
-
-            return playerCell;
         }
 
         private static Label BuildStatCell(string cellText, Color textColor)
@@ -184,23 +131,47 @@ namespace Torres.Client.Screens
             var statCell = new Label
             {
                 Text = cellText,
-                Width = Sizes.RankingStatColumnWidth,
+                Width = MatchLayout.PauseStatColumnWidth,
                 Font = Fonts.Body,
                 TextColor = textColor,
+                TextAlign = TextHorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
             return statCell;
         }
 
+        private HorizontalStackPanel BuildPlayerRow(MatchSeat seat, MatchRoundScore roundScore, bool isViewer)
+        {
+            string butterflyText = DisplaySymbols.MissingValue;
+            if (roundScore.ButterflyPoints > 0)
+            {
+                butterflyText = DisplayFormats.FormatBonus(roundScore.ButterflyPoints);
+            }
+
+            HorizontalStackPanel playerTag = _matchPause.CreatePlayerTag(seat, Fonts.Control);
+            var totalCell = new Panel { Width = MatchLayout.PauseStatColumnWidth };
+            Panel totalCircle = _matchPause.CreateScoreCircle(roundScore.PlanterPoints + roundScore.ButterflyPoints);
+            totalCircle.HorizontalAlignment = HorizontalAlignment.Center;
+            totalCell.Widgets.Add(totalCircle);
+
+            HorizontalStackPanel playerRow = _matchPause.CreateTableRow(isViewer, false);
+            playerRow.Widgets.Add(playerTag);
+            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.MintInk));
+            playerRow.Widgets.Add(totalCell);
+            StackPanel.SetProportionType(playerTag, ProportionType.Fill);
+
+            return playerRow;
+        }
+
         private VerticalStackPanel BuildTable()
         {
-            var headerRow = new HorizontalStackPanel
-            {
-                Padding = _headerRowPadding,
-            };
+            HorizontalStackPanel headerRow = _matchPause.CreateTableRow(false, false);
+            headerRow.Background = null;
             LocalizedLabel playerHeader = BuildHeaderCell(TextKeys.RoundSummary.PlayerColumn);
             playerHeader.Width = null;
+            playerHeader.TextAlign = TextHorizontalAlignment.Left;
             headerRow.Widgets.Add(playerHeader);
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.PlantersColumn));
             headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.ButterflyColumn));
@@ -216,31 +187,13 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildButterflyPlacer()
         {
-            var placerRow = new HorizontalStackPanel
-            {
-                Spacing = ButterflySpacing,
-                Padding = _butterflyPadding,
-            };
-            placerRow.Widgets.Add(new Panel
-            {
-                Width = ButterflyIconSize,
-                Height = ButterflyIconSize,
-                Background = Theme.LavenderTintBrush,
-                Border = Theme.LavenderLineBrush,
-                BorderThickness = Sizes.Border,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            placerRow.Widgets.Add(_placerPanel);
-            placerRow.Widgets.Add(_clockLabel);
+            _placerSection.Widgets.Add(_placerPanel);
+            _placerSection.Widgets.Add(_countdownView.Root);
             StackPanel.SetProportionType(_placerPanel, ProportionType.Fill);
 
-            var butterflyPlacer = new VerticalStackPanel
-            {
-                Margin = new Thickness(0, ButterflyTopSpacing, 0, 0),
-            };
+            var butterflyPlacer = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
             butterflyPlacer.Widgets.Add(CreateDivider());
-            butterflyPlacer.Widgets.Add(placerRow);
-            butterflyPlacer.Widgets.Add(CreateDivider());
+            butterflyPlacer.Widgets.Add(_placerSection);
 
             return butterflyPlacer;
         }
@@ -248,10 +201,10 @@ namespace Torres.Client.Screens
         private HorizontalStackPanel BuildContinueRow()
         {
             LocalizedButton continueButton = CreatePrimaryButton(TextKeys.RoundSummary.ContinueButton);
+            _matchPause.StylePrimaryPill(continueButton);
             continueButton.Click += ContinueButtonOnClick;
 
             HorizontalStackPanel continueRow = CreateButtonRow();
-            continueRow.Margin = new Thickness(0, ContinueTopSpacing, 0, 0);
             continueRow.HorizontalAlignment = HorizontalAlignment.Center;
             continueRow.Widgets.Add(continueButton);
 
@@ -276,22 +229,26 @@ namespace Torres.Client.Screens
             _scoreRows.Widgets.Clear();
             foreach (MatchSeat seat in matchView.Seats.Where(seat => seat.RoundScores.Count >= closedRoundNumber))
             {
-                _scoreRows.Widgets.Add(CreateDivider());
                 _scoreRows.Widgets.Add(BuildPlayerRow(seat, seat.RoundScores[closedRoundNumber - 1], seat.SeatNumber == matchView.ViewerSeatNumber));
             }
 
+            ShowButterflyPlacer(matchView);
+        }
+
+        private void ShowButterflyPlacer(MatchView matchView)
+        {
+            bool isPlacingButterfly = matchView.Phase == MatchPhase.ButterflyPlacement;
+            _placerSection.Visible = isPlacingButterfly;
             _placerPanel.Widgets.Clear();
-            if (matchView.Phase == MatchPhase.ButterflyPlacement)
+            if (isPlacingButterfly)
             {
                 MatchSeat placerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber);
-                HorizontalStackPanel placerCell = BuildPlayerCell(placerSeat, Fonts.Body);
-                placerCell.Margin = new Thickness(0, ButterflyNameTopSpacing, 0, 0);
                 _placerPanel.Widgets.Add(new LocalizedLabel(TextKeys.RoundSummary.PlaceButterflyInstruction) { Font = Fonts.Label, TextColor = Theme.MutedInk });
-                _placerPanel.Widgets.Add(placerCell);
+                _placerPanel.Widgets.Add(_matchPause.CreatePlayerPill(placerSeat));
             }
         }
 
-        private string FormatStepTimeLeft()
+        private TimeSpan FindStepTimeLeft()
         {
             TimeSpan stepTimeLeft = TimeSpan.Zero;
             if (_playerSession.StepEndsAtUtc is DateTime stepEndsAtUtc)
@@ -299,9 +256,7 @@ namespace Torres.Client.Screens
                 stepTimeLeft = stepEndsAtUtc - DateTime.UtcNow;
             }
 
-            string clockText = DisplayFormats.FormatCountdown(stepTimeLeft);
-
-            return clockText;
+            return stepTimeLeft;
         }
 
         private void ContinueButtonOnClick(object sender, MyraEventArgs e)

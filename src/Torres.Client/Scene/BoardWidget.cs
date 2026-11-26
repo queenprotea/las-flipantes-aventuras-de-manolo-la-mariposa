@@ -50,8 +50,8 @@ namespace Torres.Client.Scene
             _shownLayout = layout;
             _cellPicker = new CellPicker(layout);
             _sceneEffect = CreateSceneEffect(graphicsDevice);
-            _gardenMesh = BuildGardenMesh(graphicsDevice, layout, Array.Empty<BoardCell>());
-            _shadowMesh = BuildShadowMesh(graphicsDevice, layout);
+            _gardenMesh = GardenMeshes.BuildGardenMesh(graphicsDevice, layout, Array.Empty<BoardCell>());
+            _shadowMesh = GardenMeshes.BuildShadowMesh(graphicsDevice, layout);
             _butterflyFigure = new ButterflyFigure(graphicsDevice);
             _caterpillarFigure = new CaterpillarFigure(graphicsDevice);
             _growingFlowers = new GrowingFlowers(graphicsDevice);
@@ -95,11 +95,11 @@ namespace Torres.Client.Scene
         {
             if ((butterflyCell is BoardCell landingCell) && _isSkippingNextFlight)
             {
-                _butterflyFigure.LandAt(FindFlowerTopPoint(landingCell));
+                _butterflyFigure.LandAt(BoardGeometry.FindFlowerTopPoint(_shownLayout, landingCell));
             }
             else if (butterflyCell is BoardCell shownCell)
             {
-                _butterflyFigure.FlyTo(FindFlowerTopPoint(shownCell), _sceneTime);
+                _butterflyFigure.FlyTo(BoardGeometry.FindFlowerTopPoint(_shownLayout, shownCell), _sceneTime);
             }
             else
             {
@@ -220,7 +220,7 @@ namespace Torres.Client.Scene
             _shadowMesh.Draw(_graphicsDevice, _sceneEffect);
             if (_butterflyFigure.IsShown)
             {
-                _butterflyFigure.DrawShadow(_sceneEffect, _sceneTime, FindGroundHeightBelow(_butterflyFigure.FindFlightPoint(_sceneTime)));
+                _butterflyFigure.DrawShadow(_sceneEffect, _sceneTime, BoardGeometry.FindGroundHeightBelow(_shownLayout, _butterflyFigure.FindFlightPoint(_sceneTime)));
             }
 
             _cellMarkers.Draw(_sceneEffect, _shownLayout, _sceneTime, new CellFocus(_hoveredCell, _selectedCell));
@@ -283,52 +283,15 @@ namespace Torres.Client.Scene
             return sceneEffect;
         }
 
-        private static StaticMesh BuildGardenMesh(GraphicsDevice graphicsDevice, BoardLayout layout, IReadOnlyCollection<BoardCell> growingCells)
-        {
-            var gardenBuilder = new MeshBuilder();
-            BoardShapes.AddBoard(gardenBuilder, layout);
-            FlowerShapes.AddFlowers(gardenBuilder, layout, growingCells);
-            StaticMesh gardenMesh = gardenBuilder.BuildMesh(graphicsDevice);
-
-            return gardenMesh;
-        }
-
-        private static StaticMesh BuildShadowMesh(GraphicsDevice graphicsDevice, BoardLayout layout)
-        {
-            var shadowBuilder = new MeshBuilder();
-            ShadowShapes.AddShadows(shadowBuilder, layout);
-            StaticMesh shadowMesh = shadowBuilder.BuildMesh(graphicsDevice);
-
-            return shadowMesh;
-        }
-
         private void ReplaceLayout(BoardLayout layout)
         {
             _gardenMesh.Dispose();
             _shadowMesh.Dispose();
             _shownLayout = layout;
             _cellPicker = new CellPicker(layout);
-            _gardenMesh = BuildGardenMesh(_graphicsDevice, layout, _growingFlowers.Cells);
-            _shadowMesh = BuildShadowMesh(_graphicsDevice, layout);
+            _gardenMesh = GardenMeshes.BuildGardenMesh(_graphicsDevice, layout, _growingFlowers.Cells);
+            _shadowMesh = GardenMeshes.BuildShadowMesh(_graphicsDevice, layout);
             _selectedCell = null;
-        }
-
-        private float FindGroundHeightBelow(Vector3 worldPoint)
-        {
-            BoardCell? cellBelow = BoardGeometry.FindCellAt(worldPoint);
-            bool isOverPlanter = (cellBelow is BoardCell examinedCell) && _shownLayout.IsPlanter(examinedCell);
-            float groundHeight = isOverPlanter ? BoardGeometry.SoilTop : BoardGeometry.GrassTop;
-
-            return groundHeight;
-        }
-
-        private Vector3 FindFlowerTopPoint(BoardCell flowerCell)
-        {
-            int flowerLevel = _shownLayout.GetFlowerLevel(flowerCell);
-            float topHeight = flowerLevel > 0 ? BoardGeometry.GetFlowerTop(flowerLevel) : BoardGeometry.GetSurfaceHeight(_shownLayout, flowerCell);
-            Vector3 flowerTopPoint = BoardGeometry.GetCellCenter(flowerCell) + new Vector3(0f, topHeight, 0f);
-
-            return flowerTopPoint;
         }
 
         private void ContinueDrag(Point mousePosition)

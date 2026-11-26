@@ -21,7 +21,6 @@ namespace Torres.Client.Ui
         private const int CardRadius = 14;
         private const int PillRadius = 12;
         private const int CircleRadius = 13;
-        private const int DotRadius = 4;
 
         private readonly List<Texture2D> _textures = new List<Texture2D>();
 
@@ -32,9 +31,12 @@ namespace Torres.Client.Ui
             HoveredPillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.MintTint, Theme.MintAlt, Theme.MintLine, PillRadius, true, true));
             ChosenPillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.ChosenActionTop, Theme.ChosenAction, Theme.ChosenActionLine, PillRadius, true, true));
             HintPillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.HintPill, Theme.HintPill, Theme.HintPill, PillRadius, false, true));
+            WinnerPillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.ButterTint, Theme.Butter, Theme.ButterLine, PillRadius, true, true));
             ActivePillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.MintTint, Theme.MintAlt, Theme.ChosenAction, PillRadius, true, true));
             CircleBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.Surface, Theme.SurfaceSunken, Theme.StrongLine, CircleRadius, true, false));
-            DotImage = CreateDot(graphicsDevice);
+            PetalLineImages = CreatePetalImages(graphicsDevice, 0f);
+            PetalFillImages = CreatePetalImages(graphicsDevice, FlowerClockShapes.PetalLineShare);
+            FlowerCenterImage = new TextureRegion(CreateTexture(graphicsDevice, MatchLayout.FlowerClockSize, FlowerClockShapes.CreateCenter()));
         }
 
         internal IBrush CardBrush { get; }
@@ -49,9 +51,15 @@ namespace Torres.Client.Ui
 
         internal IBrush ActivePillBrush { get; }
 
+        internal IBrush WinnerPillBrush { get; }
+
         internal IBrush CircleBrush { get; }
 
-        internal TextureRegion DotImage { get; }
+        internal IReadOnlyList<TextureRegion> PetalLineImages { get; }
+
+        internal IReadOnlyList<TextureRegion> PetalFillImages { get; }
+
+        internal TextureRegion FlowerCenterImage { get; }
 
         public void Dispose()
         {
@@ -127,23 +135,15 @@ namespace Torres.Client.Ui
             return shadedColor;
         }
 
-        private TextureRegion CreateDot(GraphicsDevice graphicsDevice)
+        private IReadOnlyList<TextureRegion> CreatePetalImages(GraphicsDevice graphicsDevice, float insetShare)
         {
-            int textureSize = (DotRadius * 2) + 1;
-            var dotCenter = new Vector2(textureSize * HalfShare);
-            var pixels = new Color[textureSize * textureSize];
-            for (var row = 0; row < textureSize; row++)
+            var petalImages = new List<TextureRegion>();
+            for (var petalIndex = 0; petalIndex < FlowerClockShapes.PetalCount; petalIndex++)
             {
-                for (var column = 0; column < textureSize; column++)
-                {
-                    float centerDistance = Vector2.Distance(new Vector2(column + PixelCenter, row + PixelCenter), dotCenter);
-                    pixels[(row * textureSize) + column] = Color.White * MathHelper.Clamp(DotRadius + HalfShare - centerDistance, 0f, 1f);
-                }
+                petalImages.Add(new TextureRegion(CreateTexture(graphicsDevice, MatchLayout.FlowerClockSize, FlowerClockShapes.CreatePetalMask(petalIndex, insetShare))));
             }
 
-            var dotImage = new TextureRegion(CreateTexture(graphicsDevice, textureSize, pixels));
-
-            return dotImage;
+            return petalImages;
         }
 
         private Texture2D CreateTexture(GraphicsDevice graphicsDevice, int textureSize, Color[] pixels)

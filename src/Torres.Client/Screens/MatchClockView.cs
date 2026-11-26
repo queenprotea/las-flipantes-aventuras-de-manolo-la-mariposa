@@ -14,11 +14,11 @@ namespace Torres.Client.Screens
         private readonly LocalizedLabel _roundTurnLabel = new LocalizedLabel(TextKeys.Match.RoundTurnInstruction) { Font = Fonts.Small, TextColor = Theme.Ink };
         private readonly LocalizedLabel _turnStatusLabel = new LocalizedLabel(TextKeys.Match.YourTurnStatus) { Font = Fonts.Small, TextColor = Theme.MintInk };
         private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
-        private readonly ClockRing _clockRing;
+        private readonly FlowerClock _flowerClock;
 
         internal MatchClockView(VolumeTextures volumeTextures)
         {
-            _clockRing = new ClockRing(volumeTextures.DotImage, MatchLayout.ClockRingSize) { VerticalAlignment = VerticalAlignment.Center };
+            _flowerClock = new FlowerClock(volumeTextures) { VerticalAlignment = VerticalAlignment.Center };
             var turnLines = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
             turnLines.Widgets.Add(_roundTurnLabel);
             turnLines.Widgets.Add(_turnStatusLabel);
@@ -28,7 +28,7 @@ namespace Torres.Client.Screens
                 Padding = MatchLayout.HeaderCardPadding,
                 Background = volumeTextures.PillBrush,
             };
-            clockPill.Widgets.Add(_clockRing);
+            clockPill.Widgets.Add(_flowerClock);
             clockPill.Widgets.Add(_clockLabel);
             clockPill.Widgets.Add(turnLines);
             Root = clockPill;
@@ -47,7 +47,7 @@ namespace Torres.Client.Screens
         internal void ShowClock(TimeSpan stepTimeLeft, float remainingShare)
         {
             _clockLabel.Text = DisplayFormats.FormatCountdown(stepTimeLeft);
-            _clockRing.RemainingShare = remainingShare;
+            _flowerClock.RemainingShare = remainingShare;
         }
     }
 }

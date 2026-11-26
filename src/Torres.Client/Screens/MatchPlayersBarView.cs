@@ -78,39 +78,12 @@ namespace Torres.Client.Screens
                 Width = MatchLayout.PlayerPillWidth,
                 Background = isPlaying ? _volumeTextures.ActivePillBrush : _volumeTextures.PillBrush,
             };
-            playerPill.Widgets.Add(new Image
-            {
-                Width = MatchLayout.PlayerIconWidth,
-                Height = MatchLayout.PlayerIconHeight,
-                Renderable = _figureIcons.FindCaterpillarIcon(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
+            playerPill.Widgets.Add(MatchPieces.CreateCaterpillarImage(_figureIcons, seat.Color));
             playerPill.Widgets.Add(playerIdentity);
-            playerPill.Widgets.Add(BuildScoreCircle(seat.FinalScore));
+            playerPill.Widgets.Add(MatchPieces.CreateScoreCircle(_volumeTextures, seat.FinalScore));
             StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
 
             return playerPill;
-        }
-
-        private Panel BuildScoreCircle(int score)
-        {
-            var scoreCircle = new Panel
-            {
-                Width = MatchLayout.ScoreCircleSize,
-                Height = MatchLayout.ScoreCircleSize,
-                Background = _volumeTextures.CircleBrush,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            scoreCircle.Widgets.Add(new Label
-            {
-                Text = DisplayFormats.FormatInteger(score),
-                Font = Fonts.Small,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-
-            return scoreCircle;
         }
     }
 }

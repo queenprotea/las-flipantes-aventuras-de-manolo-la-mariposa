@@ -47,6 +47,24 @@ namespace Torres.Client.Scene
             return surfaceHeight;
         }
 
+        internal static float FindGroundHeightBelow(BoardLayout layout, Vector3 worldPoint)
+        {
+            BoardCell? cellBelow = FindCellAt(worldPoint);
+            bool isOverPlanter = (cellBelow is BoardCell examinedCell) && layout.IsPlanter(examinedCell);
+            float groundHeight = isOverPlanter ? SoilTop : GrassTop;
+
+            return groundHeight;
+        }
+
+        internal static Vector3 FindFlowerTopPoint(BoardLayout layout, BoardCell flowerCell)
+        {
+            int flowerLevel = layout.GetFlowerLevel(flowerCell);
+            float topHeight = flowerLevel > 0 ? GetFlowerTop(flowerLevel) : GetSurfaceHeight(layout, flowerCell);
+            Vector3 flowerTopPoint = GetCellCenter(flowerCell) + new Vector3(0f, topHeight, 0f);
+
+            return flowerTopPoint;
+        }
+
         internal static float GetFlowerTop(int flowerLevel)
         {
             float flowerTop = PlanterTop + FlowerTopOffset + (FlowerLevelHeight * flowerLevel);

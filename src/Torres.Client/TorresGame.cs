@@ -37,6 +37,7 @@ namespace Torres.Client
         private readonly DoomLauncher _doomLauncher;
 
         private MatchScreen? _matchScreen;
+        private MatchPause? _matchPause;
         private DisconnectionScreen? _disconnectionScreen;
         private ResumeScreen? _resumeScreen;
         private RoomScreen? _roomScreen;
@@ -137,6 +138,7 @@ namespace Torres.Client
             _screensById.Add(ScreenId.Profile, _profileScreen);
             _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
             _screensById.Add(ScreenId.Rooms, new RoomsScreen(_gameSessionConnection, _playerSession));
+            _matchPause = new MatchPause(GraphicsDevice);
             _matchScreen = new MatchScreen(GraphicsDevice, _gameSessionConnection, _playerSession);
             _screensById.Add(ScreenId.Match, _matchScreen);
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(_rankingChannelFactory, _playerSession));
@@ -148,16 +150,16 @@ namespace Torres.Client
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen(_gameSessionConnection, _playerSession, avatarCache));
             _screensById.Add(ScreenId.History, new HistoryScreen(_gameSessionConnection, _playerSession));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(_gameSessionConnection, _playerSession));
-            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession));
+            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(_playerSession, _matchPause));
             _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, _gameSessionConnection, _playerSession, _doomLauncher);
             _screensById.Add(ScreenId.InitialPlacement, _initialPlacementScreen);
-            _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen(_playerSession));
-            _screensById.Add(ScreenId.Result, new ResultScreen(_playerSession));
-            _disconnectionScreen = new DisconnectionScreen(_gameSessionConnection, _playerSession);
+            _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen(_playerSession, _matchPause));
+            _screensById.Add(ScreenId.Result, new ResultScreen(_playerSession, _matchPause));
+            _disconnectionScreen = new DisconnectionScreen(_gameSessionConnection, _playerSession, _matchPause);
             _screensById.Add(ScreenId.Disconnection, _disconnectionScreen);
-            _resumeScreen = new ResumeScreen(_gameSessionConnection, _playerSession);
+            _resumeScreen = new ResumeScreen(_gameSessionConnection, _playerSession, _matchPause);
             _screensById.Add(ScreenId.Resume, _resumeScreen);
-            _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen(_gameSessionConnection, _playerSession));
+            _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen(_gameSessionConnection, _playerSession, _matchPause));
         }
 
         protected override void Update(GameTime gameTime)
@@ -194,6 +196,7 @@ namespace Torres.Client
             Window.TextInput -= WindowOnTextInput;
             Window.ClientSizeChanged -= WindowOnClientSizeChanged;
             _matchScreen?.Dispose();
+            _matchPause?.Dispose();
             _initialPlacementScreen?.Dispose();
             _avatarCache?.Dispose();
             base.UnloadContent();

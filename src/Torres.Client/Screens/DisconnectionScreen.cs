@@ -18,22 +18,16 @@ namespace Torres.Client.Screens
 {
     internal sealed class DisconnectionScreen : Screen
     {
-        private const int CenterSpacing = 16;
         private const int TagSpacing = 6;
-        private const float MutedIconOpacity = 0.5f;
         private const float WithdrawnOpacity = 0.45f;
         private const float FullOpacity = 1f;
 
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly NoticeBox _noticeBox = new NoticeBox();
-        private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel();
-        private readonly Label _clockLabel = new Label
-        {
-            Font = Fonts.LargeClock,
-            TextColor = Theme.BlushInk,
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
+        private readonly MatchPause _matchPause;
+        private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
+        private readonly CountdownView _countdownView;
 
         private readonly LocalizedButton _retryButton = CreatePrimaryButton(TextKeys.Disconnection.RetryButton);
 
@@ -41,11 +35,14 @@ namespace Torres.Client.Screens
         private TimeSpan _sinceLastAttempt;
         private bool _isWaitingForMatch;
 
-        internal DisconnectionScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal DisconnectionScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, MatchPause matchPause)
             : base(TextKeys.Disconnection.HeaderLabel, true)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _matchPause = matchPause;
+            _countdownView = new CountdownView(matchPause.VolumeTextures, Fonts.Clock, Theme.BlushInk);
+            _countdownView.Root.HorizontalAlignment = HorizontalAlignment.Center;
             _retryButton.Click += RetryButtonOnClick;
         }
 
@@ -63,13 +60,16 @@ namespace Torres.Client.Screens
             _sessionReopening = null;
             _isWaitingForMatch = false;
             ClearRequests();
+            _countdownView.Restart();
+            _matchPause.ShowTable(Root, _playerSession.CurrentMatchView);
             ShowSeats();
             StartReopening();
         }
 
         internal override void Update(GameTime gameTime)
         {
-            _clockLabel.Text = FormatReconnectionTimeLeft();
+            _matchPause.Advance(gameTime.ElapsedGameTime);
+            _countdownView.Show(FindReconnectionTimeLeft());
             FollowReopening();
             bool isWaitingToRetry = (_sessionReopening is null) && !_isWaitingForMatch;
             if (isWaitingToRetry)
@@ -83,6 +83,11 @@ namespace Torres.Client.Screens
             }
         }
 
+        internal override void RenderScene()
+        {
+            _matchPause.RenderScene();
+        }
+
         internal void ClearRequests()
         {
             WasExitRequested = false;
@@ -93,81 +98,51 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            VerticalStackPanel centerPanel = BuildCenter();
-            HorizontalStackPanel columns = CreateColumns();
-            columns.Widgets.Add(centerPanel);
-            columns.Widgets.Add(BuildSideColumn());
-            StackPanel.SetProportionType(centerPanel, ProportionType.Fill);
-
-            return columns;
-        }
-
-        private VerticalStackPanel BuildCenter()
-        {
             var resumeTurnMessage = new LocalizedLabel(TextKeys.Disconnection.ResumeTurnMessage)
             {
-                Width = Sizes.DisconnectionMessageWidth,
+                Width = MatchLayout.DisconnectionCardWidth,
                 Font = Fonts.Body,
                 TextColor = Theme.SoftInk,
                 Wrap = true,
                 TextAlign = TextHorizontalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            _noticeBox.Width = Sizes.DisconnectionMessageWidth;
             _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
 
-            var centerPanel = new VerticalStackPanel
-            {
-                Spacing = CenterSpacing,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            centerPanel.Widgets.Add(new Panel
-            {
-                Width = Sizes.DisconnectionIconSize,
-                Height = Sizes.DisconnectionIconSize,
-                Background = Theme.MintAltBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Sizes.Border,
-                Opacity = MutedIconOpacity,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            centerPanel.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.ConnectionLostTitle)
+            var playersSection = new VerticalStackPanel { Spacing = MatchLayout.SectionLabelSpacing };
+            playersSection.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.PlayersLabel) { Font = Fonts.Label, TextColor = Theme.MutedInk });
+            playersSection.Widgets.Add(_playersPanel);
+
+            var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
+            cardContent.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.ConnectionLostTitle)
             {
                 Font = Fonts.Notice,
                 TextColor = Theme.Ink,
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            centerPanel.Widgets.Add(_clockLabel);
-            centerPanel.Widgets.Add(resumeTurnMessage);
-            centerPanel.Widgets.Add(_noticeBox);
-            centerPanel.Widgets.Add(BuildActions());
+            cardContent.Widgets.Add(_countdownView.Root);
+            cardContent.Widgets.Add(resumeTurnMessage);
+            cardContent.Widgets.Add(CreateDivider());
+            cardContent.Widgets.Add(playersSection);
+            cardContent.Widgets.Add(_noticeBox);
+            cardContent.Widgets.Add(BuildActions());
+            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.DisconnectionCardWidth);
 
-            return centerPanel;
+            return cardLayer;
         }
 
         private HorizontalStackPanel BuildActions()
         {
             LocalizedButton exitButton = CreateSecondaryButton(TextKeys.Disconnection.ExitMatchButton);
+            _matchPause.StyleSecondaryPill(exitButton);
+            _matchPause.StylePrimaryPill(_retryButton);
             exitButton.Click += ExitButtonOnClick;
-
             HorizontalStackPanel actionButtons = CreateButtonRow();
             actionButtons.HorizontalAlignment = HorizontalAlignment.Center;
             actionButtons.Widgets.Add(_retryButton);
             actionButtons.Widgets.Add(exitButton);
 
             return actionButtons;
-        }
-
-        private VerticalStackPanel BuildSideColumn()
-        {
-            var sideColumn = new VerticalStackPanel
-            {
-                Width = Sizes.DisconnectionSideWidth,
-                VerticalAlignment = VerticalAlignment.Top,
-            };
-            sideColumn.Widgets.Add(CreateGameSection(TextKeys.Disconnection.PlayersLabel, _playersPanel));
-
-            return sideColumn;
         }
 
         private void ShowSeats()
@@ -183,35 +158,14 @@ namespace Torres.Client.Screens
             }
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer)
+        private HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer)
         {
-            var playerIdentity = new VerticalStackPanel
-            {
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            playerIdentity.Widgets.Add(CreatePlayerNameLabel(seat.DisplayName, Theme.Ink));
-
-            HorizontalStackPanel playerTags = BuildTags(seat, isViewer);
-            if (playerTags.Widgets.Count > 0)
-            {
-                playerIdentity.Widgets.Add(playerTags);
-            }
-
-            var playerRow = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.PlayerRowSpacing,
-                Padding = MatchLayout.PlayerRowPadding,
-                Opacity = seat.IsRetired ? WithdrawnOpacity : FullOpacity,
-            };
-            playerRow.Widgets.Add(new Panel
-            {
-                Width = MatchLayout.PlayerIconSize,
-                Height = MatchLayout.PlayerIconSize,
-                Background = SeatColors.BrushFor(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            playerRow.Widgets.Add(playerIdentity);
-            StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
+            HorizontalStackPanel playerTag = _matchPause.CreatePlayerTag(seat, Fonts.Body);
+            HorizontalStackPanel playerRow = _matchPause.CreateStatusPill();
+            playerRow.Opacity = seat.IsRetired ? WithdrawnOpacity : FullOpacity;
+            playerRow.Widgets.Add(playerTag);
+            playerRow.Widgets.Add(BuildTags(seat, isViewer));
+            StackPanel.SetProportionType(playerTag, ProportionType.Fill);
 
             return playerRow;
         }
@@ -245,7 +199,7 @@ namespace Torres.Client.Screens
             return playerTags;
         }
 
-        private string FormatReconnectionTimeLeft()
+        private TimeSpan FindReconnectionTimeLeft()
         {
             TimeSpan reconnectionTimeLeft = TimeSpan.Zero;
             if (_playerSession.ReconnectionEndsAtUtc is DateTime reconnectionEndsAtUtc)
@@ -253,9 +207,7 @@ namespace Torres.Client.Screens
                 reconnectionTimeLeft = reconnectionEndsAtUtc - DateTime.UtcNow;
             }
 
-            string clockText = DisplayFormats.FormatCountdown(reconnectionTimeLeft);
-
-            return clockText;
+            return reconnectionTimeLeft;
         }
 
         private void StartReopening()

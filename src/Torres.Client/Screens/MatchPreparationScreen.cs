@@ -6,7 +6,6 @@ using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -17,31 +16,27 @@ namespace Torres.Client.Screens
 {
     internal sealed class MatchPreparationScreen : Screen
     {
-        private const int SummarySpacing = 12;
-        private const int SeatingLabelSpacing = 8;
-        private const int SeatRowSpacing = 8;
-        private const int SeatColorSize = 20;
         private const double SecondsBeforePlacement = 3;
 
-        private static readonly Thickness _titleMargin = new Thickness(0, 6, 0, 2);
-        private static readonly Thickness _seatRowPadding = new Thickness(0, 4);
-
         private readonly PlayerSession _playerSession;
+        private readonly MatchPause _matchPause;
         private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.MatchPreparation.SummaryLabel) { Font = Fonts.Body, TextColor = Theme.MutedInk, TextAlign = TextHorizontalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly VerticalStackPanel _seatsPanel = new VerticalStackPanel();
+        private readonly VerticalStackPanel _seatsPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing, HorizontalAlignment = HorizontalAlignment.Center };
 
         private double _secondsShown;
 
-        internal MatchPreparationScreen(PlayerSession playerSession)
+        internal MatchPreparationScreen(PlayerSession playerSession, MatchPause matchPause)
             : base(TextKeys.MatchPreparation.HeaderLabel, true)
         {
             _playerSession = playerSession;
+            _matchPause = matchPause;
         }
 
         internal override void Open()
         {
             _secondsShown = 0;
             MatchView? matchView = _playerSession.CurrentMatchView;
+            _matchPause.ShowTable(Root, matchView);
             if (matchView is null)
             {
                 RequestedScreen = ScreenId.MainMenu;
@@ -54,6 +49,7 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
+            _matchPause.Advance(gameTime.ElapsedGameTime);
             _secondsShown += gameTime.ElapsedGameTime.TotalSeconds;
             if (_secondsShown < SecondsBeforePlacement)
             {
@@ -63,88 +59,37 @@ namespace Torres.Client.Screens
             RequestedScreen = ScreenId.InitialPlacement;
         }
 
+        internal override void RenderScene()
+        {
+            _matchPause.RenderScene();
+        }
+
         protected override Widget Build()
         {
-            Panel ambiencePanel = CreateAmbiencePanel();
-            ambiencePanel.Width = Sizes.PreparationSceneWidth;
-            ambiencePanel.Height = Sizes.PreparationSceneHeight;
-            ambiencePanel.HorizontalAlignment = HorizontalAlignment.Center;
-            ambiencePanel.VerticalAlignment = VerticalAlignment.Top;
-
             var titleLabel = new LocalizedLabel(TextKeys.MatchPreparation.Title)
             {
                 Font = Fonts.Heading,
                 TextColor = Theme.Ink,
-                Margin = _titleMargin,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
-            var screenLayout = new VerticalStackPanel
-            {
-                Width = Sizes.MatchPreparationWidth,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            screenLayout.Widgets.Add(ambiencePanel);
-            screenLayout.Widgets.Add(titleLabel);
-            screenLayout.Widgets.Add(_summaryLabel);
-            screenLayout.Widgets.Add(BuildSeatingOrder());
+            var titleBlock = new VerticalStackPanel();
+            titleBlock.Widgets.Add(titleLabel);
+            titleBlock.Widgets.Add(_summaryLabel);
 
-            return screenLayout;
-        }
-
-        private VerticalStackPanel BuildSeatingOrder()
-        {
-            var seatingList = new VerticalStackPanel
-            {
-                Spacing = SeatingLabelSpacing,
-                Width = Sizes.SeatingOrderWidth,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            seatingList.Widgets.Add(new LocalizedLabel(TextKeys.MatchPreparation.SeatingOrderLabel)
+            var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
+            cardContent.Widgets.Add(titleBlock);
+            cardContent.Widgets.Add(CreateDivider());
+            cardContent.Widgets.Add(new LocalizedLabel(TextKeys.MatchPreparation.SeatingOrderLabel)
             {
                 Font = Fonts.Label,
                 TextColor = Theme.MutedInk,
-            });
-
-            seatingList.Widgets.Add(_seatsPanel);
-
-            var seatingOrderSection = new VerticalStackPanel
-            {
-                Spacing = SummarySpacing,
-                Margin = new Thickness(0, SummarySpacing, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            seatingOrderSection.Widgets.Add(CreateDivider());
-            seatingOrderSection.Widgets.Add(seatingList);
-
-            return seatingOrderSection;
-        }
-
-        private static HorizontalStackPanel BuildSeatRow(MatchSeat seat)
-        {
-            var seatRow = new HorizontalStackPanel
-            {
-                Spacing = SeatRowSpacing,
-                Padding = _seatRowPadding,
-            };
-            seatRow.Widgets.Add(new Panel
-            {
-                Width = SeatColorSize,
-                Height = SeatColorSize,
-                Background = SeatColors.BrushFor(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
             });
-            seatRow.Widgets.Add(new Label
-            {
-                Text = seat.DisplayName,
-                Font = Fonts.Control,
-                TextColor = Theme.Ink,
-                VerticalAlignment = VerticalAlignment.Center,
-                SupportsCommands = false,
-            });
+            cardContent.Widgets.Add(_seatsPanel);
+            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.PreparationCardWidth);
 
-            return seatRow;
+            return cardLayer;
         }
 
         private void ShowSeats(IReadOnlyList<MatchSeat> seats)
@@ -153,7 +98,9 @@ namespace Torres.Client.Screens
             _seatsPanel.Widgets.Clear();
             foreach (MatchSeat seat in seats)
             {
-                _seatsPanel.Widgets.Add(BuildSeatRow(seat));
+                HorizontalStackPanel seatPill = _matchPause.CreatePlayerPill(seat);
+                seatPill.HorizontalAlignment = HorizontalAlignment.Center;
+                _seatsPanel.Widgets.Add(seatPill);
             }
         }
     }

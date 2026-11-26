@@ -8,7 +8,6 @@ using Game.Contracts;
 
 using Microsoft.Xna.Framework;
 
-using Myra.Graphics2D;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.Localization;
@@ -19,31 +18,24 @@ namespace Torres.Client.Screens
 {
     internal sealed class ResumeScreen : Screen
     {
-        private const int TitleTopSpacing = 4;
-        private const int StatusBottomSpacing = 14;
-        private const int PlayersTopSpacing = 22;
-        private const int PlayersTopPadding = 16;
-        private const int HintTopSpacing = 16;
-
         private readonly GameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly NoticeBox _noticeBox = new NoticeBox();
-        private readonly VerticalStackPanel _playerRows = new VerticalStackPanel();
-        private readonly Label _clockLabel = new Label
-        {
-            Font = Fonts.Clock,
-            TextColor = Theme.MintInk,
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
+        private readonly MatchPause _matchPause;
+        private readonly VerticalStackPanel _playerRows = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
+        private readonly CountdownView _countdownView;
 
         private Task<ReturnToMatchResult>? _returnRequest;
         private MatchView? _shownView;
 
-        internal ResumeScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal ResumeScreen(GameSessionConnection gameSessionConnection, PlayerSession playerSession, MatchPause matchPause)
             : base(TextKeys.Resume.HeaderLabel, true)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _matchPause = matchPause;
+            _countdownView = new CountdownView(matchPause.VolumeTextures, Fonts.Clock, Theme.MintInk);
+            _countdownView.Root.HorizontalAlignment = HorizontalAlignment.Center;
         }
 
         internal bool WasMatchLost { get; private set; }
@@ -53,7 +45,9 @@ namespace Torres.Client.Screens
             _noticeBox.Hide();
             _shownView = null;
             WasMatchLost = false;
+            _countdownView.Restart();
             _playerRows.Widgets.Clear();
+            _matchPause.ShowTable(Root, _playerSession.CurrentMatchView);
             bool hasReturned = (_playerSession.CurrentMatchView is MatchView matchView) && PlayerSession.HasViewerReturned(matchView);
             if (!hasReturned && (_returnRequest is null))
             {
@@ -63,7 +57,8 @@ namespace Torres.Client.Screens
 
         internal override void Update(GameTime gameTime)
         {
-            _clockLabel.Text = FormatResumeTimeLeft();
+            _matchPause.Advance(gameTime.ElapsedGameTime);
+            _countdownView.Show(FindResumeTimeLeft());
             FollowReturnRequest();
             MatchView? matchView = _playerSession.CurrentMatchView;
             if ((matchView is not null) && !ReferenceEquals(matchView, _shownView) && (matchView.Phase == MatchPhase.AwaitingPlayers))
@@ -71,6 +66,11 @@ namespace Torres.Client.Screens
                 _shownView = matchView;
                 ShowPlayers(matchView);
             }
+        }
+
+        internal override void RenderScene()
+        {
+            _matchPause.RenderScene();
         }
 
         internal void ClearRequests()
@@ -81,69 +81,48 @@ namespace Torres.Client.Screens
         protected override Widget Build()
         {
             LocalizedLabel noActionNeeded = CreateCenteredHint(TextKeys.Resume.NoActionNeededMessage);
-            noActionNeeded.Margin = new Thickness(0, HintTopSpacing, 0, 0);
             LocalizedLabel discardedTurn = CreateCenteredHint(TextKeys.Resume.DiscardedTurnMessage);
             _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
 
-            var screenLayout = new VerticalStackPanel
-            {
-                Width = Sizes.ResumeWidth,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            screenLayout.Widgets.Add(new Panel
-            {
-                Width = Sizes.ResumeIconSize,
-                Height = Sizes.ResumeIconSize,
-                Background = Theme.MintAltBrush,
-                Border = Theme.MintLineBrush,
-                BorderThickness = Sizes.Border,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            screenLayout.Widgets.Add(new LocalizedLabel(TextKeys.Resume.Title)
+            var titleBlock = new VerticalStackPanel();
+            titleBlock.Widgets.Add(new LocalizedLabel(TextKeys.Resume.Title)
             {
                 Font = Fonts.Notice,
                 TextColor = Theme.Ink,
-                Margin = new Thickness(0, TitleTopSpacing, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            screenLayout.Widgets.Add(new LocalizedLabel(TextKeys.Resume.WaitingStatus)
+            titleBlock.Widgets.Add(new LocalizedLabel(TextKeys.Resume.WaitingStatus)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.MutedInk,
-                Margin = new Thickness(0, 0, 0, StatusBottomSpacing),
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
-            screenLayout.Widgets.Add(_clockLabel);
-            screenLayout.Widgets.Add(BuildPlayers());
-            screenLayout.Widgets.Add(noActionNeeded);
-            screenLayout.Widgets.Add(discardedTurn);
-            screenLayout.Widgets.Add(_noticeBox);
 
-            return screenLayout;
+            var hintBlock = new VerticalStackPanel();
+            hintBlock.Widgets.Add(noActionNeeded);
+            hintBlock.Widgets.Add(discardedTurn);
+
+            var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
+            cardContent.Widgets.Add(titleBlock);
+            cardContent.Widgets.Add(_countdownView.Root);
+            cardContent.Widgets.Add(CreateDivider());
+            cardContent.Widgets.Add(_playerRows);
+            cardContent.Widgets.Add(hintBlock);
+            cardContent.Widgets.Add(_noticeBox);
+            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.ResumeCardWidth);
+
+            return cardLayer;
         }
 
         private static LocalizedLabel CreateCenteredHint(string textKey)
         {
             LocalizedLabel centeredHint = CreateHint(textKey);
+            centeredHint.Width = MatchLayout.ResumeCardWidth;
+            centeredHint.Wrap = true;
             centeredHint.TextAlign = TextHorizontalAlignment.Center;
             centeredHint.HorizontalAlignment = HorizontalAlignment.Center;
 
             return centeredHint;
-        }
-
-        private VerticalStackPanel BuildPlayers()
-        {
-            _playerRows.Margin = new Thickness(0, PlayersTopPadding, 0, 0);
-
-            var playersPanel = new VerticalStackPanel
-            {
-                Margin = new Thickness(0, PlayersTopSpacing, 0, 0),
-            };
-            playersPanel.Widgets.Add(CreateDivider());
-            playersPanel.Widgets.Add(_playerRows);
-
-            return playersPanel;
         }
 
         private void ShowPlayers(MatchView matchView)
@@ -155,36 +134,25 @@ namespace Torres.Client.Screens
             }
         }
 
-        private static HorizontalStackPanel BuildPlayerRow(MatchSeat seat)
+        private HorizontalStackPanel BuildPlayerRow(MatchSeat seat)
         {
             bool hasReturned = !seat.IsDisconnected;
-            Label nameLabel = CreatePlayerNameLabel(seat.DisplayName, Theme.Ink);
-            var playerRow = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.PlayerRowSpacing,
-                Padding = MatchLayout.PlayerRowPadding,
-            };
-            playerRow.Widgets.Add(new Panel
-            {
-                Width = MatchLayout.PlayerIconSize,
-                Height = MatchLayout.PlayerIconSize,
-                Background = SeatColors.BrushFor(seat.Color),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            playerRow.Widgets.Add(nameLabel);
+            HorizontalStackPanel playerTag = _matchPause.CreatePlayerTag(seat, Fonts.Body);
+            HorizontalStackPanel playerRow = _matchPause.CreateStatusPill();
+            playerRow.Widgets.Add(playerTag);
             playerRow.Widgets.Add(new Label
             {
                 Text = hasReturned ? DisplaySymbols.CheckMark : DisplaySymbols.WaitingClock,
-                Font = Fonts.Small,
+                Font = Fonts.Body,
                 TextColor = hasReturned ? Theme.MintInk : Theme.MutedInk,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            StackPanel.SetProportionType(nameLabel, ProportionType.Fill);
+            StackPanel.SetProportionType(playerTag, ProportionType.Fill);
 
             return playerRow;
         }
 
-        private string FormatResumeTimeLeft()
+        private TimeSpan FindResumeTimeLeft()
         {
             TimeSpan resumeTimeLeft = TimeSpan.Zero;
             bool isWaiting = _playerSession.CurrentMatchView?.Phase == MatchPhase.AwaitingPlayers;
@@ -193,9 +161,7 @@ namespace Torres.Client.Screens
                 resumeTimeLeft = resumeEndsAtUtc - DateTime.UtcNow;
             }
 
-            string clockText = DisplayFormats.FormatCountdown(resumeTimeLeft);
-
-            return clockText;
+            return resumeTimeLeft;
         }
 
         private void FollowReturnRequest()

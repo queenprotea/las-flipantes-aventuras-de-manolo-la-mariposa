@@ -32,6 +32,7 @@ namespace Torres.Client.Ui
         internal static Color Butter { get; } = new Color(0xF7, 0xE9, 0xB0);
         internal static Color ButterTint { get; } = new Color(0xFC, 0xF6, 0xDF);
         internal static Color ButterInk { get; } = new Color(0x6B, 0x5A, 0x20);
+        internal static Color ButterLine { get; } = new Color(0xE2, 0xBE, 0x5C);
 
         internal static Color Sky { get; } = new Color(0xBF, 0xE0, 0xEC);
         internal static Color SkyTint { get; } = new Color(0xE7, 0xF4, 0xF8);
@@ -45,7 +46,11 @@ namespace Torres.Client.Ui
         internal static Color ChosenActionLine { get; } = new Color(0x4E, 0x9C, 0x6C);
         internal static Color HintPill { get; } = new Color(0x4E, 0x5D, 0x53);
         internal static Color PanelShadow { get; } = new Color(0x37, 0x47, 0x3C);
-        internal static Color ClockTrack { get; } = new Color(0xE3, 0xEF, 0xD8);
+        internal static Color ClockPetal { get; } = new Color(0xE8, 0xA1, 0xA8);
+        internal static Color ClockPetalLine { get; } = new Color(0xC7, 0x7F, 0x88);
+        internal static Color ClockPetalWithered { get; } = new Color(0xC4, 0xA4, 0x86);
+        internal static Color ClockPetalLast { get; } = new Color(0xD0, 0x63, 0x6E);
+        internal static Color ClockPetalLastLine { get; } = new Color(0xA8, 0x46, 0x52);
         internal static Color MatchBackground { get; } = new Color(0xF7, 0xFA, 0xF3);
         internal static Color PointsInk { get; } = new Color(0x3A, 0x7C, 0xA8);
         internal static Color CardLine { get; } = new Color(0xCF, 0xDC, 0xC4);

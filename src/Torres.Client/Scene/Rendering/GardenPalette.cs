@@ -5,6 +5,7 @@ namespace Torres.Client.Scene
     internal static class GardenPalette
     {
         private const float ShadowOpacity = 0.16f;
+        private const float BackdropVeilOpacity = 0.5f;
 
         internal static Color Background { get; } = new Color(0xEE, 0xF5, 0xEA);
         internal static Color TablePlank { get; } = new Color(0xEA, 0xDF, 0xCB);
@@ -55,6 +56,7 @@ namespace Torres.Client.Scene
         internal static Color SproutSepal { get; } = new Color(0x6F, 0xAF, 0x8B);
         internal static Color SproutBud { get; } = new Color(0xE8, 0xA1, 0xA8);
         internal static Color SproutBudTip { get; } = new Color(0xD7, 0xA3, 0xA0);
+        internal static Color BackdropVeil { get; } = new Color(0xF7, 0xF2, 0xE6) * BackdropVeilOpacity;
         internal static Color DewDrop { get; } = new Color(0x8E, 0xC5, 0xE8);
         internal static Color ExtraDewDrop { get; } = new Color(0xF2, 0xD2, 0x7A);
         internal static Color CardEdge { get; } = new Color(0xCF, 0xDC, 0xC4);

@@ -33,7 +33,7 @@ namespace Torres.Client.Screens
         private readonly ChatView _chatView;
         private readonly VerticalStackPanel _turnOrderPanel = new VerticalStackPanel();
         private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
-        private readonly ClockRing _clockRing;
+        private readonly FlowerClock _flowerClock;
         private readonly LocalizedLabel _instructionLabel = new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction) { Font = Fonts.Small, TextColor = Theme.Surface };
         private readonly LocalizedLabel _turnLabel = new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction) { Font = Fonts.Small, TextColor = Theme.MintInk, VerticalAlignment = VerticalAlignment.Center };
         private readonly Panel _instructionPill;
@@ -55,7 +55,7 @@ namespace Torres.Client.Screens
             _figureIcons = new FigureIcons(graphicsDevice);
             _volumeTextures = new VolumeTextures(graphicsDevice);
             _playersBar = new MatchPlayersBarView(_figureIcons, _volumeTextures);
-            _clockRing = new ClockRing(_volumeTextures.DotImage, MatchLayout.ClockRingSize) { VerticalAlignment = VerticalAlignment.Center };
+            _flowerClock = new FlowerClock(_volumeTextures) { VerticalAlignment = VerticalAlignment.Center };
             _instructionPill = new Panel
             {
                 Padding = MatchLayout.HintPillPadding,
@@ -150,7 +150,7 @@ namespace Torres.Client.Screens
                 Padding = MatchLayout.HeaderCardPadding,
                 Background = _volumeTextures.PillBrush,
             };
-            clockPill.Widgets.Add(_clockRing);
+            clockPill.Widgets.Add(_flowerClock);
             clockPill.Widgets.Add(_clockLabel);
             clockPill.Widgets.Add(_turnLabel);
             var topBar = new HorizontalStackPanel
@@ -284,7 +284,7 @@ namespace Torres.Client.Screens
             }
 
             _clockLabel.Text = DisplayFormats.FormatCountdown(placementTimeLeft);
-            _clockRing.RemainingShare = _shownStepTime > TimeSpan.Zero ? (float)(placementTimeLeft / _shownStepTime) : 0f;
+            _flowerClock.RemainingShare = _shownStepTime > TimeSpan.Zero ? (float)(placementTimeLeft / _shownStepTime) : 0f;
         }
 
         private void ShowMatchView(MatchView matchView)
