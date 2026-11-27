@@ -6,21 +6,13 @@ namespace Game.Services
 {
     internal sealed class PendingAvatarUpload
     {
-        private const string IncompleteUploadMessage = "The avatar upload has not received the start of the image.";
-
-        private readonly byte[] _original;
         private readonly byte[] _thumbnail;
-        private readonly bool[] _receivedOriginalParts;
-        private readonly bool[] _receivedThumbnailParts;
+        private readonly bool[] _receivedParts;
 
-        private string? _extension;
-
-        internal PendingAvatarUpload(int originalBytes, int thumbnailBytes, DateTime startedAtUtc)
+        internal PendingAvatarUpload(int thumbnailBytes, DateTime startedAtUtc)
         {
-            _original = new byte[originalBytes];
             _thumbnail = new byte[thumbnailBytes];
-            _receivedOriginalParts = new bool[CountParts(originalBytes)];
-            _receivedThumbnailParts = new bool[CountParts(thumbnailBytes)];
+            _receivedParts = new bool[CountParts(thumbnailBytes)];
             LastActivityUtc = startedAtUtc;
         }
 
@@ -28,29 +20,26 @@ namespace Game.Services
 
         internal bool IsComplete()
         {
-            bool isComplete = (_extension is not null)
-                && Array.TrueForAll(_receivedOriginalParts, IsReceived)
-                && Array.TrueForAll(_receivedThumbnailParts, IsReceived);
+            bool isComplete = Array.TrueForAll(_receivedParts, IsReceived);
 
             return isComplete;
         }
 
         internal SendAvatarPartResult Write(ReceivedAvatarPart receivedPart, DateTime nowUtc)
         {
-            byte[] targetBuffer = receivedPart.FileKind == AvatarFileKind.Thumbnail ? _thumbnail : _original;
-            if (!FitsInBuffer(targetBuffer.Length, receivedPart.Offset, receivedPart.Bytes.Length))
+            if (!FitsInBuffer(_thumbnail.Length, receivedPart.Offset, receivedPart.Bytes.Length))
             {
                 return SendAvatarPartResult.OutOfRange;
             }
 
-            SendAvatarPartResult writeResult = CheckFileStart(receivedPart);
-            if (writeResult == SendAvatarPartResult.Accepted)
+            bool isValidStart = (receivedPart.Offset != 0) || AvatarImageCheck.IsValidThumbnailStart(receivedPart.Bytes);
+            SendAvatarPartResult writeResult = SendAvatarPartResult.ThumbnailInvalid;
+            if (isValidStart)
             {
-                receivedPart.Bytes.CopyTo(targetBuffer, receivedPart.Offset);
-                bool[] receivedParts = receivedPart.FileKind == AvatarFileKind.Thumbnail ? _receivedThumbnailParts : _receivedOriginalParts;
-                receivedParts[receivedPart.Offset / ProfileLimits.AvatarPartBytes] = true;
+                receivedPart.Bytes.CopyTo(_thumbnail, receivedPart.Offset);
+                _receivedParts[receivedPart.Offset / ProfileLimits.AvatarPartBytes] = true;
                 LastActivityUtc = nowUtc;
-                writeResult = CheckCompletedThumbnail(receivedPart.FileKind);
+                writeResult = CheckCompletedThumbnail();
             }
 
             return writeResult;
@@ -63,12 +52,7 @@ namespace Game.Services
 
         internal CompletedAvatarUpload ToCompleted()
         {
-            if (_extension is null)
-            {
-                throw new InvalidOperationException(IncompleteUploadMessage);
-            }
-
-            var completedUpload = new CompletedAvatarUpload(_original, _extension, _thumbnail);
+            var completedUpload = new CompletedAvatarUpload(_thumbnail);
 
             return completedUpload;
         }
@@ -93,37 +77,12 @@ namespace Game.Services
             return isPartReceived;
         }
 
-        private SendAvatarPartResult CheckCompletedThumbnail(AvatarFileKind writtenFileKind)
+        private SendAvatarPartResult CheckCompletedThumbnail()
         {
-            bool isThumbnailComplete = (writtenFileKind == AvatarFileKind.Thumbnail) && Array.TrueForAll(_receivedThumbnailParts, IsReceived);
-            SendAvatarPartResult completionResult = SendAvatarPartResult.Accepted;
-            if (isThumbnailComplete && !AvatarImageCheck.IsDecodableThumbnail(_thumbnail))
-            {
-                completionResult = SendAvatarPartResult.ThumbnailInvalid;
-            }
+            bool isUndecodable = IsComplete() && !AvatarImageCheck.IsDecodableThumbnail(_thumbnail);
+            SendAvatarPartResult completionResult = isUndecodable ? SendAvatarPartResult.ThumbnailInvalid : SendAvatarPartResult.Accepted;
 
             return completionResult;
-        }
-
-        private SendAvatarPartResult CheckFileStart(ReceivedAvatarPart receivedPart)
-        {
-            SendAvatarPartResult fileStartResult = SendAvatarPartResult.Accepted;
-            if (receivedPart.Offset != 0)
-            {
-                return fileStartResult;
-            }
-
-            if (receivedPart.FileKind == AvatarFileKind.Thumbnail)
-            {
-                fileStartResult = AvatarImageCheck.IsValidThumbnailStart(receivedPart.Bytes) ? SendAvatarPartResult.Accepted : SendAvatarPartResult.ThumbnailInvalid;
-            }
-            else
-            {
-                _extension = AvatarImageCheck.FindExtension(receivedPart.Bytes);
-                fileStartResult = _extension is null ? SendAvatarPartResult.AvatarInvalidFormat : SendAvatarPartResult.Accepted;
-            }
-
-            return fileStartResult;
         }
     }
 }

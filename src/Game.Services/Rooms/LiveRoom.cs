@@ -99,6 +99,28 @@ namespace Game.Services
             return isApplied;
         }
 
+        internal IReadOnlyList<SessionOwner> SeatForResumedMatch(IReadOnlyList<MatchEntrant> entrants, DateTime nowUtc)
+        {
+            var seatedOwners = new List<SessionOwner>();
+            lock (_roomLock)
+            {
+                foreach (MatchEntrant entrant in entrants.OrderBy(entrant => entrant.MemberId))
+                {
+                    SessionOwner owner = entrant.IsGuest ? SessionOwner.ForGuest(entrant.EntrantId, entrant.DisplayName) : SessionOwner.ForPlayer(entrant.EntrantId, entrant.DisplayName);
+                    var restoredMember = new LiveRoomMember(entrant.MemberId, owner, entrant.SeatColor);
+                    restoredMember.MarkInactive(nowUtc);
+                    _members.Add(restoredMember);
+                    _lastMemberId = Math.Max(_lastMemberId, entrant.MemberId);
+                    seatedOwners.Add(owner);
+                }
+
+                _hostMemberId = _members.Count > 0 ? _members[0].MemberId : 0;
+                _isInMatch = _members.Count > 0;
+            }
+
+            return seatedOwners;
+        }
+
         internal JoinRoomStatus Admit(SessionOwner owner)
         {
             JoinRoomStatus admission;
@@ -175,6 +197,7 @@ namespace Game.Services
                 if ((returningMember is not null) && !returningMember.IsActive)
                 {
                     returningMember.MarkActive();
+                    TakeHostIfUnattended(returningMember);
                     wasInactive = true;
                 }
             }
@@ -306,18 +329,18 @@ namespace Game.Services
             return posting;
         }
 
-        internal IReadOnlyList<ChatMessage>? ReadChatHistory(int readerOwnerId)
+        internal RoomChatHistory? ReadChatHistory(int readerOwnerId)
         {
-            IReadOnlyList<ChatMessage>? keptMessages = null;
+            RoomChatHistory? chatHistory = null;
             lock (_roomLock)
             {
                 if (FindByOwner(readerOwnerId) is not null)
                 {
-                    keptMessages = _chat.ListMessages();
+                    chatHistory = new RoomChatHistory(_chat.ListMessages(), _chat.ListClosedReportIds(readerOwnerId));
                 }
             }
 
-            return keptMessages;
+            return chatHistory;
         }
 
         internal ReportTarget? FindReportTarget(int reporterOwnerId, int messageId)
@@ -427,6 +450,15 @@ namespace Game.Services
             var departure = new RoomDeparture(true, hasHostChanged, isRoomEmpty);
 
             return departure;
+        }
+
+        private void TakeHostIfUnattended(LiveRoomMember returningMember)
+        {
+            bool isHostActive = _members.Exists(member => (member.MemberId == _hostMemberId) && member.IsActive);
+            if (!isHostActive)
+            {
+                _hostMemberId = returningMember.MemberId;
+            }
         }
 
         private bool PassHostIfHeldBy(LiveRoomMember lostMember)

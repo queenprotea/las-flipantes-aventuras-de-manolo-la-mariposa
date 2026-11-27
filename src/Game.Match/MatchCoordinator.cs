@@ -116,6 +116,19 @@ namespace Game.Match
             return waitingEntrantIds;
         }
 
+        public IReadOnlyList<InterruptedRoom> ListInterruptedRooms()
+        {
+            List<AwaitingMatch> awaitingMatches;
+            lock (_coordinatorLock)
+            {
+                awaitingMatches = _awaitingMatchesByEntrantId.Values.Distinct().ToList();
+            }
+
+            List<InterruptedRoom> interruptedRooms = awaitingMatches.Select(ToInterruptedRoom).ToList();
+
+            return interruptedRooms;
+        }
+
         public MatchSeating? FindSeating(int entrantId)
         {
             AwaitingMatch? awaitingMatch = FindAwaitingMatchOfEntrant(entrantId);
@@ -399,6 +412,14 @@ namespace Game.Match
             var awaitingMatch = new AwaitingMatch(seatedMatch, matchTable, _matchRecordWriter, _timeProvider, _matchListener, resumption.TimeLimits);
 
             return awaitingMatch;
+        }
+
+        private static InterruptedRoom ToInterruptedRoom(AwaitingMatch awaitingMatch)
+        {
+            List<MatchEntrant> entrants = awaitingMatch.SeatedMatch.SeatedEntrants.Select(seatedEntrant => seatedEntrant.Entrant).ToList();
+            var interruptedRoom = new InterruptedRoom(awaitingMatch.SeatedMatch.RoomCode, entrants);
+
+            return interruptedRoom;
         }
 
         private List<int> OpenAwaitingMatch(AwaitingMatch awaitingMatch, TimeSpan resumeTime)

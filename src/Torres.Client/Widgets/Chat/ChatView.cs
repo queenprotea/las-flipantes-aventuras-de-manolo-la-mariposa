@@ -19,7 +19,7 @@ namespace Torres.Client.Widgets
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly VerticalStackPanel _messageList = new VerticalStackPanel { Spacing = Metrics.ChatSpacing };
         private readonly ScrollViewer _messageScroller;
-        private readonly TextBox _inputBox = new TextBox();
+        private readonly LimitedTextBox _inputBox = new LimitedTextBox(0);
         private readonly LocalizedLabel _inputHint = new LocalizedLabel(TextKeys.Chat.InputPlaceholder);
         private readonly LocalizedLabel _reportConfirmation = new LocalizedLabel(TextKeys.Chat.ReportSent)
         {
@@ -54,7 +54,11 @@ namespace Torres.Client.Widgets
 
         internal bool HasTypingFocus => _inputBox.IsKeyboardFocused;
 
-        internal int MessageMaxLength { get; set; }
+        internal int MessageMaxLength
+        {
+            get => _inputBox.LongestText;
+            set => _inputBox.LongestText = value;
+        }
 
         internal void Open()
         {
@@ -144,7 +148,6 @@ namespace Torres.Client.Widgets
             _inputBox.FocusedBackground = null;
             _inputBox.Border = null;
             _inputBox.HorizontalAlignment = HorizontalAlignment.Stretch;
-            _inputBox.ValueChanging += InputBoxOnValueChanging;
 
             _inputHint.Font = Fonts.Small;
             _inputHint.TextColor = Theme.SoftInk;
@@ -312,14 +315,6 @@ namespace Torres.Client.Widgets
         private void SendButtonOnClick(object sender, MyraEventArgs e)
         {
             StartSend();
-        }
-
-        private void InputBoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)
-        {
-            if ((MessageMaxLength > 0) && (e.NewValue is not null) && (e.NewValue.Length > MessageMaxLength))
-            {
-                e.Cancel = true;
-            }
         }
     }
 }

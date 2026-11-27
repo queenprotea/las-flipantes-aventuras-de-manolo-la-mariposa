@@ -84,7 +84,7 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes)
+        public BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes)
         {
             int callerPlayerId = RequireCallerPlayerId();
             BeginAvatarUploadResult beginResult;
@@ -95,17 +95,17 @@ namespace Game.Services
             }
             else
             {
-                beginResult = _avatarUploadRegistry.Begin(callerPlayerId, originalBytes, thumbnailBytes);
+                beginResult = _avatarUploadRegistry.Begin(callerPlayerId, thumbnailBytes);
             }
 
             return beginResult;
         }
 
         /// <inheritdoc/>
-        public SendAvatarPartResult SendAvatarPart(AvatarFileKind fileKind, int offset, byte[] part)
+        public SendAvatarPartResult SendAvatarPart(int offset, byte[] part)
         {
             int callerPlayerId = RequireCallerPlayerId();
-            bool isWellFormedPart = (part is { Length: > 0 }) && Enum.IsDefined(fileKind);
+            bool isWellFormedPart = part is { Length: > 0 };
             SendAvatarPartResult partResult;
             if (_roomService.HasMatchInProgress(callerPlayerId))
             {
@@ -114,7 +114,7 @@ namespace Game.Services
             }
             else if (isWellFormedPart)
             {
-                partResult = _avatarUploadRegistry.AcceptPart(callerPlayerId, new ReceivedAvatarPart(fileKind, offset, part));
+                partResult = _avatarUploadRegistry.AcceptPart(callerPlayerId, new ReceivedAvatarPart(offset, part));
             }
             else
             {

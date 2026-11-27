@@ -99,6 +99,7 @@ namespace Game.Services
             IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = _ruleSetsByPlayerCount ?? throw new InvalidOperationException(RulesNotLoadedMessage);
             var resumption = new MatchResumption(timeLimits, ruleSetsByPlayerCount, _resumeTime);
             IReadOnlyList<int> waitingEntrantIds = await _matchCoordinator.RestoreInterruptedMatchesAsync(resumption);
+            await _roomService.RestoreRoomsAsync(_matchCoordinator.ListInterruptedRooms());
             foreach (int waitingGuestId in waitingEntrantIds.Where(entrantId => entrantId < 0))
             {
                 _guestIdIssuer.SkipPast(waitingGuestId);

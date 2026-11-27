@@ -4,7 +4,6 @@ namespace Torres.Client.Avatars
     {
         None,
         RoomInMatch,
-        InvalidFormat,
         ServerError,
     }
 }

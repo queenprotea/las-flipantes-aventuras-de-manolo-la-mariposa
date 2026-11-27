@@ -1,9 +1,11 @@
+using System;
 using System.Globalization;
 
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
 using Torres.Client.UI;
+using Torres.Client.Widgets;
 
 namespace Torres.Client.Localization
 {
@@ -18,6 +20,7 @@ namespace Torres.Client.Localization
         {
             _labelKey = labelKey;
             _longestText = longestText;
+            Box = new LimitedTextBox(longestText);
             Spacing = Metrics.FieldLabelSpacing;
 
             _label.Font = Fonts.Label;
@@ -37,7 +40,8 @@ namespace Torres.Client.Localization
             Box.Border = Theme.StrongLineBrush;
             Box.BorderThickness = Sizes.Border;
             Box.HorizontalAlignment = HorizontalAlignment.Stretch;
-            Box.ValueChanging += BoxOnValueChanging;
+            Box.TextChanged += BoxOnTextChanged;
+            Box.LimitReached += BoxOnLimitReached;
 
             Widgets.Add(_label);
             Widgets.Add(Box);
@@ -47,7 +51,7 @@ namespace Torres.Client.Localization
 
         internal string Value => Box.Text ?? string.Empty;
 
-        internal TextBox Box { get; } = new TextBox();
+        internal LimitedTextBox Box { get; }
 
         public void RefreshText()
         {
@@ -56,11 +60,14 @@ namespace Torres.Client.Localization
             _limitNotice.Text = LocalizedText.Format(TextKeys.Common.TextLimitMessage, longestTextNumber);
         }
 
-        private void BoxOnValueChanging(object sender, ValueChangingEventArgs<string> e)
+        private void BoxOnTextChanged(object sender, ValueChangedEventArgs<string> e)
         {
-            bool isTooLong = (e.NewValue is not null) && (e.NewValue.Length > _longestText);
-            e.Cancel = isTooLong;
-            _limitNotice.Visible = isTooLong;
+            _limitNotice.Visible = false;
+        }
+
+        private void BoxOnLimitReached(object? sender, EventArgs e)
+        {
+            _limitNotice.Visible = true;
         }
     }
 }

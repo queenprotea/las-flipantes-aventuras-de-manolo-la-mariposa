@@ -1,4 +1,4 @@
 namespace Torres.Client.Avatars
 {
-    internal sealed record PreparedAvatar(byte[] Original, byte[] Thumbnail);
+    internal sealed record PreparedAvatar(byte[] Thumbnail);
 }

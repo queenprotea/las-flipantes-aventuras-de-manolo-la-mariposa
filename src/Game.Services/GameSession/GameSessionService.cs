@@ -295,17 +295,17 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes)
+        public BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes)
         {
-            BeginAvatarUploadResult beginResult = _profileService.BeginAvatarUpload(originalBytes, thumbnailBytes);
+            BeginAvatarUploadResult beginResult = _profileService.BeginAvatarUpload(thumbnailBytes);
 
             return beginResult;
         }
 
         /// <inheritdoc/>
-        public SendAvatarPartResult SendAvatarPart(AvatarFileKind fileKind, int offset, byte[] part)
+        public SendAvatarPartResult SendAvatarPart(int offset, byte[] part)
         {
-            SendAvatarPartResult partResult = _profileService.SendAvatarPart(fileKind, offset, part);
+            SendAvatarPartResult partResult = _profileService.SendAvatarPart(offset, part);
 
             return partResult;
         }

@@ -616,14 +616,14 @@ namespace Torres.Client.Connection
 
         private BeginAvatarUploadResult BeginAvatarUpload(PreparedAvatar preparedAvatar)
         {
-            BeginAvatarUploadResult beginResult = RequireChannel().BeginAvatarUpload(preparedAvatar.Original.Length, preparedAvatar.Thumbnail.Length);
+            BeginAvatarUploadResult beginResult = RequireChannel().BeginAvatarUpload(preparedAvatar.Thumbnail.Length);
 
             return beginResult;
         }
 
         private SendAvatarPartResult SendAvatarPart(AvatarPart avatarPart)
         {
-            SendAvatarPartResult partResult = RequireChannel().SendAvatarPart(avatarPart.FileKind, avatarPart.Offset, avatarPart.Bytes);
+            SendAvatarPartResult partResult = RequireChannel().SendAvatarPart(avatarPart.Offset, avatarPart.Bytes);
 
             return partResult;
         }

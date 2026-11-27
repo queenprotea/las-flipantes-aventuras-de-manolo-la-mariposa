@@ -218,10 +218,6 @@ namespace Torres.Client.Flows
         {
             switch (failure)
             {
-                case AvatarUploadFailure.InvalidFormat:
-                    AddMessage(ProfileMessageTarget.Avatar, TextKeys.Profile.AvatarInvalidFormat);
-                    break;
-
                 case AvatarUploadFailure.RoomInMatch:
                     AddMessage(ProfileMessageTarget.Save, TextKeys.Profile.MatchInProgress);
                     break;

@@ -37,15 +37,15 @@ namespace Game.Services
             sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
         }
 
-        internal BeginAvatarUploadResult Begin(int ownerId, int originalBytes, int thumbnailBytes)
+        internal BeginAvatarUploadResult Begin(int ownerId, int thumbnailBytes)
         {
-            BeginAvatarUploadResult beginResult = JudgeSizes(originalBytes, thumbnailBytes);
+            BeginAvatarUploadResult beginResult = JudgeSize(thumbnailBytes);
             lock (_registryLock)
             {
                 _uploadsByOwnerId.Remove(ownerId);
                 if (beginResult == BeginAvatarUploadResult.Started)
                 {
-                    _uploadsByOwnerId[ownerId] = new PendingAvatarUpload(originalBytes, thumbnailBytes, NowUtc());
+                    _uploadsByOwnerId[ownerId] = new PendingAvatarUpload(thumbnailBytes, NowUtc());
                 }
             }
 
@@ -129,25 +129,17 @@ namespace Game.Services
             }
         }
 
-        private static BeginAvatarUploadResult JudgeSizes(int originalBytes, int thumbnailBytes)
+        private static BeginAvatarUploadResult JudgeSize(int thumbnailBytes)
         {
-            BeginAvatarUploadResult sizeCheckResult = BeginAvatarUploadResult.Started;
-            if ((originalBytes <= 0) || (originalBytes > ProfileLimits.LargestAvatarBytes))
-            {
-                sizeCheckResult = BeginAvatarUploadResult.AvatarTooLarge;
-            }
-            else if ((thumbnailBytes <= 0) || (thumbnailBytes > ProfileLimits.LargestThumbnailBytes))
-            {
-                sizeCheckResult = BeginAvatarUploadResult.ThumbnailInvalid;
-            }
+            bool isAcceptedSize = (thumbnailBytes > 0) && (thumbnailBytes <= ProfileLimits.LargestThumbnailBytes);
+            BeginAvatarUploadResult sizeCheckResult = isAcceptedSize ? BeginAvatarUploadResult.Started : BeginAvatarUploadResult.ThumbnailInvalid;
 
             return sizeCheckResult;
         }
 
         private static bool IsRejectedImage(SendAvatarPartResult partResult)
         {
-            bool isRejectedImage = (partResult == SendAvatarPartResult.AvatarInvalidFormat)
-                || (partResult == SendAvatarPartResult.ThumbnailInvalid);
+            bool isRejectedImage = partResult == SendAvatarPartResult.ThumbnailInvalid;
 
             return isRejectedImage;
         }

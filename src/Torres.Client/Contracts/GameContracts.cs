@@ -1518,11 +1518,26 @@ namespace Game.Contracts
     public partial class ChatHistoryResponse : object
     {
         
+        private System.Collections.Generic.List<int> ClosedReportMessageIdsField;
+        
         private int MessageMaxLengthField;
         
         private System.Collections.Generic.List<Game.Contracts.ChatMessage> MessagesField;
         
         private int MessagesKeptPerRoomField;
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.List<int> ClosedReportMessageIds
+        {
+            get
+            {
+                return this.ClosedReportMessageIdsField;
+            }
+            set
+            {
+                this.ClosedReportMessageIdsField = value;
+            }
+        }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public int MessageMaxLength
@@ -3462,25 +3477,10 @@ namespace Game.Contracts
         Started = 0,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        AvatarTooLarge = 1,
+        ThumbnailInvalid = 1,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        ThumbnailInvalid = 2,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        RoomInMatch = 3,
-    }
-    
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="AvatarFileKind", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public enum AvatarFileKind : int
-    {
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Original = 0,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Thumbnail = 1,
+        RoomInMatch = 2,
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
@@ -3498,13 +3498,10 @@ namespace Game.Contracts
         OutOfRange = 2,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        AvatarInvalidFormat = 3,
+        ThumbnailInvalid = 3,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        ThumbnailInvalid = 4,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        RoomInMatch = 5,
+        RoomInMatch = 4,
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -4265,16 +4262,16 @@ namespace Game.Contracts
         System.Threading.Tasks.Task<Game.Contracts.ProfileResponse> GetProfileAsync();
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/BeginAvatarUpload", ReplyAction="http://tempuri.org/IProfileService/BeginAvatarUploadResponse")]
-        Game.Contracts.BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes);
+        Game.Contracts.BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/BeginAvatarUpload", ReplyAction="http://tempuri.org/IProfileService/BeginAvatarUploadResponse")]
-        System.Threading.Tasks.Task<Game.Contracts.BeginAvatarUploadResult> BeginAvatarUploadAsync(int originalBytes, int thumbnailBytes);
+        System.Threading.Tasks.Task<Game.Contracts.BeginAvatarUploadResult> BeginAvatarUploadAsync(int thumbnailBytes);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/SendAvatarPart", ReplyAction="http://tempuri.org/IProfileService/SendAvatarPartResponse")]
-        Game.Contracts.SendAvatarPartResult SendAvatarPart(Game.Contracts.AvatarFileKind fileKind, int offset, byte[] part);
+        Game.Contracts.SendAvatarPartResult SendAvatarPart(int offset, byte[] part);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/SendAvatarPart", ReplyAction="http://tempuri.org/IProfileService/SendAvatarPartResponse")]
-        System.Threading.Tasks.Task<Game.Contracts.SendAvatarPartResult> SendAvatarPartAsync(Game.Contracts.AvatarFileKind fileKind, int offset, byte[] part);
+        System.Threading.Tasks.Task<Game.Contracts.SendAvatarPartResult> SendAvatarPartAsync(int offset, byte[] part);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/CancelAvatarUpload", ReplyAction="http://tempuri.org/IProfileService/CancelAvatarUploadResponse")]
         void CancelAvatarUpload();
@@ -4708,24 +4705,24 @@ namespace Game.Contracts
             return base.Channel.GetProfileAsync();
         }
         
-        public Game.Contracts.BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes)
+        public Game.Contracts.BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes)
         {
-            return base.Channel.BeginAvatarUpload(originalBytes, thumbnailBytes);
+            return base.Channel.BeginAvatarUpload(thumbnailBytes);
         }
         
-        public System.Threading.Tasks.Task<Game.Contracts.BeginAvatarUploadResult> BeginAvatarUploadAsync(int originalBytes, int thumbnailBytes)
+        public System.Threading.Tasks.Task<Game.Contracts.BeginAvatarUploadResult> BeginAvatarUploadAsync(int thumbnailBytes)
         {
-            return base.Channel.BeginAvatarUploadAsync(originalBytes, thumbnailBytes);
+            return base.Channel.BeginAvatarUploadAsync(thumbnailBytes);
         }
         
-        public Game.Contracts.SendAvatarPartResult SendAvatarPart(Game.Contracts.AvatarFileKind fileKind, int offset, byte[] part)
+        public Game.Contracts.SendAvatarPartResult SendAvatarPart(int offset, byte[] part)
         {
-            return base.Channel.SendAvatarPart(fileKind, offset, part);
+            return base.Channel.SendAvatarPart(offset, part);
         }
         
-        public System.Threading.Tasks.Task<Game.Contracts.SendAvatarPartResult> SendAvatarPartAsync(Game.Contracts.AvatarFileKind fileKind, int offset, byte[] part)
+        public System.Threading.Tasks.Task<Game.Contracts.SendAvatarPartResult> SendAvatarPartAsync(int offset, byte[] part)
         {
-            return base.Channel.SendAvatarPartAsync(fileKind, offset, part);
+            return base.Channel.SendAvatarPartAsync(offset, part);
         }
         
         public void CancelAvatarUpload()

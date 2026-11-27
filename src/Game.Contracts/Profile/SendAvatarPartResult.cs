@@ -18,9 +18,6 @@ namespace Game.Contracts
         OutOfRange,
 
         [EnumMember]
-        AvatarInvalidFormat,
-
-        [EnumMember]
         ThumbnailInvalid,
 
         [EnumMember]
