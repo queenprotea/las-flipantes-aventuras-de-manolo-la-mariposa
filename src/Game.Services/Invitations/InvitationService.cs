@@ -252,12 +252,22 @@ namespace Game.Services
             }
             catch (NpgsqlException exception)
             {
-                string failureMessage = string.Format(CultureInfo.InvariantCulture, InviteeReadFailedMessage, storedInvitation.InvitedPlayerId, storedInvitation.RoomId);
-                _log.Warn(failureMessage, exception);
-                announcementResult = SendInvitationResult.EmailNotSent;
+                announcementResult = ReportAnnouncementFailure(storedInvitation, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                announcementResult = ReportAnnouncementFailure(storedInvitation, exception);
             }
 
             return announcementResult;
+        }
+
+        private static SendInvitationResult ReportAnnouncementFailure(RoomInvitationRecord storedInvitation, Exception exception)
+        {
+            string failureMessage = string.Format(CultureInfo.InvariantCulture, InviteeReadFailedMessage, storedInvitation.InvitedPlayerId, storedInvitation.RoomId);
+            _log.Warn(failureMessage, exception);
+
+            return SendInvitationResult.EmailNotSent;
         }
 
         private async Task<SendInvitationResult> EmailInviteeAsync(RoomInvitationRecord storedInvitation, string roomCode, string inviterUsername)

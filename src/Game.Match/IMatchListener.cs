@@ -9,5 +9,7 @@ namespace Game.Match
         void ReceiveMatchStateChanged(IReadOnlyList<MatchRecipientView> recipientViews);
 
         void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds, IReadOnlyList<EntrantStanding> entrantStandings);
+
+        void ReceiveSeatAbsent(int entrantId);
     }
 }

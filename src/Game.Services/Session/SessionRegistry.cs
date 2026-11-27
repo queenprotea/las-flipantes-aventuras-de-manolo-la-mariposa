@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 using CoreWCF;
@@ -17,23 +16,13 @@ namespace Game.Services
         private const string SessionReplacedMessage = "Session of player {0} replaced by a newer one.";
         private const string SessionClosedMessage = "Session of player {0} closed by the player.";
         private const string SessionLostMessage = "Session of player {0} lost.";
+        private const string SeatAbsentMessage = "Session of player {0} declared lost: the seat let its match steps run out.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(SessionRegistry));
 
         private readonly Lock _registryLock = new Lock();
         private readonly Dictionary<string, PlayerSession> _sessionsById = new Dictionary<string, PlayerSession>(StringComparer.Ordinal);
         private readonly Dictionary<int, PlayerSession> _sessionsByOwnerId = new Dictionary<int, PlayerSession>();
-        private readonly SessionTimings _sessionTimings;
-        private readonly TimeProvider _timeProvider;
-
-        public SessionRegistry(SessionTimings sessionTimings, TimeProvider timeProvider)
-        {
-            ArgumentNullException.ThrowIfNull(sessionTimings);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
-            _sessionTimings = sessionTimings;
-            _timeProvider = timeProvider;
-        }
 
         public event EventHandler<SessionOwnerEventArgs>? SessionOpened;
 
@@ -45,7 +34,7 @@ namespace Game.Services
         {
             OperationContext callContext = OperationContext.Current;
             IGameSessionNoticeReceiver noticeReceiver = callContext.GetCallbackChannel<IGameSessionNoticeReceiver>();
-            var openedSession = new PlayerSession(owner, callContext.SessionId, noticeReceiver, this, _timeProvider.GetUtcNow().UtcDateTime);
+            var openedSession = new PlayerSession(owner, callContext.SessionId, noticeReceiver, this);
             PlayerSession? replacedSession;
             lock (_registryLock)
             {
@@ -93,9 +82,17 @@ namespace Game.Services
             return hasOpenSession;
         }
 
-        internal void Touch(PlayerSession session)
+        internal SessionOwner? FindOwner(int ownerId)
         {
-            session.Touch(_timeProvider.GetUtcNow().UtcDateTime);
+            PlayerSession? ownerSession;
+            lock (_registryLock)
+            {
+                _sessionsByOwnerId.TryGetValue(ownerId, out ownerSession);
+            }
+
+            SessionOwner? owner = ownerSession?.Owner;
+
+            return owner;
         }
 
         internal void Close(PlayerSession closedSession)
@@ -121,16 +118,19 @@ namespace Game.Services
             OnSessionLost(new SessionOwnerEventArgs(lostSession.Owner.OwnerId));
         }
 
-        internal IReadOnlyList<PlayerSession> FindSilentSessions()
+        internal void DeclareAbsent(int ownerId)
         {
-            DateTime silenceLimitUtc = _timeProvider.GetUtcNow().UtcDateTime - _sessionTimings.SilenceLimit;
-            List<PlayerSession> silentSessions;
+            PlayerSession? absentSession;
             lock (_registryLock)
             {
-                silentSessions = _sessionsById.Values.Where(session => session.IsSilentSince(silenceLimitUtc)).ToList();
+                _sessionsByOwnerId.TryGetValue(ownerId, out absentSession);
             }
 
-            return silentSessions;
+            if (absentSession is not null)
+            {
+                _log.InfoFormat(SeatAbsentMessage, ownerId);
+                DeclareLost(absentSession);
+            }
         }
 
         internal void Deliver(int ownerId, Notice notice)

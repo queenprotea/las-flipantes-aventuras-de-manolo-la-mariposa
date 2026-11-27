@@ -20,6 +20,7 @@ namespace Game.Match
 
         private readonly Lock _matchLock = new Lock();
         private readonly Dictionary<int, CancellationTokenSource> _reconnectionCountdownsBySeat = new Dictionary<int, CancellationTokenSource>();
+        private readonly Dictionary<int, int> _expiredStepCountsBySeat = new Dictionary<int, int>();
         private readonly MatchTable _matchTable;
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
         private readonly MatchViewFactory _viewFactory;
@@ -28,6 +29,7 @@ namespace Game.Match
         private readonly MatchRecordWriter _recordWriter;
         private readonly TimeSpan _stepDuration;
         private readonly TimeSpan _reconnectionDuration;
+        private readonly int _absentAfterExpiredSteps;
 
         private CancellationTokenSource? _stepCountdown;
         private DateTime? _stepEndsAtUtc;
@@ -46,6 +48,7 @@ namespace Game.Match
             _matchListener = matchListener;
             _stepDuration = timeLimits.StepTime;
             _reconnectionDuration = timeLimits.ReconnectionTime;
+            _absentAfterExpiredSteps = timeLimits.AbsentAfterExpiredSteps;
         }
 
         internal event EventHandler? Finished;
@@ -53,6 +56,17 @@ namespace Game.Match
         internal int MatchId { get; }
 
         internal string RoomCode { get; }
+
+        internal bool HoldsSeatOf(int entrantId)
+        {
+            bool holdsSeat;
+            lock (_matchLock)
+            {
+                holdsSeat = IsSeatInPlay(GetSeatNumber(entrantId));
+            }
+
+            return holdsSeat;
+        }
 
         internal void StartPlacement()
         {
@@ -141,6 +155,7 @@ namespace Game.Match
                 int seatNumber = GetSeatNumber(entrantId);
                 isBackInMatch = IsSeatInPlay(seatNumber);
                 StopReconnectionCountdown(seatNumber);
+                _expiredStepCountsBySeat.Remove(seatNumber);
                 if (isBackInMatch)
                 {
                     _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
@@ -204,7 +219,7 @@ namespace Game.Match
                     actionResult = PlacePieceOnTable(GetSeatNumber(entrantId), piece, destinationCell);
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -225,7 +240,7 @@ namespace Game.Match
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.MoveCaterpillar(GetSeatNumber(entrantId), move));
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -246,7 +261,7 @@ namespace Game.Match
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.AddFlowerLevel(GetSeatNumber(entrantId), buildCell));
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -267,7 +282,7 @@ namespace Game.Match
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.DrawCard(GetSeatNumber(entrantId)));
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -288,7 +303,7 @@ namespace Game.Match
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.PlayCard(GetSeatNumber(entrantId), cardPlay));
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -309,7 +324,7 @@ namespace Game.Match
                     actionResult = MatchActionResultConversion.ToActionResult(_matchTable.EndTurn(GetSeatNumber(entrantId)));
                 }
 
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
+                hasJustFinished = CompleteAction(entrantId, actionResult, stepBefore);
             }
 
             ReportFinish(hasJustFinished);
@@ -359,10 +374,11 @@ namespace Game.Match
             return actionResult;
         }
 
-        private bool CompleteAction(MatchActionResult actionResult, TableStep stepBefore)
+        private bool CompleteAction(int entrantId, MatchActionResult actionResult, TableStep stepBefore)
         {
             if (actionResult == MatchActionResult.Applied)
             {
+                _expiredStepCountsBySeat.Remove(GetSeatNumber(entrantId));
                 if (ReadTableStep() != stepBefore)
                 {
                     RestartStepCountdown();
@@ -386,12 +402,15 @@ namespace Game.Match
         private void ExpireStep()
         {
             bool hasJustFinished;
+            int? absentEntrantId = null;
             lock (_matchLock)
             {
                 bool isCurrentCountdown = (_stepCountdown is not null) && _stepCountdown.IsCancellationRequested;
                 if (isCurrentCountdown)
                 {
+                    int expiredSeatNumber = _matchTable.ActiveSeatNumber;
                     ExpireTableStep();
+                    absentEntrantId = CountExpiredStep(expiredSeatNumber);
                     RestartStepCountdown();
                     _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
                 }
@@ -400,6 +419,33 @@ namespace Game.Match
             }
 
             ReportFinish(hasJustFinished);
+            ReportAbsence(absentEntrantId);
+        }
+
+        private int? CountExpiredStep(int expiredSeatNumber)
+        {
+            bool isCounted = (_absentAfterExpiredSteps > 0) && IsSeatInPlay(expiredSeatNumber) && !_reconnectionCountdownsBySeat.ContainsKey(expiredSeatNumber);
+            int? absentEntrantId = null;
+            if (isCounted)
+            {
+                int expiredStepCount = _expiredStepCountsBySeat.GetValueOrDefault(expiredSeatNumber) + 1;
+                _expiredStepCountsBySeat[expiredSeatNumber] = expiredStepCount;
+                if (expiredStepCount >= _absentAfterExpiredSteps)
+                {
+                    _expiredStepCountsBySeat.Remove(expiredSeatNumber);
+                    absentEntrantId = _seatedEntrants.First(seatedEntrant => seatedEntrant.SeatNumber == expiredSeatNumber).Entrant.EntrantId;
+                }
+            }
+
+            return absentEntrantId;
+        }
+
+        private void ReportAbsence(int? absentEntrantId)
+        {
+            if (absentEntrantId is int entrantId)
+            {
+                _matchListener.ReceiveSeatAbsent(entrantId);
+            }
         }
 
         private void ExpireTableStep()
@@ -599,7 +645,7 @@ namespace Game.Match
         private List<MatchRecipientView> BuildRetiredRecipientView(int entrantId, int seatNumber)
         {
             MatchView retiredView = _viewFactory.CreateForSeat(_matchTable, ReadStepTimeLeft(), seatNumber);
-            var retiredRecipientViews = new List<MatchRecipientView> { new MatchRecipientView(entrantId, retiredView) };
+            var retiredRecipientViews = new List<MatchRecipientView> { new MatchRecipientView(entrantId, MatchId, retiredView) };
 
             return retiredRecipientViews;
         }
@@ -611,7 +657,7 @@ namespace Game.Match
             foreach (SeatedEntrant recipient in _seatedEntrants.Where(seatedEntrant => !_matchTable.IsSeatRetired(seatedEntrant.SeatNumber)))
             {
                 MatchView matchView = _viewFactory.CreateForSeat(_matchTable, stepTimeLeft, recipient.SeatNumber);
-                recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, matchView));
+                recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, MatchId, matchView));
             }
 
             return recipientViews;

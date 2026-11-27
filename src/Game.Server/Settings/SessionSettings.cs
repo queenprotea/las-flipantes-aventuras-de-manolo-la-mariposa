@@ -11,21 +11,29 @@ namespace Game.Server
     {
         private const string SectionName = "Session";
         private const string SigningKeyVariable = "TORRES_SESSION_KEY";
-        private const string InvalidConnectionCheckMessage = "The Session section of appsettings.json needs a positive ConnectionCheckPeriodSeconds and ConnectionCheckMissesToDrop.";
+        private const string InvalidTimesMessage = "The Session section of appsettings.json needs a positive MaintenancePeriodSeconds, ReceiveTimeoutMinutes and SendTimeoutSeconds.";
         private const string MissingKeyMessage = "The environment variable TORRES_SESSION_KEY is not set, is not valid base64 or is shorter than {0} bytes.";
 
-        public int ConnectionCheckPeriodSeconds { get; set; }
+        public int MaintenancePeriodSeconds { get; set; }
 
-        public int ConnectionCheckMissesToDrop { get; set; }
+        public int ReceiveTimeoutMinutes { get; set; }
+
+        public int SendTimeoutSeconds { get; set; }
+
+        public TimeSpan MaintenancePeriod => TimeSpan.FromSeconds(MaintenancePeriodSeconds);
+
+        public TimeSpan ReceiveTimeout => TimeSpan.FromMinutes(ReceiveTimeoutMinutes);
+
+        public TimeSpan SendTimeout => TimeSpan.FromSeconds(SendTimeoutSeconds);
 
         public static SessionSettings Read(IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(configuration);
 
             SessionSettings? settings = configuration.GetSection(SectionName).Get<SessionSettings>();
-            if ((settings is null) || (settings.ConnectionCheckPeriodSeconds <= 0) || (settings.ConnectionCheckMissesToDrop <= 0))
+            if ((settings is null) || !settings.HasPositiveTimes())
             {
-                throw new InvalidOperationException(InvalidConnectionCheckMessage);
+                throw new InvalidOperationException(InvalidTimesMessage);
             }
 
             return settings;
@@ -44,6 +52,13 @@ namespace Game.Server
             byte[] signingKey = keyBuffer[..keyLength];
 
             return signingKey;
+        }
+
+        private bool HasPositiveTimes()
+        {
+            bool hasPositiveTimes = (MaintenancePeriodSeconds > 0) && (ReceiveTimeoutMinutes > 0) && (SendTimeoutSeconds > 0);
+
+            return hasPositiveTimes;
         }
     }
 }

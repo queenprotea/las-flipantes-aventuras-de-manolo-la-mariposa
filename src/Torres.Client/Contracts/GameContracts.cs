@@ -18,8 +18,6 @@ namespace Game.Contracts
     public partial class OpenSessionResult : object
     {
         
-        private int ConnectionCheckPeriodSecondsField;
-        
         private Game.Contracts.MatchSeating CurrentMatchField;
         
         private Game.Contracts.Room CurrentRoomField;
@@ -27,19 +25,6 @@ namespace Game.Contracts
         private Game.Contracts.SessionIdentity IdentityField;
         
         private Game.Contracts.OpenSessionStatus StatusField;
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public int ConnectionCheckPeriodSeconds
-        {
-            get
-            {
-                return this.ConnectionCheckPeriodSecondsField;
-            }
-            set
-            {
-                this.ConnectionCheckPeriodSecondsField = value;
-            }
-        }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public Game.Contracts.MatchSeating CurrentMatch
@@ -592,43 +577,6 @@ namespace Game.Contracts
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
         Yellow = 3,
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="ConnectionCheckResponse", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
-    public partial class ConnectionCheckResponse : object
-    {
-        
-        private System.DateTime ServerTimeUtcField;
-        
-        private string SessionTokenField;
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.DateTime ServerTimeUtc
-        {
-            get
-            {
-                return this.ServerTimeUtcField;
-            }
-            set
-            {
-                this.ServerTimeUtcField = value;
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public string SessionToken
-        {
-            get
-            {
-                return this.SessionTokenField;
-            }
-            set
-            {
-                this.SessionTokenField = value;
-            }
-        }
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
@@ -2559,6 +2507,8 @@ namespace Game.Contracts
         
         private System.TimeSpan ReconnectionTimeField;
         
+        private string ReconnectionTokenField;
+        
         private string RoomCodeField;
         
         private int RoundButterflyPointsField;
@@ -2834,6 +2784,19 @@ namespace Game.Contracts
             set
             {
                 this.ReconnectionTimeField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string ReconnectionToken
+        {
+            get
+            {
+                return this.ReconnectionTokenField;
+            }
+            set
+            {
+                this.ReconnectionTokenField = value;
             }
         }
         
@@ -4103,12 +4066,6 @@ namespace Game.Contracts
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISessionService/OpenSession", ReplyAction="http://tempuri.org/ISessionService/OpenSessionResponse")]
         System.Threading.Tasks.Task<Game.Contracts.OpenSessionResult> OpenSessionAsync(string sessionToken);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISessionService/IsAlive", ReplyAction="http://tempuri.org/ISessionService/IsAliveResponse")]
-        Game.Contracts.ConnectionCheckResponse IsAlive();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISessionService/IsAlive", ReplyAction="http://tempuri.org/ISessionService/IsAliveResponse")]
-        System.Threading.Tasks.Task<Game.Contracts.ConnectionCheckResponse> IsAliveAsync();
-        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISessionService/CloseSession", ReplyAction="http://tempuri.org/ISessionService/CloseSessionResponse")]
         Game.Contracts.CloseSessionResult CloseSession();
         
@@ -4419,16 +4376,6 @@ namespace Game.Contracts
         public System.Threading.Tasks.Task<Game.Contracts.OpenSessionResult> OpenSessionAsync(string sessionToken)
         {
             return base.Channel.OpenSessionAsync(sessionToken);
-        }
-        
-        public Game.Contracts.ConnectionCheckResponse IsAlive()
-        {
-            return base.Channel.IsAlive();
-        }
-        
-        public System.Threading.Tasks.Task<Game.Contracts.ConnectionCheckResponse> IsAliveAsync()
-        {
-            return base.Channel.IsAliveAsync();
         }
         
         public Game.Contracts.CloseSessionResult CloseSession()

@@ -220,7 +220,7 @@ namespace Torres.Client.Flows
             OpenSessionResult? opening = finishedOpening.IsSuccessful ? finishedOpening.Reply : null;
             if ((registeredPlayer is not null) && (opening is not null) && (opening.Status == OpenSessionStatus.SessionOpened))
             {
-                _gameSessionConnection.BeginConnectionChecks(opening);
+                _gameSessionConnection.MarkSessionOpen();
                 _playerSession.Start(registeredPlayer);
                 _outcome = new RegisterOutcome(null, null, null, ScreenId.MainMenu);
             }

@@ -278,7 +278,7 @@ namespace Game.Match
             IEnumerable<SeatedEntrant> returnedEntrants = _seatedMatch.SeatedEntrants.Where(seatedEntrant => !_matchTable.IsSeatRetired(seatedEntrant.SeatNumber) && !_absentSeatNumbers.Contains(seatedEntrant.SeatNumber));
             foreach (SeatedEntrant recipient in returnedEntrants)
             {
-                recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, BuildViewFor(recipient.SeatNumber, resumeTimeLeft)));
+                recipientViews.Add(new MatchRecipientView(recipient.Entrant.EntrantId, _seatedMatch.MatchId, BuildViewFor(recipient.SeatNumber, resumeTimeLeft)));
             }
 
             return recipientViews;

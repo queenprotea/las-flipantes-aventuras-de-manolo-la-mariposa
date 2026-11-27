@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -24,16 +23,14 @@ namespace Game.Services
         private readonly IGameSessionNoticeReceiver _noticeReceiver;
         private readonly SessionRegistry _sessionRegistry;
 
-        private long _lastConnectionCheckTicks;
         private Task _senderTask = Task.CompletedTask;
 
-        internal PlayerSession(SessionOwner owner, string sessionId, IGameSessionNoticeReceiver noticeReceiver, SessionRegistry sessionRegistry, DateTime openedAtUtc)
+        internal PlayerSession(SessionOwner owner, string sessionId, IGameSessionNoticeReceiver noticeReceiver, SessionRegistry sessionRegistry)
         {
             Owner = owner;
             SessionId = sessionId;
             _noticeReceiver = noticeReceiver;
             _sessionRegistry = sessionRegistry;
-            _lastConnectionCheckTicks = openedAtUtc.Ticks;
         }
 
         internal SessionOwner Owner { get; private set; }
@@ -65,18 +62,6 @@ namespace Game.Services
         internal void Enqueue(Notice notice)
         {
             _outbox.Writer.TryWrite(notice);
-        }
-
-        internal void Touch(DateTime nowUtc)
-        {
-            Interlocked.Exchange(ref _lastConnectionCheckTicks, nowUtc.Ticks);
-        }
-
-        internal bool IsSilentSince(DateTime limitUtc)
-        {
-            bool isSilent = Interlocked.Read(ref _lastConnectionCheckTicks) < limitUtc.Ticks;
-
-            return isSilent;
         }
 
         internal void Terminate(SessionTerminationReason reason)

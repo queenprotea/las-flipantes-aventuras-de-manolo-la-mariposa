@@ -16,17 +16,20 @@ namespace Game.Services
 
         private readonly SessionRegistry _sessionRegistry;
         private readonly MatchRoomReturn _matchRoomReturn;
+        private readonly MatchReconnectionTokenIssuer _reconnectionTokenIssuer;
 
-        internal MatchNoticeForwarder(SessionRegistry sessionRegistry, MatchRoomReturn matchRoomReturn)
+        internal MatchNoticeForwarder(SessionRegistry sessionRegistry, MatchRoomReturn matchRoomReturn, MatchReconnectionTokenIssuer reconnectionTokenIssuer)
         {
             _sessionRegistry = sessionRegistry;
             _matchRoomReturn = matchRoomReturn;
+            _reconnectionTokenIssuer = reconnectionTokenIssuer;
         }
 
         public void ReceiveMatchStarted(IReadOnlyList<MatchRecipientView> recipientViews)
         {
             foreach (MatchRecipientView recipientView in recipientViews)
             {
+                _reconnectionTokenIssuer.Attach(recipientView);
                 _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStartedNotice(recipientView.MatchView));
             }
         }
@@ -35,6 +38,7 @@ namespace Game.Services
         {
             foreach (MatchRecipientView recipientView in recipientViews)
             {
+                _reconnectionTokenIssuer.Attach(recipientView);
                 _sessionRegistry.Deliver(recipientView.EntrantId, new MatchStateChangedNotice(recipientView.MatchView));
             }
         }
@@ -54,6 +58,11 @@ namespace Game.Services
             {
                 _matchLog.InfoFormat(MatchFinishedMessage, returnedRoom.RoomId);
             }
+        }
+
+        public void ReceiveSeatAbsent(int entrantId)
+        {
+            _sessionRegistry.DeclareAbsent(entrantId);
         }
     }
 }

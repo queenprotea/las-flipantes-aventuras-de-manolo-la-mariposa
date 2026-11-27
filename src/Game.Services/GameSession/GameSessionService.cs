@@ -47,13 +47,6 @@ namespace Game.Services
             return opening;
         }
 
-        public ConnectionCheckResponse IsAlive()
-        {
-            ConnectionCheckResponse connectionCheck = _sessionService.IsAlive();
-
-            return connectionCheck;
-        }
-
         public Task<CloseSessionResult> CloseSessionAsync()
         {
             Task<CloseSessionResult> closing = _sessionService.CloseSessionAsync();

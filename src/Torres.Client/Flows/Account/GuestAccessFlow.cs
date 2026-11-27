@@ -130,7 +130,7 @@ namespace Torres.Client.Flows
 
         private void EnterAs(string guestAlias, OpenSessionResult openingResult)
         {
-            _gameSessionConnection.BeginConnectionChecks(openingResult);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.StartAsGuest(openingResult.Identity?.DisplayName ?? guestAlias);
             ScreenId nextScreen = ScreenId.MainMenu;
             if (openingResult.CurrentRoom is not null)

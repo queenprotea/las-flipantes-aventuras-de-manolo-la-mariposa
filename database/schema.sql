@@ -470,7 +470,7 @@ CREATE TABLE system_parameter
     parameter_value varchar(32) NOT NULL
 );
 
-COMMENT ON TABLE system_parameter IS 'Read only configuration: report threshold, chat limits, heartbeat, room inactivity and recovery code lifetime.';
+COMMENT ON TABLE system_parameter IS 'Read only configuration: report threshold, chat limits, match clocks, absent seats, room inactivity and recovery code lifetime.';
 
 -- Declared here because sanction is created before its catalogue.
 ALTER TABLE sanction

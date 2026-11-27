@@ -1,4 +1,4 @@
 namespace Game.Services
 {
-    internal sealed record SessionTokenReading(SessionTokenStatus Status, int OwnerId, string DisplayName, bool IsGuest);
+    internal sealed record SessionTokenReading(SessionTokenStatus Status, int OwnerId, string DisplayName, bool IsGuest, int? MatchId = null);
 }

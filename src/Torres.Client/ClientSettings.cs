@@ -27,11 +27,27 @@ namespace Torres.Client
 
         public double SessionCloseTimeoutSeconds { get; set; }
 
+        public double ReconnectionRetrySeconds { get; set; }
+
+        public double ReceiveTimeoutMinutes { get; set; }
+
+        public double SendTimeoutSeconds { get; set; }
+
+        public double StepSilenceMarginSeconds { get; set; }
+
         internal TimeSpan FriendshipListRefreshPeriod => TimeSpan.FromSeconds(FriendshipListRefreshSeconds);
 
         internal TimeSpan InvitationStateRefreshPeriod => TimeSpan.FromSeconds(InvitationStateRefreshSeconds);
 
         internal TimeSpan SessionCloseTimeout => TimeSpan.FromSeconds(SessionCloseTimeoutSeconds);
+
+        internal TimeSpan ReconnectionRetryInterval => TimeSpan.FromSeconds(ReconnectionRetrySeconds);
+
+        internal TimeSpan ReceiveTimeout => TimeSpan.FromMinutes(ReceiveTimeoutMinutes);
+
+        internal TimeSpan SendTimeout => TimeSpan.FromSeconds(SendTimeoutSeconds);
+
+        internal TimeSpan StepSilenceMargin => TimeSpan.FromSeconds(StepSilenceMarginSeconds);
 
         internal static Task<ClientSettings?> ReadAsync()
         {
@@ -65,8 +81,18 @@ namespace Torres.Client
         private bool HasPositiveTimes()
         {
             bool hasPositiveTimes = (FriendshipListRefreshSeconds > 0) && (InvitationStateRefreshSeconds > 0) && (SessionCloseTimeoutSeconds > 0);
+            bool hasPositiveConnectionTimes = HasPositiveConnectionTimes();
+            bool hasAllPositiveTimes = hasPositiveTimes && hasPositiveConnectionTimes;
 
-            return hasPositiveTimes;
+            return hasAllPositiveTimes;
+        }
+
+        private bool HasPositiveConnectionTimes()
+        {
+            bool hasPositiveTimeouts = (ReceiveTimeoutMinutes > 0) && (SendTimeoutSeconds > 0);
+            bool hasPositiveConnectionTimes = hasPositiveTimeouts && (ReconnectionRetrySeconds > 0) && (StepSilenceMarginSeconds > 0);
+
+            return hasPositiveConnectionTimes;
         }
 
         private static ClientSettings? ReadSettingsFile(string settingsPath)

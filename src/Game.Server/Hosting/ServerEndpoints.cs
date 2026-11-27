@@ -22,15 +22,18 @@ namespace Game.Server
         private const string MetadataPublishedMessage = "Service metadata published on {0}";
 
         private readonly ServerSettings _serverSettings;
+        private readonly SessionSettings _sessionSettings;
         private readonly Uri _metadataBaseAddress;
         private readonly ILog _hostLog;
 
-        public ServerEndpoints(ServerSettings serverSettings, ILog hostLog)
+        public ServerEndpoints(ServerSettings serverSettings, SessionSettings sessionSettings, ILog hostLog)
         {
             ArgumentNullException.ThrowIfNull(serverSettings);
+            ArgumentNullException.ThrowIfNull(sessionSettings);
             ArgumentNullException.ThrowIfNull(hostLog);
 
             _serverSettings = serverSettings;
+            _sessionSettings = sessionSettings;
             _metadataBaseAddress = new UriBuilder(Uri.UriSchemeHttp, MetadataHostName, serverSettings.MetadataHttpPort).Uri;
             _hostLog = hostLog;
         }
@@ -69,10 +72,12 @@ namespace Game.Server
             return binding;
         }
 
-        private static NetTcpBinding CreateGameSessionBinding()
+        private NetTcpBinding CreateGameSessionBinding()
         {
             NetTcpBinding gameSessionBinding = CreateBinding();
             gameSessionBinding.ReaderQuotas.MaxArrayLength = ProfileLimits.LargestArrayBytes;
+            gameSessionBinding.ReceiveTimeout = _sessionSettings.ReceiveTimeout;
+            gameSessionBinding.SendTimeout = _sessionSettings.SendTimeout;
 
             return gameSessionBinding;
         }

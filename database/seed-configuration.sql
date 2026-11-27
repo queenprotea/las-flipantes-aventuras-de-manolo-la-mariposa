@@ -64,13 +64,11 @@ INSERT INTO system_parameter (parameter_code, parameter_value) VALUES
     -- Seat kept for a player who lost the connection during the turn of another player (rules 5.2).
     -- During the player's own turn the window is what is left of that turn.
     ('reconnection_seconds',         '90'),
+    -- A seat that lets this many of its own steps run out in a row is taken for absent:
+    -- its session is declared lost and its reconnection window opens. This replaces the
+    -- heartbeat, which the course does not allow.
+    ('absent_after_expired_steps',   '2'),
     -- The emailed recovery code stops being valid after this.
     ('recovery_code_minutes',        '5'),
     -- BCrypt work factor.
     ('password_hash_cost',           '11');
-
--- Deliberately NOT seeded: 'heartbeat_period_seconds' and 'heartbeat_misses_to_drop'.
--- The project declares that connection loss is detected by heartbeat, with a declared
--- period and a declared number of misses, but it has not fixed those two numbers yet.
--- Add them here when the team does; inventing them would put an undecided value into
--- the database.

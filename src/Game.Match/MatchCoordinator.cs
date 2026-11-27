@@ -134,6 +134,25 @@ namespace Game.Match
             return seating;
         }
 
+        public bool HoldsSeatIn(int entrantId, int matchId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
+
+            AwaitingMatch? awaitingMatch = FindAwaitingMatchOfEntrant(entrantId);
+            LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
+            bool holdsSeat;
+            if (awaitingMatch is not null)
+            {
+                holdsSeat = (awaitingMatch.SeatedMatch.MatchId == matchId) && awaitingMatch.HoldsSeatOf(entrantId);
+            }
+            else
+            {
+                holdsSeat = (liveMatch is not null) && (liveMatch.MatchId == matchId) && liveMatch.HoldsSeatOf(entrantId);
+            }
+
+            return holdsSeat;
+        }
+
         public ReturnToMatchResult ReturnToMatch(int entrantId)
         {
             AwaitingMatch? awaitingMatch = FindAwaitingMatchOfEntrant(entrantId);

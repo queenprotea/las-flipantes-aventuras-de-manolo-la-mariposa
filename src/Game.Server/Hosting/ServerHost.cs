@@ -57,7 +57,7 @@ namespace Game.Server
 
         private async Task RunWithSettingsAsync(WebApplicationBuilder builder, HostSettings hostSettings)
         {
-            var serverEndpoints = new ServerEndpoints(hostSettings.Server, _hostLog);
+            var serverEndpoints = new ServerEndpoints(hostSettings.Server, hostSettings.Session, _hostLog);
             serverEndpoints.ConfigureHost(builder);
             ServiceRegistration.AddSettingValues(builder.Services, hostSettings);
             ServiceRegistration.AddRepositories(builder.Services, hostSettings.Database);

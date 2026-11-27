@@ -22,7 +22,7 @@ namespace Game.Server
         private readonly IServiceProvider _serviceProvider;
         private readonly ILog _hostLog;
         private MatchService? _recordingMatchService;
-        private ConnectionSupervisor? _startedSupervisor;
+        private MaintenanceSupervisor? _startedSupervisor;
         private TimeSpan _roomInactivityLimit;
 
         public ServerStartup(IServiceProvider serviceProvider, ILog hostLog)
@@ -43,9 +43,9 @@ namespace Game.Server
 
         public void StartSupervisor()
         {
-            ConnectionSupervisor connectionSupervisor = _serviceProvider.GetRequiredService<ConnectionSupervisor>();
-            connectionSupervisor.Start(_roomInactivityLimit);
-            _startedSupervisor = connectionSupervisor;
+            MaintenanceSupervisor maintenanceSupervisor = _serviceProvider.GetRequiredService<MaintenanceSupervisor>();
+            maintenanceSupervisor.Start(_roomInactivityLimit);
+            _startedSupervisor = maintenanceSupervisor;
         }
 
         public async Task StopAsync()

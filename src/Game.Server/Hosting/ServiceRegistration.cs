@@ -16,7 +16,7 @@ namespace Game.Server
 
             services.AddSingleton(TimeProvider.System);
             services.AddSingleton(Random.Shared);
-            services.AddSingleton(new SessionTimings(TimeSpan.FromSeconds(hostSettings.Session.ConnectionCheckPeriodSeconds), hostSettings.Session.ConnectionCheckMissesToDrop));
+            services.AddSingleton(new MaintenanceTiming(hostSettings.Session.MaintenancePeriod));
             services.AddSingleton(new SessionTokenIssuer(hostSettings.SessionSigningKey, TimeProvider.System));
             services.AddSingleton(new HistoryPaging(hostSettings.History.MatchesPerPage));
             services.AddSingleton(new StartingBoard(hostSettings.StartingFlowerCells));
@@ -82,7 +82,7 @@ namespace Game.Server
             services.AddSingleton<MatchService>();
 
             services.AddSingleton<GameSessionService>();
-            services.AddSingleton<ConnectionSupervisor>();
+            services.AddSingleton<MaintenanceSupervisor>();
         }
     }
 }

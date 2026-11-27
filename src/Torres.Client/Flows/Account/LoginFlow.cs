@@ -164,7 +164,7 @@ namespace Torres.Client.Flows
 
         private void EnterAs(PlayerIdentity player, OpenSessionResult opening)
         {
-            _gameSessionConnection.BeginConnectionChecks(opening);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.Start(player);
             if (opening.CurrentRoom is not null)
             {

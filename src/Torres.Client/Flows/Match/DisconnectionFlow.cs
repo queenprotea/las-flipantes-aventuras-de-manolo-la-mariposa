@@ -44,7 +44,7 @@ namespace Torres.Client.Flows
                 _sinceLastAttempt += elapsedTime;
             }
 
-            if (isWaitingToRetry && (_sinceLastAttempt >= _gameSessionConnection.ConnectionCheckPeriod))
+            if (isWaitingToRetry && (_sinceLastAttempt >= _gameSessionConnection.ReconnectionRetryInterval))
             {
                 StartReopening();
             }
@@ -110,7 +110,7 @@ namespace Torres.Client.Flows
 
         private DisconnectionOutcome ResumeSession(OpenSessionResult opening)
         {
-            _gameSessionConnection.BeginConnectionChecks(opening);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.RecoverConnection();
             _hasResumed = true;
             if (opening.CurrentRoom is not null)

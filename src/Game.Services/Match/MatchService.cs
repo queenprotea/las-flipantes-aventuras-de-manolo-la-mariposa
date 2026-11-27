@@ -21,6 +21,8 @@ namespace Game.Services
         private const string TurnSecondsParameterCode = "turn_seconds";
         private const string ReconnectionSecondsParameterCode = "reconnection_seconds";
         private const string ResumeMinutesParameterCode = "match_resume_minutes";
+        private const string AbsentStepsParameterCode = "absent_after_expired_steps";
+        private const double ReconnectionTokenMargin = 1.25;
         private const string MatchesRestoredMessage = "{0} players wait for the matches left in progress by the previous run.";
         private const string SeatReturnedMessage = "Player {0} came back to the match interrupted by the server restart.";
         private const string SeatKeptMessage = "Player {0} lost the connection during a match; the seat waits for the reconnection window.";
@@ -41,11 +43,13 @@ namespace Game.Services
         private readonly TimeProvider _timeProvider;
         private readonly GuestIdIssuer _guestIdIssuer;
         private readonly MatchCoordinator _matchCoordinator;
+        private readonly MatchReconnectionTokenIssuer _reconnectionTokenIssuer;
 
         private MatchTimeLimits? _timeLimits;
+        private TimeSpan _resumeTime;
         private IReadOnlyDictionary<int, MatchRuleSet>? _ruleSetsByPlayerCount;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, MatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, Random chanceSource)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, MatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, SessionTokenIssuer sessionTokenIssuer, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);
@@ -58,6 +62,7 @@ namespace Game.Services
             ArgumentNullException.ThrowIfNull(timeProvider);
             ArgumentNullException.ThrowIfNull(startingBoard);
             ArgumentNullException.ThrowIfNull(guestIdIssuer);
+            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
             ArgumentNullException.ThrowIfNull(chanceSource);
 
             _roomRegistry = roomRegistry;
@@ -69,7 +74,8 @@ namespace Game.Services
             _guestIdIssuer = guestIdIssuer;
             var matchRoomReturn = new MatchRoomReturn(roomRegistry, roomService);
             var matchRepositories = new MatchRepositories(matchRecordRepository, matchParticipantRepository, matchStateRepository);
-            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, matchRoomReturn), matchRepositories, startingBoard.FlowerCells, chanceSource);
+            _reconnectionTokenIssuer = new MatchReconnectionTokenIssuer(sessionTokenIssuer, sessionRegistry);
+            _matchCoordinator = new MatchCoordinator(timeProvider, new MatchNoticeForwarder(sessionRegistry, matchRoomReturn, _reconnectionTokenIssuer), matchRepositories, startingBoard.FlowerCells, chanceSource);
             _sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
             _sessionRegistry.SessionClosed += SessionRegistryOnSessionClosed;
             _sessionRegistry.SessionOpened += SessionRegistryOnSessionOpened;
@@ -79,16 +85,19 @@ namespace Game.Services
         {
             TimeSpan stepTime = await ReadSecondsAsync(TurnSecondsParameterCode);
             TimeSpan reconnectionTime = await ReadSecondsAsync(ReconnectionSecondsParameterCode);
-            _timeLimits = new MatchTimeLimits(stepTime, reconnectionTime);
+            int absentAfterExpiredSteps = await _systemParameterReader.ReadPositiveAsync(AbsentStepsParameterCode);
+            int resumeMinutes = await _systemParameterReader.ReadPositiveAsync(ResumeMinutesParameterCode);
+            _timeLimits = new MatchTimeLimits(stepTime, reconnectionTime, absentAfterExpiredSteps);
+            _resumeTime = TimeSpan.FromMinutes(resumeMinutes);
+            _reconnectionTokenIssuer.UseLifetime((stepTime + reconnectionTime + _resumeTime) * ReconnectionTokenMargin);
             _ruleSetsByPlayerCount = await _matchRuleReader.ReadByPlayerCountAsync();
         }
 
         public async Task ResumeInterruptedMatchesAsync()
         {
-            int resumeMinutes = await _systemParameterReader.ReadPositiveAsync(ResumeMinutesParameterCode);
             MatchTimeLimits timeLimits = _timeLimits ?? throw new InvalidOperationException(RulesNotLoadedMessage);
             IReadOnlyDictionary<int, MatchRuleSet> ruleSetsByPlayerCount = _ruleSetsByPlayerCount ?? throw new InvalidOperationException(RulesNotLoadedMessage);
-            var resumption = new MatchResumption(timeLimits, ruleSetsByPlayerCount, TimeSpan.FromMinutes(resumeMinutes));
+            var resumption = new MatchResumption(timeLimits, ruleSetsByPlayerCount, _resumeTime);
             IReadOnlyList<int> waitingEntrantIds = await _matchCoordinator.RestoreInterruptedMatchesAsync(resumption);
             foreach (int waitingGuestId in waitingEntrantIds.Where(entrantId => entrantId < 0))
             {
@@ -103,6 +112,13 @@ namespace Game.Services
             MatchSeating? seating = _matchCoordinator.FindSeating(ownerId);
 
             return seating;
+        }
+
+        internal bool HoldsSeatIn(int ownerId, int matchId)
+        {
+            bool holdsSeat = _matchCoordinator.HoldsSeatIn(ownerId, matchId);
+
+            return holdsSeat;
         }
 
         public Task FinishRecordingAsync()
