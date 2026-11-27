@@ -18,8 +18,6 @@ namespace Game.Server
 
         public static ServerSettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             ServerSettings? settings = configuration.GetSection(SectionName).Get<ServerSettings>();
             if ((settings is null) || (settings.NetTcpPort <= 0))
             {

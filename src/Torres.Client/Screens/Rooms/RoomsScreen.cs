@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Contracts;
 using Torres.Client.Flows;
 using Torres.Client.Localization;
 using Torres.Client.UI;
@@ -160,7 +161,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Body,
                 TextColor = Theme.Ink,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextArguments = new[] { room.HostDisplayName },
+                TextArguments = new string[] { room.HostDisplayName },
             };
             rowContent.Widgets.Add(hostLabel);
             StackPanel.SetProportionType(hostLabel, ProportionType.Fill);
@@ -170,7 +171,7 @@ namespace Torres.Client.Screens
                 Font = Fonts.Small,
                 TextColor = Theme.MutedInk,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextArguments = new[] { DisplayFormats.FormatInteger(room.PlayerCount), DisplayFormats.FormatInteger(room.MaxPlayers) },
+                TextArguments = new string[] { DisplayFormats.FormatInteger(room.PlayerCount), DisplayFormats.FormatInteger(room.MaxPlayers) },
             };
             rowContent.Widgets.Add(occupancyLabel);
             rowContent.Widgets.Add(BuildJoinControl(room));

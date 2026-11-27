@@ -18,10 +18,10 @@ namespace Torres.Client.Scene
         private const float BudTipLift = 0.09f;
         private const int OpeningFloretCount = 40;
         private const int FullBloomFloretCount = 90;
-        private const float OpeningLowestShare = -0.1f;
+        private const float OpeningLowestFraction = -0.1f;
         private const float GoldenAngleDegrees = 137.50776f;
-        private const float SphereTopShare = 1f;
-        private const float SphereSpanShare = 2f;
+        private const float SphereTopFraction = 1f;
+        private const float SphereSpanFraction = 2f;
         private const float HalfStep = 0.5f;
         private const int FloretColorCycle = 3;
         private const float OpeningCupDrop = 0.03f;
@@ -39,55 +39,49 @@ namespace Torres.Client.Scene
             {
                 FlowerPhase.Bud => BudRadius,
                 FlowerPhase.Opening => OpeningRadius,
-                _ => FullBloomRadius,
+                FlowerPhase.FullBloom => FullBloomRadius,
+                _ => throw new ArgumentOutOfRangeException(nameof(flowerLevel)),
             };
             float headCenterHeight = BoardGeometry.GetFlowerTop(flowerLevel) - headRadius;
-            FlowerParts.AddColumn(meshBuilder, cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), headCenterHeight - BoardGeometry.SoilTop, StemRadius, GardenPalette.Stem);
-            AddLeaves(meshBuilder, cellCenter, BaseLeafCount + flowerLevel);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), new Vector3(StemRadius, headCenterHeight - BoardGeometry.SoilTop, StemRadius)), GardenPalette.Stem);
+            FlowerParts.AddLeafRing(meshBuilder, cellCenter, new LeafRing(BaseLeafCount + flowerLevel, LeafPhaseDegrees, LeafDistance, LeafLift, _leafScale, LeafTiltDegrees, GardenPalette.Leaf, false));
             Vector3 headCenter = cellCenter + new Vector3(0f, headCenterHeight, 0f);
             switch (flowerPhase)
             {
                 case FlowerPhase.Bud:
-                    FlowerParts.AddPart(meshBuilder, headCenter, _budScale, 0f, 0f, GardenPalette.AlliumBud);
-                    FlowerParts.AddPart(meshBuilder, headCenter + new Vector3(0f, BudTipLift, 0f), _budTipScale, 0f, 0f, GardenPalette.AlliumBudTip);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headCenter, _budScale, 0f, 0f), GardenPalette.AlliumBud);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headCenter + new Vector3(0f, BudTipLift, 0f), _budTipScale, 0f, 0f), GardenPalette.AlliumBudTip);
                     break;
                 case FlowerPhase.Opening:
-                    AddFlorets(meshBuilder, headCenter, headRadius, OpeningFloretCount, OpeningLowestShare);
-                    FlowerParts.AddPart(meshBuilder, headCenter - new Vector3(0f, OpeningCupDrop, 0f), _openingCupScale, 0f, 0f, GardenPalette.AlliumBud);
+                    AddFlorets(meshBuilder, new BoundingSphere(headCenter, headRadius), flowerPhase);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headCenter - new Vector3(0f, OpeningCupDrop, 0f), _openingCupScale, 0f, 0f), GardenPalette.AlliumBud);
                     break;
                 case FlowerPhase.FullBloom:
-                    AddFlorets(meshBuilder, headCenter, headRadius, FullBloomFloretCount, -SphereTopShare);
+                    AddFlorets(meshBuilder, new BoundingSphere(headCenter, headRadius), flowerPhase);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(flowerLevel));
             }
         }
 
-        private static void AddLeaves(MeshBuilder meshBuilder, Vector3 cellCenter, int leafCount)
+        private static void AddFlorets(MeshBuilder meshBuilder, BoundingSphere head, FlowerPhase flowerPhase)
         {
-            for (var leafIndex = 0; leafIndex < leafCount; leafIndex++)
-            {
-                float headingDegrees = FlowerParts.GetCircleHeading(leafIndex, leafCount, LeafPhaseDegrees);
-                Vector3 leafCenter = cellCenter + (BoardGeometry.GetHeadingDirection(headingDegrees) * LeafDistance) + new Vector3(0f, BoardGeometry.PlanterTop + LeafLift, 0f);
-                FlowerParts.AddPart(meshBuilder, leafCenter, _leafScale, LeafTiltDegrees, headingDegrees, GardenPalette.Leaf);
-            }
-        }
-
-        private static void AddFlorets(MeshBuilder meshBuilder, Vector3 headCenter, float headRadius, int floretCount, float lowestShare)
-        {
+            bool isOpening = flowerPhase == FlowerPhase.Opening;
+            int floretCount = isOpening ? OpeningFloretCount : FullBloomFloretCount;
+            float lowestFraction = isOpening ? OpeningLowestFraction : -SphereTopFraction;
             for (var floretIndex = 0; floretIndex < floretCount; floretIndex++)
             {
-                float heightShare = SphereTopShare - (SphereSpanShare * (floretIndex + HalfStep) / floretCount);
-                if (heightShare < lowestShare)
+                float heightFraction = SphereTopFraction - (SphereSpanFraction * (floretIndex + HalfStep) / floretCount);
+                if (heightFraction < lowestFraction)
                 {
                     continue;
                 }
 
-                float ringShare = MathF.Sqrt((SphereTopShare * SphereTopShare) - (heightShare * heightShare));
+                float ringFraction = MathF.Sqrt((SphereTopFraction * SphereTopFraction) - (heightFraction * heightFraction));
                 Vector3 ringDirection = BoardGeometry.GetHeadingDirection(GoldenAngleDegrees * floretIndex);
-                Vector3 floretCenter = headCenter + (ringDirection * ringShare * headRadius) + new Vector3(0f, heightShare * headRadius, 0f);
+                Vector3 floretCenter = head.Center + (ringDirection * ringFraction * head.Radius) + new Vector3(0f, heightFraction * head.Radius, 0f);
                 Color floretColor = (floretIndex % FloretColorCycle) != 0 ? GardenPalette.AlliumFloret : GardenPalette.AlliumLightFloret;
-                FlowerParts.AddBead(meshBuilder, floretCenter, _floretScale, floretColor);
+                FlowerParts.AddCoarsePart(meshBuilder, PartPose.CreateUpright(floretCenter, _floretScale), floretColor);
             }
         }
     }

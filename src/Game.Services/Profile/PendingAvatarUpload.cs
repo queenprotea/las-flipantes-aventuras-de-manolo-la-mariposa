@@ -15,16 +15,16 @@ namespace Game.Services
 
         private string? _extension;
 
-        internal PendingAvatarUpload(int originalBytes, int thumbnailBytes, DateTime startedAtUtc)
+        internal PendingAvatarUpload(int originalBytes, int thumbnailBytes, DateTime startedAt)
         {
             _original = new byte[originalBytes];
             _thumbnail = new byte[thumbnailBytes];
             _receivedOriginalParts = new bool[CountParts(originalBytes)];
             _receivedThumbnailParts = new bool[CountParts(thumbnailBytes)];
-            LastActivityUtc = startedAtUtc;
+            LastActivityAt = startedAt;
         }
 
-        internal DateTime LastActivityUtc { get; private set; }
+        internal DateTime LastActivityAt { get; private set; }
 
         internal bool IsComplete()
         {
@@ -35,7 +35,7 @@ namespace Game.Services
             return isComplete;
         }
 
-        internal SendAvatarPartResult Write(ReceivedAvatarPart receivedPart, DateTime nowUtc)
+        internal SendAvatarPartResult Write(ReceivedAvatarPart receivedPart, DateTime now)
         {
             byte[] targetBuffer = receivedPart.FileKind == AvatarFileKind.Thumbnail ? _thumbnail : _original;
             if (!FitsInBuffer(targetBuffer.Length, receivedPart.Offset, receivedPart.Bytes.Length))
@@ -49,16 +49,16 @@ namespace Game.Services
                 receivedPart.Bytes.CopyTo(targetBuffer, receivedPart.Offset);
                 bool[] receivedParts = receivedPart.FileKind == AvatarFileKind.Thumbnail ? _receivedThumbnailParts : _receivedOriginalParts;
                 receivedParts[receivedPart.Offset / ProfileLimits.AvatarPartBytes] = true;
-                LastActivityUtc = nowUtc;
+                LastActivityAt = now;
                 writeResult = CheckCompletedThumbnail(receivedPart.FileKind);
             }
 
             return writeResult;
         }
 
-        internal void Touch(DateTime nowUtc)
+        internal void Touch(DateTime now)
         {
-            LastActivityUtc = nowUtc;
+            LastActivityAt = now;
         }
 
         internal CompletedAvatarUpload ToCompleted()

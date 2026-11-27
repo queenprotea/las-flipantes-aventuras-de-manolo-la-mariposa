@@ -1,4 +1,4 @@
-using System;
+using System.Globalization;
 using System.Collections.Generic;
 
 using Game.Contracts;
@@ -41,9 +41,6 @@ namespace Game.Services
 
         public void ReceiveMatchFinished(IReadOnlyList<int> releasedEntrantIds, IReadOnlyList<EntrantStanding> entrantStandings)
         {
-            ArgumentNullException.ThrowIfNull(releasedEntrantIds);
-            ArgumentNullException.ThrowIfNull(entrantStandings);
-
             LiveRoom? returnedRoom = null;
             foreach (int releasedEntrantId in releasedEntrantIds)
             {
@@ -52,7 +49,7 @@ namespace Game.Services
 
             if (returnedRoom is not null)
             {
-                _matchLog.InfoFormat(MatchFinishedMessage, returnedRoom.RoomId);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, MatchFinishedMessage, returnedRoom.RoomId);
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,9 +29,6 @@ namespace Game.Services
 
         public SessionRegistry(SessionTimings sessionTimings, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(sessionTimings);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _sessionTimings = sessionTimings;
             _timeProvider = timeProvider;
         }
@@ -61,7 +59,7 @@ namespace Game.Services
 
             EndReplacedSession(replacedSession, openedSession);
             openedSession.Watch();
-            _log.InfoFormat(SessionOpenedMessage, owner.OwnerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, SessionOpenedMessage, owner.OwnerId);
             OnSessionOpened(new SessionOwnerEventArgs(owner.OwnerId));
 
             return openedSession;
@@ -104,7 +102,7 @@ namespace Game.Services
             closedSession.Abandon();
             if (wasRemoved)
             {
-                _log.InfoFormat(SessionClosedMessage, closedSession.Owner.OwnerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, SessionClosedMessage, closedSession.Owner.OwnerId);
                 OnSessionClosed(new SessionOwnerEventArgs(closedSession.Owner.OwnerId));
             }
         }
@@ -117,17 +115,17 @@ namespace Game.Services
             }
 
             lostSession.Drop();
-            _log.InfoFormat(SessionLostMessage, lostSession.Owner.OwnerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, SessionLostMessage, lostSession.Owner.OwnerId);
             OnSessionLost(new SessionOwnerEventArgs(lostSession.Owner.OwnerId));
         }
 
         internal IReadOnlyList<PlayerSession> FindSilentSessions()
         {
-            DateTime silenceLimitUtc = _timeProvider.GetUtcNow().UtcDateTime - _sessionTimings.SilenceLimit;
+            DateTime silenceLimitAt = _timeProvider.GetUtcNow().UtcDateTime - _sessionTimings.SilenceLimit;
             List<PlayerSession> silentSessions;
             lock (_registryLock)
             {
-                silentSessions = _sessionsById.Values.Where(session => session.IsSilentSince(silenceLimitUtc)).ToList();
+                silentSessions = _sessionsById.Values.Where(session => session.IsSilentSince(silenceLimitAt)).ToList();
             }
 
             return silentSessions;
@@ -158,7 +156,7 @@ namespace Game.Services
             else
             {
                 replacedSession.Terminate(SessionTerminationReason.AccountSignedInElsewhere);
-                _log.InfoFormat(SessionReplacedMessage, replacedSession.Owner.OwnerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, SessionReplacedMessage, replacedSession.Owner.OwnerId);
             }
         }
 

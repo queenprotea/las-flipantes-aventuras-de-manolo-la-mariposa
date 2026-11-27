@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 
 using StbImageSharp;
 
+using Torres.Client.Contracts;
 using Torres.Client.UI;
 
 namespace Torres.Client.Avatars
@@ -16,7 +17,6 @@ namespace Torres.Client.Avatars
         private const int GreenOffset = 1;
         private const int BlueOffset = 2;
 
-        private static readonly byte[] _pngSignature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         private static readonly byte[] _jpgSignature = new byte[] { 0xFF, 0xD8, 0xFF };
 
         internal static AvatarPreparation Prepare(string filePath)
@@ -35,7 +35,7 @@ namespace Torres.Client.Avatars
         private static AvatarPreparation PrepareImage(byte[] originalFile)
         {
             var preparation = new AvatarPreparation(AvatarPreparationStatus.InvalidFormat, null, originalFile.Length);
-            if (StartsWith(originalFile, _pngSignature) || StartsWith(originalFile, _jpgSignature))
+            if (StartsWith(originalFile, PngEncoder.Signature) || StartsWith(originalFile, _jpgSignature))
             {
                 ImageResult decodedImage = ImageResult.FromMemory(originalFile, ColorComponents.RedGreenBlueAlpha);
                 var preparedAvatar = new PreparedAvatar(originalFile, MakeThumbnail(decodedImage));

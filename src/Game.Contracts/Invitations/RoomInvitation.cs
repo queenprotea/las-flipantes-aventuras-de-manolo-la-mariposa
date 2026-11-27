@@ -19,6 +19,6 @@ namespace Game.Contracts
         public PlayerSummary Sender { get; set; } = new PlayerSummary();
 
         [DataMember]
-        public DateTime SentAtUtc { get; set; }
+        public DateTime SentAt { get; set; }
     }
 }

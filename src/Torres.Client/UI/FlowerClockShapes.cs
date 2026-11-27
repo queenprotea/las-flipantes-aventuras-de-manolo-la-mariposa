@@ -7,40 +7,41 @@ namespace Torres.Client.UI
     internal static class FlowerClockShapes
     {
         internal const int PetalCount = 12;
-        internal const float PetalLineShare = 0.024f;
+        internal const float PetalLineFraction = 0.024f;
 
-        private const int SampleGrid = 4;
-        private const float HalfShare = 0.5f;
+        private const int SamplesPerSide = 4;
+        private const float SampleCenterOffset = 0.5f;
+        private const float TextureCenterOffset = 0.5f;
         private const float StartAngleRadians = -MathHelper.PiOver2;
-        private const float PetalInnerShare = 0.12f;
-        private const float PetalLengthShare = 0.46f;
-        private const float PetalWidthShare = 0.118f;
+        private const float PetalInnerFraction = 0.12f;
+        private const float PetalLengthFraction = 0.46f;
+        private const float PetalWidthFraction = 0.118f;
         private const float PetalTaperPower = 0.8f;
         private const float PetalRoundPower = 0.7f;
-        private const float CenterRadiusShare = 0.14f;
-        private const float CenterLineShare = 0.03f;
+        private const float CenterRadiusFraction = 0.14f;
+        private const float CenterLineFraction = 0.03f;
         private const int SeedCount = 7;
         private const float SeedPhaseRadians = 0.3f;
-        private const float SeedReachShare = 0.45f;
-        private const float SeedRadiusShare = 0.018f;
+        private const float SeedReachFraction = 0.45f;
+        private const float SeedRadiusFraction = 0.018f;
 
-        internal static Color[] CreatePetalMask(int petalIndex, float insetShare)
+        internal static Color[] CreatePetalMask(int petalIndex, float insetFraction)
         {
             float petalAngleRadians = StartAngleRadians + (MathHelper.TwoPi * petalIndex / PetalCount);
             var petalDirection = new Vector2(MathF.Cos(petalAngleRadians), MathF.Sin(petalAngleRadians));
-            Color[] maskPixels = CreatePixels(shapePoint => IsInsidePetal(shapePoint, petalDirection, insetShare) ? Color.White : Color.Transparent);
+            Color[] maskPixels = CreatePixels(new PetalMask(petalDirection, insetFraction));
 
             return maskPixels;
         }
 
         internal static Color[] CreateCenter()
         {
-            Color[] centerPixels = CreatePixels(FindCenterColor);
+            Color[] centerPixels = CreatePixels(null);
 
             return centerPixels;
         }
 
-        private static Color[] CreatePixels(Func<Vector2, Color> findShapeColor)
+        private static Color[] CreatePixels(PetalMask? petalMask)
         {
             int textureSize = MatchLayout.FlowerClockSize;
             var pixels = new Color[textureSize * textureSize];
@@ -48,38 +49,55 @@ namespace Torres.Client.UI
             {
                 for (var column = 0; column < textureSize; column++)
                 {
-                    pixels[(row * textureSize) + column] = SamplePixel(column, row, findShapeColor);
+                    pixels[(row * textureSize) + column] = SamplePixel(column, row, petalMask);
                 }
             }
 
             return pixels;
         }
 
-        private static Color SamplePixel(int column, int row, Func<Vector2, Color> findShapeColor)
+        private static Color SamplePixel(int column, int row, PetalMask? petalMask)
         {
             float textureSize = MatchLayout.FlowerClockSize;
             Vector4 colorSum = Vector4.Zero;
-            for (var sampleIndex = 0; sampleIndex < SampleGrid * SampleGrid; sampleIndex++)
+            for (var sampleIndex = 0; sampleIndex < SamplesPerSide * SamplesPerSide; sampleIndex++)
             {
-                float sampleX = column + (((sampleIndex % SampleGrid) + HalfShare) / SampleGrid);
-                float sampleY = row + (((sampleIndex / SampleGrid) + HalfShare) / SampleGrid);
-                var shapePoint = new Vector2((sampleX / textureSize) - HalfShare, (sampleY / textureSize) - HalfShare);
-                colorSum += findShapeColor(shapePoint).ToVector4();
+                float sampleX = column + (((sampleIndex % SamplesPerSide) + SampleCenterOffset) / SamplesPerSide);
+                float sampleY = row + (((sampleIndex / SamplesPerSide) + SampleCenterOffset) / SamplesPerSide);
+                var shapePoint = new Vector2((sampleX / textureSize) - TextureCenterOffset, (sampleY / textureSize) - TextureCenterOffset);
+                colorSum += FindShapeColor(shapePoint, petalMask).ToVector4();
             }
 
-            var pixelColor = new Color(colorSum / (SampleGrid * SampleGrid));
+            var pixelColor = new Color(colorSum / (SamplesPerSide * SamplesPerSide));
 
             return pixelColor;
         }
 
-        private static bool IsInsidePetal(Vector2 shapePoint, Vector2 petalDirection, float insetShare)
+        private static Color FindShapeColor(Vector2 shapePoint, PetalMask? petalMask)
         {
+            Color shapeColor;
+            if (petalMask is PetalMask shownPetal)
+            {
+                shapeColor = IsInsidePetal(shapePoint, shownPetal) ? Color.White : Color.Transparent;
+            }
+            else
+            {
+                shapeColor = FindCenterColor(shapePoint);
+            }
+
+            return shapeColor;
+        }
+
+        private static bool IsInsidePetal(Vector2 shapePoint, PetalMask petalMask)
+        {
+            Vector2 petalDirection = petalMask.Direction;
+            float insetFraction = petalMask.InsetFraction;
             float alongReach = Vector2.Dot(shapePoint, petalDirection);
             float acrossReach = Math.Abs((shapePoint.Y * petalDirection.X) - (shapePoint.X * petalDirection.Y));
-            bool isWithinLength = (alongReach >= PetalInnerShare + insetShare) && (alongReach <= PetalLengthShare - insetShare);
-            float lengthShare = (alongReach - PetalInnerShare) / (PetalLengthShare - PetalInnerShare);
+            bool isWithinLength = (alongReach >= PetalInnerFraction + insetFraction) && (alongReach <= PetalLengthFraction - insetFraction);
+            float lengthFraction = (alongReach - PetalInnerFraction) / (PetalLengthFraction - PetalInnerFraction);
             float halfWidth = isWithinLength
-                ? (PetalWidthShare * MathF.Pow(MathF.Sin(MathHelper.Pi * MathF.Pow(lengthShare, PetalTaperPower)), PetalRoundPower)) - insetShare
+                ? (PetalWidthFraction * MathF.Pow(MathF.Sin(MathHelper.Pi * MathF.Pow(lengthFraction, PetalTaperPower)), PetalRoundPower)) - insetFraction
                 : 0f;
             bool isInside = isWithinLength && (acrossReach <= halfWidth);
 
@@ -90,9 +108,9 @@ namespace Torres.Client.UI
         {
             float centerDistance = shapePoint.Length();
             Color centerColor = Color.Transparent;
-            if (centerDistance <= CenterRadiusShare)
+            if (centerDistance <= CenterRadiusFraction)
             {
-                bool isOnLine = centerDistance >= CenterRadiusShare - CenterLineShare;
+                bool isOnLine = centerDistance >= CenterRadiusFraction - CenterLineFraction;
                 centerColor = (isOnLine || IsOnSeed(shapePoint)) ? Theme.ButterLine : Theme.Butter;
             }
 
@@ -101,12 +119,12 @@ namespace Torres.Client.UI
 
         private static bool IsOnSeed(Vector2 shapePoint)
         {
-            var isOnSeed = false;
+            bool isOnSeed = false;
             for (var seedIndex = 0; seedIndex < SeedCount; seedIndex++)
             {
                 float seedAngleRadians = SeedPhaseRadians + (MathHelper.TwoPi * seedIndex / SeedCount);
-                Vector2 seedCenter = new Vector2(MathF.Cos(seedAngleRadians), MathF.Sin(seedAngleRadians)) * CenterRadiusShare * SeedReachShare;
-                isOnSeed = isOnSeed || (Vector2.Distance(shapePoint, seedCenter) <= SeedRadiusShare);
+                Vector2 seedCenter = new Vector2(MathF.Cos(seedAngleRadians), MathF.Sin(seedAngleRadians)) * CenterRadiusFraction * SeedReachFraction;
+                isOnSeed = isOnSeed || (Vector2.Distance(shapePoint, seedCenter) <= SeedRadiusFraction);
             }
 
             return isOnSeed;

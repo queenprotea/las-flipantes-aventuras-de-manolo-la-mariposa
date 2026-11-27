@@ -14,7 +14,6 @@ namespace Torres.Client.Scene
         private const float LayerStep = 0.03f;
         private const float FirstHeadingDegrees = -8f;
         private const float HeadingStepDegrees = 0.6f;
-        private const float FaceLift = 0.002f;
         private const float LabelDistance = 0.75f;
 
         private static readonly Vector3 _deckPosition = new Vector3(3.6f, TableShapes.TableTop, 5.5f);
@@ -38,7 +37,7 @@ namespace Torres.Client.Scene
 
         internal static Matrix TopCardWorld { get; } = Matrix.CreateTranslation(0f, LayerThickness, 0f) * FindLayerWorld(MostShownLayers - 1);
 
-        internal static float CardWidthShare { get; } = DeckCardWidth / HandFigure.CardWidth;
+        internal static float CardWidthFraction { get; } = DeckCardWidth / HandFigure.CardWidth;
 
         internal void ShowDeck(int deckCount)
         {
@@ -64,7 +63,7 @@ namespace Torres.Client.Scene
             }
 
             textureEffect.Texture = backTexture;
-            textureEffect.World = Matrix.CreateTranslation(0f, LayerThickness + FaceLift, 0f) * FindLayerWorld(_shownLayers - 1);
+            textureEffect.World = Matrix.CreateTranslation(0f, LayerThickness + SceneValues.FaceLift, 0f) * FindLayerWorld(_shownLayers - 1);
             _backQuad.Draw(_graphicsDevice, textureEffect);
         }
 

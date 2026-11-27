@@ -131,7 +131,11 @@ namespace Game.Match
 
         private static CheckpointCell ToCheckpointCell(BoardCell boardCell)
         {
-            var checkpointCell = new CheckpointCell { Row = boardCell.Row, Column = boardCell.Column };
+            var checkpointCell = new CheckpointCell
+            {
+                Row = boardCell.Row,
+                Column = boardCell.Column,
+            };
 
             return checkpointCell;
         }
@@ -146,7 +150,11 @@ namespace Game.Match
 
         private static CheckpointFlower ToCheckpointFlower(Flower flower)
         {
-            var checkpointFlower = new CheckpointFlower { Cell = ToCheckpointCell(flower.Cell), Level = flower.Level };
+            var checkpointFlower = new CheckpointFlower
+            {
+                Cell = ToCheckpointCell(flower.Cell),
+                Level = flower.Level,
+            };
 
             return checkpointFlower;
         }
@@ -161,7 +169,11 @@ namespace Game.Match
 
         private static CheckpointCaterpillar ToCheckpointCaterpillar(Caterpillar caterpillar)
         {
-            var checkpointCaterpillar = new CheckpointCaterpillar { SeatNumber = caterpillar.SeatNumber, Cell = ToCheckpointCell(caterpillar.Cell) };
+            var checkpointCaterpillar = new CheckpointCaterpillar
+            {
+                SeatNumber = caterpillar.SeatNumber,
+                Cell = ToCheckpointCell(caterpillar.Cell),
+            };
 
             return checkpointCaterpillar;
         }
@@ -198,7 +210,12 @@ namespace Game.Match
 
         private static CheckpointRoundScore ToCheckpointRoundScore(SeatRoundScore roundScore)
         {
-            var checkpointRoundScore = new CheckpointRoundScore { PlanterPoints = roundScore.PlanterPoints, ButterflyPoints = roundScore.ButterflyPoints, ScoredPlanterCount = roundScore.ScoredPlanterCount };
+            var checkpointRoundScore = new CheckpointRoundScore
+            {
+                PlanterPoints = roundScore.PlanterPoints,
+                ButterflyPoints = roundScore.ButterflyPoints,
+                ScoredPlanterCount = roundScore.ScoredPlanterCount,
+            };
 
             return checkpointRoundScore;
         }

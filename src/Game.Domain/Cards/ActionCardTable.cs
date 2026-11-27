@@ -29,8 +29,6 @@ namespace Game.Domain
 
         public TurnActionOutcome DrawCard(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             TurnActionOutcome actionOutcome = _matchTable.JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -48,13 +46,6 @@ namespace Game.Domain
 
         public TurnActionOutcome PlayCard(int seatNumber, CardPlay cardPlay)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            ArgumentNullException.ThrowIfNull(cardPlay);
-            foreach (BoardCell playedCell in cardPlay.AffectedCells)
-            {
-                Board.ThrowIfOutside(playedCell, nameof(cardPlay));
-            }
-
             TurnActionOutcome actionOutcome = _matchTable.JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -77,8 +68,6 @@ namespace Game.Domain
 
         public bool CanDrawCard(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             bool canDraw = (_matchTable.JudgeTurnOwner(seatNumber) == TurnActionOutcome.Applied) && (JudgeDraw(GetSeatCards(seatNumber)) == TurnActionOutcome.Applied);
 
             return canDraw;
@@ -86,8 +75,6 @@ namespace Game.Domain
 
         public IReadOnlyList<ActionCard> FindPlayableCards(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             SeatCards seatCards = GetSeatCards(seatNumber);
             bool isTurnOwner = _matchTable.JudgeTurnOwner(seatNumber) == TurnActionOutcome.Applied;
             List<ActionCard> playableCards = isTurnOwner ? seatCards.Hand.Where(handCard => JudgeHeldCard(seatCards, handCard) == TurnActionOutcome.Applied).ToList() : new List<ActionCard>();
@@ -259,12 +246,6 @@ namespace Game.Domain
             SeatCards seatCards = _seatCards[ToSeatIndex(seatNumber)];
 
             return seatCards;
-        }
-
-        private void ThrowIfSeatNumberOutOfRange(int seatNumber)
-        {
-            ArgumentOutOfRangeException.ThrowIfLessThan(seatNumber, MatchTable.FirstSeatNumber);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(seatNumber, _seatCards.Count);
         }
     }
 }

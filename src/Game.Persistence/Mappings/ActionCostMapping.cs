@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,8 +11,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<ActionCost> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(ActionCostTable);
             builder.HasKey(mappedCost => mappedCost.ActionCode);
             builder.Property(mappedCost => mappedCost.ActionCode).HasColumnName(ActionCodeColumn);

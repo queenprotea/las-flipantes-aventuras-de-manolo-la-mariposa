@@ -76,7 +76,7 @@ namespace Game.Match.Tests
             return listing;
         }
 
-        public Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        public Task FinishAsync(int matchId, string endReason, DateTime finishedAt)
         {
             _firstFinish.TrySetResult(new RecordedFinish(matchId, endReason));
             Task finishing = Task.CompletedTask;

@@ -15,7 +15,6 @@ namespace Torres.Client.Screens
     {
         private const double ReadyDisplaySeconds = 0.8;
         private const int StatusSpacing = 14;
-        private const int NoticeWidth = 420;
 
         private readonly StartupFlow _startupFlow;
 
@@ -65,38 +64,17 @@ namespace Torres.Client.Screens
             {
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Widgets =
-                {
-                    new LocalizedLabel(TextKeys.Common.GameName)
-                    {
-                        Font = Fonts.Display,
-                        TextColor = Theme.Ink,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                    },
-                    _statusLabel,
-                    _failureNotice,
-                },
             };
+            startupLayout.Widgets.Add(LabelFactory.CreateGameName());
+            startupLayout.Widgets.Add(_statusLabel);
+            startupLayout.Widgets.Add(_failureNotice);
 
             return startupLayout;
         }
 
         private VerticalStackPanel BuildFailureNotice()
         {
-            var failureMessage = new VerticalStackPanel
-            {
-                Padding = Metrics.CardPadding,
-                Background = Theme.BlushTintBrush,
-                Border = Theme.BlushBrush,
-                BorderThickness = Sizes.Border,
-            };
-            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
-            {
-                Font = Fonts.Body,
-                TextColor = Theme.BlushInk,
-                Wrap = true,
-            });
-            failureMessage.Widgets.Add(LabelFactory.CreateParagraph(TextKeys.Common.ServerErrorDetail));
+            VerticalStackPanel failureMessage = PanelFactory.CreateFailureMessage();
 
             LocalizedButton retryButton = ButtonFactory.CreatePrimaryButton(TextKeys.Common.RetryButton);
             LocalizedButton exitButton = ButtonFactory.CreateSecondaryButton(TextKeys.Common.ExitButton);
@@ -109,7 +87,7 @@ namespace Torres.Client.Screens
 
             var failureNotice = new VerticalStackPanel
             {
-                Width = NoticeWidth,
+                Width = Metrics.NoticeWidth,
                 Spacing = Metrics.FieldSpacing,
                 Margin = new Thickness(0, StatusSpacing, 0, 0),
                 Visible = false,

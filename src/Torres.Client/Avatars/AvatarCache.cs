@@ -21,7 +21,6 @@ namespace Torres.Client.Avatars
 {
     internal sealed class AvatarCache : IDisposable
     {
-        private const string ApplicationFolderName = "Torres";
         private const string AvatarsFolderName = "avatars";
         private const string ThumbnailFileNameFormat = "{0}-mini.png";
         private const string ThumbnailFilePattern = "*-mini.png";
@@ -54,7 +53,7 @@ namespace Torres.Client.Avatars
         {
             _graphicsDevice = graphicsDevice;
             _gameSessionConnection = gameSessionConnection;
-            _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationFolderName, AvatarsFolderName);
+            _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ClientSettings.LocalFolderName, AvatarsFolderName);
             _folderPreparation = Task.Run(PrepareFolder);
             _defaultTexture = DefaultAvatarArt.Create(graphicsDevice);
             DefaultImage = new TextureRegion(_defaultTexture);

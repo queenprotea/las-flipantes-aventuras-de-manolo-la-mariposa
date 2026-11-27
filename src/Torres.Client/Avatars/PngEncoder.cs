@@ -31,13 +31,14 @@ namespace Torres.Client.Avatars
         private const string DataChunkType = "IDAT";
         private const string EndChunkType = "IEND";
 
-        private static readonly byte[] _signature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         private static readonly uint[] _crcTable = CreateCrcTable();
+
+        internal static byte[] Signature { get; } = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
         internal static byte[] Encode(byte[] pixels, int imageSide, bool hasAlpha)
         {
             using var pngStream = new MemoryStream();
-            pngStream.Write(_signature);
+            pngStream.Write(Signature);
             WriteChunk(pngStream, HeaderChunkType, CreateHeaderData(imageSide, hasAlpha));
             WriteChunk(pngStream, DataChunkType, CompressScanlines(pixels, imageSide, hasAlpha));
             WriteChunk(pngStream, EndChunkType, Array.Empty<byte>());

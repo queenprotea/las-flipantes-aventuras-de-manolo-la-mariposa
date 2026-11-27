@@ -13,15 +13,11 @@ namespace Game.Services
 
         public PendingRegistrationRegistry(TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _timeProvider = timeProvider;
         }
 
         public void Hold(PendingRegistration registration)
         {
-            ArgumentNullException.ThrowIfNull(registration);
-
             lock (_registryLock)
             {
                 ForgetExpired();
@@ -31,9 +27,6 @@ namespace Game.Services
 
         public PendingRegistration? Redeem(string email, string code)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(email);
-            ArgumentException.ThrowIfNullOrWhiteSpace(code);
-
             PendingRegistration? redeemedRegistration;
             lock (_registryLock)
             {

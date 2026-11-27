@@ -55,6 +55,14 @@ namespace Game.Contracts
         Task<UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar);
 
         /// <summary>
+        /// Deletes the caller's account with everything that belongs to it, takes the caller out of its room and closes its session; nothing is deleted while the caller plays a match.
+        /// </summary>
+        /// <returns>Whether the account was deleted, or why not.</returns>
+        /// <exception cref="FaultException">The caller is a guest.</exception>
+        [OperationContract(Name = "DeleteAccount", IsInitiating = false)]
+        Task<DeleteAccountResult> DeleteAccountAsync();
+
+        /// <summary>
         /// Reads the thumbnail of an avatar, as every screen shows it.
         /// </summary>
         /// <param name="avatarReference">Reference to the avatar, as profiles and player lists give it.</param>

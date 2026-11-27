@@ -10,7 +10,7 @@ namespace Game.Contracts
     public sealed class ConnectionCheckResponse
     {
         [DataMember]
-        public DateTime ServerTimeUtc { get; set; }
+        public DateTime CheckedAt { get; set; }
 
         [DataMember]
         public string SessionToken { get; set; } = string.Empty;

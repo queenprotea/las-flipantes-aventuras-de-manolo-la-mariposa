@@ -16,12 +16,19 @@ namespace Torres.Client.Widgets
     internal sealed class CardHandView
     {
         private const int CardCellCount = 2;
-        private const float DisabledOpacity = 0.5f;
 
         private static readonly IReadOnlyList<BoardCell> _allBoardCells = CreateAllBoardCells();
 
-        private readonly LocalizedLabel _drawLabel = new LocalizedLabel(TextKeys.Match.DrawButton) { Font = Fonts.Small, TextColor = Theme.Ink };
-        private readonly LocalizedLabel _deckCountLabel = new LocalizedLabel(TextKeys.Match.DeckCountLabel) { Font = Fonts.Small, TextColor = Theme.MutedInk };
+        private readonly LocalizedLabel _drawLabel = new LocalizedLabel(TextKeys.Match.DrawButton)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.Ink,
+        };
+        private readonly LocalizedLabel _deckCountLabel = new LocalizedLabel(TextKeys.Match.DeckCountLabel)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.MutedInk,
+        };
         private readonly Button _drawButton;
         private readonly List<BoardCell> _chosenCells = new List<BoardCell>();
         private readonly List<HandCardState> _handStates = new List<HandCardState>();
@@ -64,7 +71,7 @@ namespace Torres.Client.Widgets
             _drawLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.ActionCosts.CardDraw) };
             _deckCountLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(matchView.DeckCount) };
             _drawButton.Enabled = canAct && matchView.CanDrawCard;
-            _drawButton.Opacity = _drawButton.Enabled ? 1f : DisabledOpacity;
+            _drawButton.Opacity = _drawButton.Enabled ? 1f : MatchLayout.DisabledPillOpacity;
             _handStates.Clear();
             foreach (MatchCard handCard in matchView.Hand)
             {
@@ -169,9 +176,7 @@ namespace Torres.Client.Widgets
 
         private static List<BoardCell> CreateAllBoardCells()
         {
-            List<BoardCell> allBoardCells = Enumerable.Range(0, BoardLayout.CellsPerSide)
-                .SelectMany(row => Enumerable.Range(0, BoardLayout.CellsPerSide).Select(column => new BoardCell(row, column)))
-                .ToList();
+            List<BoardCell> allBoardCells = BoardLayout.EnumerateCells().ToList();
 
             return allBoardCells;
         }
@@ -211,9 +216,22 @@ namespace Torres.Client.Widgets
 
         private VerticalStackPanel BuildDeckRoot()
         {
-            var deckTitle = new HorizontalStackPanel { Spacing = MatchLayout.TableLabelSpacing, HorizontalAlignment = HorizontalAlignment.Center };
-            deckTitle.Widgets.Add(new LocalizedLabel(TextKeys.Match.DeckLabel) { Font = Fonts.Small, TextColor = Theme.MutedInk });
-            deckTitle.Widgets.Add(new Label { Text = DisplaySymbols.InlineSeparator, Font = Fonts.Small, TextColor = Theme.MutedInk });
+            var deckTitle = new HorizontalStackPanel
+            {
+                Spacing = MatchLayout.TableLabelSpacing,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            deckTitle.Widgets.Add(new LocalizedLabel(TextKeys.Match.DeckLabel)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+            });
+            deckTitle.Widgets.Add(new Label
+            {
+                Text = DisplaySymbols.InlineSeparator,
+                Font = Fonts.Small,
+                TextColor = Theme.MutedInk,
+            });
             deckTitle.Widgets.Add(_deckCountLabel);
             var deckRoot = new VerticalStackPanel { Spacing = MatchLayout.HandSpacing };
             deckRoot.Widgets.Add(deckTitle);

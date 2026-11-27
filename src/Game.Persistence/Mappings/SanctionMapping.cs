@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +16,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<Sanction> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(SanctionTable);
             builder.HasKey(mappedSanction => mappedSanction.SanctionId);
             builder.Property(mappedSanction => mappedSanction.SanctionId)

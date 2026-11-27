@@ -20,7 +20,6 @@ namespace Torres.Client.UI
         internal const int ActionIconWidth = 30;
         internal const int ActionIconHeight = 15;
         internal const int ActionPillSpacing = 7;
-        internal const int NoticeWidth = 420;
         internal const int SideColumnWidth = 194;
         internal const int SectionLabelSpacing = 8;
         internal const int PlayerRowSpacing = 8;

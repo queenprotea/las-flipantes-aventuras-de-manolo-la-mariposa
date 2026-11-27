@@ -421,6 +421,9 @@
   <data name="AccountSettings.BackToProfileButton" xml:space="preserve">
     <value>Volver al perfil</value>
   </data>
+  <data name="AccountSettings.MatchInProgress" xml:space="preserve">
+    <value>No puedes eliminar tu cuenta mientras haya una partida en curso.</value>
+  </data>
   <data name="Friends.HeaderLabel" xml:space="preserve">
     <value>amigos</value>
   </data>

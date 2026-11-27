@@ -24,16 +24,12 @@ namespace Torres.Client.Scene
         private const float StackStep = 0.04f;
         private const float HoverLift = 0.28f;
         private const float ChosenLift = 0.42f;
-        private const float OutlineGrowth = 1.08f;
         private const float OutlineDrop = 0.012f;
         private const float UnplayableShade = 0.86f;
         private const float BodyInset = 0.94f;
-        private const float FaceLift = 0.002f;
         private const float PickTopAllowance = 0.01f;
-        private const float HalfShare = 0.5f;
         private const double FlightSeconds = 0.5;
         private const float FlightArcHeight = 0.7f;
-        private const float FullScale = 1f;
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly TexturedQuad _faceQuad;
@@ -49,7 +45,7 @@ namespace Torres.Client.Scene
             _graphicsDevice = graphicsDevice;
             _faceQuad = new TexturedQuad(graphicsDevice, CardWidth, CardLength, true);
             _bodyMesh = BuildSlab(graphicsDevice, BodyInset, GardenPalette.CardEdge);
-            _outlineMesh = BuildSlab(graphicsDevice, OutlineGrowth, GardenPalette.ChosenCardOutline);
+            _outlineMesh = BuildSlab(graphicsDevice, SceneValues.OutlineGrowth, GardenPalette.ChosenCardOutline);
         }
 
         internal MatchCard? HoveredCard { get; set; }
@@ -83,7 +79,7 @@ namespace Torres.Client.Scene
         {
             MatchCard? pickedCard = null;
             float nearestDistance = float.MaxValue;
-            var cardBounds = new BoundingBox(new Vector3(-CardWidth * HalfShare, -CardThickness, -CardLength * HalfShare), new Vector3(CardWidth * HalfShare, PickTopAllowance, CardLength * HalfShare));
+            var cardBounds = new BoundingBox(new Vector3(-CardWidth * SceneValues.HalfFactor, -CardThickness, -CardLength * SceneValues.HalfFactor), new Vector3(CardWidth * SceneValues.HalfFactor, PickTopAllowance, CardLength * SceneValues.HalfFactor));
             for (var cardIndex = 0; cardIndex < _handStates.Count; cardIndex++)
             {
                 Matrix localTransform = Matrix.Invert(FindCardWorld(cardIndex));
@@ -124,7 +120,7 @@ namespace Torres.Client.Scene
                 HandCardState handState = _handStates[cardIndex];
                 textureEffect.Texture = cardFaces.FindFace(handState.Card);
                 textureEffect.DiffuseColor = handState.IsPlayable ? Vector3.One : new Vector3(UnplayableShade);
-                textureEffect.World = Matrix.CreateTranslation(0f, FaceLift, 0f) * FindCardWorld(cardIndex);
+                textureEffect.World = Matrix.CreateTranslation(0f, SceneValues.FaceLift, 0f) * FindCardWorld(cardIndex);
                 _faceQuad.Draw(_graphicsDevice, textureEffect);
             }
 
@@ -149,7 +145,7 @@ namespace Torres.Client.Scene
 
         private Matrix FindCardWorld(int cardIndex)
         {
-            float centerIndex = (_handStates.Count - 1) * HalfShare;
+            float centerIndex = (_handStates.Count - 1) * SceneValues.HalfFactor;
             float cardSpacing = _handStates.Count > 1 ? Math.Min(CardSpacing, HandSpan / (_handStates.Count - 1)) : CardSpacing;
             float centerOffset = cardIndex - centerIndex;
             HandCardState handState = _handStates[cardIndex];
@@ -177,11 +173,11 @@ namespace Torres.Client.Scene
 
         private static Matrix FindFlightWorld(Matrix handWorld, float flightProgress)
         {
-            float easedProgress = MathHelper.SmoothStep(0f, FullScale, flightProgress);
+            float easedProgress = MathHelper.SmoothStep(0f, SceneValues.FullScale, flightProgress);
             DeckFigure.TopCardWorld.Decompose(out _, out Quaternion deckRotation, out Vector3 deckPosition);
             handWorld.Decompose(out _, out Quaternion handRotation, out Vector3 handPosition);
             Vector3 flightPosition = Vector3.Lerp(deckPosition, handPosition, easedProgress) + new Vector3(0f, SceneTiming.FindArcLift(FlightArcHeight, easedProgress), 0f);
-            float flightScale = MathHelper.Lerp(DeckFigure.CardWidthShare, FullScale, easedProgress);
+            float flightScale = MathHelper.Lerp(DeckFigure.CardWidthFraction, SceneValues.FullScale, easedProgress);
             Matrix flightWorld = Matrix.CreateScale(flightScale)
                 * Matrix.CreateFromQuaternion(Quaternion.Slerp(deckRotation, handRotation, easedProgress))
                 * Matrix.CreateTranslation(flightPosition);

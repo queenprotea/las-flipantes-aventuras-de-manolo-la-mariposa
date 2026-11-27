@@ -20,7 +20,6 @@ namespace Game.Services
         private const string ResetFailedMessage = "The database could not be used while a password was reset with a recovery code.";
         private const string RecoveryCodeSentMessage = "A recovery code was sent to the email of player {0}.";
         private const string PasswordResetMessage = "Player {0} set a new password with a recovery code.";
-        private const string NotStartedMessage = "The verification code lifetime was not set; Start must run before passwords are recovered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccessRecovery));
 
@@ -30,27 +29,16 @@ namespace Game.Services
         private readonly TimeProvider _timeProvider;
         private readonly EmailSendingPacer _emailSendingPacer;
         private readonly CodeAttemptCounter _codeAttemptCounter = new CodeAttemptCounter();
-        private int? _codeLifetimeMinutes;
+        private readonly VerificationCodeLifetime _verificationCodeLifetime;
 
-        public AccessRecovery(PlayerRepository playerRepository, PasswordRecoveryRepository passwordRecoveryRepository, IEmailSender emailSender, TimeProvider timeProvider)
+        public AccessRecovery(PlayerRepository playerRepository, PasswordRecoveryRepository passwordRecoveryRepository, IEmailSender emailSender, TimeProvider timeProvider, VerificationCodeLifetime verificationCodeLifetime)
         {
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(passwordRecoveryRepository);
-            ArgumentNullException.ThrowIfNull(emailSender);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _playerRepository = playerRepository;
             _passwordRecoveryRepository = passwordRecoveryRepository;
             _emailSender = emailSender;
             _timeProvider = timeProvider;
             _emailSendingPacer = new EmailSendingPacer(timeProvider);
-        }
-
-        public void Start(int codeLifetimeMinutes)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(codeLifetimeMinutes);
-
-            _codeLifetimeMinutes = codeLifetimeMinutes;
+            _verificationCodeLifetime = verificationCodeLifetime;
         }
 
         internal async Task<RecoveryCodeRequestResult> RequestCodeAsync(string email)
@@ -152,7 +140,7 @@ namespace Game.Services
 
         private async Task<RecoveryCodeRequestResult> IssueCodeAsync(Player owner)
         {
-            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
+            int codeLifetimeMinutes = _verificationCodeLifetime.RequireMinutes();
             var newRecovery = new PasswordRecovery
             {
                 PlayerId = owner.PlayerId,
@@ -246,7 +234,7 @@ namespace Game.Services
 
         private bool IsUsable(PasswordRecovery recovery, string code)
         {
-            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
+            int codeLifetimeMinutes = _verificationCodeLifetime.RequireMinutes();
             DateTime expiresAt = recovery.CreatedAt.AddMinutes(codeLifetimeMinutes);
             bool isCurrent = _timeProvider.GetUtcNow().UtcDateTime < expiresAt;
             bool isUsable = isCurrent
@@ -254,13 +242,6 @@ namespace Game.Services
                 && _codeAttemptCounter.HasAttemptsLeft(recovery.PlayerId);
 
             return isUsable;
-        }
-
-        private int RequireCodeLifetimeMinutes()
-        {
-            int codeLifetimeMinutes = _codeLifetimeMinutes ?? throw new InvalidOperationException(NotStartedMessage);
-
-            return codeLifetimeMinutes;
         }
     }
 }

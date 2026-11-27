@@ -34,6 +34,12 @@ namespace Torres.Client.Screens
 
         internal virtual bool KeepsEscapeKey => false;
 
+        protected VerticalStackPanel ConfirmationPlaceholder => _confirmationPlaceholder ??= new VerticalStackPanel
+        {
+            Spacing = Metrics.FieldSpacing,
+            Visible = false,
+        };
+
         internal virtual void Update(GameTime gameTime)
         {
         }
@@ -49,8 +55,6 @@ namespace Torres.Client.Screens
         internal virtual void RenderScene()
         {
         }
-
-        protected VerticalStackPanel ConfirmationPlaceholder => _confirmationPlaceholder ??= new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
 
         protected abstract Widget Build();
 

@@ -21,16 +21,28 @@ namespace Torres.Client.Screens
 
         private readonly MatchSummaryFlow _matchSummaryFlow;
         private readonly MatchPause _matchPause;
-        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.MatchPreparation.SummaryLabel) { Font = Fonts.Body, TextColor = Theme.MutedInk, TextAlign = TextHorizontalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly VerticalStackPanel _seatsPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly PauseCardFactory _pauseCards;
+        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.MatchPreparation.SummaryLabel)
+        {
+            Font = Fonts.Body,
+            TextColor = Theme.MutedInk,
+            TextAlign = TextHorizontalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        private readonly VerticalStackPanel _seatsPanel = new VerticalStackPanel
+        {
+            Spacing = MatchLayout.PauseRowSpacing,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
 
         private double _secondsShown;
 
-        internal MatchPreparationScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause)
+        internal MatchPreparationScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause, PauseCardFactory pauseCards)
             : base(TextKeys.MatchPreparation.HeaderLabel, true)
         {
             _matchSummaryFlow = matchSummaryFlow;
             _matchPause = matchPause;
+            _pauseCards = pauseCards;
         }
 
         internal override void Open()
@@ -67,12 +79,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var titleLabel = new LocalizedLabel(TextKeys.MatchPreparation.Title)
-            {
-                Font = Fonts.Heading,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
+            LocalizedLabel titleLabel = LabelFactory.CreateCenteredTitle(TextKeys.MatchPreparation.Title, Fonts.Heading);
 
             var titleBlock = new VerticalStackPanel();
             titleBlock.Widgets.Add(titleLabel);
@@ -88,7 +95,7 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
             cardContent.Widgets.Add(_seatsPanel);
-            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.PreparationCardWidth);
+            Panel cardLayer = _pauseCards.CreateCardLayer(cardContent, MatchLayout.PreparationCardWidth);
 
             return cardLayer;
         }
@@ -99,7 +106,7 @@ namespace Torres.Client.Screens
             _seatsPanel.Widgets.Clear();
             foreach (MatchSeat seat in seats)
             {
-                HorizontalStackPanel seatPill = _matchPause.CreatePlayerPill(seat);
+                HorizontalStackPanel seatPill = _pauseCards.CreatePlayerPill(seat);
                 seatPill.HorizontalAlignment = HorizontalAlignment.Center;
                 _seatsPanel.Widgets.Add(seatPill);
             }

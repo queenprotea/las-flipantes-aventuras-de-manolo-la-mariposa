@@ -14,9 +14,9 @@ namespace Torres.Client.Scene
         private const double TargetPulsePeriodSeconds = 1.2;
         private const double ArrivalMarkSeconds = 0.7;
         private const float ArrivalMarkGrowth = 0.35f;
-        private const float FullScale = 1f;
 
         private readonly GraphicsDevice _graphicsDevice;
+        private readonly BasicEffect _sceneEffect;
         private readonly StaticMesh _hoverFrameMesh;
         private readonly StaticMesh _selectionRingMesh;
         private readonly StaticMesh _targetDiscMesh;
@@ -25,10 +25,11 @@ namespace Torres.Client.Scene
         private IReadOnlyList<BoardCell> _arrivalCells = Array.Empty<BoardCell>();
         private TimeSpan _arrivalTime;
 
-        internal CellMarkers(GraphicsDevice graphicsDevice)
+        internal CellMarkers(GraphicsDevice graphicsDevice, BasicEffect sceneEffect)
         {
             _graphicsDevice = graphicsDevice;
-            _hoverFrameMesh = SceneMeshes.Build(graphicsDevice, frameBuilder => CellFrameShapes.AddCellFrame(frameBuilder, GardenPalette.HoveredCellFrame));
+            _sceneEffect = sceneEffect;
+            _hoverFrameMesh = SceneMeshes.Build(graphicsDevice, CellFrameShapes.AddHoveredCellFrame);
             _selectionRingMesh = SceneMeshes.Build(graphicsDevice, CellMarkerShapes.AddSelectionRing);
             _targetDiscMesh = SceneMeshes.Build(graphicsDevice, CellMarkerShapes.AddTargetDisc);
         }
@@ -49,34 +50,34 @@ namespace Torres.Client.Scene
             _arrivalCells = Array.Empty<BoardCell>();
         }
 
-        internal void Draw(BasicEffect sceneEffect, BoardLayout layout, TimeSpan sceneTime, CellFocus cellFocus)
+        internal void Draw(BoardLayout layout, TimeSpan sceneTime, CellFocus cellFocus)
         {
-            float targetScale = FullScale + (TargetPulseGrowth * SceneTiming.FindCycleWave(sceneTime, TargetPulsePeriodSeconds));
+            float targetScale = SceneValues.FullScale + (TargetPulseGrowth * SceneTiming.FindCycleWave(sceneTime, TargetPulsePeriodSeconds));
             foreach (BoardCell targetCell in _targetCells)
             {
-                DrawMarker(sceneEffect, layout, _targetDiscMesh, targetCell, targetScale);
+                DrawMarker(_targetDiscMesh, FindMarkerCenter(layout, targetCell), targetScale);
             }
 
             float arrivalProgress = SceneTiming.FindProgress(sceneTime, _arrivalTime, ArrivalMarkSeconds);
-            if (arrivalProgress < FullScale)
+            if (arrivalProgress < SceneValues.FullScale)
             {
                 foreach (BoardCell arrivalCell in _arrivalCells)
                 {
-                    DrawMarker(sceneEffect, layout, _selectionRingMesh, arrivalCell, FullScale + (ArrivalMarkGrowth * arrivalProgress));
+                    DrawMarker(_selectionRingMesh, FindMarkerCenter(layout, arrivalCell), SceneValues.FullScale + (ArrivalMarkGrowth * arrivalProgress));
                 }
             }
 
             if ((cellFocus.HoveredCell is BoardCell hoveredCell) && (hoveredCell != cellFocus.SelectedCell))
             {
-                DrawMarker(sceneEffect, layout, _hoverFrameMesh, hoveredCell, FullScale);
+                DrawMarker(_hoverFrameMesh, FindMarkerCenter(layout, hoveredCell), SceneValues.FullScale);
             }
 
             if (cellFocus.SelectedCell is BoardCell selectedCell)
             {
-                DrawMarker(sceneEffect, layout, _selectionRingMesh, selectedCell, FullScale);
+                DrawMarker(_selectionRingMesh, FindMarkerCenter(layout, selectedCell), SceneValues.FullScale);
             }
 
-            sceneEffect.World = Matrix.Identity;
+            _sceneEffect.World = Matrix.Identity;
         }
 
         public void Dispose()
@@ -109,12 +110,18 @@ namespace Torres.Client.Scene
             return arrivalCells;
         }
 
-        private void DrawMarker(BasicEffect sceneEffect, BoardLayout layout, StaticMesh markerMesh, BoardCell markedCell, float markerScale)
+        private static Vector3 FindMarkerCenter(BoardLayout layout, BoardCell markedCell)
         {
             float markerHeight = BoardGeometry.GetSurfaceHeight(layout, markedCell) + FrameLift;
             Vector3 markerCenter = BoardGeometry.GetCellCenter(markedCell) + new Vector3(0f, markerHeight, 0f);
-            sceneEffect.World = Matrix.CreateScale(markerScale, FullScale, markerScale) * Matrix.CreateTranslation(markerCenter);
-            markerMesh.Draw(_graphicsDevice, sceneEffect);
+
+            return markerCenter;
+        }
+
+        private void DrawMarker(StaticMesh markerMesh, Vector3 markerCenter, float markerScale)
+        {
+            _sceneEffect.World = Matrix.CreateScale(markerScale, SceneValues.FullScale, markerScale) * Matrix.CreateTranslation(markerCenter);
+            markerMesh.Draw(_graphicsDevice, _sceneEffect);
         }
     }
 }

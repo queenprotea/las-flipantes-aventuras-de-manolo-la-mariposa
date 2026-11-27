@@ -35,18 +35,18 @@ namespace Torres.Client.Scene
         {
             var flowerPhase = (FlowerPhase)flowerLevel;
             float headHeight = BoardGeometry.GetFlowerTop(flowerLevel) - HeadDrop;
-            FlowerParts.AddColumn(meshBuilder, cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), headHeight - BoardGeometry.SoilTop, StemRadius, GardenPalette.Stem);
-            AddLeaves(meshBuilder, cellCenter, BaseLeafCount + flowerLevel);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), new Vector3(StemRadius, headHeight - BoardGeometry.SoilTop, StemRadius)), GardenPalette.Stem);
+            FlowerParts.AddLeafRing(meshBuilder, cellCenter, new LeafRing(BaseLeafCount + flowerLevel, LeafPhaseDegrees, LeafDistance, LeafLift, _leafScale, LeafTiltDegrees, GardenPalette.Leaf, false));
             Vector3 headPoint = cellCenter + new Vector3(0f, headHeight, 0f);
             switch (flowerPhase)
             {
                 case FlowerPhase.Bud:
-                    FlowerParts.AddPart(meshBuilder, headPoint + new Vector3(0f, BudLift, 0f), _budScale, BudTiltDegrees, 0f, GardenPalette.NarcissusBud);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headPoint + new Vector3(0f, BudLift, 0f), _budScale, BudTiltDegrees, 0f), GardenPalette.NarcissusBud);
                     break;
                 case FlowerPhase.Opening:
                     Vector3 openingPoint = headPoint - new Vector3(0f, OpeningDrop, 0f);
                     FlowerParts.AddRing(meshBuilder, openingPoint, _openingPetals);
-                    FlowerParts.AddColumn(meshBuilder, openingPoint, OpeningCupHeight, OpeningCupRadius, GardenPalette.NarcissusCup);
+                    FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(openingPoint, new Vector3(OpeningCupRadius, OpeningCupHeight, OpeningCupRadius)), GardenPalette.NarcissusCup);
                     break;
                 case FlowerPhase.FullBloom:
                     AddFullBloom(meshBuilder, headPoint);
@@ -56,27 +56,17 @@ namespace Torres.Client.Scene
             }
         }
 
-        private static void AddLeaves(MeshBuilder meshBuilder, Vector3 cellCenter, int leafCount)
-        {
-            for (var leafIndex = 0; leafIndex < leafCount; leafIndex++)
-            {
-                float headingDegrees = FlowerParts.GetCircleHeading(leafIndex, leafCount, LeafPhaseDegrees);
-                Vector3 leafCenter = cellCenter + (BoardGeometry.GetHeadingDirection(headingDegrees) * LeafDistance) + new Vector3(0f, BoardGeometry.PlanterTop + LeafLift, 0f);
-                FlowerParts.AddPart(meshBuilder, leafCenter, _leafScale, LeafTiltDegrees, headingDegrees, GardenPalette.Leaf);
-            }
-        }
-
         private static void AddFullBloom(MeshBuilder meshBuilder, Vector3 headPoint)
         {
             for (var petalIndex = 0; petalIndex < FullBloomPetalCount; petalIndex++)
             {
-                float headingDegrees = FlowerParts.GetCircleHeading(petalIndex, FullBloomPetalCount, 0f);
+                float headingDegrees = FlowerParts.GetCircleHeadingDegrees(petalIndex, FullBloomPetalCount, 0f);
                 Vector3 petalCenter = headPoint + (BoardGeometry.GetHeadingDirection(headingDegrees) * FullBloomPetalDistance) + new Vector3(0f, FullBloomPetalLift, 0f);
-                FlowerParts.AddPart(meshBuilder, petalCenter, _fullBloomPetalScale, FullBloomPetalTiltDegrees, headingDegrees, GardenPalette.NarcissusPetal);
+                FlowerParts.AddPart(meshBuilder, new PartPose(petalCenter, _fullBloomPetalScale, FullBloomPetalTiltDegrees, headingDegrees), GardenPalette.NarcissusPetal);
             }
 
-            FlowerParts.AddColumn(meshBuilder, headPoint, FullBloomCupHeight, FullBloomCupRadius, GardenPalette.NarcissusCup);
-            FlowerParts.AddPart(meshBuilder, headPoint + new Vector3(0f, FullBloomCupHeight, 0f), _cupRimScale, 0f, 0f, GardenPalette.NarcissusCupRim);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(headPoint, new Vector3(FullBloomCupRadius, FullBloomCupHeight, FullBloomCupRadius)), GardenPalette.NarcissusCup);
+            FlowerParts.AddPart(meshBuilder, new PartPose(headPoint + new Vector3(0f, FullBloomCupHeight, 0f), _cupRimScale, 0f, 0f), GardenPalette.NarcissusCupRim);
         }
     }
 }

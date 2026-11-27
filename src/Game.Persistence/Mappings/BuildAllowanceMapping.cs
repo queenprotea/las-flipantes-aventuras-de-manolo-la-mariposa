@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,8 +13,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<BuildAllowance> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(BuildAllowanceTable);
             builder.HasKey(mappedAllowance => new { mappedAllowance.PlayerCount, mappedAllowance.RoundNumber, mappedAllowance.TurnNumber });
             builder.Property(mappedAllowance => mappedAllowance.PlayerCount).HasColumnName(PlayerCountColumn);

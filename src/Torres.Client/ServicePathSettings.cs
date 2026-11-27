@@ -14,7 +14,7 @@ namespace Torres.Client
 
         internal bool IsComplete()
         {
-            string[] servicePaths = [ServerStatus, Account, Ranking, GameSession];
+            var servicePaths = new string[] { ServerStatus, Account, Ranking, GameSession };
             bool isComplete = servicePaths.All(servicePath => !string.IsNullOrWhiteSpace(servicePath));
 
             return isComplete;

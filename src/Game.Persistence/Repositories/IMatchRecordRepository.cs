@@ -8,7 +8,7 @@ namespace Game.Persistence
     {
         Task<int> CreateAsync(int roomId, int playerCount);
 
-        Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc);
+        Task FinishAsync(int matchId, string endReason, DateTime finishedAt);
 
         Task<List<int>> ListInProgressIdsAsync();
     }

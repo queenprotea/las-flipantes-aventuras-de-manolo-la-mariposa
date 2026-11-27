@@ -27,9 +27,6 @@ namespace Game.Server
 
         public ServerStartup(IServiceProvider serviceProvider, ILog hostLog)
         {
-            ArgumentNullException.ThrowIfNull(serviceProvider);
-            ArgumentNullException.ThrowIfNull(hostLog);
-
             _serviceProvider = serviceProvider;
             _hostLog = hostLog;
         }
@@ -135,8 +132,7 @@ namespace Game.Server
             await matchService.LoadRulesAsync();
             await matchService.ResumeInterruptedMatchesAsync();
 
-            _serviceProvider.GetRequiredService<AccountRegistration>().Start(codeLifetimeMinutes);
-            _serviceProvider.GetRequiredService<AccessRecovery>().Start(codeLifetimeMinutes);
+            _serviceProvider.GetRequiredService<VerificationCodeLifetime>().Start(codeLifetimeMinutes);
             _serviceProvider.GetRequiredService<ChatService>().Start(chatCapacity);
             _serviceProvider.GetRequiredService<ReportRecorder>().Start(sanctionPolicy);
             _roomInactivityLimit = roomInactivityLimit;

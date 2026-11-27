@@ -47,19 +47,6 @@ namespace Game.Services
 
         public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, MatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, Random chanceSource)
         {
-            ArgumentNullException.ThrowIfNull(roomRegistry);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(systemParameterReader);
-            ArgumentNullException.ThrowIfNull(matchRuleReader);
-            ArgumentNullException.ThrowIfNull(matchRecordRepository);
-            ArgumentNullException.ThrowIfNull(matchParticipantRepository);
-            ArgumentNullException.ThrowIfNull(matchStateRepository);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentNullException.ThrowIfNull(startingBoard);
-            ArgumentNullException.ThrowIfNull(guestIdIssuer);
-            ArgumentNullException.ThrowIfNull(chanceSource);
-
             _roomRegistry = roomRegistry;
             _roomService = roomService;
             _sessionRegistry = sessionRegistry;
@@ -95,7 +82,7 @@ namespace Game.Services
                 _guestIdIssuer.SkipPast(waitingGuestId);
             }
 
-            _matchLog.InfoFormat(MatchesRestoredMessage, waitingEntrantIds.Count);
+            _matchLog.InfoFormat(CultureInfo.InvariantCulture, MatchesRestoredMessage, waitingEntrantIds.Count);
         }
 
         internal MatchSeating? FindSeating(int ownerId)
@@ -240,7 +227,7 @@ namespace Game.Services
             ReturnToMatchResult returnResult = _matchCoordinator.ReturnToMatch(ownerId);
             if (returnResult == ReturnToMatchResult.Returned)
             {
-                _matchLog.InfoFormat(SeatReturnedMessage, ownerId);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, SeatReturnedMessage, ownerId);
             }
 
             return returnResult;
@@ -248,7 +235,13 @@ namespace Game.Services
 
         private static StartMatchResult ToBannedResult(MatchBan ban)
         {
-            var bannedResult = new StartMatchResult { Status = StartMatchStatus.PlayerBanned, BannedDisplayName = ban.DisplayName, IsBanPermanent = ban.IsPermanent, BanTimeLeft = ban.BanTimeLeft };
+            var bannedResult = new StartMatchResult
+            {
+                Status = StartMatchStatus.PlayerBanned,
+                BannedDisplayName = ban.DisplayName,
+                IsBanPermanent = ban.IsPermanent,
+                BanTimeLeft = ban.BanTimeLeft,
+            };
 
             return bannedResult;
         }
@@ -258,7 +251,7 @@ namespace Game.Services
             ForfeitResult forfeitResult = _matchCoordinator.Forfeit(ownerId);
             if (forfeitResult == ForfeitResult.Forfeited)
             {
-                _matchLog.InfoFormat(MatchForfeitedMessage, ownerId);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, MatchForfeitedMessage, ownerId);
             }
 
             return forfeitResult;
@@ -368,7 +361,7 @@ namespace Game.Services
                 int matchId = await StartLiveMatchAsync(room, startCheck.Entrants, ruleSetsByPlayerCount[seatedCount]);
                 int? noExcludedOwnerId = null;
                 _roomService.NotifyMembers(room, RoomChangeReason.MatchStarted, noExcludedOwnerId);
-                _matchLog.InfoFormat(MatchStartedMessage, matchId, room.RoomId, seatedCount);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, MatchStartedMessage, matchId, room.RoomId, seatedCount);
             }
 
             var startResult = new StartMatchResult { Status = startCheck.Status };
@@ -417,11 +410,11 @@ namespace Game.Services
 
         private MatchBan ToMatchBan(MatchEntrant bannedEntrant, Sanction sanction)
         {
-            DateTime nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
             TimeSpan banTimeLeft = TimeSpan.Zero;
-            if (sanction.EffectiveUntil is DateTime effectiveUntilUtc)
+            if (sanction.EffectiveUntil is DateTime sanctionEndsAt)
             {
-                banTimeLeft = effectiveUntilUtc - nowUtc;
+                banTimeLeft = sanctionEndsAt - now;
             }
 
             var matchBan = new MatchBan(bannedEntrant.DisplayName, sanction.EffectiveUntil is null, banTimeLeft);
@@ -456,7 +449,7 @@ namespace Game.Services
         {
             if (_matchCoordinator.OpenReconnectionWindow(ownerId))
             {
-                _matchLog.InfoFormat(SeatKeptMessage, ownerId);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, SeatKeptMessage, ownerId);
             }
 
             if (_sessionRegistry.HasOpenSession(ownerId))
@@ -469,7 +462,7 @@ namespace Game.Services
         {
             if (_matchCoordinator.CloseReconnectionWindow(ownerId))
             {
-                _matchLog.InfoFormat(SeatTakenBackMessage, ownerId);
+                _matchLog.InfoFormat(CultureInfo.InvariantCulture, SeatTakenBackMessage, ownerId);
             }
         }
     }

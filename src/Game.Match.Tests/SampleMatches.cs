@@ -12,6 +12,19 @@ namespace Game.Match.Tests
         internal const int CaterpillarPlacementCost = 2;
         internal const int RoomId = 30;
         internal const string RoomCode = "K7Q2PX";
+        internal const int SeatNumberOne = 1;
+        internal const int SeatNumberTwo = 2;
+        internal const int SeatNumberThree = 3;
+        internal const int TwoSeatCount = 2;
+        internal const int ThreeSeatCount = 3;
+        internal const int NorthWestPlanterNumber = 1;
+        internal const int NorthEastPlanterNumber = 2;
+        internal const short FirstPosition = 1;
+        internal const int ThirdSeatIndex = 2;
+        internal const int LevelTwo = 2;
+        internal const int FiveFlowers = 5;
+
+        internal static TimeSpan RecordWaitLimit { get; } = TimeSpan.FromSeconds(5);
 
         internal static TimeSpan StepTime { get; } = TimeSpan.FromSeconds(90);
 
@@ -33,25 +46,65 @@ namespace Game.Match.Tests
 
         internal static TimeSpan JustBeforeDeadline { get; } = StepTime - TimeSpan.FromTicks(1);
 
-        internal static MatchCell NorthWestFlower { get; } = new MatchCell { Row = 1, Column = 1 };
+        internal static MatchCell NorthWestFlower { get; } = new MatchCell
+        {
+            Row = 1,
+            Column = 1,
+        };
 
-        internal static MatchCell NorthEastFlower { get; } = new MatchCell { Row = 1, Column = 6 };
+        internal static MatchCell NorthEastFlower { get; } = new MatchCell
+        {
+            Row = 1,
+            Column = 6,
+        };
 
-        internal static MatchCell CenterFlower { get; } = new MatchCell { Row = 3, Column = 3 };
+        internal static MatchCell CenterFlower { get; } = new MatchCell
+        {
+            Row = 3,
+            Column = 3,
+        };
 
-        internal static MatchCell SouthWestFlower { get; } = new MatchCell { Row = 6, Column = 1 };
+        internal static MatchCell SouthWestFlower { get; } = new MatchCell
+        {
+            Row = 6,
+            Column = 1,
+        };
 
-        internal static MatchCell SouthEastFlower { get; } = new MatchCell { Row = 6, Column = 6 };
+        internal static MatchCell SouthEastFlower { get; } = new MatchCell
+        {
+            Row = 6,
+            Column = 6,
+        };
 
-        internal static MatchCell SouthOfNorthWest { get; } = new MatchCell { Row = 2, Column = 1 };
+        internal static MatchCell SouthOfNorthWest { get; } = new MatchCell
+        {
+            Row = 2,
+            Column = 1,
+        };
 
-        internal static MatchCell SouthOfNorthEast { get; } = new MatchCell { Row = 2, Column = 6 };
+        internal static MatchCell SouthOfNorthEast { get; } = new MatchCell
+        {
+            Row = 2,
+            Column = 6,
+        };
 
-        internal static MatchCell NorthOfNorthEast { get; } = new MatchCell { Row = 0, Column = 6 };
+        internal static MatchCell NorthOfNorthEast { get; } = new MatchCell
+        {
+            Row = 0,
+            Column = 6,
+        };
 
-        internal static MatchCell GroundCell { get; } = new MatchCell { Row = 4, Column = 4 };
+        internal static MatchCell GroundCell { get; } = new MatchCell
+        {
+            Row = 4,
+            Column = 4,
+        };
 
-        internal static MatchCell OutsideCell { get; } = new MatchCell { Row = 8, Column = 0 };
+        internal static MatchCell OutsideCell { get; } = new MatchCell
+        {
+            Row = 8,
+            Column = 0,
+        };
 
         internal static IReadOnlyList<MatchCell> FiveFlowerCells { get; } = new MatchCell[] { NorthWestFlower, NorthEastFlower, CenterFlower, SouthWestFlower, SouthEastFlower };
 

@@ -33,11 +33,6 @@ namespace Game.Services
 
         public ChatService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, ReportRecorder reportRecorder, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(roomRegistry);
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(reportRecorder);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _roomRegistry = roomRegistry;
             _sessionRegistry = sessionRegistry;
             _reportRecorder = reportRecorder;
@@ -46,8 +41,6 @@ namespace Game.Services
 
         public void Start(ChatCapacity chatCapacity)
         {
-            ArgumentNullException.ThrowIfNull(chatCapacity);
-
             _chatCapacity = chatCapacity;
         }
 
@@ -229,7 +222,7 @@ namespace Game.Services
                 return SendChatMessageResult.NotInRoom;
             }
 
-            _log.DebugFormat(MessagePostedMessage, posting.Message.SenderMemberId, authorRoom.RoomId);
+            _log.DebugFormat(CultureInfo.InvariantCulture, MessagePostedMessage, posting.Message.SenderMemberId, authorRoom.RoomId);
             var messageNotice = new ChatMessageNotice(posting.Message);
             foreach (int recipientOwnerId in posting.RecipientOwnerIds)
             {

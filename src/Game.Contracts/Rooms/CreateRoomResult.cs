@@ -16,6 +16,6 @@ namespace Game.Contracts
         public Room? Room { get; set; }
 
         [DataMember]
-        public DateTime? BanEndsAtUtc { get; set; }
+        public DateTime? BanEndsAt { get; set; }
     }
 }

@@ -19,12 +19,10 @@ namespace Torres.Client.Scene
         private const double DropSeconds = 0.4;
         private const double VanishSeconds = 0.4;
         private const float WalkHopHeight = 0.08f;
-        private const float ClimbHopShare = 0.6f;
+        private const float ClimbHopFraction = 0.6f;
         private const float DropHeight = 0.9f;
-        private const float FullScale = 1f;
         private const int SingleCaterpillarCount = 1;
         private const int NeighborDistance = 1;
-        private const float OutlineGrowth = 1.08f;
         private const float OutlineShade = 0.45f;
 
         private readonly GraphicsDevice _graphicsDevice;
@@ -68,7 +66,7 @@ namespace Torres.Client.Scene
             {
                 Vector3 restingOrigin = FindBodyOrigin(layout, caterpillar);
                 CaterpillarMotion? arrivalMotion = FindArrivalMotion(caterpillar);
-                CaterpillarMotionSample motionSample = arrivalMotion is CaterpillarMotion motion ? FindMotionSample(motion, sceneTime) : new CaterpillarMotionSample(restingOrigin, FullScale);
+                CaterpillarMotionSample motionSample = arrivalMotion is CaterpillarMotion motion ? FindMotionSample(motion, sceneTime) : new CaterpillarMotionSample(restingOrigin, SceneValues.FullScale);
                 DrawPose(sceneEffect, CreatePose(caterpillar, motionSample, wavePhaseRadians));
             }
 
@@ -85,9 +83,9 @@ namespace Torres.Client.Scene
             sceneEffect.World = Matrix.Identity;
         }
 
-        internal void DrawStill(BasicEffect sceneEffect, Vector3 bodyOrigin, float headingDegrees, Color bodyColor, float bodyScale)
+        internal void DrawStill(BasicEffect sceneEffect, CaterpillarPose stillPose)
         {
-            DrawPose(sceneEffect, new CaterpillarPose(bodyOrigin, headingDegrees, bodyColor, 0f, bodyScale));
+            DrawPose(sceneEffect, stillPose);
             sceneEffect.DiffuseColor = Vector3.One;
             sceneEffect.World = Matrix.Identity;
         }
@@ -136,38 +134,38 @@ namespace Torres.Client.Scene
 
         private static CaterpillarMotionSample FindWalkSample(CaterpillarMotion motion, TimeSpan sceneTime)
         {
-            float easedShare = MathHelper.SmoothStep(0f, 1f, FindMotionShare(motion, sceneTime, WalkSeconds));
-            float hopHeight = WalkHopHeight + (ClimbHopShare * Math.Max(0f, motion.EndBodyOrigin.Y - motion.StartBodyOrigin.Y));
-            float hopLift = SceneTiming.FindArcLift(hopHeight, easedShare);
-            Vector3 walkOrigin = Vector3.Lerp(motion.StartBodyOrigin, motion.EndBodyOrigin, easedShare) + new Vector3(0f, hopLift, 0f);
-            var motionSample = new CaterpillarMotionSample(walkOrigin, FullScale);
+            float easedProgress = MathHelper.SmoothStep(0f, 1f, FindMotionProgress(motion, sceneTime, WalkSeconds));
+            float hopHeight = WalkHopHeight + (ClimbHopFraction * Math.Max(0f, motion.EndBodyOrigin.Y - motion.StartBodyOrigin.Y));
+            float hopLift = SceneTiming.FindArcLift(hopHeight, easedProgress);
+            Vector3 walkOrigin = Vector3.Lerp(motion.StartBodyOrigin, motion.EndBodyOrigin, easedProgress) + new Vector3(0f, hopLift, 0f);
+            var motionSample = new CaterpillarMotionSample(walkOrigin, SceneValues.FullScale);
 
             return motionSample;
         }
 
         private static CaterpillarMotionSample FindDropSample(CaterpillarMotion motion, TimeSpan sceneTime)
         {
-            float dropShare = FindMotionShare(motion, sceneTime, DropSeconds);
-            float fallLift = DropHeight * (1f - (dropShare * dropShare));
-            var motionSample = new CaterpillarMotionSample(motion.EndBodyOrigin + new Vector3(0f, fallLift, 0f), FullScale);
+            float dropProgress = FindMotionProgress(motion, sceneTime, DropSeconds);
+            float fallLift = DropHeight * (1f - (dropProgress * dropProgress));
+            var motionSample = new CaterpillarMotionSample(motion.EndBodyOrigin + new Vector3(0f, fallLift, 0f), SceneValues.FullScale);
 
             return motionSample;
         }
 
         private static CaterpillarMotionSample FindVanishSample(CaterpillarMotion motion, TimeSpan sceneTime)
         {
-            float vanishScale = FullScale - MathHelper.SmoothStep(0f, 1f, FindMotionShare(motion, sceneTime, VanishSeconds));
+            float vanishScale = SceneValues.FullScale - MathHelper.SmoothStep(0f, 1f, FindMotionProgress(motion, sceneTime, VanishSeconds));
             var motionSample = new CaterpillarMotionSample(motion.StartBodyOrigin, vanishScale);
 
             return motionSample;
         }
 
-        private static float FindMotionShare(CaterpillarMotion motion, TimeSpan sceneTime, double motionSeconds)
+        private static float FindMotionProgress(CaterpillarMotion motion, TimeSpan sceneTime, double motionSeconds)
         {
             double elapsedSeconds = (sceneTime - motion.StartTime).TotalSeconds;
-            float motionShare = (float)Math.Clamp(elapsedSeconds / motionSeconds, 0d, 1d);
+            float motionProgress = (float)Math.Clamp(elapsedSeconds / motionSeconds, 0d, 1d);
 
-            return motionShare;
+            return motionProgress;
         }
 
         private static List<BoardCaterpillar> FindCaterpillarsMissingFrom(BoardLayout presentLayout, BoardLayout otherLayout, SeatColor seatColor)
@@ -232,7 +230,7 @@ namespace Torres.Client.Scene
             sceneEffect.DiffuseColor = pose.BodyColor.ToVector3() * OutlineShade;
             foreach (CaterpillarPart part in _parts.Where(part => part.IsOutlined))
             {
-                sceneEffect.World = Matrix.CreateScale(OutlineGrowth) * part.Transform * poseScaling;
+                sceneEffect.World = Matrix.CreateScale(SceneValues.OutlineGrowth) * part.Transform * poseScaling;
                 _sphereMesh.Draw(_graphicsDevice, sceneEffect);
             }
 

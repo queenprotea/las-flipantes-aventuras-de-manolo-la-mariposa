@@ -149,7 +149,7 @@ namespace Game.Services
             return kick;
         }
 
-        internal RoomActivityChange MarkInactive(int ownerId, DateTime nowUtc)
+        internal RoomActivityChange MarkInactive(int ownerId, DateTime now)
         {
             var activityChange = new RoomActivityChange(false, false);
             lock (_roomLock)
@@ -157,7 +157,7 @@ namespace Game.Services
                 LiveRoomMember? lostMember = FindByOwner(ownerId);
                 if ((lostMember is not null) && lostMember.IsActive)
                 {
-                    lostMember.MarkInactive(nowUtc);
+                    lostMember.MarkInactive(now);
                     bool hasHostChanged = PassHostIfHeldBy(lostMember);
                     activityChange = new RoomActivityChange(true, hasHostChanged);
                 }
@@ -182,14 +182,14 @@ namespace Game.Services
             return wasInactive;
         }
 
-        internal RoomExpiry RemoveExpired(DateTime limitUtc)
+        internal RoomExpiry RemoveExpired(DateTime limitAt)
         {
             var removedOwnerIds = new List<int>();
             bool hasHostChanged = false;
             bool isRoomEmpty = false;
             lock (_roomLock)
             {
-                List<LiveRoomMember> expiredMembers = _isInMatch ? new List<LiveRoomMember>() : _members.Where(member => member.HasExpiredBefore(limitUtc)).ToList();
+                List<LiveRoomMember> expiredMembers = _isInMatch ? new List<LiveRoomMember>() : _members.Where(member => member.HasExpiredBefore(limitAt)).ToList();
                 foreach (LiveRoomMember expiredMember in expiredMembers)
                 {
                     RoomDeparture departure = RemoveMember(expiredMember);

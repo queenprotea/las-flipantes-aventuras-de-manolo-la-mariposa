@@ -10,7 +10,6 @@ namespace Game.Match
     internal sealed class MatchViewFactory
     {
         private const int FirstPlanterNumber = 1;
-        private const int MissingIndex = -1;
 
         private readonly IReadOnlyList<SeatedEntrant> _seatedEntrants;
         private readonly List<BoardCell> _startingFlowerCells;
@@ -73,24 +72,32 @@ namespace Game.Match
             int nextUnmatchedPlanterNumber = FirstPlanterNumber + _startingFlowerCells.Count;
             foreach (Planter planter in matchTable.FindPlanters())
             {
-                int startingIndex = FindStartingIndex(planter);
-                if (startingIndex == MissingIndex)
+                int? startingIndex = FindStartingIndex(planter);
+                if (startingIndex is int foundIndex)
                 {
-                    AddPlanterFlowers(planter, nextUnmatchedPlanterNumber, matchFlowers);
-                    nextUnmatchedPlanterNumber++;
+                    AddPlanterFlowers(planter, FirstPlanterNumber + foundIndex, matchFlowers);
                 }
                 else
                 {
-                    AddPlanterFlowers(planter, FirstPlanterNumber + startingIndex, matchFlowers);
+                    AddPlanterFlowers(planter, nextUnmatchedPlanterNumber, matchFlowers);
+                    nextUnmatchedPlanterNumber++;
                 }
             }
 
             return matchFlowers;
         }
 
-        private int FindStartingIndex(Planter planter)
+        private static bool HasFlowerOn(Planter planter, BoardCell flowerCell)
         {
-            int startingIndex = _startingFlowerCells.FindIndex(startingCell => planter.Flowers.Any(flower => flower.Cell == startingCell));
+            bool hasFlower = planter.Flowers.Any(flower => flower.Cell == flowerCell);
+
+            return hasFlower;
+        }
+
+        private int? FindStartingIndex(Planter planter)
+        {
+            int foundIndex = _startingFlowerCells.FindIndex(startingCell => HasFlowerOn(planter, startingCell));
+            int? startingIndex = foundIndex >= 0 ? foundIndex : null;
 
             return startingIndex;
         }
@@ -133,14 +140,26 @@ namespace Game.Match
 
         private static MatchActionCosts ToMatchActionCosts(ActionCosts actionCosts)
         {
-            var matchActionCosts = new MatchActionCosts { CaterpillarPlacement = actionCosts.CaterpillarPlacement, Movement = actionCosts.Movement, LevelClimb = actionCosts.LevelClimb, FlowerLevelAddition = actionCosts.FlowerLevelAddition, CardDraw = actionCosts.CardDraw, CardPlay = actionCosts.CardPlay };
+            var matchActionCosts = new MatchActionCosts
+            {
+                CaterpillarPlacement = actionCosts.CaterpillarPlacement,
+                Movement = actionCosts.Movement,
+                LevelClimb = actionCosts.LevelClimb,
+                FlowerLevelAddition = actionCosts.FlowerLevelAddition,
+                CardDraw = actionCosts.CardDraw,
+                CardPlay = actionCosts.CardPlay,
+            };
 
             return matchActionCosts;
         }
 
         private static MatchRoundScore ToMatchRoundScore(SeatRoundScore roundScore)
         {
-            var matchRoundScore = new MatchRoundScore { PlanterPoints = roundScore.PlanterPoints, ButterflyPoints = roundScore.ButterflyPoints };
+            var matchRoundScore = new MatchRoundScore
+            {
+                PlanterPoints = roundScore.PlanterPoints,
+                ButterflyPoints = roundScore.ButterflyPoints,
+            };
 
             return matchRoundScore;
         }
@@ -163,7 +182,12 @@ namespace Game.Match
 
         private static MatchMoveTarget ToMatchMoveTarget(BoardCell originCell, MoveTarget moveTarget)
         {
-            var matchMoveTarget = new MatchMoveTarget { Origin = MatchCellConversion.ToMatchCell(originCell), Destination = MatchCellConversion.ToMatchCell(moveTarget.Destination), ActionPointCost = moveTarget.ActionPointCost };
+            var matchMoveTarget = new MatchMoveTarget
+            {
+                Origin = MatchCellConversion.ToMatchCell(originCell),
+                Destination = MatchCellConversion.ToMatchCell(moveTarget.Destination),
+                ActionPointCost = moveTarget.ActionPointCost,
+            };
 
             return matchMoveTarget;
         }
@@ -183,13 +207,22 @@ namespace Game.Match
         {
             foreach (Flower flower in planter.Flowers)
             {
-                matchFlowers.Add(new MatchFlower { Cell = MatchCellConversion.ToMatchCell(flower.Cell), Level = flower.Level, PlanterNumber = planterNumber });
+                matchFlowers.Add(new MatchFlower
+                {
+                    Cell = MatchCellConversion.ToMatchCell(flower.Cell),
+                    Level = flower.Level,
+                    PlanterNumber = planterNumber,
+                });
             }
         }
 
         private static MatchCaterpillar ToMatchCaterpillar(Caterpillar caterpillar)
         {
-            var matchCaterpillar = new MatchCaterpillar { SeatNumber = caterpillar.SeatNumber, Cell = MatchCellConversion.ToMatchCell(caterpillar.Cell) };
+            var matchCaterpillar = new MatchCaterpillar
+            {
+                SeatNumber = caterpillar.SeatNumber,
+                Cell = MatchCellConversion.ToMatchCell(caterpillar.Cell),
+            };
 
             return matchCaterpillar;
         }

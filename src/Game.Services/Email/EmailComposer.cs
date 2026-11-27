@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 
 namespace Game.Services
@@ -14,10 +13,6 @@ namespace Game.Services
 
         public static EmailMessage ComposeRegistrationCode(string recipientAddress, string code, int validMinutes)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(recipientAddress);
-            ArgumentException.ThrowIfNullOrWhiteSpace(code);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(validMinutes);
-
             string body = string.Format(CultureInfo.InvariantCulture, RegistrationBody, code, validMinutes);
             var registrationEmail = new EmailMessage(recipientAddress, RegistrationSubject, body);
 
@@ -26,10 +21,6 @@ namespace Game.Services
 
         public static EmailMessage ComposeRecoveryCode(string recipientAddress, string code, int validMinutes)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(recipientAddress);
-            ArgumentException.ThrowIfNullOrWhiteSpace(code);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(validMinutes);
-
             string body = string.Format(CultureInfo.InvariantCulture, RecoveryBody, code, validMinutes);
             var recoveryEmail = new EmailMessage(recipientAddress, RecoverySubject, body);
 
@@ -38,10 +29,6 @@ namespace Game.Services
 
         public static EmailMessage ComposeRoomInvitation(string recipientAddress, string roomCode, string inviterUsername)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(recipientAddress);
-            ArgumentException.ThrowIfNullOrWhiteSpace(roomCode);
-            ArgumentException.ThrowIfNullOrWhiteSpace(inviterUsername);
-
             string subject = string.Format(CultureInfo.InvariantCulture, InvitationSubject, inviterUsername);
             string body = string.Format(CultureInfo.InvariantCulture, InvitationBody, inviterUsername, roomCode);
             var invitationEmail = new EmailMessage(recipientAddress, subject, body);

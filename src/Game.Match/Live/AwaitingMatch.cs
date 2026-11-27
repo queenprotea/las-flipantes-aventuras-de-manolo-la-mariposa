@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -30,7 +31,7 @@ namespace Game.Match
         private readonly IMatchListener _matchListener;
 
         private CancellationTokenSource? _resumeCountdown;
-        private DateTime _resumeEndsAtUtc;
+        private DateTime _resumeEndsAt;
         private bool _isSettled;
         private bool _isInterrupted;
 
@@ -61,7 +62,7 @@ namespace Game.Match
         {
             lock (_matchLock)
             {
-                _resumeEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + resumeTime;
+                _resumeEndsAt = _timeProvider.GetUtcNow().UtcDateTime + resumeTime;
                 _resumeCountdown = new CancellationTokenSource(resumeTime, _timeProvider);
                 _resumeCountdown.Token.Register(ExpireResumeTime);
             }
@@ -145,7 +146,7 @@ namespace Game.Match
                 {
                     _matchTable.RetireSeat(seatNumber);
                     _absentSeatNumbers.Remove(seatNumber);
-                    _log.InfoFormat(SeatForfeitedMessage, seatNumber, _seatedMatch.MatchId);
+                    _log.InfoFormat(CultureInfo.InvariantCulture, SeatForfeitedMessage, seatNumber, _seatedMatch.MatchId);
                     hasFinished = _matchTable.Phase == TablePhase.Finished;
                     SaveCheckpoint();
                 }
@@ -218,7 +219,7 @@ namespace Game.Match
             if (CountReturnedSeats() == 0)
             {
                 _isInterrupted = true;
-                _log.InfoFormat(NobodyReturnedMessage, _seatedMatch.MatchId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, NobodyReturnedMessage, _seatedMatch.MatchId);
                 return;
             }
 
@@ -228,7 +229,7 @@ namespace Game.Match
             }
 
             _absentSeatNumbers.Clear();
-            _log.InfoFormat(OneReturnedMessage, _seatedMatch.MatchId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, OneReturnedMessage, _seatedMatch.MatchId);
             _matchListener.ReceiveMatchStateChanged(BuildReturnedViews());
         }
 
@@ -273,7 +274,7 @@ namespace Game.Match
 
         private List<MatchRecipientView> BuildReturnedViews()
         {
-            TimeSpan resumeTimeLeft = _resumeEndsAtUtc - _timeProvider.GetUtcNow().UtcDateTime;
+            TimeSpan resumeTimeLeft = _resumeEndsAt - _timeProvider.GetUtcNow().UtcDateTime;
             var recipientViews = new List<MatchRecipientView>();
             IEnumerable<SeatedEntrant> returnedEntrants = _seatedMatch.SeatedEntrants.Where(seatedEntrant => !_matchTable.IsSeatRetired(seatedEntrant.SeatNumber) && !_absentSeatNumbers.Contains(seatedEntrant.SeatNumber));
             foreach (SeatedEntrant recipient in returnedEntrants)

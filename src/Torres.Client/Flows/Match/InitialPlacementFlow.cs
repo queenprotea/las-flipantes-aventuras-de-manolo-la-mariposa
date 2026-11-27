@@ -21,6 +21,8 @@ namespace Torres.Client.Flows
             _playerSession = playerSession;
         }
 
+        internal TimeSpan PlacementTimeLeft => _playerSession.StepTimeLeft;
+
         internal MatchView? CurrentMatchView => _playerSession.CurrentMatchView;
 
         internal static bool IsViewerPlacing(MatchView matchView)
@@ -49,17 +51,6 @@ namespace Torres.Client.Flows
             ScreenId? redirect = _playerSession.CurrentMatchView is null ? ScreenId.MainMenu : null;
 
             return redirect;
-        }
-
-        internal TimeSpan FindPlacementTimeLeft()
-        {
-            TimeSpan placementTimeLeft = TimeSpan.Zero;
-            if (_playerSession.StepEndsAtUtc is DateTime placementEndsAt)
-            {
-                placementTimeLeft = placementEndsAt - DateTime.UtcNow;
-            }
-
-            return placementTimeLeft;
         }
 
         internal bool Place(MatchCell destinationCell)

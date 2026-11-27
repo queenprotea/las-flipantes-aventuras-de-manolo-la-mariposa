@@ -7,6 +7,7 @@ using Game.Contracts;
 using Microsoft.Xna.Framework;
 
 using Torres.Client.Avatars;
+using Torres.Client.Contracts;
 using Torres.Client.Threading;
 
 namespace Torres.Client.Connection
@@ -386,6 +387,13 @@ namespace Torres.Client.Connection
             Task<UpdateProfileResult> profileUpdate = RequireChannel().UpdateProfileAsync(username, includesNewAvatar);
 
             return profileUpdate;
+        }
+
+        internal Task<DeleteAccountResult> DeleteAccountAsync()
+        {
+            Task<DeleteAccountResult> accountDeletion = RequireChannel().DeleteAccountAsync();
+
+            return accountDeletion;
         }
 
         internal Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)

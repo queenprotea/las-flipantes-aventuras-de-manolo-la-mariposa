@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +16,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<PlayerRanking> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToView(PlayerRankingView);
             builder.HasNoKey();
             builder.Property(mappedRanking => mappedRanking.PlayerId).HasColumnName(PlayerIdColumn);

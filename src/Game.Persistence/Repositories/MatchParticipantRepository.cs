@@ -14,15 +14,11 @@ namespace Game.Persistence
 
         public MatchParticipantRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task<List<MatchParticipant>> ListByMatchesAsync(IReadOnlyCollection<int> matchIds)
         {
-            ArgumentNullException.ThrowIfNull(matchIds);
-
             Task<List<MatchParticipant>> participantsReading = ReadByMatchesAsync(matchIds);
 
             return participantsReading;
@@ -30,9 +26,6 @@ namespace Game.Persistence
 
         public Task AddAsync(int matchId, IReadOnlyList<MatchParticipant> seatedPlayers)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-            ArgumentNullException.ThrowIfNull(seatedPlayers);
-
             Task adding = AddSeatedPlayersAsync(matchId, seatedPlayers);
 
             return adding;
@@ -40,9 +33,6 @@ namespace Game.Persistence
 
         public Task WriteResultsAsync(int matchId, IReadOnlyList<MatchParticipant> playerResults)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-            ArgumentNullException.ThrowIfNull(playerResults);
-
             Task resultWriting = WritePlayerResultsAsync(matchId, playerResults);
 
             return resultWriting;
@@ -54,7 +44,12 @@ namespace Game.Persistence
 
             foreach (MatchParticipant seatedPlayer in seatedPlayers)
             {
-                databaseContext.MatchParticipants.Add(new MatchParticipant { MatchId = matchId, SeatNumber = seatedPlayer.SeatNumber, PlayerId = seatedPlayer.PlayerId });
+                databaseContext.MatchParticipants.Add(new MatchParticipant
+                {
+                    MatchId = matchId,
+                    SeatNumber = seatedPlayer.SeatNumber,
+                    PlayerId = seatedPlayer.PlayerId,
+                });
             }
 
             await databaseContext.SaveChangesAsync();

@@ -20,7 +20,12 @@ namespace Torres.Client.Widgets
         internal CountdownView(VolumeTextures volumeTextures, SpriteFontBase clockFont, Color clockColor)
         {
             _flowerClock = new FlowerClock(volumeTextures) { VerticalAlignment = VerticalAlignment.Center };
-            _clockLabel = new Label { Font = clockFont, TextColor = clockColor, VerticalAlignment = VerticalAlignment.Center };
+            _clockLabel = new Label
+            {
+                Font = clockFont,
+                TextColor = clockColor,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             var countdownRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.HeaderCardSpacing,
@@ -46,7 +51,7 @@ namespace Torres.Client.Widgets
             }
 
             _clockLabel.Text = DisplayFormats.FormatCountdown(timeLeft);
-            _flowerClock.RemainingShare = _fullTime > TimeSpan.Zero ? (float)Math.Max(0d, timeLeft / _fullTime) : 0f;
+            _flowerClock.RemainingProgress = _fullTime > TimeSpan.Zero ? (float)Math.Max(0d, timeLeft / _fullTime) : 0f;
         }
     }
 }

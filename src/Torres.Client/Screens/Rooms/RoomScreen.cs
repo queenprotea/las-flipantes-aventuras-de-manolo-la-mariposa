@@ -184,12 +184,12 @@ namespace Torres.Client.Screens
             HorizontalStackPanel playersHeader = PanelFactory.CreateButtonRow();
             playersHeader.Widgets.Add(LabelFactory.CreateTitle(TextKeys.Room.PlayersTitle));
 
-            playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.OccupancyLabel, new[] { DisplayFormats.FormatInteger(room.Members.Count), DisplayFormats.FormatInteger(room.MaxPlayers) }));
+            playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.OccupancyLabel, new string[] { DisplayFormats.FormatInteger(room.Members.Count), DisplayFormats.FormatInteger(room.MaxPlayers) }));
 
             int activeMemberCount = room.Members.FindAll(IsActiveMember).Count;
             if (activeMemberCount != room.Members.Count)
             {
-                playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.ActiveCountLabel, new[] { DisplayFormats.FormatInteger(activeMemberCount) }));
+                playersHeader.Widgets.Add(CreateMutedLabel(TextKeys.Room.ActiveCountLabel, new string[] { DisplayFormats.FormatInteger(activeMemberCount) }));
             }
 
             return playersHeader;
@@ -324,7 +324,7 @@ namespace Torres.Client.Screens
         {
             _noticeBox.Hide();
             NoticeBox question = ShowConfirmation(TextKeys.Alerts.RemovePlayerTitle, TextKeys.Alerts.RemovePlayerBody);
-            question.SetTitleArguments(new[] { member.DisplayName });
+            question.SetTitleArguments(new string[] { member.DisplayName });
 
             LocalizedButton kickConfirmButton = ButtonFactory.CreateDestructiveButton(TextKeys.Alerts.RemoveConfirmButton);
             kickConfirmButton.Click += (clickedButton, clickArguments) => StartKick(member.MemberId);

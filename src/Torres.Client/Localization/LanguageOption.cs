@@ -4,12 +4,12 @@ namespace Torres.Client.Localization
     {
         internal LanguageOption(string uiCultureName, string formatCultureName, string nameKey)
         {
-            UiCultureName = uiCultureName;
+            UICultureName = uiCultureName;
             FormatCultureName = formatCultureName;
             NameKey = nameKey;
         }
 
-        internal string UiCultureName { get; }
+        internal string UICultureName { get; }
 
         internal string FormatCultureName { get; }
 

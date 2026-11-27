@@ -11,7 +11,6 @@ namespace Torres.Client.Screens
     internal sealed class SettingsFailureScreen : Screen
     {
         private const int NoticeSpacing = 14;
-        private const int NoticeWidth = 420;
 
         internal SettingsFailureScreen()
             : base(TextKeys.Common.GameName, false)
@@ -22,19 +21,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            var failureMessage = new VerticalStackPanel
-            {
-                Padding = Metrics.CardPadding,
-                Background = Theme.BlushTintBrush,
-                Border = Theme.BlushBrush,
-                BorderThickness = Sizes.Border,
-            };
-            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Startup.SettingsError)
-            {
-                Font = Fonts.Body,
-                TextColor = Theme.BlushInk,
-                Wrap = true,
-            });
+            VerticalStackPanel failureMessage = PanelFactory.CreateFailureBox(TextKeys.Startup.SettingsError);
 
             LocalizedButton exitButton = ButtonFactory.CreateSecondaryButton(TextKeys.Common.ExitButton);
             exitButton.Click += ExitButtonOnClick;
@@ -44,7 +31,7 @@ namespace Torres.Client.Screens
 
             var failureNotice = new VerticalStackPanel
             {
-                Width = NoticeWidth,
+                Width = Metrics.NoticeWidth,
                 Spacing = Metrics.FieldSpacing,
                 Margin = new Thickness(0, NoticeSpacing, 0, 0),
             };
@@ -55,17 +42,9 @@ namespace Torres.Client.Screens
             {
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Widgets =
-                {
-                    new LocalizedLabel(TextKeys.Common.GameName)
-                    {
-                        Font = Fonts.Display,
-                        TextColor = Theme.Ink,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                    },
-                    failureNotice,
-                },
             };
+            failureLayout.Widgets.Add(LabelFactory.CreateGameName());
+            failureLayout.Widgets.Add(failureNotice);
 
             return failureLayout;
         }

@@ -7,8 +7,9 @@ namespace Game.Domain.Tests
 {
     public sealed class StartingLayoutTests
     {
-        private const int FiveFlowers = 5;
-        private const int SecondLevel = 2;
+        private static readonly BoardCell _eastOfNorthWest = new BoardCell(1, 2);
+        private static readonly BoardCell _cornerOfNorthWest = new BoardCell(2, 2);
+        private static readonly BoardCell _belowBoardCell = new BoardCell(8, 1);
 
         [Fact]
         public void Test_Constructor_WithFiveSingleCellPlanters_KeepsFiveFlowers()
@@ -17,13 +18,13 @@ namespace Game.Domain.Tests
 
             var layout = new StartingLayout(flowers);
 
-            Assert.Equal(FiveFlowers, layout.Flowers.Count);
+            Assert.Equal(SampleLayouts.FiveFlowers, layout.Flowers.Count);
         }
 
         [Fact]
         public void Test_Constructor_WithTwoFlowersSideBySide_ThrowsArgumentException()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(1, 1), 1), new Flower(new BoardCell(1, 2), 1), new Flower(new BoardCell(3, 3), 1), new Flower(new BoardCell(6, 1), 1), new Flower(new BoardCell(6, 6), 1) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelOne), new Flower(_eastOfNorthWest, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthEastFlower, SampleLayouts.LevelOne) };
 
             Assert.Throws<ArgumentException>(() => new StartingLayout(flowers));
         }
@@ -31,17 +32,17 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_Constructor_WithFlowersTouchingOnACorner_KeepsBothFlowers()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(1, 1), 1), new Flower(new BoardCell(2, 2), 1), new Flower(new BoardCell(4, 4), 1), new Flower(new BoardCell(6, 1), 1), new Flower(new BoardCell(6, 6), 1) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelOne), new Flower(_cornerOfNorthWest, SampleLayouts.LevelOne), new Flower(SampleLayouts.GroundCell, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthEastFlower, SampleLayouts.LevelOne) };
 
             var layout = new StartingLayout(flowers);
 
-            Assert.Equal(FiveFlowers, layout.Flowers.Count);
+            Assert.Equal(SampleLayouts.FiveFlowers, layout.Flowers.Count);
         }
 
         [Fact]
         public void Test_Constructor_WithASecondLevelFlower_ThrowsArgumentException()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(1, 1), SecondLevel), new Flower(new BoardCell(1, 6), 1), new Flower(new BoardCell(3, 3), 1), new Flower(new BoardCell(6, 1), 1), new Flower(new BoardCell(6, 6), 1) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelTwo), new Flower(SampleLayouts.NorthEastFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthEastFlower, SampleLayouts.LevelOne) };
 
             Assert.Throws<ArgumentException>(() => new StartingLayout(flowers));
         }
@@ -49,7 +50,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_Constructor_WithThreeFlowers_ThrowsArgumentOutOfRangeException()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(1, 1), 1), new Flower(new BoardCell(1, 6), 1), new Flower(new BoardCell(3, 3), 1) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.NorthEastFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne) };
 
             Assert.Throws<ArgumentOutOfRangeException>(() => new StartingLayout(flowers));
         }
@@ -57,7 +58,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_Constructor_WithAFlowerOutsideTheBoard_ThrowsArgumentOutOfRangeException()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(8, 1), 1), new Flower(new BoardCell(1, 6), 1), new Flower(new BoardCell(3, 3), 1), new Flower(new BoardCell(6, 1), 1), new Flower(new BoardCell(6, 6), 1) };
+            var flowers = new Flower[] { new Flower(_belowBoardCell, SampleLayouts.LevelOne), new Flower(SampleLayouts.NorthEastFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthEastFlower, SampleLayouts.LevelOne) };
 
             Assert.Throws<ArgumentOutOfRangeException>(() => new StartingLayout(flowers));
         }
@@ -65,7 +66,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_Constructor_WithTwoFlowersOnTheSameCell_ThrowsArgumentException()
         {
-            var flowers = new Flower[] { new Flower(new BoardCell(1, 1), 1), new Flower(new BoardCell(1, 1), 1), new Flower(new BoardCell(3, 3), 1), new Flower(new BoardCell(6, 1), 1), new Flower(new BoardCell(6, 6), 1) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthWestFlower, SampleLayouts.LevelOne), new Flower(SampleLayouts.SouthEastFlower, SampleLayouts.LevelOne) };
 
             Assert.Throws<ArgumentException>(() => new StartingLayout(flowers));
         }

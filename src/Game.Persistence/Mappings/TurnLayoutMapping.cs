@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,8 +12,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<TurnLayout> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(TurnLayoutTable);
             builder.HasKey(mappedLayout => new { mappedLayout.PlayerCount, mappedLayout.RoundNumber });
             builder.Property(mappedLayout => mappedLayout.PlayerCount).HasColumnName(PlayerCountColumn);

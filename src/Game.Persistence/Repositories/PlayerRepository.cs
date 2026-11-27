@@ -17,8 +17,6 @@ namespace Game.Persistence
 
         public PlayerRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
@@ -33,10 +31,6 @@ namespace Game.Persistence
 
         public async Task<PlayerCreationOutcome> CreateAsync(string username, string email, string passwordHash)
         {
-            ArgumentNullException.ThrowIfNull(username);
-            ArgumentNullException.ThrowIfNull(email);
-            ArgumentNullException.ThrowIfNull(passwordHash);
-
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
             var newPlayer = new Player
             {
@@ -61,8 +55,6 @@ namespace Game.Persistence
 
         public async Task<Player?> FindByUsernameAsync(string username)
         {
-            ArgumentNullException.ThrowIfNull(username);
-
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
 
             Player? player = await databaseContext.Players
@@ -74,8 +66,6 @@ namespace Game.Persistence
 
         public Task<Player?> FindByEmailAsync(string email)
         {
-            ArgumentNullException.ThrowIfNull(email);
-
             Task<Player?> playerReading = ReadByEmailAsync(email);
 
             return playerReading;
@@ -83,8 +73,6 @@ namespace Game.Persistence
 
         public Task<Player?> FindByIdAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<Player?> playerReading = ReadByIdAsync(playerId);
 
             return playerReading;
@@ -92,8 +80,6 @@ namespace Game.Persistence
 
         public Task<string?> FindAvatarReferenceAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<string?> avatarReferenceReading = ReadAvatarReferenceAsync(playerId);
 
             return avatarReferenceReading;
@@ -101,18 +87,20 @@ namespace Game.Persistence
 
         public Task<ProfileUpdateOutcome> UpdateProfileAsync(int playerId, string username, string? avatarReference)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-
             Task<ProfileUpdateOutcome> profileWriting = WriteProfileAsync(playerId, username, avatarReference);
 
             return profileWriting;
         }
 
+        public Task<bool> DeleteAsync(int playerId)
+        {
+            Task<bool> deletion = RemovePlayerAsync(playerId);
+
+            return deletion;
+        }
+
         public Player? FindByUsername(string username)
         {
-            ArgumentNullException.ThrowIfNull(username);
-
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
 
             Player? player = databaseContext.Players
@@ -124,8 +112,6 @@ namespace Game.Persistence
 
         public List<Player> ListByIds(IReadOnlyCollection<int> playerIds)
         {
-            ArgumentNullException.ThrowIfNull(playerIds);
-
             using TorresDbContext databaseContext = _contextFactory.CreateDbContext();
 
             List<Player> players = databaseContext.Players
@@ -139,8 +125,6 @@ namespace Game.Persistence
 
         public Task<List<Player>> ListByIdsAsync(IReadOnlyCollection<int> playerIds)
         {
-            ArgumentNullException.ThrowIfNull(playerIds);
-
             Task<List<Player>> playersReading = ReadByIdsAsync(playerIds);
 
             return playersReading;
@@ -216,6 +200,18 @@ namespace Game.Persistence
             }
 
             return updateOutcome;
+        }
+
+        private async Task<bool> RemovePlayerAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            int removedCount = await databaseContext.Players
+                .Where(storedPlayer => storedPlayer.PlayerId == playerId)
+                .ExecuteDeleteAsync();
+            bool wasRemoved = removedCount > 0;
+
+            return wasRemoved;
         }
 
         private static PlayerCreationOutcome ToTakenOutcome(string? violatedIndex)

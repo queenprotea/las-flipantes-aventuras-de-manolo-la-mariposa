@@ -39,12 +39,6 @@ namespace Game.Services
 
         public HistoryService(SessionRegistry sessionRegistry, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, PlayerRepository playerRepository, HistoryPaging historyPaging)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(matchRecordRepository);
-            ArgumentNullException.ThrowIfNull(matchParticipantRepository);
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(historyPaging);
-
             _sessionRegistry = sessionRegistry;
             _matchRecordRepository = matchRecordRepository;
             _matchParticipantRepository = matchParticipantRepository;

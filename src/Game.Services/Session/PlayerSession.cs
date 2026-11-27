@@ -27,13 +27,13 @@ namespace Game.Services
         private long _lastConnectionCheckTicks;
         private Task _senderTask = Task.CompletedTask;
 
-        internal PlayerSession(SessionOwner owner, string sessionId, IGameSessionNoticeReceiver noticeReceiver, SessionRegistry sessionRegistry, DateTime openedAtUtc)
+        internal PlayerSession(SessionOwner owner, string sessionId, IGameSessionNoticeReceiver noticeReceiver, SessionRegistry sessionRegistry, DateTime openedAt)
         {
             Owner = owner;
             SessionId = sessionId;
             _noticeReceiver = noticeReceiver;
             _sessionRegistry = sessionRegistry;
-            _lastConnectionCheckTicks = openedAtUtc.Ticks;
+            _lastConnectionCheckTicks = openedAt.Ticks;
         }
 
         internal SessionOwner Owner { get; private set; }
@@ -46,12 +46,12 @@ namespace Game.Services
         {
             if (_noticeReceiver is ICommunicationObject watchedChannel)
             {
-                watchedChannel.Closed += NoticeReceiverOnClosed;
-                watchedChannel.Faulted += NoticeReceiverOnFaulted;
+                watchedChannel.Closed += WatchedChannelOnClosed;
+                watchedChannel.Faulted += WatchedChannelOnFaulted;
             }
             else
             {
-                _log.WarnFormat(UnwatchableChannelMessage, Owner.OwnerId);
+                _log.WarnFormat(CultureInfo.InvariantCulture, UnwatchableChannelMessage, Owner.OwnerId);
             }
 
             _senderTask = Task.Run(SendPendingAsync);
@@ -67,14 +67,14 @@ namespace Game.Services
             _outbox.Writer.TryWrite(notice);
         }
 
-        internal void Touch(DateTime nowUtc)
+        internal void Touch(DateTime now)
         {
-            Interlocked.Exchange(ref _lastConnectionCheckTicks, nowUtc.Ticks);
+            Interlocked.Exchange(ref _lastConnectionCheckTicks, now.Ticks);
         }
 
-        internal bool IsSilentSince(DateTime limitUtc)
+        internal bool IsSilentSince(DateTime limitAt)
         {
-            bool isSilent = Interlocked.Read(ref _lastConnectionCheckTicks) < limitUtc.Ticks;
+            bool isSilent = Interlocked.Read(ref _lastConnectionCheckTicks) < limitAt.Ticks;
 
             return isSilent;
         }
@@ -155,12 +155,12 @@ namespace Game.Services
             }
         }
 
-        private void NoticeReceiverOnClosed(object? sender, EventArgs e)
+        private void WatchedChannelOnClosed(object? sender, EventArgs e)
         {
             _sessionRegistry.DeclareLost(this);
         }
 
-        private void NoticeReceiverOnFaulted(object? sender, EventArgs e)
+        private void WatchedChannelOnFaulted(object? sender, EventArgs e)
         {
             _sessionRegistry.DeclareLost(this);
         }

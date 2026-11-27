@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,8 +15,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<MatchParticipant> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(MatchParticipantTable);
             builder.HasKey(mappedParticipant => new { mappedParticipant.MatchId, mappedParticipant.SeatNumber });
             builder.Property(mappedParticipant => mappedParticipant.MatchId).HasColumnName(MatchIdColumn);

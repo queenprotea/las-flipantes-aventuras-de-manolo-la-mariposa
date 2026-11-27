@@ -1,4 +1,4 @@
-namespace Torres.Client
+namespace Torres.Client.Contracts
 {
     internal static class ProfileLimits
     {

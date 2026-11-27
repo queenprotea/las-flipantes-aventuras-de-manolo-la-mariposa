@@ -28,6 +28,6 @@ namespace Game.Contracts
         public string Text { get; set; } = string.Empty;
 
         [DataMember]
-        public DateTime SentAtUtc { get; set; }
+        public DateTime SentAt { get; set; }
     }
 }

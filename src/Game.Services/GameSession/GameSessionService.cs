@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using CoreWCF;
@@ -21,15 +20,6 @@ namespace Game.Services
 
         public GameSessionService(SessionService sessionService, RoomService roomService, FriendsService friendsService, InvitationService invitationService, ChatService chatService, HistoryService historyService, MatchService matchService, ProfileService profileService)
         {
-            ArgumentNullException.ThrowIfNull(sessionService);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(friendsService);
-            ArgumentNullException.ThrowIfNull(invitationService);
-            ArgumentNullException.ThrowIfNull(chatService);
-            ArgumentNullException.ThrowIfNull(historyService);
-            ArgumentNullException.ThrowIfNull(matchService);
-            ArgumentNullException.ThrowIfNull(profileService);
-
             _sessionService = sessionService;
             _roomService = roomService;
             _friendsService = friendsService;
@@ -329,6 +319,14 @@ namespace Game.Services
             Task<UpdateProfileResult> profileUpdate = _profileService.UpdateProfileAsync(username, includesNewAvatar);
 
             return profileUpdate;
+        }
+
+        /// <inheritdoc/>
+        public Task<DeleteAccountResult> DeleteAccountAsync()
+        {
+            Task<DeleteAccountResult> accountDeletion = _profileService.DeleteAccountAsync();
+
+            return accountDeletion;
         }
 
         /// <inheritdoc/>

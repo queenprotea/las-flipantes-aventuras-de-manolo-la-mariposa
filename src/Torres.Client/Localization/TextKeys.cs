@@ -167,6 +167,7 @@ namespace Torres.Client.Localization
             internal const string DeleteAccountHint = "AccountSettings.DeleteAccountHint";
             internal const string DeleteAccountButton = "AccountSettings.DeleteAccountButton";
             internal const string BackToProfileButton = "AccountSettings.BackToProfileButton";
+            internal const string MatchInProgress = "AccountSettings.MatchInProgress";
         }
 
         internal static class Friends

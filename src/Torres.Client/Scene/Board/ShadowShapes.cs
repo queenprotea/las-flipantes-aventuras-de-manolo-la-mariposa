@@ -6,7 +6,7 @@ namespace Torres.Client.Scene
     {
         private const float ShadowLift = 0.004f;
         private const float FlowerShadowRadius = 0.2f;
-        private const float FlowerShadowHeightShare = 0.5f;
+        private const float FlowerShadowHeightFraction = 0.5f;
         private const float CaterpillarShadowLength = 0.42f;
         private const float CaterpillarShadowWidth = 0.16f;
 
@@ -32,7 +32,7 @@ namespace Torres.Client.Scene
 
         private static void AddFlowerShadow(MeshBuilder meshBuilder, BoardCell flowerCell, int flowerLevel)
         {
-            float shadowHeight = (BoardGeometry.GetFlowerTop(flowerLevel) - BoardGeometry.SoilTop) * FlowerShadowHeightShare;
+            float shadowHeight = (BoardGeometry.GetFlowerTop(flowerLevel) - BoardGeometry.SoilTop) * FlowerShadowHeightFraction;
             Vector3 shadowCenter = BoardGeometry.GetCellCenter(flowerCell)
                 + SceneLighting.GetShadowOffset(shadowHeight)
                 + new Vector3(0f, BoardGeometry.SoilTop + ShadowLift, 0f);

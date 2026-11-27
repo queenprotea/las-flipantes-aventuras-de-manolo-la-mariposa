@@ -14,23 +14,16 @@ namespace Game.Match.Tests
 {
     public sealed class MatchResumptionTests
     {
-        private const int SeatNumberOne = 1;
-        private const int TwoSeatCount = 2;
-        private const int ThreeSeatCount = 3;
         private const int UnknownMatchId = 9;
-        private const short FirstPosition = 1;
         private const int FullTurnActionPoints = 5;
-        private const int NorthWestPlanterNumber = 1;
-        private const int NorthEastPlanterNumber = 2;
         private const string BrokenStateDocument = "<MatchCheckpoint>roto</MatchCheckpoint>";
 
-        private static readonly TimeSpan _recordWaitLimit = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan _resumeTime = TimeSpan.FromMinutes(3);
         private static readonly TimeSpan _partOfTheTurn = TimeSpan.FromSeconds(30);
 
         private static readonly MatchResumption _resumption = new MatchResumption(
             SampleMatches.TimeLimits,
-            new Dictionary<int, MatchRuleSet> { [TwoSeatCount] = SampleMatches.Rules, [ThreeSeatCount] = SampleMatches.Rules },
+            new Dictionary<int, MatchRuleSet> { [SampleMatches.TwoSeatCount] = SampleMatches.Rules, [SampleMatches.ThreeSeatCount] = SampleMatches.Rules },
             _resumeTime);
 
         private readonly FakeTimeProvider _fakeTimeProvider = new FakeTimeProvider();
@@ -57,7 +50,7 @@ namespace Game.Match.Tests
             await _firstRun.FinishRecordingAsync();
 
             MatchState savedState = Assert.Single(_firstRunStateRepository.SavedStates);
-            Assert.Equal(SeatNumberOne, savedState.ActiveSeatNumber);
+            Assert.Equal(SampleMatches.SeatNumberOne, savedState.ActiveSeatNumber);
             Assert.Contains(SampleMatches.RoomCode, savedState.StateDocument, StringComparison.Ordinal);
         }
 
@@ -115,7 +108,7 @@ namespace Game.Match.Tests
 
             MatchView resumedView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(MatchPhase.PlayerTurn, resumedView.Phase);
-            Assert.Equal(SeatNumberOne, resumedView.ActiveSeatNumber);
+            Assert.Equal(SampleMatches.SeatNumberOne, resumedView.ActiveSeatNumber);
             Assert.Equal(SampleMatches.StepTime, resumedView.StepTimeLeft);
             Assert.Equal(FullTurnActionPoints, resumedView.ActionPointsLeft);
             Assert.Empty(resumedView.Hand);
@@ -134,9 +127,9 @@ namespace Game.Match.Tests
             _coordinator.ReturnToMatch(SampleMatches.Beto.EntrantId);
 
             MatchView resumedView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
-            Assert.Equal(NorthWestPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthWestFlower));
-            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthOfNorthEast));
-            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthEastFlower));
+            Assert.Equal(SampleMatches.NorthWestPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthWestFlower));
+            Assert.Equal(SampleMatches.NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthOfNorthEast));
+            Assert.Equal(SampleMatches.NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(resumedView, SampleMatches.NorthEastFlower));
         }
 
         [Fact]
@@ -189,10 +182,10 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(_resumeTime);
 
-            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(_recordWaitLimit);
-            IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(_recordWaitLimit);
+            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(SampleMatches.RecordWaitLimit);
+            IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(SampleMatches.RecordWaitLimit);
             Assert.Equal(MatchEndReasonCodes.Abandoned, recordedFinish.EndReason);
-            Assert.Equal(FirstPosition, playerResults.Single(result => result.PlayerId == SampleMatches.Ana.EntrantId).FinalPosition);
+            Assert.Equal(SampleMatches.FirstPosition, playerResults.Single(result => result.PlayerId == SampleMatches.Ana.EntrantId).FinalPosition);
             Assert.True(playerResults.Single(result => result.PlayerId == SampleMatches.Beto.EntrantId).WasWithdrawn);
             MatchView finishedView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
             Assert.Equal(MatchPhase.Finished, finishedView.Phase);
@@ -207,8 +200,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(_resumeTime);
 
-            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(_recordWaitLimit);
-            IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(_recordWaitLimit);
+            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(SampleMatches.RecordWaitLimit);
+            IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(SampleMatches.RecordWaitLimit);
             Assert.Equal(MatchEndReasonCodes.Interrupted, recordedFinish.EndReason);
             Assert.Empty(playerResults);
             Assert.Null(_coordinator.FindSeating(SampleMatches.Ana.EntrantId));
@@ -223,7 +216,7 @@ namespace Game.Match.Tests
             ForfeitResult forfeitResult = _coordinator.Forfeit(SampleMatches.Beto.EntrantId);
 
             Assert.Equal(ForfeitResult.Forfeited, forfeitResult);
-            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(_recordWaitLimit);
+            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(SampleMatches.RecordWaitLimit);
             Assert.Equal(MatchEndReasonCodes.Abandoned, recordedFinish.EndReason);
             Assert.Equal(ReturnToMatchResult.NoMatchToResume, _coordinator.ReturnToMatch(SampleMatches.Ana.EntrantId));
         }
@@ -250,7 +243,7 @@ namespace Game.Match.Tests
 
             IReadOnlyList<int> waitingEntrantIds = await _coordinator.RestoreInterruptedMatchesAsync(_resumption);
 
-            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(_recordWaitLimit);
+            RecordedFinish recordedFinish = await _recordRepository.FirstFinish.WaitAsync(SampleMatches.RecordWaitLimit);
             Assert.Empty(waitingEntrantIds);
             Assert.Equal(new RecordedFinish(UnknownMatchId, MatchEndReasonCodes.Interrupted), recordedFinish);
         }
@@ -259,7 +252,14 @@ namespace Game.Match.Tests
         public async Task Test_RestoreInterruptedMatchesAsync_WithUnreadableState_RecordsTheMatchInterruptedAndDropsTheState()
         {
             _recordRepository.InProgressMatchIds.Add(UnknownMatchId);
-            _stateRepository.StoredStates.Add(new MatchState { MatchId = UnknownMatchId, RoundNumber = 1, TurnNumber = 1, ActiveSeatNumber = 1, StateDocument = BrokenStateDocument });
+            _stateRepository.StoredStates.Add(new MatchState
+            {
+                MatchId = UnknownMatchId,
+                RoundNumber = 1,
+                TurnNumber = 1,
+                ActiveSeatNumber = 1,
+                StateDocument = BrokenStateDocument,
+            });
 
             IReadOnlyList<int> waitingEntrantIds = await _coordinator.RestoreInterruptedMatchesAsync(_resumption);
             await _coordinator.FinishRecordingAsync();

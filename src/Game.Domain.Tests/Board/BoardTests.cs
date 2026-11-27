@@ -11,6 +11,10 @@ namespace Game.Domain.Tests
         private const int TwoPlanters = 2;
         private const int TwoCellCount = 2;
 
+        private static readonly BoardCell _innerCell = new BoardCell(2, 2);
+        private static readonly BoardCell _eastOfInnerCell = new BoardCell(2, 3);
+        private static readonly BoardCell _westOfInnerCell = new BoardCell(2, 1);
+
         [Fact]
         public void Test_FindPlanters_WithFiveSeparateFlowers_ReturnsFivePlanters()
         {
@@ -24,7 +28,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindPlanters_WithTwoFlowersSideBySide_ReturnsOnePlanterOfTwoCells()
         {
-            var board = new Board(new Flower[] { new Flower(new BoardCell(2, 2), 1), new Flower(new BoardCell(2, 3), 2) });
+            var board = new Board(new Flower[] { new Flower(_innerCell, SampleLayouts.LevelOne), new Flower(_eastOfInnerCell, SampleLayouts.LevelTwo) });
 
             IReadOnlyList<Planter> planters = board.FindPlanters();
 
@@ -35,7 +39,7 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_FindPlanters_WithFlowersTouchingOnACorner_ReturnsTwoPlanters()
         {
-            var board = new Board(new Flower[] { new Flower(new BoardCell(2, 2), 1), new Flower(new BoardCell(3, 3), 1) });
+            var board = new Board(new Flower[] { new Flower(_innerCell, SampleLayouts.LevelOne), new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelOne) });
 
             int planterCount = board.FindPlanters().Count;
 
@@ -65,9 +69,9 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_CountPlantersAround_OfCellBetweenTwoPlanters_ReturnsTwo()
         {
-            var board = new Board(new Flower[] { new Flower(new BoardCell(2, 1), 1), new Flower(new BoardCell(2, 3), 1) });
+            var board = new Board(new Flower[] { new Flower(_westOfInnerCell, SampleLayouts.LevelOne), new Flower(_eastOfInnerCell, SampleLayouts.LevelOne) });
 
-            int planterCount = board.CountPlantersAround(new BoardCell(2, 2));
+            int planterCount = board.CountPlantersAround(_innerCell);
 
             Assert.Equal(TwoPlanters, planterCount);
         }

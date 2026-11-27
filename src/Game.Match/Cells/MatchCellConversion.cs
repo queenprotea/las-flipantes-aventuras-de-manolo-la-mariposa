@@ -21,7 +21,11 @@ namespace Game.Match
 
         internal static MatchCell ToMatchCell(BoardCell boardCell)
         {
-            var matchCell = new MatchCell { Row = boardCell.Row, Column = boardCell.Column };
+            var matchCell = new MatchCell
+            {
+                Row = boardCell.Row,
+                Column = boardCell.Column,
+            };
 
             return matchCell;
         }

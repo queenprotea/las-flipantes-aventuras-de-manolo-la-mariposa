@@ -16,13 +16,15 @@ namespace Torres.Client.Flows
 
         private TimeSpan _sinceLastAttempt;
         private bool _hasResumed;
-        private bool _isWaitingForMatch;
+        private bool _isWaitingForMatchView;
 
         internal DisconnectionFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }
+
+        internal TimeSpan ReconnectionTimeLeft => _playerSession.ReconnectionTimeLeft;
 
         internal MatchView? CurrentMatchView => _playerSession.CurrentMatchView;
 
@@ -32,13 +34,13 @@ namespace Torres.Client.Flows
         {
             _reopenRequest.Forget();
             _hasResumed = false;
-            _isWaitingForMatch = false;
+            _isWaitingForMatchView = false;
             StartReopening();
         }
 
         internal void Advance(TimeSpan elapsedTime)
         {
-            bool isWaitingToRetry = !_reopenRequest.IsWaiting && !_isWaitingForMatch;
+            bool isWaitingToRetry = !_reopenRequest.IsWaiting && !_isWaitingForMatchView;
             if (isWaitingToRetry)
             {
                 _sinceLastAttempt += elapsedTime;
@@ -56,17 +58,6 @@ namespace Torres.Client.Flows
             {
                 StartReopening();
             }
-        }
-
-        internal TimeSpan FindReconnectionTimeLeft()
-        {
-            TimeSpan reconnectionTimeLeft = TimeSpan.Zero;
-            if (_playerSession.ReconnectionEndsAtUtc is DateTime reconnectionEndsAt)
-            {
-                reconnectionTimeLeft = reconnectionEndsAt - DateTime.UtcNow;
-            }
-
-            return reconnectionTimeLeft;
         }
 
         internal DisconnectionOutcome? TakeOutcome()
@@ -153,7 +144,7 @@ namespace Torres.Client.Flows
                 _playerSession.EnterMatchWithoutRoom(seatedMatch.RoomCode);
             }
 
-            _isWaitingForMatch = !seatedMatch.IsAwaitingPlayers;
+            _isWaitingForMatchView = !seatedMatch.IsAwaitingPlayers;
             bool isMatchAwaitingPlayers = seatedMatch.IsAwaitingPlayers;
 
             return isMatchAwaitingPlayers;

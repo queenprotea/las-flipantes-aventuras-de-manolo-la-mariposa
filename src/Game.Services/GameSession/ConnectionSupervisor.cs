@@ -17,11 +17,6 @@ namespace Game.Services
 
         public ConnectionSupervisor(SessionRegistry sessionRegistry, RoomService roomService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
-            ArgumentNullException.ThrowIfNull(sessionTimings);
-
             _sessionRegistry = sessionRegistry;
             _roomService = roomService;
             _avatarUploadRegistry = avatarUploadRegistry;
@@ -30,8 +25,6 @@ namespace Game.Services
 
         public void Start(TimeSpan roomInactivityLimit)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(roomInactivityLimit, TimeSpan.Zero);
-
             _roomInactivityLimit = roomInactivityLimit;
             _connectionCheckTimer = new PeriodicTimer(_sessionTimings.ConnectionCheckPeriod);
             _supervisionTask = Task.Run(SuperviseAsync);

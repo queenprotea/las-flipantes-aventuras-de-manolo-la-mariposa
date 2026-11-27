@@ -134,7 +134,7 @@ namespace Torres.Client.Flows
                 JoinRoomStatus.RoomNotFound => Refuse(TextKeys.Alerts.RoomNotFoundTitle, TextKeys.Alerts.RoomNotFoundBody),
                 JoinRoomStatus.RoomInMatch => new ScreenOutcome(Notice.CreateTitle(TextKeys.Rooms.RoomInMatchError), null),
                 JoinRoomStatus.AlreadyInRoom => new ScreenOutcome(Notice.CreateTitle(TextKeys.Rooms.AlreadyInRoomError), null),
-                JoinRoomStatus.Banned => new ScreenOutcome(Notice.CreateBan(joining.BanEndsAtUtc), null),
+                JoinRoomStatus.Banned => new ScreenOutcome(Notice.CreateBan(joining.BanEndsAt), null),
                 JoinRoomStatus.NotIdentified => new ScreenOutcome(null, ScreenId.Login),
                 JoinRoomStatus.DatabaseUnavailable => new ScreenOutcome(Notice.CreateServerError(), null),
                 _ => throw new ArgumentOutOfRangeException(nameof(joining), joining.Status, null),

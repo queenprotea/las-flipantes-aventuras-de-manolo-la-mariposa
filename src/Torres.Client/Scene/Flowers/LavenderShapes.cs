@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 
 namespace Torres.Client.Scene
@@ -19,7 +20,7 @@ namespace Torres.Client.Scene
         private const float HalfStep = 0.5f;
         private const float BudBeadDistance = 0.026f;
         private const float BloomBeadDistance = 0.03f;
-        private const float OpeningBloomShare = 0.55f;
+        private const float OpeningBloomFraction = 0.55f;
         private const int AlternatingWhorlCount = 2;
 
         private static readonly Vector3 _leafScale = new Vector3(0.016f, 0.13f, 0.016f);
@@ -30,32 +31,25 @@ namespace Torres.Client.Scene
         internal static void AddFlower(MeshBuilder meshBuilder, Vector3 cellCenter, int flowerLevel)
         {
             var flowerPhase = (FlowerPhase)flowerLevel;
-            AddLeaves(meshBuilder, cellCenter, BaseLeafCount + (LeavesPerLevel * flowerLevel));
+            FlowerParts.AddLeafRing(meshBuilder, cellCenter, new LeafRing(BaseLeafCount + (LeavesPerLevel * flowerLevel), 0f, LeafDistance, LeafLift, _leafScale, LeafTiltDegrees, GardenPalette.SilverLeaf, true));
             int stemCount = flowerPhase == FlowerPhase.Bud ? SingleStemCount : _bushStemOffsets.Length;
-            int whorlCount = BaseWhorlCount + (WhorlsPerLevel * flowerLevel);
             float flowerTop = BoardGeometry.GetFlowerTop(flowerLevel);
             for (var stemIndex = 0; stemIndex < stemCount; stemIndex++)
             {
                 Vector3 stemOffset = _bushStemOffsets[stemIndex];
-                AddSpike(meshBuilder, cellCenter + new Vector3(stemOffset.X, 0f, stemOffset.Z), flowerTop + stemOffset.Y, whorlCount, flowerPhase);
+                AddSpike(meshBuilder, cellCenter + new Vector3(stemOffset.X, flowerTop + stemOffset.Y, stemOffset.Z), flowerLevel);
             }
         }
 
-        private static void AddLeaves(MeshBuilder meshBuilder, Vector3 cellCenter, int leafCount)
+        private static void AddSpike(MeshBuilder meshBuilder, Vector3 spikeTip, int flowerLevel)
         {
-            for (var leafIndex = 0; leafIndex < leafCount; leafIndex++)
-            {
-                float headingDegrees = FlowerParts.GetCircleHeading(leafIndex, leafCount, 0f);
-                Vector3 leafCenter = cellCenter + (BoardGeometry.GetHeadingDirection(headingDegrees) * LeafDistance) + new Vector3(0f, BoardGeometry.PlanterTop + LeafLift, 0f);
-                FlowerParts.AddCoarsePart(meshBuilder, leafCenter, _leafScale, LeafTiltDegrees, headingDegrees, GardenPalette.SilverLeaf);
-            }
-        }
-
-        private static void AddSpike(MeshBuilder meshBuilder, Vector3 stemAxis, float spikeTop, int whorlCount, FlowerPhase flowerPhase)
-        {
+            var flowerPhase = (FlowerPhase)flowerLevel;
+            int whorlCount = BaseWhorlCount + (WhorlsPerLevel * flowerLevel);
+            var stemAxis = new Vector3(spikeTip.X, 0f, spikeTip.Z);
+            float spikeTop = spikeTip.Y;
             float spikeLength = SpikeLengthPerWhorl * whorlCount;
             float spikeBottom = spikeTop - spikeLength;
-            FlowerParts.AddColumn(meshBuilder, stemAxis + new Vector3(0f, BoardGeometry.SoilTop, 0f), spikeBottom - BoardGeometry.SoilTop, StemRadius, GardenPalette.Stem);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(stemAxis + new Vector3(0f, BoardGeometry.SoilTop, 0f), new Vector3(StemRadius, spikeBottom - BoardGeometry.SoilTop, StemRadius)), GardenPalette.Stem);
             bool isBud = flowerPhase == FlowerPhase.Bud;
             float beadDistance = isBud ? BudBeadDistance : BloomBeadDistance;
             Vector3 beadScale = isBud ? _budBeadScale : _bloomBeadScale;
@@ -65,22 +59,31 @@ namespace Torres.Client.Scene
                 Color whorlColor = FindWhorlColor(flowerPhase, whorlIndex, (float)whorlIndex / (whorlCount - 1));
                 for (var beadIndex = 0; beadIndex < BeadsPerWhorl; beadIndex++)
                 {
-                    float headingDegrees = FlowerParts.GetCircleHeading(beadIndex, BeadsPerWhorl, WhorlTwistDegrees * whorlIndex);
+                    float headingDegrees = FlowerParts.GetCircleHeadingDegrees(beadIndex, BeadsPerWhorl, WhorlTwistDegrees * whorlIndex);
                     Vector3 beadCenter = stemAxis + (BoardGeometry.GetHeadingDirection(headingDegrees) * beadDistance) + new Vector3(0f, whorlHeight, 0f);
-                    FlowerParts.AddBead(meshBuilder, beadCenter, beadScale, whorlColor);
+                    FlowerParts.AddCoarsePart(meshBuilder, PartPose.CreateUpright(beadCenter, beadScale), whorlColor);
                 }
             }
         }
 
-        private static Color FindWhorlColor(FlowerPhase flowerPhase, int whorlIndex, float spikeShare)
+        private static Color FindWhorlColor(FlowerPhase flowerPhase, int whorlIndex, float spikeFraction)
         {
             bool isAlternateWhorl = (whorlIndex % AlternatingWhorlCount) != 0;
-            Color whorlColor = flowerPhase switch
+            Color whorlColor;
+            switch (flowerPhase)
             {
-                FlowerPhase.Bud => isAlternateWhorl ? GardenPalette.LavenderBudGreen : GardenPalette.LavenderBudGray,
-                FlowerPhase.Opening => spikeShare < OpeningBloomShare ? GardenPalette.LavenderBloom : GardenPalette.LavenderBudGreen,
-                _ => isAlternateWhorl ? GardenPalette.LavenderBloom : GardenPalette.LavenderDeepBloom,
-            };
+                case FlowerPhase.Bud:
+                    whorlColor = isAlternateWhorl ? GardenPalette.LavenderBudGreen : GardenPalette.LavenderBudGray;
+                    break;
+                case FlowerPhase.Opening:
+                    whorlColor = spikeFraction < OpeningBloomFraction ? GardenPalette.LavenderBloom : GardenPalette.LavenderBudGreen;
+                    break;
+                case FlowerPhase.FullBloom:
+                    whorlColor = isAlternateWhorl ? GardenPalette.LavenderBloom : GardenPalette.LavenderDeepBloom;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(flowerPhase));
+            }
 
             return whorlColor;
         }

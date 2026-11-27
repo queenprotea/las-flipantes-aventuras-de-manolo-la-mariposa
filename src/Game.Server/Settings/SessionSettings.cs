@@ -20,8 +20,6 @@ namespace Game.Server
 
         public static SessionSettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             SessionSettings? settings = configuration.GetSection(SectionName).Get<SessionSettings>();
             if ((settings is null) || (settings.ConnectionCheckPeriodSeconds <= 0) || (settings.ConnectionCheckMissesToDrop <= 0))
             {

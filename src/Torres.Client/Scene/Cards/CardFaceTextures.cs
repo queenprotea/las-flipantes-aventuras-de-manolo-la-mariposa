@@ -20,8 +20,6 @@ namespace Torres.Client.Scene
         private const int FaceHeight = 264;
         private const int BadgeSize = 40;
         private const int BadgeLineWidth = 3;
-        private const float HalfShare = 0.5f;
-        private const float PixelCenter = 0.5f;
         private const float NameLeft = 58f;
         private const float NameRight = 182f;
         private const float NameBandTop = 6f;
@@ -98,17 +96,17 @@ namespace Torres.Client.Scene
 
         private static Texture2D CreateBadgeTexture(GraphicsDevice graphicsDevice)
         {
-            var badgeCenter = new Vector2(BadgeSize * HalfShare);
-            float badgeRadius = BadgeSize * HalfShare;
+            var badgeCenter = new Vector2(BadgeSize * SceneValues.HalfFactor);
+            float badgeRadius = BadgeSize * SceneValues.HalfFactor;
             var pixels = new Color[BadgeSize * BadgeSize];
             for (var row = 0; row < BadgeSize; row++)
             {
                 for (var column = 0; column < BadgeSize; column++)
                 {
-                    float centerDistance = Vector2.Distance(new Vector2(column + PixelCenter, row + PixelCenter), badgeCenter);
+                    float centerDistance = Vector2.Distance(new Vector2(column + SceneValues.PixelCenter, row + SceneValues.PixelCenter), badgeCenter);
                     float coverage = MathHelper.Clamp(badgeRadius - centerDistance, 0f, 1f);
-                    float lineShare = MathHelper.Clamp(centerDistance - (badgeRadius - BadgeLineWidth), 0f, 1f);
-                    pixels[(row * BadgeSize) + column] = Color.Lerp(Theme.Surface, Theme.CardLine, lineShare) * coverage;
+                    float lineCoverage = MathHelper.Clamp(centerDistance - (badgeRadius - BadgeLineWidth), 0f, 1f);
+                    pixels[(row * BadgeSize) + column] = Color.Lerp(Theme.Surface, Theme.CardLine, lineCoverage) * coverage;
                 }
             }
 
@@ -149,7 +147,8 @@ namespace Torres.Client.Scene
             {
                 MatchCard.SixActionPoints or MatchCard.SevenActionPoints => Theme.PointsCardStripe,
                 MatchCard.FlowerLevelMove or MatchCard.FlowerLevelRemoval => Theme.FlowerCardStripe,
-                _ => Theme.CaterpillarCardStripe,
+                MatchCard.DoubleClimb or MatchCard.GroundLeap or MatchCard.Relocation or MatchCard.PlanterCrossing => Theme.CaterpillarCardStripe,
+                _ => throw new ArgumentOutOfRangeException(nameof(card)),
             };
 
             return stripeColor;
@@ -165,7 +164,7 @@ namespace Torres.Client.Scene
             string cardNumber = DisplayFormats.FormatInteger(CardImages.FindCardNumber(card));
             SpriteFontBase numberFont = Fonts.Headline;
             Vector2 numberSize = numberFont.MeasureString(cardNumber);
-            Vector2 numberPosition = _badgePosition + ((new Vector2(BadgeSize) - numberSize) * HalfShare);
+            Vector2 numberPosition = _badgePosition + ((new Vector2(BadgeSize) - numberSize) * SceneValues.HalfFactor);
             _spriteBatch.DrawString(numberFont, cardNumber, numberPosition, Theme.Ink);
             DrawName(LocalizedText.Get(CardTexts.ToNameKey(card)));
             _spriteBatch.Draw(_whitePixel, _stripeBounds, FindStripeColor(card));
@@ -177,11 +176,11 @@ namespace Torres.Client.Scene
             SpriteFontBase nameFont = Fonts.Heading;
             List<string> nameLines = WrapName(nameFont, cardName, NameRight - NameLeft);
             float lineHeight = nameFont.LineHeight + NameLineSpacing;
-            float lineTop = NameBandTop + ((NameBandHeight - (lineHeight * nameLines.Count)) * HalfShare);
+            float lineTop = NameBandTop + ((NameBandHeight - (lineHeight * nameLines.Count)) * SceneValues.HalfFactor);
             foreach (string nameLine in nameLines)
             {
                 float lineWidth = nameFont.MeasureString(nameLine).X;
-                var linePosition = new Vector2(NameLeft + ((NameRight - NameLeft - lineWidth) * HalfShare), lineTop);
+                var linePosition = new Vector2(NameLeft + ((NameRight - NameLeft - lineWidth) * SceneValues.HalfFactor), lineTop);
                 _spriteBatch.DrawString(nameFont, nameLine, linePosition, Theme.Ink);
                 lineTop += lineHeight;
             }

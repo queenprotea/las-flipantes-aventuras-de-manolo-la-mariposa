@@ -12,6 +12,15 @@ namespace Game.Domain.Tests
         internal const int CardPlayCost = 0;
         internal const int ThreeBuildings = 3;
         internal const int TwoBuildings = 2;
+        internal const int SeatNumberOne = 1;
+        internal const int SeatNumberTwo = 2;
+        internal const int SeatNumberThree = 3;
+        internal const int TwoSeatCount = 2;
+        internal const int ThreeSeatCount = 3;
+        internal const int RoundNumberOne = 1;
+        internal const int RoundNumberTwo = 2;
+        internal const int FourTurns = 4;
+        internal const int NoActionPoints = 0;
 
         private const int ChanceSeed = 7;
 

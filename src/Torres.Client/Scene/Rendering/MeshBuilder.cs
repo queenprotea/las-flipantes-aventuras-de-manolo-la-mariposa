@@ -93,7 +93,7 @@ namespace Torres.Client.Scene
             int rowCount = gridPositions.Count / rowLength;
             for (var gridIndex = 0; gridIndex < gridPositions.Count; gridIndex++)
             {
-                Vector3 gridNormal = FindGridNormal(gridPositions, gridIndex, rowLength, rowCount);
+                Vector3 gridNormal = FindGridNormal(gridPositions, gridIndex, rowLength);
                 _vertices.Add(new VertexPositionNormalColor(gridPositions[gridIndex], gridNormal, gridColors[gridIndex]));
             }
 
@@ -123,8 +123,9 @@ namespace Torres.Client.Scene
             return radialDirection;
         }
 
-        private static Vector3 FindGridNormal(IReadOnlyList<Vector3> gridPositions, int gridIndex, int rowLength, int rowCount)
+        private static Vector3 FindGridNormal(IReadOnlyList<Vector3> gridPositions, int gridIndex, int rowLength)
         {
+            int rowCount = gridPositions.Count / rowLength;
             int row = gridIndex / rowLength;
             int column = gridIndex % rowLength;
             Vector3 alongRow = gridPositions[(row * rowLength) + Math.Min(column + 1, rowLength - 1)] - gridPositions[(row * rowLength) + Math.Max(column - 1, 0)];
@@ -161,7 +162,8 @@ namespace Torres.Client.Scene
             int ringVertexCount = segmentCount + RingSeamVertexCount;
             for (var ringIndex = 0; ringIndex <= ringCount; ringIndex++)
             {
-                AddSphereRing(ringIndex, segmentCount, ringCount, meshPlacement);
+                float polarAngleRadians = MathHelper.Pi * ringIndex / ringCount;
+                AddSphereRing(polarAngleRadians, segmentCount, meshPlacement);
             }
 
             for (var ringIndex = 0; ringIndex < ringCount; ringIndex++)
@@ -170,9 +172,8 @@ namespace Torres.Client.Scene
             }
         }
 
-        private void AddSphereRing(int ringIndex, int segmentCount, int ringCount, MeshPlacement meshPlacement)
+        private void AddSphereRing(float polarAngleRadians, int segmentCount, MeshPlacement meshPlacement)
         {
-            float polarAngleRadians = MathHelper.Pi * ringIndex / ringCount;
             for (var segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
             {
                 Vector3 radialDirection = CreateRadialDirection(segmentIndex, segmentCount);

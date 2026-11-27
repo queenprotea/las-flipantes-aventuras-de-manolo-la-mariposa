@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,8 +11,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<SystemParameter> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(SystemParameterTable);
             builder.HasKey(mappedParameter => mappedParameter.ParameterCode);
             builder.Property(mappedParameter => mappedParameter.ParameterCode).HasColumnName(ParameterCodeColumn);

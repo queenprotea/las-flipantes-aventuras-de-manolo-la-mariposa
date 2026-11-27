@@ -17,14 +17,6 @@ namespace Game.Services
 
         public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, MatchService matchService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(matchService);
-            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
-            ArgumentNullException.ThrowIfNull(sessionTimings);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _sessionRegistry = sessionRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _roomService = roomService;
@@ -60,7 +52,11 @@ namespace Game.Services
                 renewedSessionToken = IssueTokenFor(caller.Owner);
             }
 
-            var connectionCheck = new ConnectionCheckResponse { ServerTimeUtc = _timeProvider.GetUtcNow().UtcDateTime, SessionToken = renewedSessionToken };
+            var connectionCheck = new ConnectionCheckResponse
+            {
+                CheckedAt = _timeProvider.GetUtcNow().UtcDateTime,
+                SessionToken = renewedSessionToken,
+            };
 
             return connectionCheck;
         }

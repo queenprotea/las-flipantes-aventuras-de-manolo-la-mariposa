@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -30,7 +31,7 @@ namespace Game.Match
         private readonly TimeSpan _reconnectionDuration;
 
         private CancellationTokenSource? _stepCountdown;
-        private DateTime? _stepEndsAtUtc;
+        private DateTime? _stepEndsAt;
         private MatchSnapshot? _stepStartSnapshot;
         private bool _hasReportedFinish;
 
@@ -89,7 +90,7 @@ namespace Game.Match
                 {
                     StopReconnectionCountdown(seatNumber);
                     RetireSeatOnTable(seatNumber);
-                    _log.InfoFormat(SeatForfeitedMessage, seatNumber, MatchId);
+                    _log.InfoFormat(CultureInfo.InvariantCulture, SeatForfeitedMessage, seatNumber, MatchId);
                     _matchListener.ReceiveMatchStateChanged(BuildRecipientViews());
                 }
 
@@ -193,90 +194,58 @@ namespace Game.Match
 
         internal MatchActionResult PlacePiece(int entrantId, MatchPiece piece, BoardCell destinationCell)
         {
-            MatchActionResult actionResult;
-            bool hasJustFinished;
-            lock (_matchLock)
+            var piecePlacement = new TurnAction(TurnActionKind.PiecePlacement)
             {
-                TableStep stepBefore = ReadTableStep();
-                actionResult = JudgeOpenStep(entrantId);
-                if (actionResult == MatchActionResult.Applied)
-                {
-                    actionResult = PlacePieceOnTable(GetSeatNumber(entrantId), piece, destinationCell);
-                }
-
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
-            }
-
-            ReportFinish(hasJustFinished);
+                Piece = piece,
+                TargetCell = destinationCell,
+            };
+            MatchActionResult actionResult = RunTurnAction(entrantId, piecePlacement);
 
             return actionResult;
         }
 
         internal MatchActionResult MoveCaterpillar(int entrantId, CaterpillarMove move)
         {
-            MatchActionResult actionResult;
-            bool hasJustFinished;
-            lock (_matchLock)
-            {
-                TableStep stepBefore = ReadTableStep();
-                actionResult = JudgeOpenStep(entrantId);
-                if (actionResult == MatchActionResult.Applied)
-                {
-                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.MoveCaterpillar(GetSeatNumber(entrantId), move));
-                }
-
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
-            }
-
-            ReportFinish(hasJustFinished);
+            var caterpillarMove = new TurnAction(TurnActionKind.CaterpillarMove) { Move = move };
+            MatchActionResult actionResult = RunTurnAction(entrantId, caterpillarMove);
 
             return actionResult;
         }
 
         internal MatchActionResult AddFlowerLevel(int entrantId, BoardCell buildCell)
         {
-            MatchActionResult actionResult;
-            bool hasJustFinished;
-            lock (_matchLock)
-            {
-                TableStep stepBefore = ReadTableStep();
-                actionResult = JudgeOpenStep(entrantId);
-                if (actionResult == MatchActionResult.Applied)
-                {
-                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.AddFlowerLevel(GetSeatNumber(entrantId), buildCell));
-                }
-
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
-            }
-
-            ReportFinish(hasJustFinished);
+            var flowerLevelAddition = new TurnAction(TurnActionKind.FlowerLevelAddition) { TargetCell = buildCell };
+            MatchActionResult actionResult = RunTurnAction(entrantId, flowerLevelAddition);
 
             return actionResult;
         }
 
         internal MatchActionResult DrawCard(int entrantId)
         {
-            MatchActionResult actionResult;
-            bool hasJustFinished;
-            lock (_matchLock)
-            {
-                TableStep stepBefore = ReadTableStep();
-                actionResult = JudgeOpenStep(entrantId);
-                if (actionResult == MatchActionResult.Applied)
-                {
-                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.DrawCard(GetSeatNumber(entrantId)));
-                }
-
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
-            }
-
-            ReportFinish(hasJustFinished);
+            var cardDraw = new TurnAction(TurnActionKind.CardDraw);
+            MatchActionResult actionResult = RunTurnAction(entrantId, cardDraw);
 
             return actionResult;
         }
 
         internal MatchActionResult PlayCard(int entrantId, CardPlay cardPlay)
         {
+            var playedCard = new TurnAction(TurnActionKind.CardPlay) { CardPlay = cardPlay };
+            MatchActionResult actionResult = RunTurnAction(entrantId, playedCard);
+
+            return actionResult;
+        }
+
+        internal MatchActionResult EndTurn(int entrantId)
+        {
+            var turnEnd = new TurnAction(TurnActionKind.TurnEnd);
+            MatchActionResult actionResult = RunTurnAction(entrantId, turnEnd);
+
+            return actionResult;
+        }
+
+        private MatchActionResult RunTurnAction(int entrantId, TurnAction turnAction)
+        {
             MatchActionResult actionResult;
             bool hasJustFinished;
             lock (_matchLock)
@@ -285,7 +254,7 @@ namespace Game.Match
                 actionResult = JudgeOpenStep(entrantId);
                 if (actionResult == MatchActionResult.Applied)
                 {
-                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.CardTable.PlayCard(GetSeatNumber(entrantId), cardPlay));
+                    actionResult = ApplyTurnAction(GetSeatNumber(entrantId), turnAction);
                 }
 
                 hasJustFinished = CompleteAction(actionResult, stepBefore);
@@ -296,23 +265,18 @@ namespace Game.Match
             return actionResult;
         }
 
-        internal MatchActionResult EndTurn(int entrantId)
+        private MatchActionResult ApplyTurnAction(int seatNumber, TurnAction turnAction)
         {
-            MatchActionResult actionResult;
-            bool hasJustFinished;
-            lock (_matchLock)
+            MatchActionResult actionResult = turnAction switch
             {
-                TableStep stepBefore = ReadTableStep();
-                actionResult = JudgeOpenStep(entrantId);
-                if (actionResult == MatchActionResult.Applied)
-                {
-                    actionResult = MatchActionResultConversion.ToActionResult(_matchTable.EndTurn(GetSeatNumber(entrantId)));
-                }
-
-                hasJustFinished = CompleteAction(actionResult, stepBefore);
-            }
-
-            ReportFinish(hasJustFinished);
+                { Kind: TurnActionKind.PiecePlacement } => PlacePieceOnTable(seatNumber, turnAction.Piece, turnAction.TargetCell),
+                { Kind: TurnActionKind.CaterpillarMove } => MatchActionResultConversion.ToActionResult(_matchTable.MoveCaterpillar(seatNumber, turnAction.Move)),
+                { Kind: TurnActionKind.FlowerLevelAddition } => MatchActionResultConversion.ToActionResult(_matchTable.AddFlowerLevel(seatNumber, turnAction.TargetCell)),
+                { Kind: TurnActionKind.CardDraw } => MatchActionResultConversion.ToActionResult(_matchTable.CardTable.DrawCard(seatNumber)),
+                { Kind: TurnActionKind.CardPlay, CardPlay: CardPlay cardPlay } => MatchActionResultConversion.ToActionResult(_matchTable.CardTable.PlayCard(seatNumber, cardPlay)),
+                { Kind: TurnActionKind.TurnEnd } => MatchActionResultConversion.ToActionResult(_matchTable.EndTurn(seatNumber)),
+                _ => throw new ArgumentOutOfRangeException(nameof(turnAction)),
+            };
 
             return actionResult;
         }
@@ -465,7 +429,7 @@ namespace Game.Match
         {
             _stepCountdown?.Dispose();
             _stepCountdown = null;
-            _stepEndsAtUtc = null;
+            _stepEndsAt = null;
         }
 
         private void StartStepCountdown()
@@ -475,7 +439,7 @@ namespace Game.Match
                 return;
             }
 
-            _stepEndsAtUtc = _timeProvider.GetUtcNow().UtcDateTime + _stepDuration;
+            _stepEndsAt = _timeProvider.GetUtcNow().UtcDateTime + _stepDuration;
             _stepCountdown = new CancellationTokenSource(_stepDuration, _timeProvider);
             _stepCountdown.Token.Register(ExpireStep);
         }
@@ -527,7 +491,7 @@ namespace Game.Match
         private void RetireDisconnectedSeat(int seatNumber)
         {
             RetireSeatOnTable(seatNumber);
-            _log.InfoFormat(SeatRetiredMessage, seatNumber, MatchId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, SeatRetiredMessage, seatNumber, MatchId);
         }
 
         private void RetireSeatOnTable(int seatNumber)
@@ -564,7 +528,7 @@ namespace Game.Match
 
         private bool HasStepExpired()
         {
-            bool hasExpired = (_stepEndsAtUtc is DateTime endsAtUtc) && (_timeProvider.GetUtcNow().UtcDateTime >= endsAtUtc);
+            bool hasExpired = (_stepEndsAt is DateTime endsAt) && (_timeProvider.GetUtcNow().UtcDateTime >= endsAt);
 
             return hasExpired;
         }
@@ -572,9 +536,9 @@ namespace Game.Match
         private TimeSpan? ReadStepTimeLeft()
         {
             TimeSpan? stepTimeLeft = null;
-            if (_stepEndsAtUtc is DateTime endsAtUtc)
+            if (_stepEndsAt is DateTime endsAt)
             {
-                stepTimeLeft = endsAtUtc - _timeProvider.GetUtcNow().UtcDateTime;
+                stepTimeLeft = endsAt - _timeProvider.GetUtcNow().UtcDateTime;
             }
 
             return stepTimeLeft;

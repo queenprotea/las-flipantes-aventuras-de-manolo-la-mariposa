@@ -12,7 +12,6 @@ namespace Torres.Client.Scene
 {
     internal sealed class HandLayer : IDisposable
     {
-        private const float FarPlaneDepth = 1f;
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly OrbitCamera _handCamera = new OrbitCamera();
@@ -103,7 +102,7 @@ namespace Torres.Client.Scene
 
         internal void Draw(BasicEffect sceneEffect)
         {
-            _graphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, FarPlaneDepth, 0);
+            _graphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, SceneValues.FarPlaneDepth, 0);
             _graphicsDevice.BlendState = BlendState.Opaque;
             _graphicsDevice.DepthStencilState = DepthStencilState.Default;
             _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;

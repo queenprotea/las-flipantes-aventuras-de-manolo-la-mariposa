@@ -12,21 +12,17 @@ namespace Game.Persistence
 
         public SanctionRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
-        public async Task<Sanction?> FindInForceAsync(int playerId, DateTime nowUtc)
+        public async Task<Sanction?> FindInForceAsync(int playerId, DateTime now)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
 
             Sanction? sanctionInForce = await databaseContext.Sanctions
                 .AsNoTracking()
-                .Where(storedSanction => (storedSanction.PlayerId == playerId) && (storedSanction.EffectiveFrom <= nowUtc))
-                .Where(storedSanction => storedSanction.IsPermanent || (storedSanction.EffectiveUntil > nowUtc))
+                .Where(storedSanction => (storedSanction.PlayerId == playerId) && (storedSanction.EffectiveFrom <= now))
+                .Where(storedSanction => storedSanction.IsPermanent || (storedSanction.EffectiveUntil > now))
                 .OrderByDescending(storedSanction => storedSanction.IsPermanent)
                 .ThenByDescending(storedSanction => storedSanction.EffectiveUntil)
                 .FirstOrDefaultAsync();
@@ -36,8 +32,6 @@ namespace Game.Persistence
 
         public Task<bool> HasPermanentAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<bool> permanentBanReading = ReadPermanentBanExistenceAsync(playerId);
 
             return permanentBanReading;
@@ -45,8 +39,6 @@ namespace Game.Persistence
 
         public Task<DateTime?> FindLatestThresholdAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<DateTime?> latestThresholdReading = ReadLatestThresholdAsync(playerId);
 
             return latestThresholdReading;
@@ -54,8 +46,6 @@ namespace Game.Persistence
 
         public Task<int> CountAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<int> sanctionCounting = CountForPlayerAsync(playerId);
 
             return sanctionCounting;
@@ -63,9 +53,6 @@ namespace Game.Persistence
 
         public Task CreateAsync(Sanction newSanction)
         {
-            ArgumentNullException.ThrowIfNull(newSanction);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newSanction.PlayerId);
-
             Task creation = StoreAsync(newSanction);
 
             return creation;

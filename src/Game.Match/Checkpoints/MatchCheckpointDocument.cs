@@ -10,8 +10,16 @@ namespace Game.Match
         private const string WrongDocumentMessage = "The saved match state is not a match checkpoint.";
 
         private static readonly DataContractSerializer _checkpointSerializer = new DataContractSerializer(typeof(MatchCheckpoint));
-        private static readonly XmlWriterSettings _writerSettings = new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true };
-        private static readonly XmlReaderSettings _readerSettings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };
+        private static readonly XmlWriterSettings _writerSettings = new XmlWriterSettings
+        {
+            Indent = true,
+            OmitXmlDeclaration = true,
+        };
+        private static readonly XmlReaderSettings _readerSettings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+        };
 
         internal static string Write(MatchCheckpoint checkpoint)
         {

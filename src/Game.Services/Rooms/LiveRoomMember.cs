@@ -36,18 +36,18 @@ namespace Game.Services
 
         internal bool IsActive { get; private set; } = true;
 
-        internal DateTime? InactiveSinceUtc { get; private set; }
+        internal DateTime? BecameInactiveAt { get; private set; }
 
-        internal void MarkInactive(DateTime nowUtc)
+        internal void MarkInactive(DateTime now)
         {
             IsActive = false;
-            InactiveSinceUtc = nowUtc;
+            BecameInactiveAt = now;
         }
 
         internal void MarkActive()
         {
             IsActive = true;
-            InactiveSinceUtc = null;
+            BecameInactiveAt = null;
         }
 
         internal void ApplyProfile(string username, string? avatarReference)
@@ -80,9 +80,9 @@ namespace Game.Services
             AvatarReference = avatarReference;
         }
 
-        internal bool HasExpiredBefore(DateTime limitUtc)
+        internal bool HasExpiredBefore(DateTime limitAt)
         {
-            bool hasExpired = !IsActive && (InactiveSinceUtc < limitUtc);
+            bool hasExpired = !IsActive && (BecameInactiveAt < limitAt);
 
             return hasExpired;
         }

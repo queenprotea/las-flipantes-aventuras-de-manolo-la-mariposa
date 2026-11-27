@@ -8,26 +8,19 @@ namespace Torres.Client.Scene
     {
         private const float FullTurnDegrees = 360f;
 
-        internal static void AddColumn(MeshBuilder meshBuilder, Vector3 basePoint, float columnHeight, float columnRadius, Color color)
+        internal static void AddColumn(MeshBuilder meshBuilder, PartPose columnPose, Color color)
         {
-            Matrix columnTransform = Matrix.CreateScale(columnRadius, columnHeight, columnRadius) * Matrix.CreateTranslation(basePoint);
-            meshBuilder.AddCylinder(columnTransform, color);
+            meshBuilder.AddCylinder(CreatePartTransform(columnPose), color);
         }
 
-        internal static void AddPart(MeshBuilder meshBuilder, Vector3 partCenter, Vector3 partScale, float tiltDegrees, float headingDegrees, Color color)
+        internal static void AddPart(MeshBuilder meshBuilder, PartPose partPose, Color color)
         {
-            meshBuilder.AddSphere(CreatePartTransform(partCenter, partScale, tiltDegrees, headingDegrees), color);
+            meshBuilder.AddSphere(CreatePartTransform(partPose), color);
         }
 
-        internal static void AddCoarsePart(MeshBuilder meshBuilder, Vector3 partCenter, Vector3 partScale, float tiltDegrees, float headingDegrees, Color color)
+        internal static void AddCoarsePart(MeshBuilder meshBuilder, PartPose partPose, Color color)
         {
-            meshBuilder.AddCoarseSphere(CreatePartTransform(partCenter, partScale, tiltDegrees, headingDegrees), color);
-        }
-
-        internal static void AddBead(MeshBuilder meshBuilder, Vector3 beadCenter, Vector3 beadScale, Color color)
-        {
-            Matrix beadTransform = Matrix.CreateScale(beadScale) * Matrix.CreateTranslation(beadCenter);
-            meshBuilder.AddCoarseSphere(beadTransform, color);
+            meshBuilder.AddCoarseSphere(CreatePartTransform(partPose), color);
         }
 
         internal static void AddRing(MeshBuilder meshBuilder, Vector3 axisPoint, PetalRing petalRing)
@@ -38,25 +31,43 @@ namespace Torres.Client.Scene
             float petalLift = MathF.Cos(tiltRadians) * petalLength;
             for (var petalIndex = 0; petalIndex < petalRing.PetalCount; petalIndex++)
             {
-                float headingDegrees = GetCircleHeading(petalIndex, petalRing.PetalCount, petalRing.PhaseDegrees);
+                float headingDegrees = GetCircleHeadingDegrees(petalIndex, petalRing.PetalCount, petalRing.PhaseDegrees);
                 Vector3 petalCenter = axisPoint + (BoardGeometry.GetHeadingDirection(headingDegrees) * petalReach) + new Vector3(0f, petalLift, 0f);
-                AddPart(meshBuilder, petalCenter, petalRing.PetalScale, petalRing.TiltDegrees, headingDegrees, petalRing.Color);
+                AddPart(meshBuilder, new PartPose(petalCenter, petalRing.PetalScale, petalRing.TiltDegrees, headingDegrees), petalRing.Color);
             }
         }
 
-        internal static float GetCircleHeading(int partIndex, int partCount, float phaseDegrees)
+        internal static void AddLeafRing(MeshBuilder meshBuilder, Vector3 cellCenter, LeafRing leafRing)
+        {
+            for (var leafIndex = 0; leafIndex < leafRing.LeafCount; leafIndex++)
+            {
+                float headingDegrees = GetCircleHeadingDegrees(leafIndex, leafRing.LeafCount, leafRing.PhaseDegrees);
+                Vector3 leafCenter = cellCenter + (BoardGeometry.GetHeadingDirection(headingDegrees) * leafRing.Distance) + new Vector3(0f, BoardGeometry.PlanterTop + leafRing.Lift, 0f);
+                var leafPose = new PartPose(leafCenter, leafRing.Scale, leafRing.TiltDegrees, headingDegrees);
+                if (leafRing.IsCoarse)
+                {
+                    AddCoarsePart(meshBuilder, leafPose, leafRing.Color);
+                }
+                else
+                {
+                    AddPart(meshBuilder, leafPose, leafRing.Color);
+                }
+            }
+        }
+
+        internal static float GetCircleHeadingDegrees(int partIndex, int partCount, float phaseDegrees)
         {
             float headingDegrees = (FullTurnDegrees * partIndex / partCount) + phaseDegrees;
 
             return headingDegrees;
         }
 
-        private static Matrix CreatePartTransform(Vector3 partCenter, Vector3 partScale, float tiltDegrees, float headingDegrees)
+        private static Matrix CreatePartTransform(PartPose partPose)
         {
-            Matrix partTransform = Matrix.CreateScale(partScale)
-                * Matrix.CreateRotationZ(MathHelper.ToRadians(-tiltDegrees))
-                * BoardGeometry.CreateHeadingRotation(headingDegrees)
-                * Matrix.CreateTranslation(partCenter);
+            Matrix partTransform = Matrix.CreateScale(partPose.Scale)
+                * Matrix.CreateRotationZ(MathHelper.ToRadians(-partPose.TiltDegrees))
+                * BoardGeometry.CreateHeadingRotation(partPose.HeadingDegrees)
+                * Matrix.CreateTranslation(partPose.Center);
 
             return partTransform;
         }

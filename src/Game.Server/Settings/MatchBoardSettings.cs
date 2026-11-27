@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,8 +15,6 @@ namespace Game.Server
 
         public static MatchBoardSettings ReadFromConfiguration(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             MatchBoardSettings settings = configuration.GetSection(SectionName).Get<MatchBoardSettings>() ?? new MatchBoardSettings();
 
             return settings;

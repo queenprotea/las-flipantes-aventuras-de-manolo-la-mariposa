@@ -28,7 +28,7 @@ namespace Game.Services
                 SenderDisplayName = author.DisplayName,
                 SenderIsGuest = author.IsGuest,
                 Text = messageDraft.Text,
-                SentAtUtc = messageDraft.SentAtUtc,
+                SentAt = messageDraft.SentAt,
             };
             _keptEntries.Enqueue(new RoomChatEntry(appendedMessage, author.OwnerId));
             while (_keptEntries.Count > messagesKeptPerRoom)

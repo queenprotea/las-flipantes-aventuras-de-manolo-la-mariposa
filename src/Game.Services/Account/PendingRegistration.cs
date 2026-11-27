@@ -6,11 +6,6 @@ namespace Game.Services
     {
         public PendingRegistration(string username, string email, string passwordHash, string code, DateTimeOffset expiresAt)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-            ArgumentException.ThrowIfNullOrWhiteSpace(email);
-            ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
-            ArgumentException.ThrowIfNullOrWhiteSpace(code);
-
             Username = username;
             Email = email;
             PasswordHash = passwordHash;

@@ -6,9 +6,6 @@ namespace Game.Services
     {
         public SessionTimings(TimeSpan connectionCheckPeriod, int connectionCheckMissesToDrop)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(connectionCheckPeriod, TimeSpan.Zero);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(connectionCheckMissesToDrop);
-
             ConnectionCheckPeriod = connectionCheckPeriod;
             ConnectionCheckMissesToDrop = connectionCheckMissesToDrop;
         }

@@ -20,9 +20,6 @@ namespace Game.Domain
 
         public RoundScoreCalculator(IReadOnlyList<Planter> planters, IReadOnlyList<Caterpillar> caterpillars, BoardCell? butterflyCell)
         {
-            ArgumentNullException.ThrowIfNull(planters);
-            ArgumentNullException.ThrowIfNull(caterpillars);
-
             _planters = planters;
             _caterpillars = caterpillars;
             _butterflyCell = butterflyCell;
@@ -30,9 +27,6 @@ namespace Game.Domain
 
         public static int GetButterflyPoints(int roundNumber)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan(roundNumber, MatchTable.FirstRoundNumber);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(roundNumber, MatchRules.RoundCount);
-
             int butterflyPoints = _butterflyPointsByRound[roundNumber - MatchTable.FirstRoundNumber];
 
             return butterflyPoints;

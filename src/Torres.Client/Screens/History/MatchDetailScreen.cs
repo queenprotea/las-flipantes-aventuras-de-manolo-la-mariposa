@@ -43,7 +43,11 @@ namespace Torres.Client.Screens
 
         private readonly MatchDetailFlow _detailFlow;
         private readonly LocalizedLabel _loadingLabel;
-        private readonly VerticalStackPanel _matchPlaceholder = new VerticalStackPanel { Spacing = Metrics.FieldSpacing, Visible = false };
+        private readonly VerticalStackPanel _matchPlaceholder = new VerticalStackPanel
+        {
+            Spacing = Metrics.FieldSpacing,
+            Visible = false,
+        };
         private readonly VerticalStackPanel _failureNotice;
 
         internal MatchDetailScreen(MatchDetailFlow detailFlow)

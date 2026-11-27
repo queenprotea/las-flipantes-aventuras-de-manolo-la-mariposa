@@ -1,3 +1,5 @@
+using System.Linq;
+
 using Game.Contracts;
 
 using Microsoft.Xna.Framework;
@@ -12,7 +14,6 @@ namespace Torres.Client.Widgets
 {
     internal sealed class ActionBarView
     {
-        private const float DisabledOpacity = 0.5f;
 
         private readonly FigureIcons _figureIcons;
         private readonly VolumeTextures _volumeTextures;
@@ -22,16 +23,33 @@ namespace Torres.Client.Widgets
         private readonly ActionPill _buildPill;
 
         private TurnActionMode? _chosenMode;
+        private TurnActionMode _shownMode;
         private ActionPill? _hoveredPill;
 
         internal ActionBarView(FigureIcons figureIcons, VolumeTextures volumeTextures)
         {
             _figureIcons = figureIcons;
             _volumeTextures = volumeTextures;
-            _caterpillarIcon = new Image { Width = MatchLayout.ActionIconWidth, Height = MatchLayout.ActionIconHeight, VerticalAlignment = VerticalAlignment.Center };
+            _caterpillarIcon = new Image
+            {
+                Width = MatchLayout.ActionIconWidth,
+                Height = MatchLayout.ActionIconHeight,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             _caterpillarPill = CreatePill(TextKeys.Match.CaterpillarActionButton, _caterpillarIcon, TurnActionMode.NewCaterpillar);
-            _movePill = CreatePill(TextKeys.Match.MoveActionButton, new Label { Text = DisplaySymbols.MoveArrow, Font = Fonts.Body, VerticalAlignment = VerticalAlignment.Center }, TurnActionMode.Move);
-            _buildPill = CreatePill(TextKeys.Match.BuildActionButton, new Image { Width = MatchLayout.ActionIconHeight, Height = MatchLayout.ActionIconHeight, Renderable = figureIcons.SproutIcon, VerticalAlignment = VerticalAlignment.Center }, TurnActionMode.Build);
+            _movePill = CreatePill(TextKeys.Match.MoveActionButton, new Label
+            {
+                Text = DisplaySymbols.MoveArrow,
+                Font = Fonts.Body,
+                VerticalAlignment = VerticalAlignment.Center,
+            }, TurnActionMode.Move);
+            _buildPill = CreatePill(TextKeys.Match.BuildActionButton, new Image
+            {
+                Width = MatchLayout.ActionIconHeight,
+                Height = MatchLayout.ActionIconHeight,
+                Renderable = figureIcons.SproutIcon,
+                VerticalAlignment = VerticalAlignment.Center,
+            }, TurnActionMode.Build);
             var actionRow = new VerticalStackPanel
             {
                 Spacing = MatchLayout.ActionPillSpacing,
@@ -45,14 +63,28 @@ namespace Torres.Client.Widgets
 
         internal Widget Root { get; }
 
-        internal int HoveredCost => (_hoveredPill is ActionPill hoveredPill) && hoveredPill.Button.Enabled ? hoveredPill.Cost : 0;
-
-        internal void Show(MatchView matchView, SeatColor viewerColor, bool canAct, TurnActionMode chosenMode)
+        internal int HoveredCost
         {
-            _caterpillarIcon.Renderable = _figureIcons.FindCaterpillarIcon(viewerColor);
-            ShowPill(_caterpillarPill, matchView.ActionCosts.CaterpillarPlacement, canAct && (matchView.PlacementTargets.Count > 0), chosenMode);
-            ShowPill(_movePill, matchView.ActionCosts.Movement, canAct && (matchView.MoveTargets.Count > 0), chosenMode);
-            ShowPill(_buildPill, matchView.ActionCosts.FlowerLevelAddition, canAct && (matchView.BuildTargets.Count > 0), chosenMode);
+            get
+            {
+                int hoveredCost = 0;
+                if ((_hoveredPill is ActionPill hoveredPill) && hoveredPill.Button.Enabled)
+                {
+                    hoveredCost = hoveredPill.Cost;
+                }
+
+                return hoveredCost;
+            }
+        }
+
+        internal void Show(MatchView matchView, bool canAct, TurnActionMode chosenMode)
+        {
+            MatchSeat viewerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ViewerSeatNumber);
+            _shownMode = chosenMode;
+            _caterpillarIcon.Renderable = _figureIcons.FindCaterpillarIcon(viewerSeat.Color);
+            ShowPill(_caterpillarPill, matchView.ActionCosts.CaterpillarPlacement, canAct && (matchView.PlacementTargets.Count > 0));
+            ShowPill(_movePill, matchView.ActionCosts.Movement, canAct && (matchView.MoveTargets.Count > 0));
+            ShowPill(_buildPill, matchView.ActionCosts.FlowerLevelAddition, canAct && (matchView.BuildTargets.Count > 0));
         }
 
         internal TurnActionMode? TakeChosenMode()
@@ -83,7 +115,11 @@ namespace Torres.Client.Widgets
             var pillText = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
             pillText.Widgets.Add(nameLabel);
             pillText.Widgets.Add(costRow);
-            var pillContent = new HorizontalStackPanel { Spacing = Metrics.FieldLabelSpacing, VerticalAlignment = VerticalAlignment.Center };
+            var pillContent = new HorizontalStackPanel
+            {
+                Spacing = Metrics.FieldLabelSpacing,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             pillContent.Widgets.Add(iconCircle);
             pillContent.Widgets.Add(pillText);
             var pillButton = new Button
@@ -97,20 +133,20 @@ namespace Torres.Client.Widgets
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             var actionPill = new ActionPill(pillButton, nameLabel, costLabel, unitLabel, actionIcon, actionMode);
-            pillButton.Click += (_, _) => _chosenMode = actionMode;
-            pillButton.MouseEntered += (_, _) => _hoveredPill = actionPill;
-            pillButton.MouseLeft += (_, _) => _hoveredPill = _hoveredPill == actionPill ? null : _hoveredPill;
+            pillButton.Click += (sender, e) => _chosenMode = actionMode;
+            pillButton.MouseEntered += (sender, e) => _hoveredPill = actionPill;
+            pillButton.MouseLeft += (sender, e) => ForgetHoveredPill(actionPill);
 
             return actionPill;
         }
 
-        private void ShowPill(ActionPill actionPill, int actionCost, bool isEnabled, TurnActionMode chosenMode)
+        private void ShowPill(ActionPill actionPill, int actionCost, bool isEnabled)
         {
-            bool isChosen = actionPill.Mode == chosenMode;
+            bool isChosen = actionPill.Mode == _shownMode;
             Color textColor = isChosen ? Theme.Surface : Theme.Ink;
             actionPill.Cost = actionCost;
             actionPill.Button.Enabled = isEnabled;
-            actionPill.Button.Opacity = isEnabled ? 1f : DisabledOpacity;
+            actionPill.Button.Opacity = isEnabled ? 1f : MatchLayout.DisabledPillOpacity;
             actionPill.Button.Background = isChosen ? _volumeTextures.ChosenPillBrush : _volumeTextures.PillBrush;
             actionPill.Button.OverBackground = isChosen ? _volumeTextures.ChosenPillBrush : _volumeTextures.HoveredPillBrush;
             actionPill.NameLabel.TextColor = textColor;
@@ -148,6 +184,14 @@ namespace Torres.Client.Widgets
             internal TurnActionMode Mode { get; }
 
             internal int Cost { get; set; }
+        }
+
+        private void ForgetHoveredPill(ActionPill leftPill)
+        {
+            if (_hoveredPill == leftPill)
+            {
+                _hoveredPill = null;
+            }
         }
     }
 }

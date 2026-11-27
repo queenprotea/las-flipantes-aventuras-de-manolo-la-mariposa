@@ -1,5 +1,3 @@
-using FontStashSharp.RichText;
-
 using Game.Contracts;
 
 using Microsoft.Xna.Framework;
@@ -18,14 +16,16 @@ namespace Torres.Client.Screens
     {
         private readonly MatchInProgressFlow _matchInProgressFlow;
         private readonly MatchPause _matchPause;
+        private readonly PauseCardFactory _pauseCards;
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly LocalizedLabel _offlineMessage = LabelFactory.CreateParagraph(TextKeys.MatchInProgress.LeftWhileOfflineMessage);
 
-        internal MatchInProgressScreen(MatchInProgressFlow matchInProgressFlow, MatchPause matchPause)
+        internal MatchInProgressScreen(MatchInProgressFlow matchInProgressFlow, MatchPause matchPause, PauseCardFactory pauseCards)
             : base(TextKeys.MatchInProgress.HeaderLabel, true)
         {
             _matchInProgressFlow = matchInProgressFlow;
             _matchPause = matchPause;
+            _pauseCards = pauseCards;
         }
 
         internal override void Open()
@@ -59,11 +59,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            LocalizedLabel abandonHint = LabelFactory.CreateHint(TextKeys.MatchInProgress.AbandonHint);
-            abandonHint.Width = MatchLayout.MatchInProgressCardWidth;
-            abandonHint.Wrap = true;
-            abandonHint.TextAlign = TextHorizontalAlignment.Center;
-            abandonHint.HorizontalAlignment = HorizontalAlignment.Center;
+            LocalizedLabel abandonHint = LabelFactory.CreateCenteredHint(TextKeys.MatchInProgress.AbandonHint, MatchLayout.MatchInProgressCardWidth);
             _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
             _offlineMessage.Width = MatchLayout.MatchInProgressCardWidth;
 
@@ -77,7 +73,7 @@ namespace Torres.Client.Screens
             cardContent.Widgets.Add(BuildActions());
             cardContent.Widgets.Add(abandonHint);
             cardContent.Widgets.Add(_noticeBox);
-            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.MatchInProgressCardWidth);
+            Panel cardLayer = _pauseCards.CreateCardLayer(cardContent, MatchLayout.MatchInProgressCardWidth);
 
             return cardLayer;
         }
@@ -86,8 +82,8 @@ namespace Torres.Client.Screens
         {
             LocalizedButton returnButton = ButtonFactory.CreatePrimaryButton(TextKeys.MatchInProgress.ReturnToMatchButton);
             LocalizedButton abandonButton = ButtonFactory.CreateDestructiveButton(TextKeys.MatchInProgress.AbandonButton);
-            _matchPause.StylePrimaryPill(returnButton);
-            _matchPause.StyleDestructivePill(abandonButton);
+            _pauseCards.StylePrimaryPill(returnButton);
+            _pauseCards.StyleDestructivePill(abandonButton);
             returnButton.Click += ReturnButtonOnClick;
             abandonButton.Click += AbandonButtonOnClick;
             HorizontalStackPanel dialogActions = PanelFactory.CreateButtonRow();

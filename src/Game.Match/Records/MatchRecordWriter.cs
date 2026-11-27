@@ -22,7 +22,7 @@ namespace Game.Match
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(MatchRecordWriter));
 
-        private readonly Channel<Func<Task>> _pendingWrites = Channel.CreateUnbounded<Func<Task>>(new UnboundedChannelOptions { SingleReader = true });
+        private readonly Channel<PendingRecordWrite> _pendingWrites = Channel.CreateUnbounded<PendingRecordWrite>(new UnboundedChannelOptions { SingleReader = true });
         private readonly IMatchRecordRepository _matchRecordRepository;
         private readonly IMatchParticipantRepository _matchParticipantRepository;
         private readonly IMatchStateRepository _matchStateRepository;
@@ -41,7 +41,7 @@ namespace Game.Match
         internal void RecordFinish(int matchId, string endReason, IReadOnlyList<MatchParticipant> playerResults)
         {
             var finishedMatch = new FinishedMatchRecord(matchId, endReason, _timeProvider.GetUtcNow().UtcDateTime, playerResults);
-            _pendingWrites.Writer.TryWrite(() => WriteFinishAsync(finishedMatch));
+            _pendingWrites.Writer.TryWrite(new PendingRecordWrite(finishedMatch, null));
         }
 
         internal void RecordCheckpoint(int matchId, MatchCheckpoint checkpoint)
@@ -55,7 +55,7 @@ namespace Game.Match
                 StateDocument = MatchCheckpointDocument.Write(checkpoint),
                 SavedAt = _timeProvider.GetUtcNow().UtcDateTime,
             };
-            _pendingWrites.Writer.TryWrite(() => WriteCheckpointAsync(savedState));
+            _pendingWrites.Writer.TryWrite(new PendingRecordWrite(null, savedState));
         }
 
         internal Task FinishWritingAsync()
@@ -68,9 +68,16 @@ namespace Game.Match
 
         private async Task WritePendingAsync()
         {
-            await foreach (Func<Task> pendingWrite in _pendingWrites.Reader.ReadAllAsync())
+            await foreach (PendingRecordWrite pendingWrite in _pendingWrites.Reader.ReadAllAsync())
             {
-                await pendingWrite();
+                if (pendingWrite.FinishedMatch is FinishedMatchRecord finishedMatch)
+                {
+                    await WriteFinishAsync(finishedMatch);
+                }
+                else if (pendingWrite.SavedState is MatchState savedState)
+                {
+                    await WriteCheckpointAsync(savedState);
+                }
             }
         }
 
@@ -79,9 +86,9 @@ namespace Game.Match
             try
             {
                 await _matchParticipantRepository.WriteResultsAsync(finishedMatch.MatchId, finishedMatch.PlayerResults);
-                await _matchRecordRepository.FinishAsync(finishedMatch.MatchId, finishedMatch.EndReason, finishedMatch.FinishedAtUtc);
+                await _matchRecordRepository.FinishAsync(finishedMatch.MatchId, finishedMatch.EndReason, finishedMatch.FinishedAt);
                 await _matchStateRepository.DeleteAsync(finishedMatch.MatchId);
-                _log.InfoFormat(FinishWrittenMessage, finishedMatch.MatchId, finishedMatch.EndReason);
+                _log.InfoFormat(CultureInfo.InvariantCulture, FinishWrittenMessage, finishedMatch.MatchId, finishedMatch.EndReason);
             }
             catch (NpgsqlException exception)
             {

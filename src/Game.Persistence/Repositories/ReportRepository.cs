@@ -14,29 +14,19 @@ namespace Game.Persistence
 
         public ReportRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task<ReportCreationOutcome> CreateAsync(Report newReport)
         {
-            ArgumentNullException.ThrowIfNull(newReport);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newReport.ReporterPlayerId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newReport.ReportedPlayerId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newReport.RoomId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(newReport.ReportedText);
-
             Task<ReportCreationOutcome> creation = StoreAsync(newReport);
 
             return creation;
         }
 
-        public Task<int> CountOccasionsAsync(int reportedPlayerId, DateTime? reportedAfterUtc)
+        public Task<int> CountOccasionsAsync(int reportedPlayerId, DateTime? thresholdAt)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(reportedPlayerId);
-
-            Task<int> occasionCounting = CountDistinctOccasionsAsync(reportedPlayerId, reportedAfterUtc);
+            Task<int> occasionCounting = CountDistinctOccasionsAsync(reportedPlayerId, thresholdAt);
 
             return occasionCounting;
         }
@@ -59,14 +49,14 @@ namespace Game.Persistence
             return creationOutcome;
         }
 
-        private async Task<int> CountDistinctOccasionsAsync(int reportedPlayerId, DateTime? reportedAfterUtc)
+        private async Task<int> CountDistinctOccasionsAsync(int reportedPlayerId, DateTime? thresholdAt)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
             IQueryable<Report> receivedReports = databaseContext.Reports
                 .Where(storedReport => storedReport.ReportedPlayerId == reportedPlayerId);
-            if (reportedAfterUtc is DateTime reportedAfterInstantUtc)
+            if (thresholdAt is DateTime foundThresholdAt)
             {
-                receivedReports = receivedReports.Where(storedReport => storedReport.CreatedAt > reportedAfterInstantUtc);
+                receivedReports = receivedReports.Where(storedReport => storedReport.CreatedAt > foundThresholdAt);
             }
 
             int occasionCount = await receivedReports

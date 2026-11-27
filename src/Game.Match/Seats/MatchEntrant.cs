@@ -1,5 +1,3 @@
-using System;
-
 using Game.Contracts;
 
 namespace Game.Match
@@ -8,8 +6,6 @@ namespace Game.Match
     {
         public MatchEntrant(int entrantId, int memberId, string displayName, bool isGuest, bool isActive, SeatColor seatColor)
         {
-            ArgumentNullException.ThrowIfNull(displayName);
-
             EntrantId = entrantId;
             MemberId = memberId;
             DisplayName = displayName;

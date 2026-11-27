@@ -13,15 +13,11 @@ namespace Game.Persistence
 
         public MatchRecordRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task<int> CountFinishedByPlayerAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<int> counting = CountFinishedAsync(playerId);
 
             return counting;
@@ -29,10 +25,6 @@ namespace Game.Persistence
 
         public Task<List<MatchRecord>> ListFinishedPageByPlayerAsync(int playerId, int skippedCount, int pageSize)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-            ArgumentOutOfRangeException.ThrowIfNegative(skippedCount);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageSize);
-
             Task<List<MatchRecord>> pageReading = ReadFinishedPageAsync(playerId, skippedCount, pageSize);
 
             return pageReading;
@@ -40,8 +32,6 @@ namespace Game.Persistence
 
         public Task<MatchRecord?> FindFinishedAsync(int matchId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-
             Task<MatchRecord?> finding = ReadFinishedAsync(matchId);
 
             return finding;
@@ -49,20 +39,14 @@ namespace Game.Persistence
 
         public Task<int> CreateAsync(int roomId, int playerCount)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerCount);
-
             Task<int> creation = CreateInProgressAsync(roomId, playerCount);
 
             return creation;
         }
 
-        public Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        public Task FinishAsync(int matchId, string endReason, DateTime finishedAt)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-            ArgumentNullException.ThrowIfNull(endReason);
-
-            Task finishing = WriteFinishAsync(matchId, endReason, finishedAtUtc);
+            Task finishing = WriteFinishAsync(matchId, endReason, finishedAt);
 
             return finishing;
         }
@@ -72,6 +56,27 @@ namespace Game.Persistence
             Task<List<int>> listing = ReadInProgressIdsAsync();
 
             return listing;
+        }
+
+        public Task<bool> HasInProgressByPlayerAsync(int playerId)
+        {
+            Task<bool> lookup = HasInProgressAsync(playerId);
+
+            return lookup;
+        }
+
+        public Task<List<int>> ListIdsByPlayerAsync(int playerId)
+        {
+            Task<List<int>> listing = ReadIdsByPlayerAsync(playerId);
+
+            return listing;
+        }
+
+        public Task<int> DeleteFinishedWithoutParticipantsAsync(IReadOnlyCollection<int> matchIds)
+        {
+            Task<int> deletion = RemoveFinishedWithoutParticipantsAsync(matchIds);
+
+            return deletion;
         }
 
         private async Task<List<int>> ReadInProgressIdsAsync()
@@ -105,7 +110,7 @@ namespace Game.Persistence
             return createdMatchId;
         }
 
-        private async Task WriteFinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        private async Task WriteFinishAsync(int matchId, string endReason, DateTime finishedAt)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
 
@@ -113,7 +118,7 @@ namespace Game.Persistence
                 .Where(storedMatch => (storedMatch.MatchId == matchId) && (storedMatch.Status == MatchStatusCodes.InProgress))
                 .ExecuteUpdateAsync(matchUpdate => matchUpdate
                     .SetProperty(storedMatch => storedMatch.Status, MatchStatusCodes.Finished)
-                    .SetProperty(storedMatch => storedMatch.FinishedAt, finishedAtUtc)
+                    .SetProperty(storedMatch => storedMatch.FinishedAt, finishedAt)
                     .SetProperty(storedMatch => storedMatch.EndReason, endReason));
         }
 
@@ -151,13 +156,53 @@ namespace Game.Persistence
             return finishedMatch;
         }
 
-        private static IQueryable<MatchRecord> SelectFinishedByPlayer(TorresDbContext databaseContext, int playerId)
+        private async Task<bool> HasInProgressAsync(int playerId)
         {
-            IQueryable<MatchRecord> finishedMatches = databaseContext.MatchRecords
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            bool hasMatchInProgress = await SelectByPlayer(databaseContext, playerId)
+                .AnyAsync(storedMatch => storedMatch.Status == MatchStatusCodes.InProgress);
+
+            return hasMatchInProgress;
+        }
+
+        private async Task<List<int>> ReadIdsByPlayerAsync(int playerId)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            List<int> playedMatchIds = await SelectByPlayer(databaseContext, playerId)
+                .Select(storedMatch => storedMatch.MatchId)
+                .ToListAsync();
+
+            return playedMatchIds;
+        }
+
+        private async Task<int> RemoveFinishedWithoutParticipantsAsync(IReadOnlyCollection<int> matchIds)
+        {
+            await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
+
+            int removedCount = await databaseContext.MatchRecords
+                .Where(storedMatch => matchIds.Contains(storedMatch.MatchId) && (storedMatch.Status == MatchStatusCodes.Finished))
+                .Where(storedMatch => !databaseContext.MatchParticipants.Any(storedParticipant => storedParticipant.MatchId == storedMatch.MatchId))
+                .ExecuteDeleteAsync();
+
+            return removedCount;
+        }
+
+        private static IQueryable<MatchRecord> SelectByPlayer(TorresDbContext databaseContext, int playerId)
+        {
+            IQueryable<MatchRecord> playedMatches = databaseContext.MatchRecords
                 .AsNoTracking()
-                .Where(storedMatch => storedMatch.Status == MatchStatusCodes.Finished)
                 .Where(storedMatch => databaseContext.MatchParticipants
                     .Any(storedParticipant => (storedParticipant.MatchId == storedMatch.MatchId) && (storedParticipant.PlayerId == playerId)));
+
+            return playedMatches;
+        }
+
+        private static IQueryable<MatchRecord> SelectFinishedByPlayer(TorresDbContext databaseContext, int playerId)
+        {
+            IQueryable<MatchRecord> finishedMatches = SelectByPlayer(databaseContext, playerId)
+                .Where(storedMatch => storedMatch.Status == MatchStatusCodes.Finished);
 
             return finishedMatches;
         }

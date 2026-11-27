@@ -9,7 +9,6 @@ namespace Torres.Client.Scene
     {
         private const int CornerCount = 4;
         private const int TriangleCount = 2;
-        private const float HalfShare = 0.5f;
         private const float FrontSideSign = 1f;
         private const float BackSideSign = -1f;
 
@@ -20,8 +19,8 @@ namespace Torres.Client.Scene
 
         internal TexturedQuad(GraphicsDevice graphicsDevice, float quadWidth, float quadDepth, bool isFacingUp)
         {
-            float halfWidth = quadWidth * HalfShare;
-            float halfDepth = quadDepth * HalfShare;
+            float halfWidth = quadWidth * SceneValues.HalfFactor;
+            float halfDepth = quadDepth * SceneValues.HalfFactor;
             Vector3 quadNormal = isFacingUp ? Vector3.Up : Vector3.Down;
             float sideSign = isFacingUp ? FrontSideSign : BackSideSign;
             var corners = new VertexPositionNormalTexture[]

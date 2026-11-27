@@ -39,10 +39,6 @@ namespace Game.Services
 
         public FriendsService(SessionRegistry sessionRegistry, PlayerRepository playerRepository, FriendshipRepository friendshipRepository)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(friendshipRepository);
-
             _sessionRegistry = sessionRegistry;
             _playerRepository = playerRepository;
             _friendshipRepository = friendshipRepository;
@@ -189,7 +185,12 @@ namespace Game.Services
             Friendship? friendship = _friendshipRepository.FindBetween(callerPlayerId, foundPlayer.PlayerId);
             PlayerSummary foundSummary = ToPlayerSummary(foundPlayer);
             FriendRelationship foundRelationship = ToRelationship(friendship, callerPlayerId);
-            var foundResult = new PlayerSearchResponse { Status = PlayerSearchStatus.Found, Player = foundSummary, Relationship = foundRelationship };
+            var foundResult = new PlayerSearchResponse
+            {
+                Status = PlayerSearchStatus.Found,
+                Player = foundSummary,
+                Relationship = foundRelationship,
+            };
 
             return foundResult;
         }
@@ -238,7 +239,7 @@ namespace Game.Services
             if (creationOutcome == FriendRequestCreationOutcome.Created)
             {
                 requestResult = FriendRequestResult.Sent;
-                _log.InfoFormat(FriendRequestSentMessage, callerPlayerId, targetPlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, FriendRequestSentMessage, callerPlayerId, targetPlayerId);
             }
             else if (creationOutcome == FriendRequestCreationOutcome.PairTaken)
             {
@@ -256,7 +257,7 @@ namespace Game.Services
             if (wasAccepted)
             {
                 responseResult = FriendRequestResponseResult.Accepted;
-                _log.InfoFormat(FriendRequestAcceptedMessage, callerPlayerId, requesterPlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, FriendRequestAcceptedMessage, callerPlayerId, requesterPlayerId);
             }
 
             return responseResult;
@@ -269,7 +270,7 @@ namespace Game.Services
             if (wasRejected)
             {
                 responseResult = FriendRequestResponseResult.Rejected;
-                _log.InfoFormat(FriendRequestRejectedMessage, callerPlayerId, requesterPlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, FriendRequestRejectedMessage, callerPlayerId, requesterPlayerId);
             }
 
             return responseResult;
@@ -282,7 +283,7 @@ namespace Game.Services
             if (wasRemoved)
             {
                 removalResult = FriendRemovalResult.Removed;
-                _log.InfoFormat(FriendRemovedMessage, callerPlayerId, friendPlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, FriendRemovedMessage, callerPlayerId, friendPlayerId);
             }
 
             return removalResult;

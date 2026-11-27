@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
@@ -11,17 +10,11 @@ namespace Game.Persistence
 
         public PasswordRecoveryRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task ReplaceAsync(PasswordRecovery newRecovery)
         {
-            ArgumentNullException.ThrowIfNull(newRecovery);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newRecovery.PlayerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(newRecovery.Code);
-
             Task replacement = StoreAsync(newRecovery);
 
             return replacement;
@@ -29,8 +22,6 @@ namespace Game.Persistence
 
         public Task<PasswordRecovery?> FindAsync(int playerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-
             Task<PasswordRecovery?> recoveryReading = ReadAsync(playerId);
 
             return recoveryReading;
@@ -38,9 +29,6 @@ namespace Game.Persistence
 
         public Task<bool> CompleteAsync(int playerId, string newPasswordHash)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(newPasswordHash);
-
             Task<bool> completion = WriteCompletionAsync(playerId, newPasswordHash);
 
             return completion;

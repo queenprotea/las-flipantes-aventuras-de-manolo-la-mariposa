@@ -308,22 +308,36 @@ namespace Torres.Client.Widgets
             return emptyState;
         }
 
-        internal static VerticalStackPanel CreateFailureNotice(LocalizedButton retryButton)
+        internal static VerticalStackPanel CreateFailureBox(string titleKey)
         {
-            var failureMessage = new VerticalStackPanel
+            var failureBox = new VerticalStackPanel
             {
                 Padding = Metrics.CardPadding,
                 Background = Theme.BlushTintBrush,
                 Border = Theme.BlushBrush,
                 BorderThickness = Sizes.Border,
             };
-            failureMessage.Widgets.Add(new LocalizedLabel(TextKeys.Common.ServerErrorTitle)
+            failureBox.Widgets.Add(new LocalizedLabel(titleKey)
             {
                 Font = Fonts.Body,
                 TextColor = Theme.BlushInk,
                 Wrap = true,
             });
+
+            return failureBox;
+        }
+
+        internal static VerticalStackPanel CreateFailureMessage()
+        {
+            VerticalStackPanel failureMessage = CreateFailureBox(TextKeys.Common.ServerErrorTitle);
             failureMessage.Widgets.Add(LabelFactory.CreateParagraph(TextKeys.Common.ServerErrorDetail));
+
+            return failureMessage;
+        }
+
+        internal static VerticalStackPanel CreateFailureNotice(LocalizedButton retryButton)
+        {
+            VerticalStackPanel failureMessage = CreateFailureMessage();
 
             var failureNotice = new VerticalStackPanel
             {

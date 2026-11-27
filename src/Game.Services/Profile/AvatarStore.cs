@@ -20,8 +20,6 @@ namespace Game.Services
 
         public AvatarStore(string folderPath)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
-
             _folderPath = folderPath;
         }
 

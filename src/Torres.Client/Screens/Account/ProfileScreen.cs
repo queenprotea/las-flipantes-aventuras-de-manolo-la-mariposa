@@ -8,6 +8,7 @@ using Myra.Graphics2D.UI;
 using Myra.Graphics2D.UI.File;
 
 using Torres.Client.Avatars;
+using Torres.Client.Contracts;
 using Torres.Client.Flows;
 using Torres.Client.Localization;
 using Torres.Client.UI;

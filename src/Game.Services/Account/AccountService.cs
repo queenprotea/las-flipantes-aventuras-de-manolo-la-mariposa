@@ -1,4 +1,4 @@
-using System;
+using System.Globalization;
 using System.Threading.Tasks;
 
 using CoreWCF;
@@ -31,13 +31,6 @@ namespace Game.Services
 
         public AccountService(PlayerRepository playerRepository, SanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer, AccountRegistration accountRegistration, AccessRecovery accessRecovery)
         {
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(sanctionRepository);
-            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
-            ArgumentNullException.ThrowIfNull(guestIdIssuer);
-            ArgumentNullException.ThrowIfNull(accountRegistration);
-            ArgumentNullException.ThrowIfNull(accessRecovery);
-
             _playerRepository = playerRepository;
             _sanctionRepository = sanctionRepository;
             _sessionTokenIssuer = sessionTokenIssuer;
@@ -114,7 +107,7 @@ namespace Game.Services
             }
 
             int guestId = _guestIdIssuer.Issue();
-            _log.InfoFormat(GuestEnteredMessage, guestId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, GuestEnteredMessage, guestId);
             var enteredResult = new GuestAccessResult
             {
                 Status = GuestAccessStatus.Entered,
@@ -159,7 +152,7 @@ namespace Game.Services
             }
             else if (await _sanctionRepository.HasPermanentAsync(player.PlayerId))
             {
-                _log.InfoFormat(BannedLoginRefusedMessage, player.PlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, BannedLoginRefusedMessage, player.PlayerId);
                 loginResult = new LoginResult { Status = LoginStatus.AccountBanned };
             }
             else
@@ -172,7 +165,7 @@ namespace Game.Services
 
         private LoginResult BuildLoggedInResult(Player player)
         {
-            _log.InfoFormat(PlayerLoggedInMessage, player.PlayerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, PlayerLoggedInMessage, player.PlayerId);
             var loggedInResult = new LoginResult
             {
                 Status = LoginStatus.LoggedIn,

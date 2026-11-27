@@ -30,19 +30,12 @@ namespace Game.Services
 
         public SessionTokenIssuer(byte[] signingKey, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(signingKey);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentOutOfRangeException.ThrowIfLessThan(signingKey.Length, ShortestSigningKeyBytes, nameof(signingKey));
-
             _signingKey = signingKey;
             _timeProvider = timeProvider;
         }
 
         public string Issue(int playerId, string username)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(playerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-
             string sessionToken = IssueFor(PlayerOwnerKind, playerId, username);
 
             return sessionToken;
@@ -50,9 +43,6 @@ namespace Game.Services
 
         public string IssueForGuest(int guestId, string guestAlias)
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(guestId, 0);
-            ArgumentException.ThrowIfNullOrWhiteSpace(guestAlias);
-
             string sessionToken = IssueFor(GuestOwnerKind, guestId, guestAlias);
 
             return sessionToken;

@@ -47,13 +47,6 @@ namespace Game.Services
 
         public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, RoomRecordRepository roomRecordRepository, SanctionRepository sanctionRepository, PlayerRepository playerRepository, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(roomRegistry);
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(roomRecordRepository);
-            ArgumentNullException.ThrowIfNull(sanctionRepository);
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _roomRegistry = roomRegistry;
             _sessionRegistry = sessionRegistry;
             _roomRecordRepository = roomRecordRepository;
@@ -201,7 +194,7 @@ namespace Game.Services
             if (roomDeparture is RoomDeparture completedDeparture)
             {
                 _roomRegistry.ForgetMembership(ownerId);
-                _log.InfoFormat(MemberLeftMessage, ownerId, room.RoomId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, MemberLeftMessage, ownerId, room.RoomId);
                 await FollowDepartureAsync(room, completedDeparture, RoomChangeReason.MemberLeft);
                 leaveResult = completedDeparture.WasMember ? LeaveRoomResult.Left : LeaveRoomResult.NotInRoom;
             }
@@ -227,7 +220,7 @@ namespace Game.Services
             Sanction? banInForce = null;
             if (!isGuest)
             {
-                banInForce = await _sanctionRepository.FindInForceAsync(ownerId, NowUtc());
+                banInForce = await _sanctionRepository.FindInForceAsync(ownerId, ReadNow());
             }
 
             return banInForce;
@@ -245,7 +238,11 @@ namespace Game.Services
                 }
                 else
                 {
-                    joining = new JoinRoomResult { Status = JoinRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
+                    joining = new JoinRoomResult
+                    {
+                        Status = JoinRoomStatus.Banned,
+                        BanEndsAt = banInForce.EffectiveUntil,
+                    };
                 }
             }
             catch (NpgsqlException exception)
@@ -259,10 +256,10 @@ namespace Game.Services
 
         internal async Task RemoveExpiredMembersAsync(TimeSpan inactivityLimit)
         {
-            DateTime limitUtc = NowUtc() - inactivityLimit;
+            DateTime limitAt = ReadNow() - inactivityLimit;
             foreach (LiveRoom room in _roomRegistry.ListRooms())
             {
-                await ExpireMembersOfAsync(room, limitUtc);
+                await ExpireMembersOfAsync(room, limitAt);
             }
         }
 
@@ -317,7 +314,11 @@ namespace Game.Services
                 }
                 else
                 {
-                    creation = new CreateRoomResult { Status = CreateRoomStatus.Banned, BanEndsAtUtc = banInForce.EffectiveUntil };
+                    creation = new CreateRoomResult
+                    {
+                        Status = CreateRoomStatus.Banned,
+                        BanEndsAt = banInForce.EffectiveUntil,
+                    };
                 }
             }
             catch (NpgsqlException exception)
@@ -377,7 +378,7 @@ namespace Game.Services
             CreateRoomResult creation;
             if (roomId is null)
             {
-                _log.WarnFormat(NoFreeCodeMessage, MostCodeDraws);
+                _log.WarnFormat(CultureInfo.InvariantCulture, NoFreeCodeMessage, MostCodeDraws);
                 creation = new CreateRoomResult { Status = CreateRoomStatus.DatabaseUnavailable };
             }
             else
@@ -404,7 +405,7 @@ namespace Game.Services
         {
             room.Admit(owner);
             _roomRegistry.AddRoom(room, owner.OwnerId);
-            _log.InfoFormat(RoomCreatedMessage, room.RoomId, owner.OwnerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, RoomCreatedMessage, room.RoomId, owner.OwnerId);
             StartAvatarLoad(room, owner);
             var creation = new CreateRoomResult
             {
@@ -429,7 +430,7 @@ namespace Game.Services
             if ((admission == JoinRoomStatus.Joined) && (room is not null))
             {
                 _roomRegistry.RecordMembership(owner.OwnerId, room);
-                _log.InfoFormat(MemberJoinedMessage, owner.OwnerId, room.RoomId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, MemberJoinedMessage, owner.OwnerId, room.RoomId);
                 NotifyMembers(room, RoomChangeReason.MemberJoined, owner.OwnerId);
                 joining.Room = room.BuildViewFor(owner.OwnerId);
                 StartAvatarLoad(room, owner);
@@ -499,18 +500,18 @@ namespace Game.Services
             }
 
             _roomRegistry.ForgetMembership(kickedOwnerId);
-            _log.InfoFormat(MemberKickedMessage, kickedOwnerId, room.RoomId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, MemberKickedMessage, kickedOwnerId, room.RoomId);
             _sessionRegistry.Deliver(kickedOwnerId, new RoomChangeNotice(RoomChangeReason.YouWereKicked, kick.KickedView));
             NotifyMembers(room, RoomChangeReason.MemberKicked, null);
         }
 
-        private async Task ExpireMembersOfAsync(LiveRoom room, DateTime limitUtc)
+        private async Task ExpireMembersOfAsync(LiveRoom room, DateTime limitAt)
         {
-            RoomExpiry expiry = room.RemoveExpired(limitUtc);
+            RoomExpiry expiry = room.RemoveExpired(limitAt);
             foreach (int removedOwnerId in expiry.RemovedOwnerIds)
             {
                 _roomRegistry.ForgetMembership(removedOwnerId);
-                _log.InfoFormat(MemberTimedOutMessage, removedOwnerId, room.RoomId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, MemberTimedOutMessage, removedOwnerId, room.RoomId);
             }
 
             if (expiry.RemovedOwnerIds.Count > 0)
@@ -538,8 +539,8 @@ namespace Game.Services
         {
             try
             {
-                await _roomRecordRepository.CloseAsync(room.RoomId, NowUtc());
-                _log.InfoFormat(RoomClosedMessage, room.RoomId);
+                await _roomRecordRepository.CloseAsync(room.RoomId, ReadNow());
+                _log.InfoFormat(CultureInfo.InvariantCulture, RoomClosedMessage, room.RoomId);
             }
             catch (NpgsqlException exception)
             {
@@ -555,7 +556,7 @@ namespace Game.Services
         private void MarkMemberInactive(int ownerId)
         {
             LiveRoom? room = _roomRegistry.FindRoomOf(ownerId);
-            RoomActivityChange activityChange = room?.MarkInactive(ownerId, NowUtc()) ?? new RoomActivityChange(false, false);
+            RoomActivityChange activityChange = room?.MarkInactive(ownerId, ReadNow()) ?? new RoomActivityChange(false, false);
             if ((room is not null) && activityChange.HasChanged)
             {
                 RoomChangeReason noticeReason = activityChange.HasHostChanged ? RoomChangeReason.HostChanged : RoomChangeReason.MemberWentInactive;
@@ -563,11 +564,11 @@ namespace Game.Services
             }
         }
 
-        private DateTime NowUtc()
+        private DateTime ReadNow()
         {
-            DateTime nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
 
-            return nowUtc;
+            return now;
         }
     }
 }
