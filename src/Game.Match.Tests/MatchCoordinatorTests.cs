@@ -111,7 +111,8 @@ namespace Game.Match.Tests
 
             await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            Assert.False(_listener.HasNotified(SampleMatches.InactiveEva.EntrantId));
+            bool hasNotified = _listener.HasNotified(SampleMatches.InactiveEva.EntrantId);
+            Assert.False(hasNotified);
         }
 
         [Fact]
@@ -143,7 +144,8 @@ namespace Game.Match.Tests
 
             await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            Assert.Equal(SeatNumberOne, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ViewerSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(SeatNumberOne, latestView.ViewerSeatNumber);
         }
 
         [Fact]
@@ -153,7 +155,8 @@ namespace Game.Match.Tests
 
             await _coordinator.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
 
-            Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).ViewerSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(SeatNumberTwo, latestView.ViewerSeatNumber);
         }
 
         [Fact]
@@ -300,7 +303,8 @@ namespace Game.Match.Tests
 
             _coordinator.PlacePiece(SampleMatches.Ana.EntrantId, MatchPiece.Caterpillar, SampleMatches.NorthWestFlower);
 
-            Assert.Equal(SampleMatches.StepTime, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).StepTimeLeft);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(SampleMatches.StepTime, latestView.StepTimeLeft);
         }
 
         [Fact]
@@ -388,7 +392,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(SampleMatches.RestOfFirstPlacement);
 
-            Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ActiveSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(SeatNumberTwo, latestView.ActiveSeatNumber);
         }
 
         [Fact]
@@ -578,7 +583,8 @@ namespace Game.Match.Tests
 
             AdvanceUntilFinished();
 
-            Assert.Equal(MatchPhase.Finished, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Phase);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(MatchPhase.Finished, latestView.Phase);
         }
 
         [Fact]
@@ -799,7 +805,8 @@ namespace Game.Match.Tests
             _coordinator.AddFlowerLevel(SampleMatches.Ana.EntrantId, SampleMatches.NorthOfNorthEast);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
-            Assert.Equal(NorthWestPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthWestFlower));
+            int planterNumber = SampleMatches.FindPlanterNumber(view, SampleMatches.NorthWestFlower);
+            Assert.Equal(NorthWestPlanterNumber, planterNumber);
         }
 
         [Fact]
@@ -810,7 +817,8 @@ namespace Game.Match.Tests
             _coordinator.AddFlowerLevel(SampleMatches.Ana.EntrantId, SampleMatches.NorthOfNorthEast);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
-            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthOfNorthEast));
+            int planterNumber = SampleMatches.FindPlanterNumber(view, SampleMatches.NorthOfNorthEast);
+            Assert.Equal(NorthEastPlanterNumber, planterNumber);
         }
 
         [Fact]
@@ -821,7 +829,8 @@ namespace Game.Match.Tests
             _coordinator.AddFlowerLevel(SampleMatches.Ana.EntrantId, SampleMatches.NorthOfNorthEast);
 
             MatchView view = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
-            Assert.Equal(NorthEastPlanterNumber, SampleMatches.FindPlanterNumber(view, SampleMatches.NorthEastFlower));
+            int planterNumber = SampleMatches.FindPlanterNumber(view, SampleMatches.NorthEastFlower);
+            Assert.Equal(NorthEastPlanterNumber, planterNumber);
         }
 
         [Fact]
@@ -1680,7 +1689,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.Dani.EntrantId);
 
-            Assert.Same(anaViewBefore, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId));
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Same(anaViewBefore, latestView);
         }
 
         [Fact]
@@ -1741,7 +1751,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(_halfReconnectionTime);
 
-            Assert.True(_listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).Seats[SecondSeatIndex].IsRetired);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.True(latestView.Seats[SecondSeatIndex].IsRetired);
         }
 
         [Fact]
@@ -1952,7 +1963,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(SampleMatches.RestOfFirstPlacement);
 
-            Assert.True(_listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Seats[0].IsRetired);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.True(latestView.Seats[0].IsRetired);
         }
 
         [Fact]
@@ -1962,7 +1974,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(SampleMatches.RestOfFirstPlacement);
 
-            Assert.Equal(MatchPhase.CaterpillarPlacement, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Phase);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(MatchPhase.CaterpillarPlacement, latestView.Phase);
         }
 
         [Fact]
@@ -1972,7 +1985,8 @@ namespace Game.Match.Tests
 
             _fakeTimeProvider.Advance(SampleMatches.RestOfFirstPlacement);
 
-            Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).ActiveSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(SeatNumberTwo, latestView.ActiveSeatNumber);
         }
 
         [Fact]
@@ -1992,7 +2006,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.CaroGuest.EntrantId);
 
-            Assert.False(_listener.FindLatestViewFor(SampleMatches.Dani.EntrantId).Seats[0].IsDisconnected);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Dani.EntrantId);
+            Assert.False(latestView.Seats[0].IsDisconnected);
         }
 
         [Fact]
@@ -2002,7 +2017,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.CaroGuest.EntrantId);
 
-            Assert.False(_listener.FindLatestViewFor(SampleMatches.Dani.EntrantId).Seats[0].IsRetired);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Dani.EntrantId);
+            Assert.False(latestView.Seats[0].IsRetired);
         }
 
         [Fact]
@@ -2022,7 +2038,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.Beto.EntrantId);
 
-            Assert.Equal(SeatNumberOne, _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).ActiveSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.Equal(SeatNumberOne, latestView.ActiveSeatNumber);
         }
 
         [Fact]
@@ -2032,7 +2049,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.Beto.EntrantId);
 
-            Assert.False(_listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Seats[SecondSeatIndex].IsRetired);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.False(latestView.Seats[SecondSeatIndex].IsRetired);
         }
 
         [Fact]
@@ -2042,7 +2060,8 @@ namespace Game.Match.Tests
 
             _coordinator.CloseReconnectionWindow(SampleMatches.Beto.EntrantId);
 
-            Assert.False(_listener.FindLatestViewFor(SampleMatches.Beto.EntrantId).Seats[SecondSeatIndex].IsDisconnected);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Beto.EntrantId);
+            Assert.False(latestView.Seats[SecondSeatIndex].IsDisconnected);
         }
 
         [Fact]
@@ -2052,7 +2071,8 @@ namespace Game.Match.Tests
 
             _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
 
-            Assert.Equal(MatchPhase.ButterflyPlacement, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).Phase);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(MatchPhase.ButterflyPlacement, latestView.Phase);
         }
 
         [Fact]
@@ -2062,7 +2082,8 @@ namespace Game.Match.Tests
 
             _coordinator.Forfeit(SampleMatches.Dani.EntrantId);
 
-            Assert.Equal(SeatNumberTwo, _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId).ActiveSeatNumber);
+            MatchView latestView = _listener.FindLatestViewFor(SampleMatches.Ana.EntrantId);
+            Assert.Equal(SeatNumberTwo, latestView.ActiveSeatNumber);
         }
 
         [Fact]

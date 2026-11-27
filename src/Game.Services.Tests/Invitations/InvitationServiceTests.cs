@@ -137,7 +137,8 @@ namespace Game.Services.Tests
 
             await _invitationService.RespondInvitationAsync(roomId, true);
 
-            Assert.Equal(RoomLookupStatus.InRoom, _roomService.GetCurrentRoom().Status);
+            RoomLookupResponse currentRoom = _roomService.GetCurrentRoom();
+            Assert.Equal(RoomLookupStatus.InRoom, currentRoom.Status);
         }
 
         [Fact]

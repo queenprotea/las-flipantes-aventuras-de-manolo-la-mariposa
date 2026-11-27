@@ -295,7 +295,8 @@ namespace Game.Domain.Tests
 
             table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, MiddleFlower }));
 
-            Assert.Contains(new Flower(WestFlower, LevelOne), table.FindFlowers());
+            IReadOnlyList<Flower> flowersOnTable = table.FindFlowers();
+            Assert.Contains(new Flower(WestFlower, LevelOne), flowersOnTable);
         }
 
         [Fact]
@@ -306,7 +307,8 @@ namespace Game.Domain.Tests
 
             table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, MiddleFlower }));
 
-            Assert.Contains(new Flower(MiddleFlower, LevelTwo), table.FindFlowers());
+            IReadOnlyList<Flower> flowersOnTable = table.FindFlowers();
+            Assert.Contains(new Flower(MiddleFlower, LevelTwo), flowersOnTable);
         }
 
         [Fact]
@@ -328,7 +330,8 @@ namespace Game.Domain.Tests
 
             table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelMove, new BoardCell[] { WestFlower, GroundAboveWestFlower }));
 
-            Assert.Contains(new Flower(GroundAboveWestFlower, LevelOne), table.FindFlowers());
+            IReadOnlyList<Flower> flowersOnTable = table.FindFlowers();
+            Assert.Contains(new Flower(GroundAboveWestFlower, LevelOne), flowersOnTable);
         }
 
         [Fact]
@@ -457,7 +460,8 @@ namespace Game.Domain.Tests
 
             table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelRemoval, new BoardCell[] { WestFlower, MiddleFlower }));
 
-            Assert.Contains(new Flower(WestFlower, LevelTwo), table.FindFlowers());
+            IReadOnlyList<Flower> flowersOnTable = table.FindFlowers();
+            Assert.Contains(new Flower(WestFlower, LevelTwo), flowersOnTable);
         }
 
         [Fact]
@@ -468,7 +472,8 @@ namespace Game.Domain.Tests
 
             table.CardTable.PlayCard(SeatNumberOne, new CardPlay(ActionCard.FlowerLevelRemoval, new BoardCell[] { WestFlower, MiddleFlower }));
 
-            Assert.Contains(new Flower(MiddleFlower, LevelOne), table.FindFlowers());
+            IReadOnlyList<Flower> flowersOnTable = table.FindFlowers();
+            Assert.Contains(new Flower(MiddleFlower, LevelOne), flowersOnTable);
         }
 
         [Fact]

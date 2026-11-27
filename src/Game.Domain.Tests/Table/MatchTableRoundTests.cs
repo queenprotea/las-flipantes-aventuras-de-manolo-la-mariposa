@@ -223,7 +223,8 @@ namespace Game.Domain.Tests
 
             PlayRoundsWithoutButterfly(table, MatchRules.RoundCount);
 
-            Assert.Empty(table.FindBuildTargets());
+            IReadOnlyList<BoardCell> buildTargets = table.FindBuildTargets();
+            Assert.Empty(buildTargets);
         }
 
         [Fact]
@@ -334,7 +335,8 @@ namespace Game.Domain.Tests
 
             table.RetireSeat(SeatNumberOne);
 
-            Assert.Equal(new int[] { SeatNumberTwo }, table.FindRanking().Select(standing => standing.SeatNumber));
+            IReadOnlyList<SeatStanding> ranking = table.FindRanking();
+            Assert.Equal(new int[] { SeatNumberTwo }, ranking.Select(standing => standing.SeatNumber));
         }
 
         [Fact]
@@ -387,7 +389,8 @@ namespace Game.Domain.Tests
 
             table.RetireSeat(SeatNumberTwo);
 
-            Assert.True(table.IsSeatRetired(SeatNumberTwo));
+            bool isSeatRetired = table.IsSeatRetired(SeatNumberTwo);
+            Assert.True(isSeatRetired);
         }
 
         [Fact]

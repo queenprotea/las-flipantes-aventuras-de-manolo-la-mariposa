@@ -24,7 +24,8 @@ namespace Torres.Client.Tests
 
             DisconnectionOutcome? outcome = _disconnectionFlow.TakeOutcome();
 
-            Assert.Equal(Notice.CreateServerError(), outcome?.Notice);
+            Notice serverError = Notice.CreateServerError();
+            Assert.Equal(serverError, outcome?.Notice);
         }
     }
 }

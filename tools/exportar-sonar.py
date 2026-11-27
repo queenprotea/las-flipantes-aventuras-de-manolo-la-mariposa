@@ -9,6 +9,7 @@ Uso:
 
 Deja en reportes-sonar/ (en la raíz del repo):
     <clave>-ultimo.md     reporte legible: métricas, problemas por archivo y por regla, hotspots
+                          y cobertura por archivo (total y de código nuevo)
     <clave>-ultimo.json   los mismos datos sin procesar
     <clave>-AAAAMMDD-HHMM.md   copia con fecha, para comparar con reportes anteriores
 
@@ -58,6 +59,11 @@ METRICAS = [
     ("software_quality_security_issues", "Problemas de seguridad"),
 ]
 CALIFICACIONES = {"1.0": "A", "2.0": "B", "3.0": "C", "4.0": "D", "5.0": "E"}
+METRICAS_COBERTURA = [
+    "coverage", "lines_to_cover", "uncovered_lines",
+    "new_coverage", "new_lines_to_cover", "new_uncovered_lines",
+]
+ARCHIVOS_EN_TABLA_TOTAL = 40
 ORDEN_SEVERIDAD = ["BLOCKER", "HIGH", "CRITICAL", "MEDIUM", "MAJOR", "LOW", "MINOR", "INFO"]
 
 
@@ -155,6 +161,38 @@ def leer_hotspots(clave, token):
         return hotspots, total
     except ErrorSonar:
         return [], 0
+
+
+def valor_de_medida(medida):
+    if "value" in medida:
+        return medida["value"]
+    periodo = medida.get("period") or (medida.get("periods") or [{}])[0]
+    return periodo.get("value")
+
+
+def leer_cobertura(clave, token):
+    archivos = []
+    pagina = 1
+    while True:
+        respuesta = consultar(
+            "/api/measures/component_tree",
+            {
+                "component": clave,
+                "qualifiers": "FIL",
+                "metricKeys": ",".join(METRICAS_COBERTURA),
+                "ps": TAMANO_PAGINA,
+                "p": pagina,
+            },
+            token,
+        )
+        for componente in respuesta.get("components", []):
+            medidas = {medida["metric"]: valor_de_medida(medida) for medida in componente.get("measures", [])}
+            if entero(medidas.get("lines_to_cover")) > 0 or entero(medidas.get("new_lines_to_cover")) > 0:
+                archivos.append({"archivo": componente.get("path") or componente.get("key"), **medidas})
+        total = respuesta.get("paging", {}).get("total", 0)
+        if pagina * TAMANO_PAGINA >= min(total, LIMITE_API) or not respuesta.get("components"):
+            return archivos
+        pagina += 1
 
 
 def leer_opcional(ruta, parametros, token):
@@ -261,6 +299,8 @@ def escribir_markdown(datos):
             )
         lineas.append("")
 
+    lineas += escribir_cobertura(datos.get("cobertura") or [])
+
     if datos["hotspots"]:
         lineas += ["## Security hotspots", "", "| Archivo | Línea | Probabilidad | Categoría | Estado | Mensaje |", "|---|---|---|---|---|---|"]
         for hotspot in sorted(datos["hotspots"], key=lambda h: (h.get("component", ""), h.get("line") or 0)):
@@ -272,6 +312,60 @@ def escribir_markdown(datos):
         lineas.append("")
 
     return "\n".join(lineas) + "\n"
+
+
+def entero(valor):
+    try:
+        return int(float(valor))
+    except (TypeError, ValueError):
+        return 0
+
+
+def porcentaje(valor):
+    return f"{float(valor):.1f} %" if valor not in (None, "") else "—"
+
+
+def escribir_cobertura(archivos):
+    if not archivos:
+        return ["## Cobertura por archivo", "", "SonarQube no devolvió cobertura por archivo.", ""]
+
+    lineas = ["## Cobertura por archivo", ""]
+    nuevos = [archivo for archivo in archivos if entero(archivo.get("new_lines_to_cover")) > 0]
+    nuevos.sort(key=lambda archivo: (-entero(archivo.get("new_uncovered_lines")), archivo["archivo"]))
+    lineas += [
+        "### Código nuevo (lo que mide el quality gate)",
+        "",
+        "Ordenado por líneas nuevas sin cubrir, de más a menos.",
+        "",
+        "| Archivo | Líneas nuevas a cubrir | Sin cubrir | Cobertura nueva |",
+        "|---|---|---|---|",
+    ]
+    for archivo in nuevos:
+        lineas.append(
+            f"| `{archivo['archivo']}` | {entero(archivo.get('new_lines_to_cover'))} | "
+            f"{entero(archivo.get('new_uncovered_lines'))} | {porcentaje(archivo.get('new_coverage'))} |"
+        )
+    if not nuevos:
+        lineas.append("| — | 0 | 0 | — |")
+
+    totales = [archivo for archivo in archivos if entero(archivo.get("uncovered_lines")) > 0]
+    totales.sort(key=lambda archivo: (-entero(archivo.get("uncovered_lines")), archivo["archivo"]))
+    lineas += [
+        "",
+        f"### Todo el código (los {ARCHIVOS_EN_TABLA_TOTAL} archivos con más líneas sin cubrir)",
+        "",
+        f"Archivos con líneas sin cubrir: {len(totales)} de {len(archivos)}.",
+        "",
+        "| Archivo | Líneas a cubrir | Sin cubrir | Cobertura |",
+        "|---|---|---|---|",
+    ]
+    for archivo in totales[:ARCHIVOS_EN_TABLA_TOTAL]:
+        lineas.append(
+            f"| `{archivo['archivo']}` | {entero(archivo.get('lines_to_cover'))} | "
+            f"{entero(archivo.get('uncovered_lines'))} | {porcentaje(archivo.get('coverage'))} |"
+        )
+    lineas.append("")
+    return lineas
 
 
 def guardar(nombre, contenido):
@@ -301,6 +395,12 @@ def main():
         print(f"Error: {error}", file=sys.stderr)
         return 1
 
+    try:
+        cobertura = leer_cobertura(clave, token)
+    except ErrorSonar as error:
+        print(f"Aviso: no se pudo leer la cobertura por archivo ({error}).", file=sys.stderr)
+        cobertura = []
+
     analisis = leer_opcional("/api/project_analyses/search", {"project": clave, "ps": 1}, token)
     lista_analisis = analisis.get("analyses") or [{}]
     version = leer_version(token)
@@ -316,6 +416,7 @@ def main():
         "reglas": list({regla["key"]: regla for regla in extras["rules"]}.values()),
         "total_hotspots": total_hotspots,
         "hotspots": hotspots,
+        "cobertura": cobertura,
     }
 
     os.makedirs(CARPETA_REPORTES, exist_ok=True)

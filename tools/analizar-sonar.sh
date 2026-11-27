@@ -18,18 +18,45 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${1:-cliente}"
 WAIT_SECONDS=240
 
+# Código que solo se ve corriendo el juego (pantallas, widgets de Myra, dibujo 3D,
+# proxies WCF y arranque). Se sigue analizando, pero no cuenta para la cobertura.
+CLIENT_COVERAGE_EXCLUSIONS="src/Torres.Client/Screens/**,src/Torres.Client/Widgets/**,src/Torres.Client/UI/**,\
+src/Torres.Client/Contracts/**,\
+src/Torres.Client/Scene/*.cs,src/Torres.Client/Scene/ActionPoints/**,src/Torres.Client/Scene/Butterflies/**,\
+src/Torres.Client/Scene/Cards/**,src/Torres.Client/Scene/Caterpillars/**,src/Torres.Client/Scene/Flowers/**,\
+src/Torres.Client/Scene/Icons/**,src/Torres.Client/Scene/Sprout/**,src/Torres.Client/Scene/Table/**,\
+src/Torres.Client/Scene/Board/*Shapes.cs,src/Torres.Client/Scene/Board/CellMarkers.cs,src/Torres.Client/Scene/Board/GardenMeshes.cs,\
+src/Torres.Client/Scene/Rendering/GardenPalette.cs,src/Torres.Client/Scene/Rendering/MeshBuilder.cs,\
+src/Torres.Client/Scene/Rendering/MeshPlacement.cs,src/Torres.Client/Scene/Rendering/SceneLighting.cs,\
+src/Torres.Client/Scene/Rendering/SceneMeshes.cs,src/Torres.Client/Scene/Rendering/StaticMesh.cs,\
+src/Torres.Client/Scene/Rendering/SurfacePoint.cs,src/Torres.Client/Scene/Rendering/VertexPositionNormalColor.cs,\
+src/Torres.Client/Connection/AccountConnection.cs,src/Torres.Client/Connection/GameSessionConnection.cs,\
+src/Torres.Client/Connection/RankingConnection.cs,src/Torres.Client/Connection/ServerStatusConnection.cs,\
+src/Torres.Client/Avatars/AvatarCache.cs,src/Torres.Client/Avatars/AvatarView.cs,\
+src/Torres.Client/Avatars/AvatarViewSet.cs,src/Torres.Client/Avatars/DefaultAvatarArt.cs,\
+src/Torres.Client/Localization/ComputedLabel.cs,src/Torres.Client/Localization/LabeledText.cs,\
+src/Torres.Client/Localization/LabeledTextBox.cs,src/Torres.Client/Localization/Localized*.cs,\
+src/Torres.Client/Program.cs,src/Torres.Client/TorresGame.cs,src/Torres.Client/SettingsFailureGame.cs,\
+src/Torres.Client/DoomLauncher.cs"
+# El arranque del servidor, los repositorios de EF Core (necesitan PostgreSQL) y
+# el canal que lee el OperationContext de CoreWCF (solo existe dentro de una llamada real).
+SERVER_COVERAGE_EXCLUSIONS="src/Game.Server/**,src/Game.Persistence/**,src/Game.Services/Session/CallerChannel.cs"
+
 case "$TARGET" in
   cliente)
     PROJECT_KEY="torres-client"
     SOLUTIONS=("Torres.Client.sln")
+    COVERAGE_EXCLUSIONS="$CLIENT_COVERAGE_EXCLUSIONS"
     ;;
   servidor)
     PROJECT_KEY="torres-server"
     SOLUTIONS=("Torres.Server.sln")
+    COVERAGE_EXCLUSIONS="$SERVER_COVERAGE_EXCLUSIONS"
     ;;
   todo)
     PROJECT_KEY="torres"
     SOLUTIONS=("Torres.Server.sln" "Torres.Client.sln")
+    COVERAGE_EXCLUSIONS="$SERVER_COVERAGE_EXCLUSIONS,$CLIENT_COVERAGE_EXCLUSIONS"
     ;;
   *)
     echo "Uso: bash tools/analizar-sonar.sh [cliente|servidor|todo]" >&2
@@ -130,6 +157,7 @@ trap 'rm -rf "$COVERAGE_DIR"' EXIT
 step "Iniciando el análisis de '$PROJECT_KEY'"
 dotnet-sonarscanner begin /k:"$PROJECT_KEY" /d:sonar.host.url="$SONAR_URL" /d:sonar.token="$token" \
   /d:sonar.exclusions="$EXCLUSIONS" \
+  /d:sonar.coverage.exclusions="$COVERAGE_EXCLUSIONS" \
   /d:sonar.cs.opencover.reportsPaths="$COVERAGE_DIR/**/coverage.opencover.xml"
 
 for solution in "${SOLUTIONS[@]}"; do
@@ -138,7 +166,6 @@ for solution in "${SOLUTIONS[@]}"; do
 done
 
 # --- 5. Pruebas y cobertura --------------------------------------------------
-# Las soluciones sin proyectos de prueba (hoy, el cliente) no generan cobertura.
 # Si alguna prueba falla se avisa, pero el análisis se envía de todos modos.
 for solution in "${SOLUTIONS[@]}"; do
   step "Corriendo las pruebas de $solution"

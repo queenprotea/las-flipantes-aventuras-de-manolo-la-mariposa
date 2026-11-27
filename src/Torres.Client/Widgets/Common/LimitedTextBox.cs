@@ -144,7 +144,7 @@ namespace Torres.Client.Widgets
             string fittingText = CutToLength(pastedText, freeLength);
             if (fittingText.Length > 0)
             {
-                Text = currentText.Substring(0, replacedStart) + fittingText + currentText.Substring(replacedEnd);
+                Text = string.Concat(currentText.AsSpan(0, replacedStart), fittingText, currentText.AsSpan(replacedEnd));
                 CursorPosition = Math.Min(replacedStart + fittingText.Length, CurrentText().Length);
             }
 

@@ -37,7 +37,8 @@ namespace Torres.Client.Tests
 
             ResumeOutcome? outcome = _resumeFlow.TakeOutcome();
 
-            Assert.Equal(Notice.CreateServerError(), outcome?.Notice);
+            Notice serverError = Notice.CreateServerError();
+            Assert.Equal(serverError, outcome?.Notice);
         }
     }
 }

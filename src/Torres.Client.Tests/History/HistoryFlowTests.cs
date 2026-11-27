@@ -65,7 +65,8 @@ namespace Torres.Client.Tests
 
             _historyFlow.Retry();
 
-            Assert.Equal(TwoRequests, _gameSessionConnection.CalledMethods.Count(calledMethod => calledMethod == GetMatchHistoryCall));
+            int historyRequestCount = _gameSessionConnection.CalledMethods.Count(calledMethod => calledMethod == GetMatchHistoryCall);
+            Assert.Equal(TwoRequests, historyRequestCount);
         }
     }
 }

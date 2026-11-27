@@ -59,7 +59,8 @@ namespace Torres.Client.Tests
 
             RoomsOutcome? outcome = _roomsFlow.TakeOutcome();
 
-            Assert.Equal(Notice.CreateServerError(), outcome?.Notice);
+            Notice serverError = Notice.CreateServerError();
+            Assert.Equal(serverError, outcome?.Notice);
         }
 
         [Fact]

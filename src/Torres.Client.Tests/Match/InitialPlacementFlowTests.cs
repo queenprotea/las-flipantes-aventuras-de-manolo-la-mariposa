@@ -29,7 +29,8 @@ namespace Torres.Client.Tests
 
             Notice? notice = _initialPlacementFlow.TakeNotice();
 
-            Assert.Equal(Notice.CreateServerError(), notice);
+            Notice serverError = Notice.CreateServerError();
+            Assert.Equal(serverError, notice);
         }
     }
 }

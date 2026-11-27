@@ -326,7 +326,8 @@ namespace Game.Domain.Tests
 
             table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
 
-            Assert.Contains(new Flower(SampleLayouts.CenterFlower, LevelTwo), table.FindFlowers());
+            IReadOnlyList<Flower> flowers = table.FindFlowers();
+            Assert.Contains(new Flower(SampleLayouts.CenterFlower, LevelTwo), flowers);
         }
 
         [Fact]
@@ -407,7 +408,8 @@ namespace Game.Domain.Tests
 
             table.AddFlowerLevel(SeatNumberOne, _northOfNorthWest);
 
-            Assert.Contains(TwoPlanterCells, table.FindPlanters().Select(planter => planter.CellCount));
+            IReadOnlyList<Planter> planters = table.FindPlanters();
+            Assert.Contains(TwoPlanterCells, planters.Select(planter => planter.CellCount));
         }
 
         [Fact]

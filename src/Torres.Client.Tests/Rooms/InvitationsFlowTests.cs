@@ -48,7 +48,8 @@ namespace Torres.Client.Tests
 
             InvitationsOutcome? outcome = _invitationsFlow.TakeOutcome();
 
-            Assert.Equal(Notice.CreateServerError(), outcome?.Notice);
+            Notice serverError = Notice.CreateServerError();
+            Assert.Equal(serverError, outcome?.Notice);
         }
 
         [Fact]

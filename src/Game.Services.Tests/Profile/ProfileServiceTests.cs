@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Game.Contracts;
+using Game.Persistence;
 
 using Microsoft.Extensions.Time.Testing;
 
@@ -52,7 +53,8 @@ namespace Game.Services.Tests
         {
             await _profileService.UpdateProfileAsync(NewUsername, false);
 
-            Assert.NotNull(_playerRepository.FindByUsername(NewUsername));
+            Player? storedPlayer = _playerRepository.FindByUsername(NewUsername);
+            Assert.NotNull(storedPlayer);
         }
 
         [Fact]

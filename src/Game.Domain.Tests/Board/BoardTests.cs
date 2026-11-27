@@ -97,7 +97,8 @@ namespace Game.Domain.Tests
 
             board.AddFlowerLevel(SampleLayouts.GroundCell);
 
-            Assert.Equal(StartingLayout.StartingFlowerLevel, board.GetFlowerLevel(SampleLayouts.GroundCell));
+            int flowerLevel = board.GetFlowerLevel(SampleLayouts.GroundCell);
+            Assert.Equal(StartingLayout.StartingFlowerLevel, flowerLevel);
         }
 
         [Fact]
