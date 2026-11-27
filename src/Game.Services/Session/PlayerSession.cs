@@ -43,12 +43,12 @@ namespace Game.Services
         {
             if (_noticeReceiver is ICommunicationObject watchedChannel)
             {
-                watchedChannel.Closed += NoticeReceiverOnClosed;
-                watchedChannel.Faulted += NoticeReceiverOnFaulted;
+                watchedChannel.Closed += WatchedChannelOnClosed;
+                watchedChannel.Faulted += WatchedChannelOnFaulted;
             }
             else
             {
-                _log.WarnFormat(UnwatchableChannelMessage, Owner.OwnerId);
+                _log.WarnFormat(CultureInfo.InvariantCulture, UnwatchableChannelMessage, Owner.OwnerId);
             }
 
             _senderTask = Task.Run(SendPendingAsync);
@@ -140,12 +140,12 @@ namespace Game.Services
             }
         }
 
-        private void NoticeReceiverOnClosed(object? sender, EventArgs e)
+        private void WatchedChannelOnClosed(object? sender, EventArgs e)
         {
             _sessionRegistry.DeclareLost(this);
         }
 
-        private void NoticeReceiverOnFaulted(object? sender, EventArgs e)
+        private void WatchedChannelOnFaulted(object? sender, EventArgs e)
         {
             _sessionRegistry.DeclareLost(this);
         }

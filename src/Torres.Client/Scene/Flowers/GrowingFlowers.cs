@@ -10,8 +10,7 @@ namespace Torres.Client.Scene
     internal sealed class GrowingFlowers : IDisposable
     {
         private const double GrowSeconds = 0.55;
-        private const float SproutStartShare = 0.05f;
-        private const float FullScale = 1f;
+        private const float SproutStartFraction = 0.05f;
 
         private readonly GraphicsDevice _graphicsDevice;
         private readonly List<GrowingFlower> _flowers = new List<GrowingFlower>();
@@ -35,8 +34,8 @@ namespace Torres.Client.Scene
                     var flowerBuilder = new MeshBuilder();
                     FlowerShapes.AddCenteredFlower(flowerBuilder, layoutChange.NextLayout, examinedCell);
                     bool isNewFlower = previousLevel == 0;
-                    float startShare = isNewFlower ? SproutStartShare : BoardGeometry.GetFlowerTop(previousLevel) / BoardGeometry.GetFlowerTop(nextLevel);
-                    _flowers.Add(new GrowingFlower(examinedCell, flowerBuilder.BuildMesh(_graphicsDevice), sceneTime, startShare, isNewFlower));
+                    float startHeightFraction = isNewFlower ? SproutStartFraction : BoardGeometry.GetFlowerTop(previousLevel) / BoardGeometry.GetFlowerTop(nextLevel);
+                    _flowers.Add(new GrowingFlower(examinedCell, flowerBuilder.BuildMesh(_graphicsDevice), sceneTime, startHeightFraction, isNewFlower));
                 }
             }
         }
@@ -56,8 +55,8 @@ namespace Torres.Client.Scene
             foreach (GrowingFlower flower in _flowers)
             {
                 float growth = SceneTiming.EaseOutWithOvershoot(SceneTiming.FindProgress(sceneTime, flower.StartTime, GrowSeconds));
-                float heightScale = MathHelper.Lerp(flower.StartShare, FullScale, growth);
-                float widthScale = flower.IsNewFlower ? heightScale : FullScale;
+                float heightScale = MathHelper.Lerp(flower.StartHeightFraction, SceneValues.FullScale, growth);
+                float widthScale = flower.IsNewFlower ? heightScale : SceneValues.FullScale;
                 Vector3 soilPoint = BoardGeometry.GetCellCenter(flower.Cell) + new Vector3(0f, BoardGeometry.SoilTop, 0f);
                 sceneEffect.World = Matrix.CreateTranslation(0f, -BoardGeometry.SoilTop, 0f)
                     * Matrix.CreateScale(widthScale, heightScale, widthScale)
@@ -73,6 +72,6 @@ namespace Torres.Client.Scene
             Clear();
         }
 
-        private sealed record GrowingFlower(BoardCell Cell, StaticMesh Mesh, TimeSpan StartTime, float StartShare, bool IsNewFlower);
+        private sealed record GrowingFlower(BoardCell Cell, StaticMesh Mesh, TimeSpan StartTime, float StartHeightFraction, bool IsNewFlower);
     }
 }

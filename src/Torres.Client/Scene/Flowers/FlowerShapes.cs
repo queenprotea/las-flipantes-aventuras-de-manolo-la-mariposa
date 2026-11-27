@@ -20,14 +20,14 @@ namespace Torres.Client.Scene
                 int flowerLevel = layout.GetFlowerLevel(drawnCell);
                 if ((flowerLevel > 0) && !skippedCells.Contains(drawnCell))
                 {
-                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(drawnCell), flowerLevel, FindSpecies(layout.GetPlanterNumber(drawnCell)));
+                    AddFlower(meshBuilder, BoardGeometry.GetCellCenter(drawnCell), new PlantedFlower(flowerLevel, FindSpecies(layout.GetPlanterNumber(drawnCell))));
                 }
             }
         }
 
         internal static void AddCenteredFlower(MeshBuilder meshBuilder, BoardLayout layout, BoardCell flowerCell)
         {
-            AddFlower(meshBuilder, Vector3.Zero, layout.GetFlowerLevel(flowerCell), FindSpecies(layout.GetPlanterNumber(flowerCell)));
+            AddFlower(meshBuilder, Vector3.Zero, new PlantedFlower(layout.GetFlowerLevel(flowerCell), FindSpecies(layout.GetPlanterNumber(flowerCell))));
         }
 
         private static FlowerSpecies FindSpecies(int planterNumber)
@@ -38,27 +38,27 @@ namespace Torres.Client.Scene
             return flowerSpecies;
         }
 
-        private static void AddFlower(MeshBuilder meshBuilder, Vector3 cellCenter, int flowerLevel, FlowerSpecies flowerSpecies)
+        private static void AddFlower(MeshBuilder meshBuilder, Vector3 cellCenter, PlantedFlower plantedFlower)
         {
-            switch (flowerSpecies)
+            switch (plantedFlower.Species)
             {
                 case FlowerSpecies.Allium:
-                    AlliumShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    AlliumShapes.AddFlower(meshBuilder, cellCenter, plantedFlower.Level);
                     break;
                 case FlowerSpecies.Lavender:
-                    LavenderShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    LavenderShapes.AddFlower(meshBuilder, cellCenter, plantedFlower.Level);
                     break;
                 case FlowerSpecies.Protea:
-                    ProteaShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    ProteaShapes.AddFlower(meshBuilder, cellCenter, plantedFlower.Level);
                     break;
                 case FlowerSpecies.Coneflower:
-                    ConeflowerShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    ConeflowerShapes.AddFlower(meshBuilder, cellCenter, plantedFlower.Level);
                     break;
                 case FlowerSpecies.Narcissus:
-                    NarcissusShapes.AddFlower(meshBuilder, cellCenter, flowerLevel);
+                    NarcissusShapes.AddFlower(meshBuilder, cellCenter, plantedFlower.Level);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(flowerSpecies));
+                    throw new ArgumentOutOfRangeException(nameof(plantedFlower));
             }
         }
     }

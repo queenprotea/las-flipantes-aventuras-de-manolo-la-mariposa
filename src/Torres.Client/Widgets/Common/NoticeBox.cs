@@ -59,12 +59,12 @@ namespace Torres.Client.Widgets
             _titleLabel.TextArguments = titleArguments;
         }
 
-        internal void ShowBan(DateTime? banEndsAtUtc)
+        internal void ShowBan(DateTime? banEndsAt)
         {
-            if (banEndsAtUtc is DateTime endsAtUtc)
+            if (banEndsAt is DateTime endsAt)
             {
-                string remainingTime = DisplayFormats.FormatRemainingTime(endsAtUtc - DateTime.UtcNow);
-                ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Alerts.SuspensionBody, new[] { remainingTime });
+                string remainingTime = DisplayFormats.FormatRemainingTime(endsAt - DateTime.UtcNow);
+                ShowMessage(TextKeys.Alerts.SuspensionTitle, TextKeys.Alerts.SuspensionBody, new string[] { remainingTime });
             }
             else
             {

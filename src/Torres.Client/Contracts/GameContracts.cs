@@ -603,22 +603,22 @@ namespace Game.Contracts
     public partial class CreateRoomResult : object
     {
         
-        private System.Nullable<System.DateTime> BanEndsAtUtcField;
+        private System.Nullable<System.DateTime> BanEndsAtField;
         
         private Game.Contracts.Room RoomField;
         
         private Game.Contracts.CreateRoomStatus StatusField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.Nullable<System.DateTime> BanEndsAtUtc
+        public System.Nullable<System.DateTime> BanEndsAt
         {
             get
             {
-                return this.BanEndsAtUtcField;
+                return this.BanEndsAtField;
             }
             set
             {
-                this.BanEndsAtUtcField = value;
+                this.BanEndsAtField = value;
             }
         }
         
@@ -813,22 +813,22 @@ namespace Game.Contracts
     public partial class JoinRoomResult : object
     {
         
-        private System.Nullable<System.DateTime> BanEndsAtUtcField;
+        private System.Nullable<System.DateTime> BanEndsAtField;
         
         private Game.Contracts.Room RoomField;
         
         private Game.Contracts.JoinRoomStatus StatusField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.Nullable<System.DateTime> BanEndsAtUtc
+        public System.Nullable<System.DateTime> BanEndsAt
         {
             get
             {
-                return this.BanEndsAtUtcField;
+                return this.BanEndsAtField;
             }
             set
             {
-                this.BanEndsAtUtcField = value;
+                this.BanEndsAtField = value;
             }
         }
         
@@ -1305,7 +1305,7 @@ namespace Game.Contracts
         
         private Game.Contracts.PlayerSummary SenderField;
         
-        private System.DateTime SentAtUtcField;
+        private System.DateTime SentAtField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
         public string RoomCode
@@ -1347,15 +1347,15 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.DateTime SentAtUtc
+        public System.DateTime SentAt
         {
             get
             {
-                return this.SentAtUtcField;
+                return this.SentAtField;
             }
             set
             {
-                this.SentAtUtcField = value;
+                this.SentAtField = value;
             }
         }
     }
@@ -1415,22 +1415,22 @@ namespace Game.Contracts
     public partial class RespondInvitationResult : object
     {
         
-        private System.Nullable<System.DateTime> BanEndsAtUtcField;
+        private System.Nullable<System.DateTime> BanEndsAtField;
         
         private Game.Contracts.Room RoomField;
         
         private Game.Contracts.RespondInvitationStatus StatusField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.Nullable<System.DateTime> BanEndsAtUtc
+        public System.Nullable<System.DateTime> BanEndsAt
         {
             get
             {
-                return this.BanEndsAtUtcField;
+                return this.BanEndsAtField;
             }
             set
             {
-                this.BanEndsAtUtcField = value;
+                this.BanEndsAtField = value;
             }
         }
         
@@ -1595,7 +1595,7 @@ namespace Game.Contracts
         
         private int SenderMemberIdField;
         
-        private System.DateTime SentAtUtcField;
+        private System.DateTime SentAtField;
         
         private string TextField;
         
@@ -1665,15 +1665,15 @@ namespace Game.Contracts
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.DateTime SentAtUtc
+        public System.DateTime SentAt
         {
             get
             {
-                return this.SentAtUtcField;
+                return this.SentAtField;
             }
             set
             {
-                this.SentAtUtcField = value;
+                this.SentAtField = value;
             }
         }
         
@@ -3568,6 +3568,21 @@ namespace Game.Contracts
         StorageUnavailable = 6,
     }
     
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="DeleteAccountResult", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
+    public enum DeleteAccountResult : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Deleted = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        MatchInProgress = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        DatabaseUnavailable = 2,
+    }
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="AvatarResponse", Namespace="http://schemas.datacontract.org/2004/07/Game.Contracts")]
@@ -4285,6 +4300,12 @@ namespace Game.Contracts
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/UpdateProfile", ReplyAction="http://tempuri.org/IProfileService/UpdateProfileResponse")]
         System.Threading.Tasks.Task<Game.Contracts.UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/DeleteAccount", ReplyAction="http://tempuri.org/IProfileService/DeleteAccountResponse")]
+        Game.Contracts.DeleteAccountResult DeleteAccount();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/DeleteAccount", ReplyAction="http://tempuri.org/IProfileService/DeleteAccountResponse")]
+        System.Threading.Tasks.Task<Game.Contracts.DeleteAccountResult> DeleteAccountAsync();
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IProfileService/GetAvatarThumbnail", ReplyAction="http://tempuri.org/IProfileService/GetAvatarThumbnailResponse")]
         Game.Contracts.AvatarResponse GetAvatarThumbnail(string avatarReference);
         
@@ -4743,6 +4764,16 @@ namespace Game.Contracts
         public System.Threading.Tasks.Task<Game.Contracts.UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar)
         {
             return base.Channel.UpdateProfileAsync(username, includesNewAvatar);
+        }
+        
+        public Game.Contracts.DeleteAccountResult DeleteAccount()
+        {
+            return base.Channel.DeleteAccount();
+        }
+        
+        public System.Threading.Tasks.Task<Game.Contracts.DeleteAccountResult> DeleteAccountAsync()
+        {
+            return base.Channel.DeleteAccountAsync();
         }
         
         public Game.Contracts.AvatarResponse GetAvatarThumbnail(string avatarReference)

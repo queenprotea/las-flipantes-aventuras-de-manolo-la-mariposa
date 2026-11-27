@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using FontStashSharp.RichText;
-
 using Game.Contracts;
 
 using Microsoft.Xna.Framework;
@@ -23,16 +21,28 @@ namespace Torres.Client.Screens
 
         private readonly MatchSummaryFlow _matchSummaryFlow;
         private readonly MatchPause _matchPause;
-        private readonly Image _winnerImage = new Image { Width = MatchLayout.WinnerIconWidth, Height = MatchLayout.WinnerIconHeight, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly LocalizedLabel _winnerLabel = new LocalizedLabel(TextKeys.Result.WinnerTitle) { Font = Fonts.Winner, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
-        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.Result.SummaryLabel) { Font = Fonts.Body, TextColor = Theme.MutedInk, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly PauseCardFactory _pauseCards;
+        private readonly Image _winnerImage = new Image
+        {
+            Width = MatchLayout.WinnerIconWidth,
+            Height = MatchLayout.WinnerIconHeight,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        private readonly LocalizedLabel _winnerLabel = LabelFactory.CreateCenteredTitle(TextKeys.Result.WinnerTitle, Fonts.Winner);
+        private readonly LocalizedLabel _summaryLabel = new LocalizedLabel(TextKeys.Result.SummaryLabel)
+        {
+            Font = Fonts.Body,
+            TextColor = Theme.MutedInk,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
         private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
 
-        internal ResultScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause)
+        internal ResultScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause, PauseCardFactory pauseCards)
             : base(TextKeys.Result.HeaderLabel, true)
         {
             _matchSummaryFlow = matchSummaryFlow;
             _matchPause = matchPause;
+            _pauseCards = pauseCards;
         }
 
         internal override void Open()
@@ -61,11 +71,7 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            LocalizedLabel roomStillOpen = LabelFactory.CreateHint(TextKeys.Result.RoomStillOpenHint);
-            roomStillOpen.Width = MatchLayout.ResultCardWidth;
-            roomStillOpen.Wrap = true;
-            roomStillOpen.TextAlign = TextHorizontalAlignment.Center;
-            roomStillOpen.HorizontalAlignment = HorizontalAlignment.Center;
+            LocalizedLabel roomStillOpen = LabelFactory.CreateCenteredHint(TextKeys.Result.RoomStillOpenHint, MatchLayout.ResultCardWidth);
 
             var winnerHeader = new VerticalStackPanel { HorizontalAlignment = HorizontalAlignment.Center };
             winnerHeader.Widgets.Add(_winnerImage);
@@ -77,7 +83,7 @@ namespace Torres.Client.Screens
             cardContent.Widgets.Add(BuildTable());
             cardContent.Widgets.Add(BuildBackButton());
             cardContent.Widgets.Add(roomStillOpen);
-            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.ResultCardWidth);
+            Panel cardLayer = _pauseCards.CreateCardLayer(cardContent, MatchLayout.ResultCardWidth);
 
             return cardLayer;
         }
@@ -87,19 +93,6 @@ namespace Torres.Client.Screens
             MatchSeat foundSeat = matchView.Seats.First(seat => seat.SeatNumber == seatNumber);
 
             return foundSeat;
-        }
-
-        private static LocalizedLabel BuildHeaderCell(string textKey)
-        {
-            var headerCell = new LocalizedLabel(textKey)
-            {
-                Width = MatchLayout.PauseStatColumnWidth,
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                TextAlign = TextHorizontalAlignment.Center,
-            };
-
-            return headerCell;
         }
 
         private static LocalizedLabel CreateSeatTag(string textKey, Color textColor)
@@ -114,24 +107,9 @@ namespace Torres.Client.Screens
             return seatTag;
         }
 
-        private static Label BuildStatCell(string cellText, Color textColor)
-        {
-            var statCell = new Label
-            {
-                Text = cellText,
-                Width = MatchLayout.PauseStatColumnWidth,
-                Font = Fonts.Body,
-                TextColor = textColor,
-                TextAlign = TextHorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return statCell;
-        }
-
         private HorizontalStackPanel BuildPlayerCell(MatchSeat seat)
         {
-            HorizontalStackPanel playerCell = _matchPause.CreatePlayerTag(seat, Fonts.Control);
+            HorizontalStackPanel playerCell = _pauseCards.CreatePlayerTag(seat, Fonts.Control);
             if (seat.IsGuest)
             {
                 playerCell.Widgets.Add(CreateSeatTag(TextKeys.Common.GuestTag, Theme.LavenderInk));
@@ -149,26 +127,19 @@ namespace Torres.Client.Screens
         {
             int planterPoints = seat.RoundScores.Sum(roundScore => roundScore.PlanterPoints);
             int butterflyPoints = seat.RoundScores.Sum(roundScore => roundScore.ButterflyPoints);
-            string butterflyText = DisplaySymbols.MissingValue;
-            if (butterflyPoints > 0)
-            {
-                butterflyText = DisplayFormats.FormatBonus(butterflyPoints);
-            }
+            string butterflyText = DisplayFormats.FormatButterflyPoints(butterflyPoints);
 
-            Label rankLabel = BuildStatCell(rankText, Theme.Ink);
+            Label rankLabel = PauseCardFactory.CreateStatCell(rankText, Theme.Ink);
             rankLabel.Width = MatchLayout.PauseRankColumnWidth;
             HorizontalStackPanel playerCell = BuildPlayerCell(seat);
-            var totalCell = new Panel { Width = MatchLayout.PauseStatColumnWidth };
-            Panel totalCircle = _matchPause.CreateScoreCircle(seat.FinalScore);
-            totalCircle.HorizontalAlignment = HorizontalAlignment.Center;
-            totalCell.Widgets.Add(totalCircle);
+            Panel totalCell = _pauseCards.CreateTotalCell(seat.FinalScore);
 
-            HorizontalStackPanel playerRow = _matchPause.CreateTableRow(rankedRow.IsViewer, rankedRow.IsWinner);
+            HorizontalStackPanel playerRow = _pauseCards.CreateTableRow(rankedRow.IsViewer, rankedRow.IsWinner);
             playerRow.Widgets.Add(rankLabel);
             playerRow.Widgets.Add(playerCell);
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(planterPoints), Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.MintInk));
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(seat.CardPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(PauseCardFactory.CreateStatCell(DisplayFormats.FormatInteger(planterPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(PauseCardFactory.CreateStatCell(butterflyText, Theme.MintInk));
+            playerRow.Widgets.Add(PauseCardFactory.CreateStatCell(DisplayFormats.FormatInteger(seat.CardPoints), Theme.SoftInk));
             playerRow.Widgets.Add(totalCell);
             StackPanel.SetProportionType(playerCell, ProportionType.Fill);
 
@@ -183,13 +154,13 @@ namespace Torres.Client.Screens
                 TextColor = Theme.MutedInk,
             };
 
-            HorizontalStackPanel headerRow = _matchPause.CreateTableRow(false, false);
+            HorizontalStackPanel headerRow = _pauseCards.CreateTableRow(false, false);
             headerRow.Widgets.Add(new Panel { Width = MatchLayout.PauseRankColumnWidth });
             headerRow.Widgets.Add(playerHeader);
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.PlantersColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.ButterflyColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.CardsColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.Result.TotalColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.Result.PlantersColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.Result.ButterflyColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.Result.CardsColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.Result.TotalColumn));
             StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
 
             var scoreTable = new VerticalStackPanel();
@@ -202,7 +173,7 @@ namespace Torres.Client.Screens
         private HorizontalStackPanel BuildBackButton()
         {
             LocalizedButton backButton = ButtonFactory.CreatePrimaryButton(TextKeys.Common.BackToRoomButton);
-            _matchPause.StylePrimaryPill(backButton);
+            _pauseCards.StylePrimaryPill(backButton);
             backButton.Click += BackButtonOnClick;
 
             HorizontalStackPanel resultActions = PanelFactory.CreateButtonRow();

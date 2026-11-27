@@ -17,7 +17,7 @@ namespace Torres.Client.Flows
 
         internal MatchView? CurrentMatchView => _playerSession.CurrentMatchView;
 
-        internal DateTime? StepEndsAt => _playerSession.StepEndsAtUtc;
+        internal TimeSpan StepTimeLeft => _playerSession.StepTimeLeft;
 
         internal ScreenId LeaveMatch()
         {

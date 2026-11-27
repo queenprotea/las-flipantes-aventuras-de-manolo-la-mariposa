@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 using CoreWCF;
 using CoreWCF.Channels;
@@ -28,10 +29,6 @@ namespace Game.Server
 
         public ServerEndpoints(ServerSettings serverSettings, SessionSettings sessionSettings, ILog hostLog)
         {
-            ArgumentNullException.ThrowIfNull(serverSettings);
-            ArgumentNullException.ThrowIfNull(sessionSettings);
-            ArgumentNullException.ThrowIfNull(hostLog);
-
             _serverSettings = serverSettings;
             _sessionSettings = sessionSettings;
             _metadataBaseAddress = new UriBuilder(Uri.UriSchemeHttp, MetadataHostName, serverSettings.MetadataHttpPort).Uri;
@@ -40,8 +37,6 @@ namespace Game.Server
 
         public void ConfigureHost(WebApplicationBuilder builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.WebHost.UseNetTcp(_serverSettings.NetTcpPort);
             builder.Services.AddServiceModelServices();
             if (_serverSettings.PublishesServiceMetadata)
@@ -53,13 +48,11 @@ namespace Game.Server
 
         public void Publish(WebApplication app)
         {
-            ArgumentNullException.ThrowIfNull(app);
-
             if (_serverSettings.PublishesServiceMetadata)
             {
                 ServiceMetadataBehavior metadataBehavior = app.Services.GetRequiredService<ServiceMetadataBehavior>();
                 metadataBehavior.HttpGetEnabled = true;
-                _hostLog.InfoFormat(MetadataPublishedMessage, _metadataBaseAddress);
+                _hostLog.InfoFormat(CultureInfo.InvariantCulture, MetadataPublishedMessage, _metadataBaseAddress);
             }
 
             app.UseServiceModel(AddEndpoints);

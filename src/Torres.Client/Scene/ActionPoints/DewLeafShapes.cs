@@ -38,19 +38,19 @@ namespace Torres.Client.Scene
         private const float SideStart = -1f;
         private const string SeededVariegationJustification = "The fixed seed gives every leaf the same variegation on every run; the values are not used for security.";
 
-        internal static Vector3 FindRibPoint(float lengthShare)
+        internal static Vector3 FindRibPoint(float lengthParameter)
         {
-            Vector3 ribPoint = FindSurfacePoint(lengthShare, 0f);
+            Vector3 ribPoint = FindSurfacePoint(lengthParameter, 0f);
 
             return ribPoint;
         }
 
-        internal static Vector3 FindSurfacePoint(float lengthShare, float sideShare)
+        internal static Vector3 FindSurfacePoint(float lengthParameter, float sideParameter)
         {
-            float halfWidth = LeafHalfWidth * MathF.Pow(Math.Max(MathF.Sin(MathF.PI * MathF.Pow(lengthShare, WidthShapePower)), 0f), WidthRoundPower);
-            float archLift = ArchHeight * MathF.Pow(MathF.Sin(MathF.PI * lengthShare), ArchPower);
-            float foldLift = FoldSlope * Math.Abs(sideShare) * halfWidth;
-            var surfacePoint = new Vector3((lengthShare - HalfLength) * LeafLength, archLift + foldLift + SurfaceLift, sideShare * halfWidth);
+            float halfWidth = LeafHalfWidth * MathF.Pow(Math.Max(MathF.Sin(MathF.PI * MathF.Pow(lengthParameter, WidthShapePower)), 0f), WidthRoundPower);
+            float archLift = ArchHeight * MathF.Pow(MathF.Sin(MathF.PI * lengthParameter), ArchPower);
+            float foldLift = FoldSlope * Math.Abs(sideParameter) * halfWidth;
+            var surfacePoint = new Vector3((lengthParameter - HalfLength) * LeafLength, archLift + foldLift + SurfaceLift, sideParameter * halfWidth);
 
             return surfacePoint;
         }
@@ -62,12 +62,12 @@ namespace Torres.Client.Scene
             var gridColors = new List<Color>();
             for (var lengthIndex = 0; lengthIndex <= LengthSteps; lengthIndex++)
             {
-                float lengthShare = (float)lengthIndex / LengthSteps;
+                float lengthParameter = (float)lengthIndex / LengthSteps;
                 for (var widthIndex = 0; widthIndex <= WidthSteps; widthIndex++)
                 {
-                    float sideShare = SideStart + (SideSpan * widthIndex / WidthSteps);
-                    gridPositions.Add(FindSurfacePoint(lengthShare, sideShare));
-                    gridColors.Add(FindLeafColor(lengthShare, Math.Abs(sideShare), variegationReach[lengthIndex]));
+                    float sideParameter = SideStart + (SideSpan * widthIndex / WidthSteps);
+                    gridPositions.Add(FindSurfacePoint(lengthParameter, sideParameter));
+                    gridColors.Add(FindLeafColor(lengthParameter, Math.Abs(sideParameter), variegationReach[lengthIndex]));
                 }
             }
 
@@ -78,13 +78,13 @@ namespace Torres.Client.Scene
             meshBuilder.AddCylinder(stemTransform, GardenPalette.Stem);
         }
 
-        private static Color FindLeafColor(float lengthShare, float sideDistance, float reachFactor)
+        private static Color FindLeafColor(float lengthParameter, float sideDistance, float reachFactor)
         {
             Color leafColor = Color.Lerp(GardenPalette.DewLeaf, GardenPalette.DewLeafEdge, Math.Max(0f, (sideDistance - EdgeShadeStart) / EdgeShadeSpan));
-            bool isVariegated = (lengthShare > VariegationStart) && (lengthShare < VariegationEnd);
+            bool isVariegated = (lengthParameter > VariegationStart) && (lengthParameter < VariegationEnd);
             if (isVariegated)
             {
-                float creamReach = (VariegationBaseReach + (VariegationExtraReach * reachFactor)) * MathF.Sin(MathF.PI * (lengthShare - VariegationStart) / (VariegationEnd - VariegationStart));
+                float creamReach = (VariegationBaseReach + (VariegationExtraReach * reachFactor)) * MathF.Sin(MathF.PI * (lengthParameter - VariegationStart) / (VariegationEnd - VariegationStart));
                 if (sideDistance < creamReach)
                 {
                     leafColor = Color.Lerp(GardenPalette.DewLeafCream, leafColor, Math.Max(0f, (sideDistance - creamReach + VariegationSoftness) / VariegationSoftness));

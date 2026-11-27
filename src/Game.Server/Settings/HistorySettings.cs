@@ -13,8 +13,6 @@ namespace Game.Server
 
         public static HistorySettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             HistorySettings? settings = configuration.GetSection(SectionName).Get<HistorySettings>();
             if ((settings is null) || (settings.MatchesPerPage <= 0))
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 
 using log4net;
@@ -13,15 +14,12 @@ namespace Game.Server
         private const string EmailServerMessage = "Emails are delivered to {0}:{1}";
         private const string ServerListeningMessage = "Server listening on net.tcp port {0}";
 
-        private readonly string[] _args;
+        private readonly string[] _commandLineArguments;
         private readonly ILog _hostLog;
 
-        public ServerHost(string[] args, ILog hostLog)
+        public ServerHost(string[] commandLineArguments, ILog hostLog)
         {
-            ArgumentNullException.ThrowIfNull(args);
-            ArgumentNullException.ThrowIfNull(hostLog);
-
-            _args = args;
+            _commandLineArguments = commandLineArguments;
             _hostLog = hostLog;
         }
 
@@ -29,7 +27,7 @@ namespace Game.Server
         {
             var hostOptions = new WebApplicationOptions
             {
-                Args = _args,
+                Args = _commandLineArguments,
                 ContentRootPath = AppContext.BaseDirectory,
             };
             WebApplicationBuilder builder = WebApplication.CreateBuilder(hostOptions);
@@ -65,22 +63,17 @@ namespace Game.Server
             WebApplication app = builder.Build();
 
             var serverStartup = new ServerStartup(app.Services, _hostLog);
-            try
+            bool isPrepared = await serverStartup.PrepareAsync();
+            if (isPrepared)
             {
-                bool isPrepared = await serverStartup.PrepareAsync();
-                if (isPrepared)
-                {
-                    serverEndpoints.Publish(app);
-                    serverStartup.StartSupervisor();
-                    _hostLog.InfoFormat(EmailServerMessage, hostSettings.Email.ChosenHost, hostSettings.Email.ChosenPort);
-                    _hostLog.InfoFormat(ServerListeningMessage, hostSettings.Server.NetTcpPort);
-                    await app.RunAsync();
-                }
+                serverEndpoints.Publish(app);
+                serverStartup.StartSupervisor();
+                _hostLog.InfoFormat(CultureInfo.InvariantCulture, EmailServerMessage, hostSettings.Email.ChosenHost, hostSettings.Email.ChosenPort);
+                _hostLog.InfoFormat(CultureInfo.InvariantCulture, ServerListeningMessage, hostSettings.Server.NetTcpPort);
+                await app.RunAsync();
             }
-            finally
-            {
-                await serverStartup.StopAsync();
-            }
+
+            await serverStartup.StopAsync();
         }
     }
 }

@@ -28,10 +28,6 @@ namespace Game.Services
 
         public EmailSender(MailServer mailServer, MailSender mailSender, TimeSpan sendTimeout)
         {
-            ArgumentNullException.ThrowIfNull(mailServer);
-            ArgumentNullException.ThrowIfNull(mailSender);
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sendTimeout, TimeSpan.Zero);
-
             _mailServer = mailServer;
             _mailSender = mailSender;
             _sendTimeout = sendTimeout;
@@ -39,8 +35,6 @@ namespace Game.Services
 
         public Task<bool> SendAsync(EmailMessage message)
         {
-            ArgumentNullException.ThrowIfNull(message);
-
             Task<bool> sending = DeliverOrReportAsync(message);
 
             return sending;

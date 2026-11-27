@@ -26,10 +26,7 @@ namespace Torres.Client.Widgets
             _answerRow.Widgets.Add(confirmButton);
             _answerRow.Widgets.Add(cancelButton);
 
-            var forfeitPanel = new VerticalStackPanel
-            {
-                Spacing = Metrics.ButtonSpacing,
-            };
+            var forfeitPanel = new VerticalStackPanel { Spacing = Metrics.ButtonSpacing };
             forfeitPanel.Widgets.Add(forfeitButton);
             forfeitPanel.Widgets.Add(_questionNotice);
             forfeitPanel.Widgets.Add(_answerRow);

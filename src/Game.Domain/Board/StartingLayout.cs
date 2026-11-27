@@ -16,7 +16,6 @@ namespace Game.Domain
 
         public StartingLayout(IReadOnlyList<Flower> flowers)
         {
-            ArgumentNullException.ThrowIfNull(flowers);
             ArgumentOutOfRangeException.ThrowIfLessThan(flowers.Count, MinimumFlowerCount, nameof(flowers));
             if (flowers.Any(flower => flower.Level != StartingFlowerLevel))
             {

@@ -8,10 +8,7 @@ namespace Game.Services.Tests
 {
     public sealed class SessionTokenIssuerTests
     {
-        private const int ShortKeyBytes = 16;
         private const int MatchId = 5;
-        private const int NoPlayerId = 0;
-        private const int PositiveGuestId = 3;
         private const string TamperedEnding = "x";
         private const string UnsignedToken = "esto-no-es-un-token";
 
@@ -25,12 +22,6 @@ namespace Game.Services.Tests
         public SessionTokenIssuerTests()
         {
             _tokenIssuer = new SessionTokenIssuer(SampleServices.SigningKey, _fakeTimeProvider);
-        }
-
-        [Fact]
-        public void Test_Constructor_WithAShortKey_ThrowsArgumentOutOfRangeException()
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new SessionTokenIssuer(new byte[ShortKeyBytes], _fakeTimeProvider));
         }
 
         [Fact]
@@ -152,18 +143,6 @@ namespace Game.Services.Tests
             SessionTokenReading tokenReading = _tokenIssuer.Read(matchToken);
 
             Assert.Equal(SessionTokenStatus.Expired, tokenReading.Status);
-        }
-
-        [Fact]
-        public void Test_Issue_WithoutPlayerId_ThrowsArgumentOutOfRangeException()
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(() => _tokenIssuer.Issue(NoPlayerId, SamplePlayers.AnaUsername));
-        }
-
-        [Fact]
-        public void Test_IssueForGuest_WithAPositiveId_ThrowsArgumentOutOfRangeException()
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(() => _tokenIssuer.IssueForGuest(PositiveGuestId, SamplePlayers.CaroAlias));
         }
 
         [Fact]

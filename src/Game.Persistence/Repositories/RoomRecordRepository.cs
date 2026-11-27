@@ -19,16 +19,11 @@ namespace Game.Persistence
 
         public RoomRecordRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public async Task<int?> CreateAsync(string code, string visibility)
         {
-            ArgumentNullException.ThrowIfNull(code);
-            ArgumentNullException.ThrowIfNull(visibility);
-
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
             var newRoom = new RoomRecord
             {
@@ -51,10 +46,8 @@ namespace Game.Persistence
             return createdRoomId;
         }
 
-        public async Task CloseAsync(int roomId, DateTime closedAtUtc)
+        public async Task CloseAsync(int roomId, DateTime closedAt)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
             await using IDbContextTransaction closing = await databaseContext.Database.BeginTransactionAsync();
 
@@ -63,11 +56,11 @@ namespace Game.Persistence
                 .ExecuteDeleteAsync();
             await databaseContext.RoomRecords
                 .Where(storedRoom => (storedRoom.RoomId == roomId) && !storedRoom.ClosedAt.HasValue)
-                .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAtUtc));
+                .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAt));
             await closing.CommitAsync();
         }
 
-        public async Task<int> CloseAllOpenAsync(DateTime closedAtUtc)
+        public async Task<int> CloseAllOpenAsync(DateTime closedAt)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();
             await using IDbContextTransaction closing = await databaseContext.Database.BeginTransactionAsync();
@@ -75,7 +68,7 @@ namespace Game.Persistence
             await databaseContext.RoomInvitationRecords.ExecuteDeleteAsync();
             int closedCount = await databaseContext.RoomRecords
                 .Where(storedRoom => !storedRoom.ClosedAt.HasValue)
-                .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAtUtc));
+                .ExecuteUpdateAsync(roomUpdate => roomUpdate.SetProperty(storedRoom => storedRoom.ClosedAt, closedAt));
             await closing.CommitAsync();
 
             return closedCount;

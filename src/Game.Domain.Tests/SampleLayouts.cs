@@ -4,6 +4,12 @@ namespace Game.Domain.Tests
 {
     internal static class SampleLayouts
     {
+        internal const int LevelOne = 1;
+        internal const int LevelTwo = 2;
+        internal const int LevelThree = 3;
+        internal const int FiveFlowers = 5;
+        internal const int OneScoredPlanter = 1;
+
         internal static BoardCell NorthWestFlower { get; } = new BoardCell(1, 1);
 
         internal static BoardCell NorthEastFlower { get; } = new BoardCell(1, 6);

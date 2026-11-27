@@ -94,6 +94,14 @@ namespace Game.Services.Tests
             return updating;
         }
 
+        public Task<bool> DeleteAsync(int playerId)
+        {
+            bool wasDeleted = Players.RemoveAll(player => player.PlayerId == playerId) > 0;
+            Task<bool> deletion = Task.FromResult(wasDeleted);
+
+            return deletion;
+        }
+
         public Player? FindByUsername(string username)
         {
             Player? foundPlayer = Players.Find(player => string.Equals(player.Username, username, StringComparison.OrdinalIgnoreCase));

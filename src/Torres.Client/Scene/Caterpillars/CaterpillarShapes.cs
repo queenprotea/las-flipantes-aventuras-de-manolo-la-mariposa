@@ -24,8 +24,8 @@ namespace Torres.Client.Scene
         private const float AntennaTiltDegrees = 20f;
         private const float AntennaTipRadius = 0.02f;
         private const float AntennaTipShade = 0.7f;
-        private const float FootSpreadShare = 0.7f;
-        private const float FootDropShare = 0.85f;
+        private const float FootSpreadFraction = 0.7f;
+        private const float FootDropFraction = 0.85f;
         private const float FootShade = 0.75f;
         private const float CheekForward = 0.07f;
         private const float CheekSpread = 0.075f;
@@ -61,7 +61,11 @@ namespace Torres.Client.Scene
                 float waveLift = SegmentWaveHeight * MathF.Sin(wavePhaseRadians);
                 Vector3 segmentCenter = pose.BodyOrigin + (headingDirection * segmentOffset) + new Vector3(0f, segmentRadius + waveLift, 0f);
                 parts.Add(new CaterpillarPart(Matrix.CreateScale(segmentRadius) * Matrix.CreateTranslation(segmentCenter), pose.BodyColor, CaterpillarPartShape.Sphere, true));
-                AddFeet(parts, segmentCenter, segmentRadius, sidewaysDirection, footColor);
+                var segment = new BoundingSphere(segmentCenter, segmentRadius);
+                foreach (float sideSign in BoardGeometry.MirroredSideSigns)
+                {
+                    parts.Add(new CaterpillarPart(CreateFootTransform(segment, sidewaysDirection, sideSign), footColor, CaterpillarPartShape.Sphere, false));
+                }
                 segmentOffset += segmentRadius * SegmentSpacing;
             }
 
@@ -70,13 +74,12 @@ namespace Torres.Client.Scene
             AddFace(parts, pose, headCenter);
         }
 
-        private static void AddFeet(List<CaterpillarPart> parts, Vector3 segmentCenter, float segmentRadius, Vector3 sidewaysDirection, Color footColor)
+        private static Matrix CreateFootTransform(BoundingSphere segment, Vector3 sidewaysDirection, float sideSign)
         {
-            foreach (float sideSign in BoardGeometry.MirroredSideSigns)
-            {
-                Vector3 footCenter = segmentCenter + (sidewaysDirection * segmentRadius * FootSpreadShare * sideSign) - new Vector3(0f, segmentRadius * FootDropShare, 0f);
-                parts.Add(new CaterpillarPart(Matrix.CreateScale(_footScale) * Matrix.CreateTranslation(footCenter), footColor, CaterpillarPartShape.Sphere, false));
-            }
+            Vector3 footCenter = segment.Center + (sidewaysDirection * segment.Radius * FootSpreadFraction * sideSign) - new Vector3(0f, segment.Radius * FootDropFraction, 0f);
+            Matrix footTransform = Matrix.CreateScale(_footScale) * Matrix.CreateTranslation(footCenter);
+
+            return footTransform;
         }
 
         private static void AddFace(List<CaterpillarPart> parts, CaterpillarPose pose, Vector3 headCenter)

@@ -19,10 +19,13 @@ namespace Game.Match.Tests
         {
             get
             {
+                List<MatchState> savedStates;
                 lock (_stateLock)
                 {
-                    return _savedStates.ToList();
+                    savedStates = _savedStates.ToList();
                 }
+
+                return savedStates;
             }
         }
 
@@ -30,10 +33,13 @@ namespace Game.Match.Tests
         {
             get
             {
+                List<int> deletedMatchIds;
                 lock (_stateLock)
                 {
-                    return _deletedMatchIds.ToList();
+                    deletedMatchIds = _deletedMatchIds.ToList();
                 }
+
+                return deletedMatchIds;
             }
         }
 

@@ -16,7 +16,7 @@ namespace Torres.Client
         private readonly SettingsFailureScreen _settingsFailureScreen = new SettingsFailureScreen();
 
         private Desktop? _desktop;
-        private string _appliedUiCultureName = string.Empty;
+        private string _appliedUICultureName = string.Empty;
 
         internal SettingsFailureGame()
         {
@@ -29,7 +29,7 @@ namespace Torres.Client
         protected override void Initialize()
         {
             _languagePreference.StartLoadingSavedPreference();
-            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
+            _appliedUICultureName = _languagePreference.CurrentLanguage.UICultureName;
             MyraEnvironment.Game = this;
             _desktop = new Desktop();
             _desktop.Root = _settingsFailureScreen.Root;
@@ -59,12 +59,12 @@ namespace Torres.Client
 
         private void FollowLanguageChange()
         {
-            if (_languagePreference.CurrentLanguage.UiCultureName == _appliedUiCultureName)
+            if (_languagePreference.CurrentLanguage.UICultureName == _appliedUICultureName)
             {
                 return;
             }
 
-            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
+            _appliedUICultureName = _languagePreference.CurrentLanguage.UICultureName;
             LanguageRefresher.Refresh(_settingsFailureScreen.Root);
         }
     }

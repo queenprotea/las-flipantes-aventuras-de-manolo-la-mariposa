@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,8 +14,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<RoomRecord> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(RoomTable);
             builder.HasKey(mappedRoom => mappedRoom.RoomId);
             builder.Property(mappedRoom => mappedRoom.RoomId)

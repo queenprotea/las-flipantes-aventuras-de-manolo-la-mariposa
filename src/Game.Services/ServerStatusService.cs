@@ -1,4 +1,4 @@
-using System;
+using System.Globalization;
 using System.Threading.Tasks;
 
 using CoreWCF;
@@ -24,8 +24,6 @@ namespace Game.Services
 
         public ServerStatusService(IPlayerRepository playerRepository)
         {
-            ArgumentNullException.ThrowIfNull(playerRepository);
-
             _playerRepository = playerRepository;
         }
 
@@ -42,7 +40,7 @@ namespace Game.Services
                 return ServerStatus.DatabaseUnavailable;
             }
 
-            _log.InfoFormat(StatusAnsweredMessage, playerCount);
+            _log.InfoFormat(CultureInfo.InvariantCulture, StatusAnsweredMessage, playerCount);
 
             return ServerStatus.Ready;
         }

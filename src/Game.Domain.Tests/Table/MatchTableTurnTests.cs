@@ -8,18 +8,8 @@ namespace Game.Domain.Tests
 {
     public sealed class MatchTableTurnTests
     {
-        private const int TwoSeatCount = 2;
-        private const int ThreeSeatCount = 3;
-        private const int SeatNumberOne = 1;
-        private const int SeatNumberTwo = 2;
-        private const int SeatNumberThree = 3;
         private const int TurnRoundNumberTwo = 2;
         private const int TurnRoundNumberThree = 3;
-        private const int RoundNumberTwo = 2;
-        private const int FourTurns = 4;
-        private const int LevelOne = 1;
-        private const int LevelTwo = 2;
-        private const int LevelThree = 3;
         private const int OneActionPoint = 1;
         private const int TwoPlanterCells = 2;
         private const int FourNeighborCells = 4;
@@ -39,7 +29,7 @@ namespace Game.Domain.Tests
         private static readonly BoardCell _eastOfFarGround = new BoardCell(4, 7);
         private static readonly BoardCell _westOfNorthEast = new BoardCell(1, 5);
         private static readonly BoardCell[] _fiveGroundCells = new BoardCell[] { new BoardCell(0, 0), new BoardCell(0, 2), new BoardCell(0, 4), new BoardCell(5, 5), new BoardCell(7, 7) };
-        private static readonly Caterpillar _seatOneOnNorthWest = new Caterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
+        private static readonly Caterpillar _seatOneOnNorthWest = new Caterpillar(SampleRules.SeatNumberOne, SampleLayouts.NorthWestFlower);
 
         [Fact]
         public void Test_PlaceButterfly_ByLastPlacer_GivesFiveActionPointsToSeatOne()
@@ -62,7 +52,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -72,7 +62,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(PointsLeftAfterPlacement, table.ActionPointsLeft);
         }
@@ -82,7 +72,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.NorthEastFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.NorthEastFlower);
 
             Assert.Equal(TurnActionOutcome.CellOccupied, outcome);
         }
@@ -92,7 +82,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.GroundCell);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.GroundCell);
 
             Assert.Equal(TurnActionOutcome.NotAFlower, outcome);
         }
@@ -102,7 +92,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberTwo, SampleLayouts.CenterFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberTwo, SampleLayouts.CenterFlower);
 
             Assert.Equal(TurnActionOutcome.NotYourTurn, outcome);
         }
@@ -110,9 +100,9 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_PlaceCaterpillar_DuringCaterpillarPlacement_ReturnsWrongPhase()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, SampleRules.TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(TurnActionOutcome.WrongPhase, outcome);
         }
@@ -121,10 +111,10 @@ namespace Game.Domain.Tests
         public void Test_PlaceCaterpillar_AfterSpendingFourPoints_ReturnsNotEnoughActionPoints()
         {
             MatchTable table = CreatePlayedOpening();
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.SouthWestFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.SouthWestFlower);
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.SouthEastFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.SouthEastFlower);
 
             Assert.Equal(TurnActionOutcome.NotEnoughActionPoints, outcome);
         }
@@ -135,7 +125,7 @@ namespace Game.Domain.Tests
             List<Caterpillar> fiveCaterpillars = _fiveGroundCells.Select(CreateSeatOneCaterpillar).ToList();
             MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, fiveCaterpillars);
 
-            TurnActionOutcome outcome = table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            TurnActionOutcome outcome = table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(TurnActionOutcome.NoCaterpillarsLeft, outcome);
         }
@@ -145,7 +135,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            int caterpillarsLeft = table.CountCaterpillarsLeft(SeatNumberOne);
+            int caterpillarsLeft = table.CountCaterpillarsLeft(SampleRules.SeatNumberOne);
 
             Assert.Equal(CaterpillarsLeftAfterTheOpening, caterpillarsLeft);
         }
@@ -155,7 +145,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -165,7 +155,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
 
             Assert.Equal(PointsLeftAfterMovement, table.ActionPointsLeft);
         }
@@ -175,9 +165,9 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
 
-            Assert.Contains(new Caterpillar(SeatNumberOne, _southOfNorthWest), table.Caterpillars);
+            Assert.Contains(new Caterpillar(SampleRules.SeatNumberOne, _southOfNorthWest), table.Caterpillars);
         }
 
         [Fact]
@@ -185,7 +175,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, new Caterpillar[] { CreateSeatOneCaterpillar(_southOfNorthWest) });
 
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
 
             Assert.Equal(PointsLeftAfterClimb, table.ActionPointsLeft);
         }
@@ -193,10 +183,10 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_MoveCaterpillar_FromGroundToLevelTwoFlower_ReturnsClimbTooHigh()
         {
-            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, LevelTwo) };
+            var flowers = new Flower[] { new Flower(SampleLayouts.NorthWestFlower, SampleLayouts.LevelTwo) };
             MatchTable table = CreateTurnTable(flowers, new Caterpillar[] { CreateSeatOneCaterpillar(_southOfNorthWest) });
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
 
             Assert.Equal(TurnActionOutcome.ClimbTooHigh, outcome);
         }
@@ -204,10 +194,10 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_MoveCaterpillar_FromLevelThreeFlowerToGround_ReturnsApplied()
         {
-            var flowers = new Flower[] { new Flower(_tallFlowerCell, LevelThree) };
+            var flowers = new Flower[] { new Flower(_tallFlowerCell, SampleLayouts.LevelThree) };
             MatchTable table = CreateTurnTable(flowers, new Caterpillar[] { CreateSeatOneCaterpillar(_tallFlowerCell) });
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_tallFlowerCell, _eastOfNorthWest));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_tallFlowerCell, _eastOfNorthWest));
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -215,10 +205,10 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_MoveCaterpillar_FromLevelThreeFlowerToGround_ChargesOnlyTheMovement()
         {
-            var flowers = new Flower[] { new Flower(_tallFlowerCell, LevelThree) };
+            var flowers = new Flower[] { new Flower(_tallFlowerCell, SampleLayouts.LevelThree) };
             MatchTable table = CreateTurnTable(flowers, new Caterpillar[] { CreateSeatOneCaterpillar(_tallFlowerCell) });
 
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_tallFlowerCell, _eastOfNorthWest));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_tallFlowerCell, _eastOfNorthWest));
 
             Assert.Equal(PointsLeftAfterMovement, table.ActionPointsLeft);
         }
@@ -228,7 +218,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _diagonalOfNorthWest));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _diagonalOfNorthWest));
 
             Assert.Equal(TurnActionOutcome.NotNeighborCell, outcome);
         }
@@ -238,7 +228,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthEastFlower, _westOfNorthEast));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthEastFlower, _westOfNorthEast));
 
             Assert.Equal(TurnActionOutcome.NotYourCaterpillar, outcome);
         }
@@ -246,9 +236,9 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_MoveCaterpillar_OntoAnotherCaterpillar_ReturnsCellOccupied()
         {
-            MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, new Caterpillar[] { _seatOneOnNorthWest, new Caterpillar(SeatNumberTwo, _southOfNorthWest) });
+            MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, new Caterpillar[] { _seatOneOnNorthWest, new Caterpillar(SampleRules.SeatNumberTwo, _southOfNorthWest) });
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(SampleLayouts.NorthWestFlower, _southOfNorthWest));
 
             Assert.Equal(TurnActionOutcome.CellOccupied, outcome);
         }
@@ -257,11 +247,11 @@ namespace Game.Domain.Tests
         public void Test_MoveCaterpillar_WithOneActionPointUphill_KeepsTheActionPoint()
         {
             MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, new Caterpillar[] { CreateSeatOneCaterpillar(_southOfNorthWest), CreateSeatOneCaterpillar(_farGroundCell) });
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_farGroundCell, _eastOfFarGround));
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_eastOfFarGround, _farGroundCell));
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_farGroundCell, _eastOfFarGround));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_eastOfFarGround, _farGroundCell));
 
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
 
             Assert.Equal(OneActionPoint, table.ActionPointsLeft);
         }
@@ -270,11 +260,11 @@ namespace Game.Domain.Tests
         public void Test_MoveCaterpillar_WithOneActionPointUphill_ReturnsNotEnoughActionPoints()
         {
             MatchTable table = CreateTurnTable(SampleLayouts.FiveStartingFlowers, new Caterpillar[] { CreateSeatOneCaterpillar(_southOfNorthWest), CreateSeatOneCaterpillar(_farGroundCell) });
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_farGroundCell, _eastOfFarGround));
-            table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_eastOfFarGround, _farGroundCell));
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_farGroundCell, _eastOfFarGround));
+            table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_eastOfFarGround, _farGroundCell));
 
-            TurnActionOutcome outcome = table.MoveCaterpillar(SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
+            TurnActionOutcome outcome = table.MoveCaterpillar(SampleRules.SeatNumberOne, new CaterpillarMove(_southOfNorthWest, SampleLayouts.NorthWestFlower));
 
             Assert.Equal(TurnActionOutcome.NotEnoughActionPoints, outcome);
         }
@@ -314,7 +304,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -324,10 +314,10 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             IReadOnlyList<Flower> flowers = table.FindFlowers();
-            Assert.Contains(new Flower(SampleLayouts.CenterFlower, LevelTwo), flowers);
+            Assert.Contains(new Flower(SampleLayouts.CenterFlower, SampleLayouts.LevelTwo), flowers);
         }
 
         [Fact]
@@ -335,7 +325,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(SampleRules.TwoBuildings, table.BuildsLeft);
         }
@@ -345,7 +335,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             Assert.Equal(PointsLeftAfterBuilding, table.ActionPointsLeft);
         }
@@ -355,7 +345,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, SampleLayouts.NorthWestFlower);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.NorthWestFlower);
 
             Assert.Equal(TurnActionOutcome.CellOccupied, outcome);
         }
@@ -365,7 +355,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, SampleLayouts.SouthEastFlower);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.SouthEastFlower);
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -375,7 +365,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.SouthEastFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.SouthEastFlower);
 
             Assert.Equal(SampleLayouts.SouthEastFlower, table.ButterflyCell);
         }
@@ -383,10 +373,10 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_AddFlowerLevel_OnLevelThreeFlower_ReturnsFlowerAtMaximumLevel()
         {
-            var flowers = new Flower[] { new Flower(_tallFlowerCell, LevelThree) };
+            var flowers = new Flower[] { new Flower(_tallFlowerCell, SampleLayouts.LevelThree) };
             MatchTable table = CreateTurnTable(flowers, Array.Empty<Caterpillar>());
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, _tallFlowerCell);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, _tallFlowerCell);
 
             Assert.Equal(TurnActionOutcome.FlowerAtMaximumLevel, outcome);
         }
@@ -396,7 +386,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, _northOfNorthWest);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, _northOfNorthWest);
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -406,7 +396,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            table.AddFlowerLevel(SeatNumberOne, _northOfNorthWest);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, _northOfNorthWest);
 
             IReadOnlyList<Planter> planters = table.FindPlanters();
             Assert.Contains(TwoPlanterCells, planters.Select(planter => planter.CellCount));
@@ -417,7 +407,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, _farGroundCell);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, _farGroundCell);
 
             Assert.Equal(TurnActionOutcome.NotNextToPlanter, outcome);
         }
@@ -425,10 +415,10 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_AddFlowerLevel_OnGroundBetweenTwoPlanters_ReturnsJoinsPlanters()
         {
-            var flowers = new Flower[] { new Flower(_southOfNorthWest, LevelOne), new Flower(_southOfTallFlower, LevelOne) };
+            var flowers = new Flower[] { new Flower(_southOfNorthWest, SampleLayouts.LevelOne), new Flower(_southOfTallFlower, SampleLayouts.LevelOne) };
             MatchTable table = CreateTurnTable(flowers, Array.Empty<Caterpillar>());
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, _diagonalOfNorthWest);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, _diagonalOfNorthWest);
 
             Assert.Equal(TurnActionOutcome.JoinsPlanters, outcome);
         }
@@ -437,11 +427,11 @@ namespace Game.Domain.Tests
         public void Test_AddFlowerLevel_AfterThreeBuilds_ReturnsNoBuildsLeft()
         {
             MatchTable table = CreatePlayedOpening();
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.SouthWestFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.SouthWestFlower);
 
-            TurnActionOutcome outcome = table.AddFlowerLevel(SeatNumberOne, SampleLayouts.SouthWestFlower);
+            TurnActionOutcome outcome = table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.SouthWestFlower);
 
             Assert.Equal(TurnActionOutcome.NoBuildsLeft, outcome);
         }
@@ -480,9 +470,9 @@ namespace Game.Domain.Tests
         public void Test_EndTurn_BySeatOne_ReturnsApplied()
         {
             MatchTable table = CreatePlayedOpening();
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
-            TurnActionOutcome outcome = table.EndTurn(SeatNumberOne);
+            TurnActionOutcome outcome = table.EndTurn(SampleRules.SeatNumberOne);
 
             Assert.Equal(TurnActionOutcome.Applied, outcome);
         }
@@ -491,20 +481,20 @@ namespace Game.Domain.Tests
         public void Test_EndTurn_BySeatOne_GivesTheTurnToSeatTwo()
         {
             MatchTable table = CreatePlayedOpening();
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
-            table.EndTurn(SeatNumberOne);
+            table.EndTurn(SampleRules.SeatNumberOne);
 
-            Assert.Equal(SeatNumberTwo, table.ActiveSeatNumber);
+            Assert.Equal(SampleRules.SeatNumberTwo, table.ActiveSeatNumber);
         }
 
         [Fact]
         public void Test_EndTurn_BySeatOne_GivesTheWholeActionPoints()
         {
             MatchTable table = CreatePlayedOpening();
-            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.PlaceCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
-            table.EndTurn(SeatNumberOne);
+            table.EndTurn(SampleRules.SeatNumberOne);
 
             Assert.Equal(MatchTable.ActionPointsPerTurn, table.ActionPointsLeft);
         }
@@ -513,9 +503,9 @@ namespace Game.Domain.Tests
         public void Test_EndTurn_ByLastSeat_StartsTheNextTurnRound()
         {
             MatchTable table = CreatePlayedOpening();
-            table.EndTurn(SeatNumberOne);
+            table.EndTurn(SampleRules.SeatNumberOne);
 
-            table.EndTurn(SeatNumberTwo);
+            table.EndTurn(SampleRules.SeatNumberTwo);
 
             Assert.Equal(TurnRoundNumberTwo, table.TurnRoundNumber);
         }
@@ -524,11 +514,11 @@ namespace Game.Domain.Tests
         public void Test_EndTurn_ByLastSeat_StartsTheNextTurnWithSeatOne()
         {
             MatchTable table = CreatePlayedOpening();
-            table.EndTurn(SeatNumberOne);
+            table.EndTurn(SampleRules.SeatNumberOne);
 
-            table.EndTurn(SeatNumberTwo);
+            table.EndTurn(SampleRules.SeatNumberTwo);
 
-            Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
+            Assert.Equal(SampleRules.SeatNumberOne, table.ActiveSeatNumber);
         }
 
         [Fact]
@@ -536,7 +526,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            TurnActionOutcome outcome = table.EndTurn(SeatNumberTwo);
+            TurnActionOutcome outcome = table.EndTurn(SampleRules.SeatNumberTwo);
 
             Assert.Equal(TurnActionOutcome.NotYourTurn, outcome);
         }
@@ -548,13 +538,13 @@ namespace Game.Domain.Tests
 
             table.ExpireTurn();
 
-            Assert.Equal(SeatNumberTwo, table.ActiveSeatNumber);
+            Assert.Equal(SampleRules.SeatNumberTwo, table.ActiveSeatNumber);
         }
 
         [Fact]
         public void Test_ExpireTurn_DuringCaterpillarPlacement_ThrowsInvalidOperationException()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, SampleRules.TwoSeatCount, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             Assert.Throws<InvalidOperationException>(table.ExpireTurn);
         }
@@ -564,9 +554,9 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            ExpireTurns(table, FourTurns * TwoSeatCount);
+            ExpireTurns(table, SampleRules.FourTurns * SampleRules.TwoSeatCount);
 
-            Assert.Equal(RoundNumberTwo, table.RoundNumber);
+            Assert.Equal(SampleRules.RoundNumberTwo, table.RoundNumber);
         }
 
         [Fact]
@@ -574,7 +564,7 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
 
-            ExpireTurns(table, FourTurns * TwoSeatCount);
+            ExpireTurns(table, SampleRules.FourTurns * SampleRules.TwoSeatCount);
 
             Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
         }
@@ -582,13 +572,13 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpireTurn_InTurnThreeWithThreeSeats_StartsTheThirdTurnRound()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
-            table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
-            table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
-            table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
-            table.PlaceButterfly(SeatNumberThree, SampleLayouts.CenterFlower);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, SampleRules.ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.NorthWestFlower);
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberTwo, SampleLayouts.NorthEastFlower);
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberThree, SampleLayouts.SouthWestFlower);
+            table.PlaceButterfly(SampleRules.SeatNumberThree, SampleLayouts.CenterFlower);
 
-            ExpireTurns(table, TurnRoundNumberTwo * ThreeSeatCount);
+            ExpireTurns(table, TurnRoundNumberTwo * SampleRules.ThreeSeatCount);
 
             Assert.Equal(TurnRoundNumberThree, table.TurnRoundNumber);
         }
@@ -596,13 +586,13 @@ namespace Game.Domain.Tests
         [Fact]
         public void Test_ExpireTurn_InTurnThreeWithThreeSeats_HandsOutTwoBuilds()
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
-            table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
-            table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
-            table.PlaceInitialCaterpillar(SeatNumberThree, SampleLayouts.SouthWestFlower);
-            table.PlaceButterfly(SeatNumberThree, SampleLayouts.CenterFlower);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, SampleRules.ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.NorthWestFlower);
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberTwo, SampleLayouts.NorthEastFlower);
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberThree, SampleLayouts.SouthWestFlower);
+            table.PlaceButterfly(SampleRules.SeatNumberThree, SampleLayouts.CenterFlower);
 
-            ExpireTurns(table, TurnRoundNumberTwo * ThreeSeatCount);
+            ExpireTurns(table, TurnRoundNumberTwo * SampleRules.ThreeSeatCount);
 
             Assert.Equal(SampleRules.TwoBuildings, table.BuildsLeft);
         }
@@ -611,7 +601,7 @@ namespace Game.Domain.Tests
         public void Test_TakeSnapshot_AfterSpendingPoints_KeepsTheActionPointsLeft()
         {
             MatchTable table = CreatePlayedOpening();
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
@@ -622,7 +612,7 @@ namespace Game.Domain.Tests
         public void Test_TakeSnapshot_AfterSpendingPoints_KeepsTheBuildsLeft()
         {
             MatchTable table = CreatePlayedOpening();
-            table.AddFlowerLevel(SeatNumberOne, SampleLayouts.CenterFlower);
+            table.AddFlowerLevel(SampleRules.SeatNumberOne, SampleLayouts.CenterFlower);
 
             MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
@@ -638,17 +628,17 @@ namespace Game.Domain.Tests
 
         private static MatchTable CreatePlayedOpening(MatchRules rules)
         {
-            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, TwoSeatCount, rules, SampleRules.CreateChanceSource());
-            table.PlaceInitialCaterpillar(SeatNumberOne, SampleLayouts.NorthWestFlower);
-            table.PlaceInitialCaterpillar(SeatNumberTwo, SampleLayouts.NorthEastFlower);
-            table.PlaceButterfly(SeatNumberTwo, SampleLayouts.SouthEastFlower);
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, SampleRules.TwoSeatCount, rules, SampleRules.CreateChanceSource());
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberOne, SampleLayouts.NorthWestFlower);
+            table.PlaceInitialCaterpillar(SampleRules.SeatNumberTwo, SampleLayouts.NorthEastFlower);
+            table.PlaceButterfly(SampleRules.SeatNumberTwo, SampleLayouts.SouthEastFlower);
 
             return table;
         }
 
         private static MatchTable CreateTurnTable(IReadOnlyList<Flower> flowers, IReadOnlyList<Caterpillar> caterpillars)
         {
-            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, TwoSeatCount, SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<SeatCards>(), Array.Empty<int>(), null);
+            var snapshot = new MatchSnapshot(TablePhase.PlayerTurn, MatchTable.FirstRoundNumber, MatchTable.FirstTurnRoundNumber, SampleRules.TwoSeatCount, SampleRules.SeatNumberOne, MatchTable.ActionPointsPerTurn, SampleRules.ThreeBuildings, flowers, caterpillars, null, Array.Empty<SeatStanding>(), Array.Empty<SeatCards>(), Array.Empty<int>(), null);
             MatchTable table = MatchTable.RestoreFromSnapshot(snapshot, SampleRules.TwoSeatRules, SampleRules.CreateChanceSource());
 
             return table;
@@ -656,7 +646,7 @@ namespace Game.Domain.Tests
 
         private static Caterpillar CreateSeatOneCaterpillar(BoardCell caterpillarCell)
         {
-            var caterpillar = new Caterpillar(SeatNumberOne, caterpillarCell);
+            var caterpillar = new Caterpillar(SampleRules.SeatNumberOne, caterpillarCell);
 
             return caterpillar;
         }

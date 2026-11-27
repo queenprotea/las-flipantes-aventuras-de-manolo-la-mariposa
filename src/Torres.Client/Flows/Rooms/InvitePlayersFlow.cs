@@ -20,7 +20,7 @@ namespace Torres.Client.Flows
         private readonly HashSet<int> _invitedPlayerIds = new HashSet<int>();
         private readonly PendingRequest<FriendshipListResponse> _friendshipListRequest = new PendingRequest<FriendshipListResponse>();
         private readonly PendingRequest<RoomInviteesResponse> _inviteesRequest = new PendingRequest<RoomInviteesResponse>();
-        private readonly PendingRequest<PlayerSearchResponse> _searchRequest = new PendingRequest<PlayerSearchResponse>();
+        private readonly PlayerSearch _playerSearch;
         private readonly PendingRequest<SendInvitationResult> _invitationRequest = new PendingRequest<SendInvitationResult>();
 
         private int _invitedPlayerId;
@@ -33,12 +33,13 @@ namespace Torres.Client.Flows
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _playerSearch = new PlayerSearch(gameSessionConnection, playerSession);
             _invitationStateRefreshPeriod = invitationStateRefreshPeriod;
         }
 
         internal IReadOnlyList<PlayerSummary> Friends { get; private set; } = new List<PlayerSummary>();
 
-        internal PlayerSearchResponse? SearchResult { get; private set; }
+        internal PlayerSearchResponse? SearchResult => _playerSearch.Result;
 
         internal string? RoomCode => _playerSession.CurrentRoom?.Code;
 
@@ -54,7 +55,7 @@ namespace Torres.Client.Flows
             ForgetRequests();
             Friends = new List<PlayerSummary>();
             _invitedPlayerIds.Clear();
-            SearchResult = null;
+            _playerSearch.Clear();
             ScreenId? redirect = null;
             if (!_playerSession.HasAccount || !_gameSessionConnection.IsSessionOpen)
             {
@@ -105,22 +106,7 @@ namespace Torres.Client.Flows
 
         internal string? Search(string typedUsername)
         {
-            string username = typedUsername.Trim();
-            string? errorKey = null;
-            bool isOwnUsername = string.Equals(username, _playerSession.Player?.Username, StringComparison.OrdinalIgnoreCase);
-            if (username.Length == 0)
-            {
-                errorKey = TextKeys.Common.RequiredField;
-            }
-            else if (isOwnUsername)
-            {
-                SearchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
-                _needsRender = true;
-            }
-            else if (!_searchRequest.IsWaiting && _gameSessionConnection.IsSessionOpen)
-            {
-                _searchRequest.Start(_gameSessionConnection.FindPlayerByUsernameAsync(username));
-            }
+            string? errorKey = _playerSearch.Search(typedUsername);
 
             return errorKey;
         }
@@ -160,7 +146,7 @@ namespace Torres.Client.Flows
         {
             _friendshipListRequest.Forget();
             _inviteesRequest.Forget();
-            _searchRequest.Forget();
+            _playerSearch.Forget();
             _invitationRequest.Forget();
         }
 
@@ -219,13 +205,12 @@ namespace Torres.Client.Flows
 
         private void FollowSearch()
         {
-            FinishedRequest<PlayerSearchResponse>? finishedSearch = _searchRequest.TakeFinished();
-            if ((finishedSearch is not null) && finishedSearch.IsSuccessful && (finishedSearch.Reply is PlayerSearchResponse foundPlayers))
+            PlayerSearchUpdate searchUpdate = _playerSearch.TakeUpdate();
+            if (searchUpdate == PlayerSearchUpdate.ResultChanged)
             {
-                SearchResult = foundPlayers;
                 _needsRender = true;
             }
-            else if (finishedSearch is not null)
+            else if (searchUpdate == PlayerSearchUpdate.Failed)
             {
                 Fail();
             }
@@ -287,7 +272,7 @@ namespace Torres.Client.Flows
         {
             if (SearchResult?.Player?.PlayerId == _invitedPlayerId)
             {
-                SearchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
+                _playerSearch.ShowNotFound();
             }
 
             StartRefresh();

@@ -4,6 +4,7 @@ namespace Torres.Client.UI
 {
     internal static class Metrics
     {
+        internal const int NoticeWidth = 420;
         internal const int ScreenPaddingX = 22;
         internal const int ScreenPaddingY = 20;
 

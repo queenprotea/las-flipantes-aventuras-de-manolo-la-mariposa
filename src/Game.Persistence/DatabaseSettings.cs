@@ -34,8 +34,6 @@ namespace Game.Persistence
 
         public void ConfigureContext(DbContextOptionsBuilder optionsBuilder)
         {
-            ArgumentNullException.ThrowIfNull(optionsBuilder);
-
             optionsBuilder.UseNpgsql(_connectionString, ConfigureNpgsql);
         }
 

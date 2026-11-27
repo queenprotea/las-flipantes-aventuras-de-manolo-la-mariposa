@@ -11,9 +11,6 @@ namespace Game.Server
     {
         public static void AddSettingValues(IServiceCollection services, HostSettings hostSettings)
         {
-            ArgumentNullException.ThrowIfNull(services);
-            ArgumentNullException.ThrowIfNull(hostSettings);
-
             services.AddSingleton(TimeProvider.System);
             services.AddSingleton(Random.Shared);
             services.AddSingleton(new MaintenanceTiming(hostSettings.Session.MaintenancePeriod));
@@ -27,9 +24,6 @@ namespace Game.Server
 
         public static void AddRepositories(IServiceCollection services, DatabaseSettings databaseSettings)
         {
-            ArgumentNullException.ThrowIfNull(services);
-            ArgumentNullException.ThrowIfNull(databaseSettings);
-
             services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
             services.AddSingleton<IPlayerRepository, PlayerRepository>();
             services.AddSingleton<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
@@ -51,12 +45,11 @@ namespace Game.Server
 
         public static void AddGameServices(IServiceCollection services)
         {
-            ArgumentNullException.ThrowIfNull(services);
-
             services.AddSingleton<ServerStatusService>();
             services.AddSingleton<SystemParameterReader>();
 
             services.AddSingleton<PendingRegistrationRegistry>();
+            services.AddSingleton<VerificationCodeLifetime>();
             services.AddSingleton<AccountRegistration>();
             services.AddSingleton<AccessRecovery>();
             services.AddSingleton<AccountService>();

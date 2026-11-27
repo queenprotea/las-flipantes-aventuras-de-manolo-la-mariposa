@@ -30,10 +30,6 @@ namespace Game.Services
 
         public ReportRecorder(IReportRepository reportRepository, ISanctionRepository sanctionRepository, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(reportRepository);
-            ArgumentNullException.ThrowIfNull(sanctionRepository);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _reportRepository = reportRepository;
             _sanctionRepository = sanctionRepository;
             _timeProvider = timeProvider;
@@ -41,8 +37,6 @@ namespace Game.Services
 
         public void Start(SanctionPolicy sanctionPolicy)
         {
-            ArgumentNullException.ThrowIfNull(sanctionPolicy);
-
             _sanctionPolicy = sanctionPolicy;
         }
 
@@ -61,7 +55,7 @@ namespace Game.Services
             bool wasRecorded = creationOutcome == ReportCreationOutcome.Created;
             if (wasRecorded)
             {
-                _log.InfoFormat(ReportRecordedMessage, reporterOwnerId, reportTarget.AuthorOwnerId, reportTarget.RoomId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, ReportRecordedMessage, reporterOwnerId, reportTarget.AuthorOwnerId, reportTarget.RoomId);
                 await JudgeSanctionAfterReportAsync(newReport, sanctionPolicy);
             }
 
@@ -92,8 +86,8 @@ namespace Game.Services
         private async Task ApplySanctionIfThresholdReachedAsync(Report recordedReport, SanctionPolicy sanctionPolicy)
         {
             int reportedPlayerId = recordedReport.ReportedPlayerId;
-            DateTime? latestThresholdAtUtc = await _sanctionRepository.FindLatestThresholdAsync(reportedPlayerId);
-            int occasionCount = await _reportRepository.CountOccasionsAsync(reportedPlayerId, latestThresholdAtUtc);
+            DateTime? latestThresholdAt = await _sanctionRepository.FindLatestThresholdAsync(reportedPlayerId);
+            int occasionCount = await _reportRepository.CountOccasionsAsync(reportedPlayerId, latestThresholdAt);
             if (occasionCount < sanctionPolicy.ThresholdOccasions)
             {
                 return;
@@ -109,11 +103,11 @@ namespace Game.Services
         {
             if (appliedSanction.IsPermanent)
             {
-                _log.InfoFormat(PermanentBanAppliedMessage, appliedSanction.PlayerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, PermanentBanAppliedMessage, appliedSanction.PlayerId);
             }
             else
             {
-                _log.InfoFormat(TemporaryBanAppliedMessage, appliedSanction.PlayerId, appliedSanction.Level, appliedSanction.EffectiveUntil);
+                _log.InfoFormat(CultureInfo.InvariantCulture, TemporaryBanAppliedMessage, appliedSanction.PlayerId, appliedSanction.Level, appliedSanction.EffectiveUntil);
             }
         }
 

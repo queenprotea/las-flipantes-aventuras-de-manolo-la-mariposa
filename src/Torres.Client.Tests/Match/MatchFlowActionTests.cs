@@ -157,9 +157,9 @@ namespace Torres.Client.Tests
         }
 
         [Fact]
-        public void Test_FindStepTimeLeft_WithoutStepEnd_ReturnsZero()
+        public void Test_StepTimeLeft_WithoutStepEnd_ReturnsZero()
         {
-            TimeSpan stepTimeLeft = _matchFlow.FindStepTimeLeft();
+            TimeSpan stepTimeLeft = _matchFlow.StepTimeLeft;
 
             Assert.Equal(TimeSpan.Zero, stepTimeLeft);
         }

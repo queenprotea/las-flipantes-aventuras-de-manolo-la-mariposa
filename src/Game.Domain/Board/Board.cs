@@ -19,8 +19,6 @@ namespace Game.Domain
 
         public Board(IReadOnlyList<Flower> flowers)
         {
-            ArgumentNullException.ThrowIfNull(flowers);
-
             foreach (Flower flower in flowers)
             {
                 PlantFlower(flower, nameof(flowers));
@@ -40,8 +38,6 @@ namespace Game.Domain
 
         public int GetFlowerLevel(BoardCell examinedCell)
         {
-            ThrowIfOutside(examinedCell, nameof(examinedCell));
-
             int flowerLevel = _flowerLevels[examinedCell.Row, examinedCell.Column];
 
             return flowerLevel;
@@ -96,17 +92,13 @@ namespace Game.Domain
 
         public Planter? FindPlanterOf(BoardCell flowerCell)
         {
-            ThrowIfOutside(flowerCell, nameof(flowerCell));
-
-            Planter? planter = FindPlanters().FirstOrDefault(examinedPlanter => examinedPlanter.Flowers.Any(flower => flower.Cell == flowerCell));
+            Planter? planter = FindPlanters().FirstOrDefault(examinedPlanter => HasFlowerOn(examinedPlanter, flowerCell));
 
             return planter;
         }
 
         public int CountPlantersAround(BoardCell examinedCell)
         {
-            ThrowIfOutside(examinedCell, nameof(examinedCell));
-
             List<BoardCell> neighborCells = FindNeighborCells(examinedCell);
             int planterCount = FindPlanters().Count(planter => IsPlanterAround(planter, neighborCells));
 
@@ -233,6 +225,13 @@ namespace Game.Domain
                     pendingCells.Enqueue(neighborCell);
                 }
             }
+        }
+
+        private static bool HasFlowerOn(Planter planter, BoardCell flowerCell)
+        {
+            bool hasFlower = planter.Flowers.Any(flower => flower.Cell == flowerCell);
+
+            return hasFlower;
         }
     }
 }

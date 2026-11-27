@@ -33,7 +33,7 @@ namespace Torres.Client.Localization
             }
             else if ((parentWidget is ContentControl contentControl) && (contentControl.Content is not null))
             {
-                childWidgets = new[] { contentControl.Content };
+                childWidgets = new Widget[] { contentControl.Content };
             }
 
             return childWidgets;

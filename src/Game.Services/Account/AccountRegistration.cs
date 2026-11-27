@@ -19,7 +19,6 @@ namespace Game.Services
         private const string AccountWriteFailedMessage = "The database could not be written while a registration was confirmed; the registration stays pending.";
         private const string RegistrationCodeSentMessage = "A registration code was sent.";
         private const string AccountCreatedMessage = "Account {0} was created after its email was confirmed.";
-        private const string NotStartedMessage = "The verification code lifetime was not set; Start must run before accounts are registered.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountRegistration));
 
@@ -29,29 +28,17 @@ namespace Game.Services
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly TimeProvider _timeProvider;
         private readonly EmailSendingPacer _emailSendingPacer;
-        private int? _codeLifetimeMinutes;
+        private readonly VerificationCodeLifetime _verificationCodeLifetime;
 
-        public AccountRegistration(IPlayerRepository playerRepository, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider)
+        public AccountRegistration(IPlayerRepository playerRepository, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider, VerificationCodeLifetime verificationCodeLifetime)
         {
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(emailSender);
-            ArgumentNullException.ThrowIfNull(pendingRegistrationRegistry);
-            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _playerRepository = playerRepository;
             _emailSender = emailSender;
             _pendingRegistrationRegistry = pendingRegistrationRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _timeProvider = timeProvider;
             _emailSendingPacer = new EmailSendingPacer(timeProvider);
-        }
-
-        public void Start(int codeLifetimeMinutes)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(codeLifetimeMinutes);
-
-            _codeLifetimeMinutes = codeLifetimeMinutes;
+            _verificationCodeLifetime = verificationCodeLifetime;
         }
 
         internal async Task<RegistrationResult> RequestCodeAsync(string username, string email, string password)
@@ -150,7 +137,7 @@ namespace Game.Services
 
         private async Task<RegistrationResult> IssueCodeAsync(string username, string email, string password)
         {
-            int codeLifetimeMinutes = RequireCodeLifetimeMinutes();
+            int codeLifetimeMinutes = _verificationCodeLifetime.RequireMinutes();
             DateTimeOffset expiresAt = _timeProvider.GetUtcNow().AddMinutes(codeLifetimeMinutes);
             var registration = new PendingRegistration(username, email, PasswordRules.Hash(password), VerificationCodeIssuer.Issue(), expiresAt);
             EmailMessage codeEmail = EmailComposer.ComposeRegistrationCode(email, registration.Code, codeLifetimeMinutes);
@@ -213,13 +200,6 @@ namespace Game.Services
                 };
                 confirmation.SessionToken = _sessionTokenIssuer.Issue(createdPlayer.PlayerId, createdPlayer.Username);
             }
-        }
-
-        private int RequireCodeLifetimeMinutes()
-        {
-            int codeLifetimeMinutes = _codeLifetimeMinutes ?? throw new InvalidOperationException(NotStartedMessage);
-
-            return codeLifetimeMinutes;
         }
 
         private static RegistrationConfirmationStatus ToConfirmationStatus(PlayerCreationOutcome creationOutcome)

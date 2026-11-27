@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Contracts;
 using Torres.Client.Flows;
 using Torres.Client.Localization;
 using Torres.Client.UI;
@@ -97,7 +98,7 @@ namespace Torres.Client.Screens
             card.Widgets.Add(accountActions);
 
             LocalizedButton forgotAccessButton = ButtonFactory.CreateLinkButton(TextKeys.Login.ForgotAccessLink);
-            forgotAccessButton.Click += ForgotButtonOnClick;
+            forgotAccessButton.Click += ForgotAccessButtonOnClick;
             _guestButton.Click += GuestButtonOnClick;
             HorizontalStackPanel accessLinks = PanelFactory.CreateButtonRow();
             accessLinks.Widgets.Add(forgotAccessButton);
@@ -148,7 +149,7 @@ namespace Torres.Client.Screens
             RequestedScreen = LoginFlow.FindScreenToCreateAccount();
         }
 
-        private void ForgotButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
+        private void ForgotAccessButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
             RequestedScreen = LoginFlow.FindScreenToRecoverAccess();
         }

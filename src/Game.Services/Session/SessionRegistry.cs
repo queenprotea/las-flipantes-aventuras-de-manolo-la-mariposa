@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -26,8 +27,6 @@ namespace Game.Services
 
         public SessionRegistry(ICallerChannel callerChannel)
         {
-            ArgumentNullException.ThrowIfNull(callerChannel);
-
             _callerChannel = callerChannel;
         }
 
@@ -57,7 +56,7 @@ namespace Game.Services
 
             EndReplacedSession(replacedSession, openedSession);
             openedSession.Watch();
-            _log.InfoFormat(SessionOpenedMessage, owner.OwnerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, SessionOpenedMessage, owner.OwnerId);
             OnSessionOpened(new SessionOwnerEventArgs(owner.OwnerId));
 
             return openedSession;
@@ -108,7 +107,7 @@ namespace Game.Services
             closedSession.Abandon();
             if (wasRemoved)
             {
-                _log.InfoFormat(SessionClosedMessage, closedSession.Owner.OwnerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, SessionClosedMessage, closedSession.Owner.OwnerId);
                 OnSessionClosed(new SessionOwnerEventArgs(closedSession.Owner.OwnerId));
             }
         }
@@ -121,7 +120,7 @@ namespace Game.Services
             }
 
             lostSession.Drop();
-            _log.InfoFormat(SessionLostMessage, lostSession.Owner.OwnerId);
+            _log.InfoFormat(CultureInfo.InvariantCulture, SessionLostMessage, lostSession.Owner.OwnerId);
             OnSessionLost(new SessionOwnerEventArgs(lostSession.Owner.OwnerId));
         }
 
@@ -165,7 +164,7 @@ namespace Game.Services
             else
             {
                 replacedSession.Terminate(SessionTerminationReason.AccountSignedInElsewhere);
-                _log.InfoFormat(SessionReplacedMessage, replacedSession.Owner.OwnerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, SessionReplacedMessage, replacedSession.Owner.OwnerId);
             }
         }
 

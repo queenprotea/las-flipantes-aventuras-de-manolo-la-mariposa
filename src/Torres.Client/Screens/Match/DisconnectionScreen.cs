@@ -23,16 +23,18 @@ namespace Torres.Client.Screens
         private readonly DisconnectionFlow _disconnectionFlow;
         private readonly NoticeBox _noticeBox = new NoticeBox();
         private readonly MatchPause _matchPause;
+        private readonly PauseCardFactory _pauseCards;
         private readonly VerticalStackPanel _playersPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
         private readonly CountdownView _countdownView;
 
         private readonly LocalizedButton _retryButton = ButtonFactory.CreatePrimaryButton(TextKeys.Disconnection.RetryButton);
 
-        internal DisconnectionScreen(DisconnectionFlow disconnectionFlow, MatchPause matchPause)
+        internal DisconnectionScreen(DisconnectionFlow disconnectionFlow, MatchPause matchPause, PauseCardFactory pauseCards)
             : base(TextKeys.Disconnection.HeaderLabel, true)
         {
             _disconnectionFlow = disconnectionFlow;
             _matchPause = matchPause;
+            _pauseCards = pauseCards;
             _countdownView = new CountdownView(matchPause.VolumeTextures, Fonts.Clock, Theme.BlushInk);
             _countdownView.Root.HorizontalAlignment = HorizontalAlignment.Center;
             _retryButton.Click += RetryButtonOnClick;
@@ -60,7 +62,7 @@ namespace Torres.Client.Screens
         internal override void Update(GameTime gameTime)
         {
             _matchPause.Advance(gameTime.ElapsedGameTime);
-            _countdownView.Show(_disconnectionFlow.FindReconnectionTimeLeft());
+            _countdownView.Show(_disconnectionFlow.ReconnectionTimeLeft);
             _disconnectionFlow.Advance(gameTime.ElapsedGameTime);
             DisconnectionOutcome? outcome = _disconnectionFlow.TakeOutcome();
             if (outcome is not null)
@@ -98,23 +100,22 @@ namespace Torres.Client.Screens
             _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
 
             var playersSection = new VerticalStackPanel { Spacing = MatchLayout.SectionLabelSpacing };
-            playersSection.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.PlayersLabel) { Font = Fonts.Label, TextColor = Theme.MutedInk });
+            playersSection.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.PlayersLabel)
+            {
+                Font = Fonts.Label,
+                TextColor = Theme.MutedInk,
+            });
             playersSection.Widgets.Add(_playersPanel);
 
             var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
-            cardContent.Widgets.Add(new LocalizedLabel(TextKeys.Disconnection.ConnectionLostTitle)
-            {
-                Font = Fonts.Notice,
-                TextColor = Theme.Ink,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
+            cardContent.Widgets.Add(LabelFactory.CreateCenteredTitle(TextKeys.Disconnection.ConnectionLostTitle, Fonts.Notice));
             cardContent.Widgets.Add(_countdownView.Root);
             cardContent.Widgets.Add(resumeTurnMessage);
             cardContent.Widgets.Add(PanelFactory.CreateDivider());
             cardContent.Widgets.Add(playersSection);
             cardContent.Widgets.Add(_noticeBox);
             cardContent.Widgets.Add(BuildActions());
-            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.DisconnectionCardWidth);
+            Panel cardLayer = _pauseCards.CreateCardLayer(cardContent, MatchLayout.DisconnectionCardWidth);
 
             return cardLayer;
         }
@@ -122,8 +123,8 @@ namespace Torres.Client.Screens
         private HorizontalStackPanel BuildActions()
         {
             LocalizedButton exitButton = ButtonFactory.CreateSecondaryButton(TextKeys.Disconnection.ExitMatchButton);
-            _matchPause.StyleSecondaryPill(exitButton);
-            _matchPause.StylePrimaryPill(_retryButton);
+            _pauseCards.StyleSecondaryPill(exitButton);
+            _pauseCards.StylePrimaryPill(_retryButton);
             exitButton.Click += ExitButtonOnClick;
             HorizontalStackPanel actionButtons = PanelFactory.CreateButtonRow();
             actionButtons.HorizontalAlignment = HorizontalAlignment.Center;
@@ -148,8 +149,8 @@ namespace Torres.Client.Screens
 
         private HorizontalStackPanel BuildPlayerRow(MatchSeat seat, bool isViewer)
         {
-            HorizontalStackPanel playerTag = _matchPause.CreatePlayerTag(seat, Fonts.Body);
-            HorizontalStackPanel playerRow = _matchPause.CreateStatusPill();
+            HorizontalStackPanel playerTag = _pauseCards.CreatePlayerTag(seat, Fonts.Body);
+            HorizontalStackPanel playerRow = _pauseCards.CreateStatusPill();
             playerRow.Opacity = seat.IsRetired ? WithdrawnOpacity : FullOpacity;
             playerRow.Widgets.Add(playerTag);
             playerRow.Widgets.Add(BuildTags(seat, isViewer));
@@ -160,10 +161,7 @@ namespace Torres.Client.Screens
 
         private static HorizontalStackPanel BuildTags(MatchSeat seat, bool isViewer)
         {
-            var playerTags = new HorizontalStackPanel
-            {
-                Spacing = TagSpacing,
-            };
+            var playerTags = new HorizontalStackPanel { Spacing = TagSpacing };
 
             if (isViewer)
             {

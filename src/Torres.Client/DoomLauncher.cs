@@ -27,10 +27,7 @@ namespace Torres.Client
                 return;
             }
 
-            var doomStartInfo = new ProcessStartInfo(_clientSettings.DoomProgramPath)
-            {
-                UseShellExecute = false,
-            };
+            var doomStartInfo = new ProcessStartInfo(_clientSettings.DoomProgramPath) { UseShellExecute = false };
             doomStartInfo.ArgumentList.Add(WadArgument);
             doomStartInfo.ArgumentList.Add(_clientSettings.DoomWadPath);
             _doomLaunch = new BackgroundWork<ProcessStartInfo>(StartDoom, doomStartInfo).StartAsync();

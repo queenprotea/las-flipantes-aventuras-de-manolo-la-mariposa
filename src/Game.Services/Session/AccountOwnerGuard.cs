@@ -19,7 +19,7 @@ namespace Game.Services
             return accountOwner;
         }
 
-        internal static PlayerSession RequireAccountSession(SessionRegistry sessionRegistry, ILog featureLog, string featureName)
+        internal static PlayerSession RequireSession(SessionRegistry sessionRegistry)
         {
             PlayerSession? caller = sessionRegistry.FindCaller();
             if (caller is null)
@@ -27,6 +27,12 @@ namespace Game.Services
                 throw new FaultException(SessionNotOpenMessage);
             }
 
+            return caller;
+        }
+
+        internal static PlayerSession RequireAccountSession(SessionRegistry sessionRegistry, ILog featureLog, string featureName)
+        {
+            PlayerSession caller = RequireSession(sessionRegistry);
             if (caller.Owner.IsGuest)
             {
                 featureLog.WarnFormat(CultureInfo.InvariantCulture, GuestRejectedMessage, caller.Owner.OwnerId, featureName);

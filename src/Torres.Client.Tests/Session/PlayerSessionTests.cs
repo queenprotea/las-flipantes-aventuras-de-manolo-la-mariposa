@@ -113,7 +113,7 @@ namespace Torres.Client.Tests
 
             _playerSession.ApplyMatchChange(matchChange);
 
-            Assert.Equal(_stepEndsAtUtc, _playerSession.StepEndsAtUtc);
+            Assert.Equal(_stepEndsAtUtc, _playerSession.StepEndsAt);
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace Torres.Client.Tests
 
             _playerSession.ApplyMatchChange(matchChange);
 
-            Assert.Null(_playerSession.StepEndsAtUtc);
+            Assert.Null(_playerSession.StepEndsAt);
         }
 
         [Fact]
@@ -144,7 +144,7 @@ namespace Torres.Client.Tests
 
             _playerSession.LoseConnection(_lostAtUtc);
 
-            Assert.Equal(_stepEndsAtUtc, _playerSession.ReconnectionEndsAtUtc);
+            Assert.Equal(_stepEndsAtUtc, _playerSession.ReconnectionEndsAt);
         }
 
         [Fact]
@@ -154,7 +154,7 @@ namespace Torres.Client.Tests
 
             _playerSession.LoseConnection(_lostAtUtc);
 
-            Assert.Equal(_reconnectionEndsAtUtc, _playerSession.ReconnectionEndsAtUtc);
+            Assert.Equal(_reconnectionEndsAtUtc, _playerSession.ReconnectionEndsAt);
         }
 
         [Fact]
@@ -162,7 +162,7 @@ namespace Torres.Client.Tests
         {
             _playerSession.LoseConnection(_lostAtUtc);
 
-            Assert.Null(_playerSession.ReconnectionEndsAtUtc);
+            Assert.Null(_playerSession.ReconnectionEndsAt);
         }
 
         [Fact]
@@ -173,7 +173,7 @@ namespace Torres.Client.Tests
 
             _playerSession.RecoverConnection();
 
-            Assert.Null(_playerSession.ReconnectionEndsAtUtc);
+            Assert.Null(_playerSession.ReconnectionEndsAt);
         }
 
         [Fact]

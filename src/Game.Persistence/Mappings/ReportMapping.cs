@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +16,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<Report> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(ReportTable);
             builder.HasKey(mappedReport => mappedReport.ReportId);
             builder.Property(mappedReport => mappedReport.ReportId)

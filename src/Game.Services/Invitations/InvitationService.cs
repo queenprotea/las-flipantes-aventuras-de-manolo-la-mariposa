@@ -49,14 +49,6 @@ namespace Game.Services
 
         public InvitationService(SessionRegistry sessionRegistry, RoomRegistry roomRegistry, RoomService roomService, IRoomInvitationRepository roomInvitationRepository, IPlayerRepository playerRepository, IEmailSender emailSender, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(roomRegistry);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(roomInvitationRepository);
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(emailSender);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _sessionRegistry = sessionRegistry;
             _roomRegistry = roomRegistry;
             _roomService = roomService;
@@ -398,7 +390,7 @@ namespace Game.Services
             {
                 Status = ToAnswerStatus(joining.Status),
                 Room = joining.Room,
-                BanEndsAtUtc = joining.BanEndsAtUtc,
+                BanEndsAt = joining.BanEndsAt,
             };
             if (joining.Status == JoinRoomStatus.Joined)
             {
@@ -477,7 +469,7 @@ namespace Game.Services
                     Username = inviter.Username,
                     AvatarReference = inviter.AvatarReference,
                 },
-                SentAtUtc = storedInvitation.CreatedAt,
+                SentAt = storedInvitation.CreatedAt,
             };
 
             return invitation;

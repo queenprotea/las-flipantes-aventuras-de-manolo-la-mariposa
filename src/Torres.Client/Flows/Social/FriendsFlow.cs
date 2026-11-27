@@ -5,7 +5,6 @@ using System.Linq;
 using Game.Contracts;
 
 using Torres.Client.Connection;
-using Torres.Client.Localization;
 using Torres.Client.Session;
 using Torres.Client.Threading;
 
@@ -17,12 +16,11 @@ namespace Torres.Client.Flows
         private readonly PlayerSession _playerSession;
         private readonly TimeSpan _friendshipListRefreshPeriod;
         private readonly PendingRequest<FriendshipListResponse> _friendshipListRequest = new PendingRequest<FriendshipListResponse>();
-        private readonly PendingRequest<PlayerSearchResponse> _searchRequest = new PendingRequest<PlayerSearchResponse>();
+        private readonly PlayerSearch _playerSearch;
         private readonly PendingRequest<FriendRequestResult> _friendRequest = new PendingRequest<FriendRequestResult>();
         private readonly PendingRequest<FriendRequestResponseResult> _responseRequest = new PendingRequest<FriendRequestResponseResult>();
         private readonly PendingRequest<FriendRemovalResult> _removalRequest = new PendingRequest<FriendRemovalResult>();
 
-        private string _searchedUsername = string.Empty;
         private TimeSpan _sinceFriendshipList;
         private bool _needsRender;
         private bool _hasFailed;
@@ -32,12 +30,13 @@ namespace Torres.Client.Flows
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
+            _playerSearch = new PlayerSearch(gameSessionConnection, playerSession);
             _friendshipListRefreshPeriod = friendshipListRefreshPeriod;
         }
 
         internal FriendshipListResponse FriendshipList { get; private set; } = CreateEmptyFriendshipList();
 
-        internal PlayerSearchResponse? SearchResult { get; private set; }
+        internal PlayerSearchResponse? SearchResult => _playerSearch.Result;
 
         internal static ScreenId FindScreenToGoBack()
         {
@@ -50,7 +49,7 @@ namespace Torres.Client.Flows
         {
             ForgetRequests();
             FriendshipList = CreateEmptyFriendshipList();
-            SearchResult = null;
+            _playerSearch.Clear();
             bool canOpen = _playerSession.HasAccount && _gameSessionConnection.IsSessionOpen;
             if (canOpen)
             {
@@ -92,29 +91,14 @@ namespace Torres.Client.Flows
 
         internal string? Search(string typedUsername)
         {
-            string username = typedUsername.Trim();
-            string? errorKey = null;
-            bool isOwnUsername = string.Equals(username, _playerSession.Player?.Username, StringComparison.OrdinalIgnoreCase);
-            if (username.Length == 0)
-            {
-                errorKey = TextKeys.Common.RequiredField;
-            }
-            else if (isOwnUsername)
-            {
-                SearchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
-                _needsRender = true;
-            }
-            else if (!_searchRequest.IsWaiting)
-            {
-                StartSearchRequest(username);
-            }
+            string? errorKey = _playerSearch.Search(typedUsername);
 
             return errorKey;
         }
 
         internal void ClearSearch()
         {
-            SearchResult = null;
+            _playerSearch.Clear();
             if (!_friendshipListRequest.IsWaiting)
             {
                 StartFriendshipListRequest();
@@ -210,18 +194,12 @@ namespace Torres.Client.Flows
 
         private void FollowSearch()
         {
-            FinishedRequest<PlayerSearchResponse>? finishedSearch = _searchRequest.TakeFinished();
-            if (finishedSearch is null)
+            PlayerSearchUpdate searchUpdate = _playerSearch.TakeUpdate();
+            if (searchUpdate == PlayerSearchUpdate.ResultChanged)
             {
-                return;
-            }
-
-            if (finishedSearch.IsSuccessful && (finishedSearch.Reply is PlayerSearchResponse foundPlayers))
-            {
-                SearchResult = foundPlayers;
                 _needsRender = true;
             }
-            else
+            else if (searchUpdate == PlayerSearchUpdate.Failed)
             {
                 Fail();
             }
@@ -250,19 +228,19 @@ namespace Torres.Client.Flows
             switch (requestResult)
             {
                 case FriendRequestResult.Sent:
-                    SearchResult = null;
+                    _playerSearch.Clear();
                     _showsSentRequests = true;
                     StartFriendshipListRequest();
                     break;
 
                 case FriendRequestResult.AlreadyFriends:
                 case FriendRequestResult.RequestAlreadyPending:
-                    StartSearchRequest(_searchedUsername);
+                    _playerSearch.Repeat();
                     StartFriendshipListRequest();
                     break;
 
                 case FriendRequestResult.PlayerNotFound:
-                    SearchResult = new PlayerSearchResponse { Status = PlayerSearchStatus.NotFound };
+                    _playerSearch.ShowNotFound();
                     _needsRender = true;
                     break;
 
@@ -325,16 +303,6 @@ namespace Torres.Client.Flows
             }
         }
 
-        private void StartSearchRequest(string username)
-        {
-            if (_gameSessionConnection.IsSessionOpen)
-            {
-                _searchedUsername = username;
-                _searchRequest.Forget();
-                _searchRequest.Start(_gameSessionConnection.FindPlayerByUsernameAsync(username));
-            }
-        }
-
         private void Fail()
         {
             ForgetRequests();
@@ -344,7 +312,7 @@ namespace Torres.Client.Flows
         internal void ForgetRequests()
         {
             _friendshipListRequest.Forget();
-            _searchRequest.Forget();
+            _playerSearch.Forget();
             _friendRequest.Forget();
             _responseRequest.Forget();
             _removalRequest.Forget();

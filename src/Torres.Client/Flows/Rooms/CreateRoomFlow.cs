@@ -76,7 +76,7 @@ namespace Torres.Client.Flows
             {
                 CreateRoomStatus.Created => EnterRoom(creation.Room),
                 CreateRoomStatus.AlreadyInRoom => new ScreenOutcome(Notice.CreateTitle(TextKeys.Rooms.AlreadyInRoomError), null),
-                CreateRoomStatus.Banned => new ScreenOutcome(Notice.CreateBan(creation.BanEndsAtUtc), null),
+                CreateRoomStatus.Banned => new ScreenOutcome(Notice.CreateBan(creation.BanEndsAt), null),
                 CreateRoomStatus.NotIdentified => new ScreenOutcome(null, ScreenId.Login),
                 CreateRoomStatus.InvalidVisibility or CreateRoomStatus.DatabaseUnavailable => new ScreenOutcome(Notice.CreateServerError(), null),
                 _ => throw new ArgumentOutOfRangeException(nameof(creation), creation.Status, null),

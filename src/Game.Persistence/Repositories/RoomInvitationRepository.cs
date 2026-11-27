@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,19 +14,11 @@ namespace Game.Persistence
 
         public RoomInvitationRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task<InvitationCreationOutcome> CreateAsync(RoomInvitationRecord newInvitation)
         {
-            ArgumentNullException.ThrowIfNull(newInvitation);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newInvitation.RoomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newInvitation.InviterPlayerId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(newInvitation.InvitedPlayerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(newInvitation.Channel);
-
             Task<InvitationCreationOutcome> creation = StoreAsync(newInvitation);
 
             return creation;
@@ -35,8 +26,6 @@ namespace Game.Persistence
 
         public Task<List<RoomInvitationRecord>> ListForInviteeAsync(int invitedPlayerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
-
             Task<List<RoomInvitationRecord>> invitationsReading = ReadForInviteeAsync(invitedPlayerId);
 
             return invitationsReading;
@@ -44,8 +33,6 @@ namespace Game.Persistence
 
         public Task<List<int>> ListInviteeIdsAsync(int roomId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-
             Task<List<int>> inviteeIdsReading = ReadInviteeIdsAsync(roomId);
 
             return inviteeIdsReading;
@@ -53,9 +40,6 @@ namespace Game.Persistence
 
         public Task<bool> ExistsAsync(int roomId, int invitedPlayerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
-
             Task<bool> existenceReading = ReadExistenceAsync(roomId, invitedPlayerId);
 
             return existenceReading;
@@ -63,9 +47,6 @@ namespace Game.Persistence
 
         public Task<string?> FindChannelAsync(int roomId, int invitedPlayerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
-
             Task<string?> channelReading = ReadChannelAsync(roomId, invitedPlayerId);
 
             return channelReading;
@@ -73,10 +54,6 @@ namespace Game.Persistence
 
         public Task ChangeChannelAsync(int roomId, int invitedPlayerId, string channel)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(channel);
-
             Task channelChange = WriteChannelAsync(roomId, invitedPlayerId, channel);
 
             return channelChange;
@@ -84,9 +61,6 @@ namespace Game.Persistence
 
         public Task<bool> DeleteAsync(int roomId, int invitedPlayerId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roomId);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(invitedPlayerId);
-
             Task<bool> deletion = RemoveAsync(roomId, invitedPlayerId);
 
             return deletion;

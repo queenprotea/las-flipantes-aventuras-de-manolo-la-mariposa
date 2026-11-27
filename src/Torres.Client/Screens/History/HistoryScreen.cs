@@ -388,8 +388,17 @@ namespace Torres.Client.Screens
             };
 
             HorizontalStackPanel chipContent = PanelFactory.CreateButtonRow();
-            chipContent.Widgets.Add(new Label { Text = DisplaySymbols.CheckMark, Font = Fonts.Small, TextColor = Theme.MintInk });
-            chipContent.Widgets.Add(new LocalizedLabel(TextKeys.History.FinishedStatus) { Font = Fonts.Small, TextColor = Theme.MintInk });
+            chipContent.Widgets.Add(new Label
+            {
+                Text = DisplaySymbols.CheckMark,
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
+            chipContent.Widgets.Add(new LocalizedLabel(TextKeys.History.FinishedStatus)
+            {
+                Font = Fonts.Small,
+                TextColor = Theme.MintInk,
+            });
             winChip.Widgets.Add(chipContent);
 
             return winChip;
@@ -406,7 +415,11 @@ namespace Torres.Client.Screens
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            statusChip.Widgets.Add(new LocalizedLabel(statusTextKey) { Font = Fonts.Small, TextColor = chipStyle.TextColor });
+            statusChip.Widgets.Add(new LocalizedLabel(statusTextKey)
+            {
+                Font = Fonts.Small,
+                TextColor = chipStyle.TextColor,
+            });
 
             return statusChip;
         }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using Game.Contracts;
@@ -44,8 +43,6 @@ namespace Game.Server
 
         public static HostSettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             var hostSettings = new HostSettings(configuration);
 
             return hostSettings;

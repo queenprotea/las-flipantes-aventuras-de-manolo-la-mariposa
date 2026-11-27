@@ -182,9 +182,9 @@ namespace Torres.Client.Tests
         }
 
         [Fact]
-        public void Test_FindReconnectionTimeLeft_WithoutReconnectionWindow_ReturnsZero()
+        public void Test_ReconnectionTimeLeft_WithoutReconnectionWindow_ReturnsZero()
         {
-            TimeSpan reconnectionTimeLeft = _disconnectionFlow.FindReconnectionTimeLeft();
+            TimeSpan reconnectionTimeLeft = _disconnectionFlow.ReconnectionTimeLeft;
 
             Assert.Equal(TimeSpan.Zero, reconnectionTimeLeft);
         }

@@ -29,7 +29,8 @@ namespace Torres.Client.Scene
                 bool isDarkPlank = (plankIndex % PlankColorPeriod) == 0;
                 Matrix plankTransform = Matrix.CreateScale(PlankWidth, PlankHeight, PlankDepth)
                     * Matrix.CreateTranslation(0f, TableTop - PlankHeight, plankIndex * PlankPitch);
-                meshBuilder.AddBox(plankTransform, isDarkPlank ? GardenPalette.TablePlankDark : GardenPalette.TablePlank);
+                Color plankColor = isDarkPlank ? GardenPalette.TablePlankDark : GardenPalette.TablePlank;
+                meshBuilder.AddBox(plankTransform, plankColor);
             }
 
             meshBuilder.AddBox(Matrix.CreateScale(TraySpan, TrayHeight, TraySpan) * Matrix.CreateTranslation(0f, TrayBottom, 0f), GardenPalette.Tray);

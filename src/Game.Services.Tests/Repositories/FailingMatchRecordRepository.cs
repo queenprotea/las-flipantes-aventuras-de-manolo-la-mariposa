@@ -32,12 +32,27 @@ namespace Game.Services.Tests
             throw new NpgsqlException(FailureMessage);
         }
 
-        public Task FinishAsync(int matchId, string endReason, DateTime finishedAtUtc)
+        public Task FinishAsync(int matchId, string endReason, DateTime finishedAt)
         {
             throw new NpgsqlException(FailureMessage);
         }
 
         public Task<List<int>> ListInProgressIdsAsync()
+        {
+            throw new NpgsqlException(FailureMessage);
+        }
+
+        public Task<bool> HasInProgressByPlayerAsync(int playerId)
+        {
+            throw new NpgsqlException(FailureMessage);
+        }
+
+        public Task<List<int>> ListIdsByPlayerAsync(int playerId)
+        {
+            throw new NpgsqlException(FailureMessage);
+        }
+
+        public Task<int> DeleteFinishedWithoutParticipantsAsync(IReadOnlyCollection<int> matchIds)
         {
             throw new NpgsqlException(FailureMessage);
         }

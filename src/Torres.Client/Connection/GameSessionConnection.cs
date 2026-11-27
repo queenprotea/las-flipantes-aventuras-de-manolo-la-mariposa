@@ -8,6 +8,7 @@ using Game.Contracts;
 using Microsoft.Xna.Framework;
 
 using Torres.Client.Avatars;
+using Torres.Client.Contracts;
 using Torres.Client.Threading;
 
 namespace Torres.Client.Connection
@@ -390,6 +391,13 @@ namespace Torres.Client.Connection
             return profileUpdate;
         }
 
+        internal Task<DeleteAccountResult> DeleteAccountAsync()
+        {
+            Task<DeleteAccountResult> accountDeletion = RequireChannel().DeleteAccountAsync();
+
+            return accountDeletion;
+        }
+
         internal Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)
         {
             Task<AvatarResponse> thumbnailReading = ObserveAsync(RequireChannel().GetAvatarThumbnailAsync(avatarReference));
@@ -525,9 +533,9 @@ namespace Torres.Client.Connection
 
         private DateTime FindSilenceLimit(MatchChange lastMatchChange)
         {
-            DateTime silenceLimitUtc = lastMatchChange.ReceivedAtUtc + lastMatchChange.MatchView.StepTimeLeft.GetValueOrDefault() + _stepSilenceMargin;
+            DateTime silenceLimitAt = lastMatchChange.ReceivedAt + lastMatchChange.MatchView.StepTimeLeft.GetValueOrDefault() + _stepSilenceMargin;
 
-            return silenceLimitUtc;
+            return silenceLimitAt;
         }
 
         private static bool IsStepRunning(MatchView matchView)

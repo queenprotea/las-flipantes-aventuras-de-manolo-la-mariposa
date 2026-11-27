@@ -169,7 +169,7 @@ namespace Torres.Client.Flows
                     break;
 
                 case RespondInvitationStatus.Banned:
-                    outcome = CreateNotice(Notice.CreateBan(answer.BanEndsAtUtc));
+                    outcome = CreateNotice(Notice.CreateBan(answer.BanEndsAt));
                     break;
 
                 case RespondInvitationStatus.AlreadyInRoom:

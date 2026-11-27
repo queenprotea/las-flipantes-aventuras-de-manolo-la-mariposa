@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,8 +14,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<Friendship> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(FriendshipTable);
             builder.HasKey(mappedFriendship => new { mappedFriendship.RequesterId, mappedFriendship.AddresseeId });
             builder.Property(mappedFriendship => mappedFriendship.RequesterId).HasColumnName(RequesterIdColumn);

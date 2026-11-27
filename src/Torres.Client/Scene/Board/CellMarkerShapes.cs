@@ -15,16 +15,16 @@ namespace Torres.Client.Scene
 
         internal static void AddTargetDisc(MeshBuilder meshBuilder)
         {
-            FlowerParts.AddColumn(meshBuilder, Vector3.Zero, DiscRimHeight, DiscRimRadius, GardenPalette.TargetDiscRim);
-            FlowerParts.AddColumn(meshBuilder, Vector3.Zero, DiscHeight, DiscRadius, GardenPalette.TargetDisc);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(Vector3.Zero, new Vector3(DiscRimRadius, DiscRimHeight, DiscRimRadius)), GardenPalette.TargetDiscRim);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(Vector3.Zero, new Vector3(DiscRadius, DiscHeight, DiscRadius)), GardenPalette.TargetDisc);
         }
 
         internal static void AddSelectionRing(MeshBuilder meshBuilder)
         {
             for (var beadIndex = 0; beadIndex < RingBeadCount; beadIndex++)
             {
-                float headingDegrees = FlowerParts.GetCircleHeading(beadIndex, RingBeadCount, 0f);
-                FlowerParts.AddBead(meshBuilder, BoardGeometry.GetHeadingDirection(headingDegrees) * RingRadius, _ringBeadScale, GardenPalette.SelectionRing);
+                float headingDegrees = FlowerParts.GetCircleHeadingDegrees(beadIndex, RingBeadCount, 0f);
+                FlowerParts.AddCoarsePart(meshBuilder, PartPose.CreateUpright(BoardGeometry.GetHeadingDirection(headingDegrees) * RingRadius, _ringBeadScale), GardenPalette.SelectionRing);
             }
         }
     }

@@ -29,11 +29,6 @@ namespace Game.Services
 
         public RoomStartup(IRoomRecordRepository roomRecordRepository, SanctionLevelRepository sanctionLevelRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
         {
-            ArgumentNullException.ThrowIfNull(roomRecordRepository);
-            ArgumentNullException.ThrowIfNull(sanctionLevelRepository);
-            ArgumentNullException.ThrowIfNull(systemParameterReader);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-
             _roomRecordRepository = roomRecordRepository;
             _sanctionLevelRepository = sanctionLevelRepository;
             _systemParameterReader = systemParameterReader;
@@ -43,7 +38,7 @@ namespace Game.Services
         public async Task CloseLeftoverRoomsAsync()
         {
             int closedCount = await _roomRecordRepository.CloseAllOpenAsync(_timeProvider.GetUtcNow().UtcDateTime);
-            _log.InfoFormat(LeftoverRoomsClosedMessage, closedCount);
+            _log.InfoFormat(CultureInfo.InvariantCulture, LeftoverRoomsClosedMessage, closedCount);
         }
 
         public async Task<TimeSpan> ReadInactivityLimitAsync()

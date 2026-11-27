@@ -72,6 +72,32 @@ namespace Game.Services.Tests
             return listing;
         }
 
+        public Task<bool> HasInProgressByPlayerAsync(int playerId)
+        {
+            Task<bool> checking = Task.FromResult(false);
+
+            return checking;
+        }
+
+        public Task<List<int>> ListIdsByPlayerAsync(int playerId)
+        {
+            List<int> playedMatchIds = _participantRepository.Participants
+                .Where(participant => participant.PlayerId == playerId)
+                .Select(participant => participant.MatchId)
+                .ToList();
+            Task<List<int>> listing = Task.FromResult(playedMatchIds);
+
+            return listing;
+        }
+
+        public Task<int> DeleteFinishedWithoutParticipantsAsync(IReadOnlyCollection<int> matchIds)
+        {
+            int deletedCount = FinishedMatches.RemoveAll(match => matchIds.Contains(match.MatchId) && !_participantRepository.Participants.Exists(participant => participant.MatchId == match.MatchId));
+            Task<int> deletion = Task.FromResult(deletedCount);
+
+            return deletion;
+        }
+
         private List<MatchRecord> ListFinishedOf(int playerId)
         {
             List<int> playedMatchIds = _participantRepository.Participants

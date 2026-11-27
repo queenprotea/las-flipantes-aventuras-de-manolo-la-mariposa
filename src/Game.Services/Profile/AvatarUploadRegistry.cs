@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,10 +29,6 @@ namespace Game.Services
 
         public AvatarUploadRegistry(SessionRegistry sessionRegistry, TimeProvider timeProvider, AvatarUploadTiming uploadTiming)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentNullException.ThrowIfNull(uploadTiming);
-
             _timeProvider = timeProvider;
             _idleLimit = uploadTiming.IdleLimit;
             sessionRegistry.SessionLost += SessionRegistryOnSessionLost;
@@ -45,7 +42,7 @@ namespace Game.Services
                 _uploadsByOwnerId.Remove(ownerId);
                 if (beginResult == BeginAvatarUploadResult.Started)
                 {
-                    _uploadsByOwnerId[ownerId] = new PendingAvatarUpload(thumbnailBytes, NowUtc());
+                    _uploadsByOwnerId[ownerId] = new PendingAvatarUpload(thumbnailBytes, ReadNow());
                 }
             }
 
@@ -60,7 +57,7 @@ namespace Game.Services
                 PendingAvatarUpload? pendingUpload = _uploadsByOwnerId.GetValueOrDefault(ownerId);
                 if (pendingUpload is not null)
                 {
-                    partResult = pendingUpload.Write(receivedPart, NowUtc());
+                    partResult = pendingUpload.Write(receivedPart, ReadNow());
                 }
             }
 
@@ -80,7 +77,7 @@ namespace Game.Services
                 PendingAvatarUpload? pendingUpload = _uploadsByOwnerId.GetValueOrDefault(ownerId);
                 if ((pendingUpload is not null) && pendingUpload.IsComplete())
                 {
-                    pendingUpload.Touch(NowUtc());
+                    pendingUpload.Touch(ReadNow());
                     completedUpload = pendingUpload.ToCompleted();
                 }
             }
@@ -113,12 +110,12 @@ namespace Game.Services
 
         internal void DiscardIdle()
         {
-            DateTime idleSinceUtc = NowUtc() - _idleLimit;
+            DateTime idleThresholdAt = ReadNow() - _idleLimit;
             List<int> idleOwnerIds;
             lock (_registryLock)
             {
                 idleOwnerIds = _uploadsByOwnerId
-                    .Where(pendingEntry => pendingEntry.Value.LastActivityUtc < idleSinceUtc)
+                    .Where(pendingEntry => pendingEntry.Value.LastActivityAt < idleThresholdAt)
                     .Select(pendingEntry => pendingEntry.Key)
                     .ToList();
             }
@@ -154,7 +151,7 @@ namespace Game.Services
 
             if (wasUploadPending)
             {
-                _log.InfoFormat(UploadDiscardedMessage, ownerId, discardReason);
+                _log.InfoFormat(CultureInfo.InvariantCulture, UploadDiscardedMessage, ownerId, discardReason);
             }
         }
 
@@ -163,11 +160,11 @@ namespace Game.Services
             Discard(e.OwnerId, SessionLostReason);
         }
 
-        private DateTime NowUtc()
+        private DateTime ReadNow()
         {
-            DateTime nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
 
-            return nowUtc;
+            return now;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Torres.Client.UI
     {
         private const string SetWindowMinimumSizeExport = "SDL_SetWindowMinimumSize";
 
-        private static readonly string[] _sdlLibraryNames =
+        private static readonly string[] _sdlLibraryNames = new string[]
         {
             "libSDL2-2.0.0.dylib",
             "libSDL2-2.0.so.0",

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,8 +25,6 @@ namespace Game.Services
 
         public RankingService(IRankingRepository rankingRepository)
         {
-            ArgumentNullException.ThrowIfNull(rankingRepository);
-
             _rankingRepository = rankingRepository;
         }
 

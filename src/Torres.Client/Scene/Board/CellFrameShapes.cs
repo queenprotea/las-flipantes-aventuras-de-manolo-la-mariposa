@@ -12,8 +12,9 @@ namespace Torres.Client.Scene
         private static readonly Vector3 _acrossBarSize = new Vector3(BarLength, BarHeight, BarThickness);
         private static readonly Vector3 _alongBarSize = new Vector3(BarThickness, BarHeight, BarLength);
 
-        internal static void AddCellFrame(MeshBuilder meshBuilder, Color frameColor)
+        internal static void AddHoveredCellFrame(MeshBuilder meshBuilder)
         {
+            Color frameColor = GardenPalette.HoveredCellFrame;
             meshBuilder.AddBox(CreateBar(_acrossBarSize, new Vector3(0f, 0f, -FrameHalfSpan)), frameColor);
             meshBuilder.AddBox(CreateBar(_acrossBarSize, new Vector3(0f, 0f, FrameHalfSpan)), frameColor);
             meshBuilder.AddBox(CreateBar(_alongBarSize, new Vector3(-FrameHalfSpan, 0f, 0f)), frameColor);

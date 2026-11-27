@@ -11,10 +11,9 @@ namespace Torres.Client.Localization
     internal sealed class LanguagePreference
     {
         private const string PreferenceFileName = "language.txt";
-        private const string PreferenceFolderName = "Torres";
-        private const string SpanishUiCulture = "es";
+        private const string SpanishUICulture = "es";
         private const string SpanishFormatCulture = "es-MX";
-        private const string EnglishUiCulture = "en";
+        private const string EnglishUICulture = "en";
         private const string EnglishFormatCulture = "en-US";
 
         private readonly string _preferencePath;
@@ -27,17 +26,17 @@ namespace Torres.Client.Localization
         {
             string preferenceFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                PreferenceFolderName);
+                ClientSettings.LocalFolderName);
             _preferencePath = Path.Combine(preferenceFolder, PreferenceFileName);
         }
 
         internal static LanguageOption Spanish { get; } =
-            new LanguageOption(SpanishUiCulture, SpanishFormatCulture, TextKeys.Language.SpanishOption);
+            new LanguageOption(SpanishUICulture, SpanishFormatCulture, TextKeys.Language.SpanishOption);
 
         internal static LanguageOption English { get; } =
-            new LanguageOption(EnglishUiCulture, EnglishFormatCulture, TextKeys.Language.EnglishOption);
+            new LanguageOption(EnglishUICulture, EnglishFormatCulture, TextKeys.Language.EnglishOption);
 
-        internal static IReadOnlyList<LanguageOption> AvailableLanguages { get; } = new[] { Spanish, English };
+        internal static IReadOnlyList<LanguageOption> AvailableLanguages { get; } = new LanguageOption[] { Spanish, English };
 
         internal LanguageOption CurrentLanguage { get; private set; } = Spanish;
 
@@ -46,7 +45,7 @@ namespace Torres.Client.Localization
         internal void StartLoadingSavedPreference()
         {
             ApplyCulture(Spanish);
-            _savedPreferenceReading = new BackgroundCall<string, string>(ReadSavedUiCultureName, _preferencePath).StartAsync();
+            _savedPreferenceReading = new BackgroundCall<string, string>(ReadSavedUICultureName, _preferencePath).StartAsync();
         }
 
         internal void Update()
@@ -56,7 +55,7 @@ namespace Torres.Client.Localization
                 return;
             }
 
-            LanguageOption? savedLanguage = _savedPreferenceReading.IsCompletedSuccessfully ? FindByUiCultureName(_savedPreferenceReading.Result) : null;
+            LanguageOption? savedLanguage = _savedPreferenceReading.IsCompletedSuccessfully ? FindByUICultureName(_savedPreferenceReading.Result) : null;
             _savedPreferenceReading = null;
             if ((savedLanguage is not null) && !_wasLanguageChosen)
             {
@@ -66,7 +65,7 @@ namespace Torres.Client.Localization
 
         internal bool Change(LanguageOption language)
         {
-            if (language.UiCultureName == CurrentLanguage.UiCultureName)
+            if (language.UICultureName == CurrentLanguage.UICultureName)
             {
                 return false;
             }
@@ -80,23 +79,23 @@ namespace Torres.Client.Localization
 
         internal bool IsCurrent(LanguageOption language)
         {
-            bool isCurrentLanguage = language.UiCultureName == CurrentLanguage.UiCultureName;
+            bool isCurrentLanguage = language.UICultureName == CurrentLanguage.UICultureName;
 
             return isCurrentLanguage;
         }
 
-        private static string ReadSavedUiCultureName(string preferencePath)
+        private static string ReadSavedUICultureName(string preferencePath)
         {
-            string savedUiCultureName = File.Exists(preferencePath) ? File.ReadAllText(preferencePath).Trim() : string.Empty;
+            string savedUICultureName = File.Exists(preferencePath) ? File.ReadAllText(preferencePath).Trim() : string.Empty;
 
-            return savedUiCultureName;
+            return savedUICultureName;
         }
 
-        private static LanguageOption? FindByUiCultureName(string uiCultureName)
+        private static LanguageOption? FindByUICultureName(string uiCultureName)
         {
             foreach (LanguageOption availableLanguage in AvailableLanguages)
             {
-                if (availableLanguage.UiCultureName == uiCultureName)
+                if (availableLanguage.UICultureName == uiCultureName)
                 {
                     return availableLanguage;
                 }
@@ -107,7 +106,7 @@ namespace Torres.Client.Localization
 
         private void ApplyCulture(LanguageOption language)
         {
-            CultureInfo uiCulture = CultureInfo.GetCultureInfo(language.UiCultureName);
+            CultureInfo uiCulture = CultureInfo.GetCultureInfo(language.UICultureName);
             CultureInfo formatCulture = CultureInfo.GetCultureInfo(language.FormatCultureName);
 
             CultureInfo.CurrentUICulture = uiCulture;
@@ -126,7 +125,7 @@ namespace Torres.Client.Localization
             }
 
             Directory.CreateDirectory(preferenceFolder);
-            File.WriteAllText(_preferencePath, language.UiCultureName);
+            File.WriteAllText(_preferencePath, language.UICultureName);
         }
     }
 }

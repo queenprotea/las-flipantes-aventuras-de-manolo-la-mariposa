@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,17 +12,11 @@ namespace Game.Persistence
 
         public MatchStateRepository(IDbContextFactory<TorresDbContext> contextFactory)
         {
-            ArgumentNullException.ThrowIfNull(contextFactory);
-
             _contextFactory = contextFactory;
         }
 
         public Task SaveAsync(MatchState savedState)
         {
-            ArgumentNullException.ThrowIfNull(savedState);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(savedState.MatchId, nameof(savedState));
-            ArgumentException.ThrowIfNullOrWhiteSpace(savedState.StateDocument, nameof(savedState));
-
             Task saving = WriteStateAsync(savedState);
 
             return saving;
@@ -31,8 +24,6 @@ namespace Game.Persistence
 
         public Task DeleteAsync(int matchId)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
-
             Task deleting = DeleteStateAsync(matchId);
 
             return deleting;

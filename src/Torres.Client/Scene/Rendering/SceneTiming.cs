@@ -26,9 +26,9 @@ namespace Torres.Client.Scene
             return signedWave;
         }
 
-        internal static float FindArcLift(float arcHeight, float travelShare)
+        internal static float FindArcLift(float arcHeight, float travelProgress)
         {
-            float arcLift = arcHeight * ArcShapeFactor * travelShare * (1f - travelShare);
+            float arcLift = arcHeight * ArcShapeFactor * travelProgress * (1f - travelProgress);
 
             return arcLift;
         }
@@ -51,8 +51,8 @@ namespace Torres.Client.Scene
 
         internal static float FindCycleRadians(TimeSpan sceneTime, double periodSeconds)
         {
-            double cycleShare = (sceneTime.TotalSeconds % periodSeconds) / periodSeconds;
-            float cycleRadians = (float)(cycleShare * MathHelper.TwoPi);
+            double cycleProgress = (sceneTime.TotalSeconds % periodSeconds) / periodSeconds;
+            float cycleRadians = (float)(cycleProgress * MathHelper.TwoPi);
 
             return cycleRadians;
         }

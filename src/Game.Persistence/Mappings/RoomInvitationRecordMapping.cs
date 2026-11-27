@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,8 +14,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<RoomInvitationRecord> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(RoomInvitationTable);
             builder.HasKey(mappedInvitation => new { mappedInvitation.RoomId, mappedInvitation.InvitedPlayerId });
             builder.Property(mappedInvitation => mappedInvitation.RoomId).HasColumnName(RoomIdColumn);

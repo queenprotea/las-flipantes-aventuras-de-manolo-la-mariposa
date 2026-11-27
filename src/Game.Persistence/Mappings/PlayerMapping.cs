@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,8 +15,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<Player> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(PlayerTable);
             builder.HasKey(mappedPlayer => mappedPlayer.PlayerId);
             builder.Property(mappedPlayer => mappedPlayer.PlayerId)

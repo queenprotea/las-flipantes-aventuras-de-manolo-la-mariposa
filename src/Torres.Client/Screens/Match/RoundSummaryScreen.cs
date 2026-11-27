@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 using FontStashSharp.RichText;
@@ -21,21 +20,27 @@ namespace Torres.Client.Screens
     {
         private readonly MatchSummaryFlow _matchSummaryFlow;
         private readonly MatchPause _matchPause;
-        private readonly LocalizedLabel _titleLabel = new LocalizedLabel(TextKeys.RoundSummary.RoundFinishedTitle) { Font = Fonts.Headline, TextColor = Theme.Ink, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly PauseCardFactory _pauseCards;
+        private readonly LocalizedLabel _titleLabel = LabelFactory.CreateCenteredTitle(TextKeys.RoundSummary.RoundFinishedTitle, Fonts.Headline);
         private readonly VerticalStackPanel _scoreRows = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing };
         private readonly HorizontalStackPanel _placerSection = new HorizontalStackPanel();
-        private readonly VerticalStackPanel _placerPanel = new VerticalStackPanel { Spacing = MatchLayout.PauseRowSpacing, VerticalAlignment = VerticalAlignment.Center };
+        private readonly VerticalStackPanel _placerPanel = new VerticalStackPanel
+        {
+            Spacing = MatchLayout.PauseRowSpacing,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         private readonly CountdownView _countdownView;
         private LocalizedLabel? _gardenStaysLabel;
         private LocalizedLabel? _rulesLabel;
 
         private MatchView? _shownMatchView;
 
-        internal RoundSummaryScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause)
+        internal RoundSummaryScreen(MatchSummaryFlow matchSummaryFlow, MatchPause matchPause, PauseCardFactory pauseCards)
             : base(TextKeys.RoundSummary.HeaderLabel, true)
         {
             _matchSummaryFlow = matchSummaryFlow;
             _matchPause = matchPause;
+            _pauseCards = pauseCards;
             _countdownView = new CountdownView(matchPause.VolumeTextures, Fonts.Clock, Theme.Ink);
         }
 
@@ -70,7 +75,7 @@ namespace Torres.Client.Screens
                 ShowMatchView(matchView);
             }
 
-            _countdownView.Show(FindStepTimeLeft());
+            _countdownView.Show(_matchSummaryFlow.StepTimeLeft);
             if (matchView.Phase == MatchPhase.PlayerTurn)
             {
                 RequestedScreen = ScreenId.Match;
@@ -88,8 +93,8 @@ namespace Torres.Client.Screens
 
         protected override Widget Build()
         {
-            _gardenStaysLabel = CreateCenteredHint(TextKeys.RoundSummary.GardenStaysInstruction);
-            _rulesLabel = CreateCenteredHint(TextKeys.RoundSummary.NextRoundRulesInstruction);
+            _gardenStaysLabel = LabelFactory.CreateCenteredHint(TextKeys.RoundSummary.GardenStaysInstruction, MatchLayout.RoundSummaryCardWidth);
+            _rulesLabel = LabelFactory.CreateCenteredHint(TextKeys.RoundSummary.NextRoundRulesInstruction, MatchLayout.RoundSummaryCardWidth);
 
             var cardContent = new VerticalStackPanel { Spacing = MatchLayout.PauseSectionSpacing };
             cardContent.Widgets.Add(_titleLabel);
@@ -98,68 +103,22 @@ namespace Torres.Client.Screens
             cardContent.Widgets.Add(BuildButterflyPlacer());
             cardContent.Widgets.Add(_rulesLabel);
             cardContent.Widgets.Add(BuildContinueRow());
-            Panel cardLayer = _matchPause.CreateCardLayer(cardContent, MatchLayout.RoundSummaryCardWidth);
+            Panel cardLayer = _pauseCards.CreateCardLayer(cardContent, MatchLayout.RoundSummaryCardWidth);
 
             return cardLayer;
         }
 
-        private static LocalizedLabel CreateCenteredHint(string textKey)
-        {
-            LocalizedLabel centeredHint = LabelFactory.CreateHint(textKey);
-            centeredHint.Width = MatchLayout.RoundSummaryCardWidth;
-            centeredHint.Wrap = true;
-            centeredHint.TextAlign = TextHorizontalAlignment.Center;
-            centeredHint.HorizontalAlignment = HorizontalAlignment.Center;
-
-            return centeredHint;
-        }
-
-        private static LocalizedLabel BuildHeaderCell(string textKey)
-        {
-            var headerCell = new LocalizedLabel(textKey)
-            {
-                Width = MatchLayout.PauseStatColumnWidth,
-                Font = Fonts.Label,
-                TextColor = Theme.MutedInk,
-                TextAlign = TextHorizontalAlignment.Center,
-            };
-
-            return headerCell;
-        }
-
-        private static Label BuildStatCell(string cellText, Color textColor)
-        {
-            var statCell = new Label
-            {
-                Text = cellText,
-                Width = MatchLayout.PauseStatColumnWidth,
-                Font = Fonts.Body,
-                TextColor = textColor,
-                TextAlign = TextHorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            return statCell;
-        }
-
         private HorizontalStackPanel BuildPlayerRow(MatchSeat seat, MatchRoundScore roundScore, bool isViewer)
         {
-            string butterflyText = DisplaySymbols.MissingValue;
-            if (roundScore.ButterflyPoints > 0)
-            {
-                butterflyText = DisplayFormats.FormatBonus(roundScore.ButterflyPoints);
-            }
+            string butterflyText = DisplayFormats.FormatButterflyPoints(roundScore.ButterflyPoints);
 
-            HorizontalStackPanel playerTag = _matchPause.CreatePlayerTag(seat, Fonts.Control);
-            var totalCell = new Panel { Width = MatchLayout.PauseStatColumnWidth };
-            Panel totalCircle = _matchPause.CreateScoreCircle(roundScore.PlanterPoints + roundScore.ButterflyPoints);
-            totalCircle.HorizontalAlignment = HorizontalAlignment.Center;
-            totalCell.Widgets.Add(totalCircle);
+            HorizontalStackPanel playerTag = _pauseCards.CreatePlayerTag(seat, Fonts.Control);
+            Panel totalCell = _pauseCards.CreateTotalCell(roundScore.PlanterPoints + roundScore.ButterflyPoints);
 
-            HorizontalStackPanel playerRow = _matchPause.CreateTableRow(isViewer, false);
+            HorizontalStackPanel playerRow = _pauseCards.CreateTableRow(isViewer, false);
             playerRow.Widgets.Add(playerTag);
-            playerRow.Widgets.Add(BuildStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints), Theme.SoftInk));
-            playerRow.Widgets.Add(BuildStatCell(butterflyText, Theme.MintInk));
+            playerRow.Widgets.Add(PauseCardFactory.CreateStatCell(DisplayFormats.FormatInteger(roundScore.PlanterPoints), Theme.SoftInk));
+            playerRow.Widgets.Add(PauseCardFactory.CreateStatCell(butterflyText, Theme.MintInk));
             playerRow.Widgets.Add(totalCell);
             StackPanel.SetProportionType(playerTag, ProportionType.Fill);
 
@@ -168,15 +127,15 @@ namespace Torres.Client.Screens
 
         private VerticalStackPanel BuildTable()
         {
-            HorizontalStackPanel headerRow = _matchPause.CreateTableRow(false, false);
+            HorizontalStackPanel headerRow = _pauseCards.CreateTableRow(false, false);
             headerRow.Background = null;
-            LocalizedLabel playerHeader = BuildHeaderCell(TextKeys.RoundSummary.PlayerColumn);
+            LocalizedLabel playerHeader = PauseCardFactory.CreateHeaderCell(TextKeys.RoundSummary.PlayerColumn);
             playerHeader.Width = null;
             playerHeader.TextAlign = TextHorizontalAlignment.Left;
             headerRow.Widgets.Add(playerHeader);
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.PlantersColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.ButterflyColumn));
-            headerRow.Widgets.Add(BuildHeaderCell(TextKeys.RoundSummary.RoundColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.RoundSummary.PlantersColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.RoundSummary.ButterflyColumn));
+            headerRow.Widgets.Add(PauseCardFactory.CreateHeaderCell(TextKeys.RoundSummary.RoundColumn));
             StackPanel.SetProportionType(playerHeader, ProportionType.Fill);
 
             var scoreTable = new VerticalStackPanel();
@@ -202,7 +161,7 @@ namespace Torres.Client.Screens
         private HorizontalStackPanel BuildContinueRow()
         {
             LocalizedButton continueButton = ButtonFactory.CreatePrimaryButton(TextKeys.RoundSummary.ContinueButton);
-            _matchPause.StylePrimaryPill(continueButton);
+            _pauseCards.StylePrimaryPill(continueButton);
             continueButton.Click += ContinueButtonOnClick;
 
             HorizontalStackPanel continueRow = PanelFactory.CreateButtonRow();
@@ -244,20 +203,13 @@ namespace Torres.Client.Screens
             if (isPlacingButterfly)
             {
                 MatchSeat placerSeat = matchView.Seats.First(seat => seat.SeatNumber == matchView.ActiveSeatNumber);
-                _placerPanel.Widgets.Add(new LocalizedLabel(TextKeys.RoundSummary.PlaceButterflyInstruction) { Font = Fonts.Label, TextColor = Theme.MutedInk });
-                _placerPanel.Widgets.Add(_matchPause.CreatePlayerPill(placerSeat));
+                _placerPanel.Widgets.Add(new LocalizedLabel(TextKeys.RoundSummary.PlaceButterflyInstruction)
+                {
+                    Font = Fonts.Label,
+                    TextColor = Theme.MutedInk,
+                });
+                _placerPanel.Widgets.Add(_pauseCards.CreatePlayerPill(placerSeat));
             }
-        }
-
-        private TimeSpan FindStepTimeLeft()
-        {
-            TimeSpan stepTimeLeft = TimeSpan.Zero;
-            if (_matchSummaryFlow.StepEndsAt is DateTime stepEndsAt)
-            {
-                stepTimeLeft = stepEndsAt - DateTime.UtcNow;
-            }
-
-            return stepTimeLeft;
         }
 
         private void ContinueButtonOnClick(object sender, MyraEventArgs e)

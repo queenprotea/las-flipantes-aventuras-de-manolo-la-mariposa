@@ -32,10 +32,10 @@ namespace Game.Services.Tests
         public AccountServiceRecoveryTests()
         {
             var tokenIssuer = new SessionTokenIssuer(_signingKey, _fakeTimeProvider);
-            var accountRegistration = new AccountRegistration(_playerRepository, _emailSender, new PendingRegistrationRegistry(_fakeTimeProvider), tokenIssuer, _fakeTimeProvider);
-            var accessRecovery = new AccessRecovery(_playerRepository, _recoveryRepository, _emailSender, _fakeTimeProvider);
-            accountRegistration.Start(CodeLifetimeMinutes);
-            accessRecovery.Start(CodeLifetimeMinutes);
+            var verificationCodeLifetime = new VerificationCodeLifetime();
+            verificationCodeLifetime.Start(CodeLifetimeMinutes);
+            var accountRegistration = new AccountRegistration(_playerRepository, _emailSender, new PendingRegistrationRegistry(_fakeTimeProvider), tokenIssuer, _fakeTimeProvider, verificationCodeLifetime);
+            var accessRecovery = new AccessRecovery(_playerRepository, _recoveryRepository, _emailSender, _fakeTimeProvider, verificationCodeLifetime);
             _accountService = new AccountService(_playerRepository, new RecordingSanctionRepository(), tokenIssuer, new GuestIdIssuer(), accountRegistration, accessRecovery);
         }
 

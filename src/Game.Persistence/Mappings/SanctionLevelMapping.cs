@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,8 +11,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<SanctionLevel> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(SanctionLevelTable);
             builder.HasKey(mappedLevel => mappedLevel.Level);
             builder.Property(mappedLevel => mappedLevel.Level)

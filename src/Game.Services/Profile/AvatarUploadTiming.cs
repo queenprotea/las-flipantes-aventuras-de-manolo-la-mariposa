@@ -6,8 +6,6 @@ namespace Game.Services
     {
         public AvatarUploadTiming(TimeSpan idleLimit)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(idleLimit, TimeSpan.Zero);
-
             IdleLimit = idleLimit;
         }
 

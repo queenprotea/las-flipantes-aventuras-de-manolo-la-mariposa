@@ -30,17 +30,31 @@ namespace Torres.Client.Screens
         private readonly ForfeitSection _forfeitSection;
         private readonly ChatSection _chatSection;
         private readonly VerticalStackPanel _turnOrderPanel = new VerticalStackPanel();
-        private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
+        private readonly Label _clockLabel = new Label
+        {
+            Font = Fonts.Clock,
+            TextColor = Theme.Ink,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         private readonly FlowerClock _flowerClock;
-        private readonly LocalizedLabel _instructionLabel = new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction) { Font = Fonts.Small, TextColor = Theme.Surface };
-        private readonly LocalizedLabel _turnLabel = new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction) { Font = Fonts.Small, TextColor = Theme.MintInk, VerticalAlignment = VerticalAlignment.Center };
+        private readonly LocalizedLabel _instructionLabel = new LocalizedLabel(TextKeys.InitialPlacement.PlaceCaterpillarInstruction)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.Surface,
+        };
+        private readonly LocalizedLabel _turnLabel = new LocalizedLabel(TextKeys.InitialPlacement.CurrentTurnInstruction)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.MintInk,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         private readonly Panel _instructionPill;
-        private readonly Panel _chatOverlay;
+        private readonly MatchTableFrame _tableFrame;
 
         private MatchView? _shownMatchView;
         private TimeSpan _shownStepTime;
 
-        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, InitialPlacementFlow initialPlacementFlow, ForfeitFlow forfeitFlow, ChatFlow chatFlow, DoomLauncher doomLauncher)
+        internal InitialPlacementScreen(GraphicsDevice graphicsDevice, InitialPlacementFlow initialPlacementFlow, ForfeitFlow forfeitFlow, ChatFlow chatFlow, DoomLauncher doomLauncher, MatchPause matchPause)
             : base(TextKeys.InitialPlacement.HeaderLabel, true)
         {
             _initialPlacementFlow = initialPlacementFlow;
@@ -48,34 +62,12 @@ namespace Torres.Client.Screens
             _forfeitSection = new ForfeitSection(forfeitFlow, TextKeys.Match.ForfeitButton);
             _chatSection = new ChatSection(chatFlow, MatchLayout.SideColumnWidth);
             _boardWidget = new BoardWidget(graphicsDevice, BoardLayout.Empty);
-            _figureIcons = new FigureIcons(graphicsDevice);
-            _volumeTextures = new VolumeTextures(graphicsDevice);
+            _figureIcons = matchPause.FigureIcons;
+            _volumeTextures = matchPause.VolumeTextures;
+            _tableFrame = new MatchTableFrame(_volumeTextures, _chatSection.Root, _noticeBox);
             _playersBar = new MatchPlayersBarView(_figureIcons, _volumeTextures);
             _flowerClock = new FlowerClock(_volumeTextures) { VerticalAlignment = VerticalAlignment.Center };
-            _instructionPill = new Panel
-            {
-                Padding = MatchLayout.HintPillPadding,
-                Background = _volumeTextures.HintPillBrush,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = MatchLayout.HintMargin,
-            };
-            _instructionPill.Widgets.Add(_instructionLabel);
-            _noticeBox.HorizontalAlignment = HorizontalAlignment.Center;
-            _noticeBox.VerticalAlignment = VerticalAlignment.Top;
-            _noticeBox.Width = MatchLayout.NoticeWidth;
-            _noticeBox.Margin = MatchLayout.NoticeMargin;
-            _chatOverlay = new Panel
-            {
-                Width = MatchLayout.ChatOverlayWidth + MatchLayout.ChatOverlayMargin.Right,
-                Padding = MatchLayout.TableLabelPadding,
-                Background = _volumeTextures.CardBrush,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                Margin = MatchLayout.ChatOverlayMargin,
-                Visible = false,
-            };
-            _chatOverlay.Widgets.Add(_chatSection.Root);
+            _instructionPill = _tableFrame.CreateHintPill(_instructionLabel);
         }
 
         internal override void Open()
@@ -131,8 +123,6 @@ namespace Torres.Client.Screens
         public void Dispose()
         {
             _boardWidget.Dispose();
-            _figureIcons.Dispose();
-            _volumeTextures.Dispose();
         }
 
         protected override Widget Build()
@@ -146,30 +136,12 @@ namespace Torres.Client.Screens
             clockPill.Widgets.Add(_flowerClock);
             clockPill.Widgets.Add(_clockLabel);
             clockPill.Widgets.Add(_turnLabel);
-            var topBar = new HorizontalStackPanel
-            {
-                Spacing = MatchLayout.TopBarSpacing,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = MatchLayout.TableEdgeMargin,
-            };
-            topBar.Widgets.Add(_playersBar.Root);
-            topBar.Widgets.Add(clockPill);
+            Panel tablePanel = MatchTableFrame.CreateTablePanel(_boardWidget);
+            tablePanel.Widgets.Add(MatchTableFrame.CreateTopBar(_playersBar.Root, clockPill));
+            tablePanel.Widgets.Add(_instructionPill);
+            _tableFrame.CompleteTablePanel(tablePanel, BuildRightColumn());
 
-            var table = new Panel
-            {
-                Background = Theme.MatchBackgroundBrush,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            table.Widgets.Add(_boardWidget);
-            table.Widgets.Add(topBar);
-            table.Widgets.Add(_instructionPill);
-            table.Widgets.Add(_noticeBox);
-            table.Widgets.Add(BuildRightColumn());
-            table.Widgets.Add(_chatOverlay);
-
-            return table;
+            return tablePanel;
         }
 
         private static string GetPlacingPlayerName(MatchView matchView)
@@ -181,7 +153,13 @@ namespace Torres.Client.Screens
 
         private HorizontalStackPanel BuildTurnOrderRow(MatchSeat seat, bool hasPlaced)
         {
-            var nameLabel = new Label { Text = seat.DisplayName, Font = Fonts.Small, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
+            var nameLabel = new Label
+            {
+                Text = seat.DisplayName,
+                Font = Fonts.Small,
+                TextColor = Theme.Ink,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             var turnOrderRow = new HorizontalStackPanel
             {
                 Spacing = MatchLayout.PlayerRowSpacing,
@@ -215,16 +193,6 @@ namespace Torres.Client.Screens
                 Background = _volumeTextures.CardBrush,
             };
             turnOrderCard.Widgets.Add(PanelFactory.CreateGameSection(TextKeys.InitialPlacement.TurnOrderLabel, _turnOrderPanel));
-            var chatTabButton = new Button
-            {
-                Content = new Label { Text = DisplaySymbols.ChatTab, Font = Fonts.Body, TextColor = Theme.ChosenAction, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
-                Width = MatchLayout.ChatTabWidth,
-                Height = MatchLayout.ChatTabHeight,
-                Background = _volumeTextures.PillBrush,
-                OverBackground = _volumeTextures.HoveredPillBrush,
-                HorizontalAlignment = HorizontalAlignment.Right,
-            };
-            chatTabButton.Click += (_, _) => _chatOverlay.Visible = !_chatOverlay.Visible;
             _forfeitSection.Root.HorizontalAlignment = HorizontalAlignment.Right;
             var rightColumn = new VerticalStackPanel
             {
@@ -236,17 +204,17 @@ namespace Torres.Client.Screens
             };
             rightColumn.Widgets.Add(_forfeitSection.Root);
             rightColumn.Widgets.Add(turnOrderCard);
-            rightColumn.Widgets.Add(chatTabButton);
+            rightColumn.Widgets.Add(_tableFrame.ChatTabButton);
 
             return rightColumn;
         }
 
         private void ShowClock()
         {
-            TimeSpan placementTimeLeft = _initialPlacementFlow.FindPlacementTimeLeft();
+            TimeSpan placementTimeLeft = _initialPlacementFlow.PlacementTimeLeft;
 
             _clockLabel.Text = DisplayFormats.FormatCountdown(placementTimeLeft);
-            _flowerClock.RemainingShare = _shownStepTime > TimeSpan.Zero ? (float)(placementTimeLeft / _shownStepTime) : 0f;
+            _flowerClock.RemainingProgress = _shownStepTime > TimeSpan.Zero ? (float)(placementTimeLeft / _shownStepTime) : 0f;
         }
 
         private void ShowMatchView(MatchView matchView)

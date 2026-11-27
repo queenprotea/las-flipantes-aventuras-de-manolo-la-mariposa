@@ -7,17 +7,19 @@ using Microsoft.Xna.Framework.Graphics;
 using Myra.Graphics2D;
 using Myra.Graphics2D.TextureAtlases;
 
+using Torres.Client.Scene;
+
 namespace Torres.Client.UI
 {
     internal sealed class VolumeTextures : IDisposable
     {
         private const int ShadowMargin = 4;
         private const float ShadowDrop = 2f;
+        private const int BothSides = 2;
         private const float ShadowBlur = 4f;
         private const float ShadowOpacity = 0.14f;
         private const float LineWidth = 1f;
-        private const float PixelCenter = 0.5f;
-        private const float HalfShare = 0.5f;
+        private const float EdgeCoverageThreshold = 0.5f;
         private const int CardRadius = 14;
         private const int PillRadius = 12;
         private const int CircleRadius = 13;
@@ -35,7 +37,7 @@ namespace Torres.Client.UI
             ActivePillBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.MintTint, Theme.MintAlt, Theme.ChosenAction, PillRadius, true, true));
             CircleBrush = CreatePanel(graphicsDevice, new PanelLook(Theme.Surface, Theme.SurfaceSunken, Theme.StrongLine, CircleRadius, true, false));
             PetalLineImages = CreatePetalImages(graphicsDevice, 0f);
-            PetalFillImages = CreatePetalImages(graphicsDevice, FlowerClockShapes.PetalLineShare);
+            PetalFillImages = CreatePetalImages(graphicsDevice, FlowerClockShapes.PetalLineFraction);
             FlowerCenterImage = new TextureRegion(CreateTexture(graphicsDevice, MatchLayout.FlowerClockSize, FlowerClockShapes.CreateCenter()));
         }
 
@@ -69,12 +71,12 @@ namespace Torres.Client.UI
             }
         }
 
-        private static float FindRoundedDistance(Vector2 pixelPoint, Vector2 shapeCenter, Vector2 halfSize, float cornerRadius)
+        private static float FindRoundedDistance(Vector2 pixelPoint, Vector2 shapeCenter, RoundedShape roundedShape)
         {
             Vector2 centerOffset = pixelPoint - shapeCenter;
-            Vector2 innerOffset = new Vector2(Math.Abs(centerOffset.X), Math.Abs(centerOffset.Y)) - (halfSize - new Vector2(cornerRadius));
+            Vector2 innerOffset = new Vector2(Math.Abs(centerOffset.X), Math.Abs(centerOffset.Y)) - (roundedShape.HalfSize - new Vector2(roundedShape.CornerRadius));
             Vector2 cornerOffset = Vector2.Max(Vector2.Zero, innerOffset);
-            float roundedDistance = cornerOffset.Length() + Math.Min(Math.Max(innerOffset.X, innerOffset.Y), 0f) - cornerRadius;
+            float roundedDistance = cornerOffset.Length() + Math.Min(Math.Max(innerOffset.X, innerOffset.Y), 0f) - roundedShape.CornerRadius;
 
             return roundedDistance;
         }
@@ -90,18 +92,17 @@ namespace Torres.Client.UI
         {
             int shadowMargin = panelLook.HasShadow ? ShadowMargin : 0;
             int inset = panelLook.CornerRadius + shadowMargin;
-            int textureSize = (inset * 2) + 1;
-            var shapeCenter = new Vector2(textureSize * HalfShare);
-            var halfSize = new Vector2((textureSize * HalfShare) - shadowMargin);
+            int textureSize = (inset * BothSides) + 1;
+            var shapeCenter = new Vector2(textureSize * SceneValues.HalfFactor);
+            var halfSize = new Vector2((textureSize * SceneValues.HalfFactor) - shadowMargin);
+            var roundedShape = new RoundedShape(textureSize, shapeCenter, halfSize, panelLook.CornerRadius);
             var pixels = new Color[textureSize * textureSize];
             for (var row = 0; row < textureSize; row++)
             {
-                float verticalShare = (float)row / textureSize;
-                Color fillColor = Color.Lerp(panelLook.TopColor, panelLook.BottomColor, verticalShare);
                 for (var column = 0; column < textureSize; column++)
                 {
-                    var pixelPoint = new Vector2(column + PixelCenter, row + PixelCenter);
-                    pixels[(row * textureSize) + column] = ShadePixel(pixelPoint, shapeCenter, halfSize, panelLook, fillColor);
+                    var pixelPoint = new Vector2(column + SceneValues.PixelCenter, row + SceneValues.PixelCenter);
+                    pixels[(row * textureSize) + column] = ShadePixel(pixelPoint, roundedShape, panelLook);
                 }
             }
 
@@ -111,22 +112,25 @@ namespace Torres.Client.UI
             return panelBrush;
         }
 
-        private static Color ShadePixel(Vector2 pixelPoint, Vector2 shapeCenter, Vector2 halfSize, PanelLook panelLook, Color fillColor)
+        private static Color ShadePixel(Vector2 pixelPoint, RoundedShape roundedShape, PanelLook panelLook)
         {
-            float shapeDistance = FindRoundedDistance(pixelPoint, shapeCenter, halfSize, panelLook.CornerRadius);
+            var pixelRow = (int)pixelPoint.Y;
+            float verticalFraction = (float)pixelRow / roundedShape.TextureSize;
+            Color fillColor = Color.Lerp(panelLook.TopColor, panelLook.BottomColor, verticalFraction);
+            float shapeDistance = FindRoundedDistance(pixelPoint, roundedShape.Center, roundedShape);
             Color pixelColor = Color.Transparent;
             if (panelLook.HasShadow)
             {
-                float shadowDistance = FindRoundedDistance(pixelPoint, shapeCenter + new Vector2(0f, ShadowDrop), halfSize, panelLook.CornerRadius);
-                float shadowAlpha = ShadowOpacity * MathHelper.Clamp(HalfShare - (shadowDistance / (ShadowBlur * 2f)), 0f, 1f);
+                float shadowDistance = FindRoundedDistance(pixelPoint, roundedShape.Center + new Vector2(0f, ShadowDrop), roundedShape);
+                float shadowAlpha = ShadowOpacity * MathHelper.Clamp(EdgeCoverageThreshold - (shadowDistance / (ShadowBlur * BothSides)), 0f, 1f);
                 pixelColor = Theme.PanelShadow * shadowAlpha;
             }
 
-            float fillCoverage = MathHelper.Clamp(HalfShare - shapeDistance, 0f, 1f);
+            float fillCoverage = MathHelper.Clamp(EdgeCoverageThreshold - shapeDistance, 0f, 1f);
             Color surfaceColor = fillColor;
             if (panelLook.HasLine)
             {
-                float innerCoverage = MathHelper.Clamp(HalfShare - (shapeDistance + LineWidth), 0f, 1f);
+                float innerCoverage = MathHelper.Clamp(EdgeCoverageThreshold - (shapeDistance + LineWidth), 0f, 1f);
                 surfaceColor = Color.Lerp(panelLook.LineColor, fillColor, innerCoverage);
             }
 
@@ -135,12 +139,12 @@ namespace Torres.Client.UI
             return shadedColor;
         }
 
-        private List<TextureRegion> CreatePetalImages(GraphicsDevice graphicsDevice, float insetShare)
+        private List<TextureRegion> CreatePetalImages(GraphicsDevice graphicsDevice, float insetFraction)
         {
             var petalImages = new List<TextureRegion>();
             for (var petalIndex = 0; petalIndex < FlowerClockShapes.PetalCount; petalIndex++)
             {
-                petalImages.Add(new TextureRegion(CreateTexture(graphicsDevice, MatchLayout.FlowerClockSize, FlowerClockShapes.CreatePetalMask(petalIndex, insetShare))));
+                petalImages.Add(new TextureRegion(CreateTexture(graphicsDevice, MatchLayout.FlowerClockSize, FlowerClockShapes.CreatePetalMask(petalIndex, insetFraction))));
             }
 
             return petalImages;

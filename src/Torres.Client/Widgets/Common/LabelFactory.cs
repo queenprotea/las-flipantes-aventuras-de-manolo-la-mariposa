@@ -1,3 +1,4 @@
+using FontStashSharp;
 using FontStashSharp.RichText;
 
 using Microsoft.Xna.Framework;
@@ -23,6 +24,18 @@ namespace Torres.Client.Widgets
             return title;
         }
 
+        internal static LocalizedLabel CreateGameName()
+        {
+            var gameName = new LocalizedLabel(TextKeys.Common.GameName)
+            {
+                Font = Fonts.Display,
+                TextColor = Theme.Ink,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+
+            return gameName;
+        }
+
         internal static LocalizedLabel CreateHint(string textKey)
         {
             var hint = new LocalizedLabel(textKey)
@@ -33,6 +46,28 @@ namespace Torres.Client.Widgets
             };
 
             return hint;
+        }
+
+        internal static LocalizedLabel CreateCenteredHint(string textKey, int hintWidth)
+        {
+            LocalizedLabel centeredHint = CreateHint(textKey);
+            centeredHint.Width = hintWidth;
+            centeredHint.TextAlign = TextHorizontalAlignment.Center;
+            centeredHint.HorizontalAlignment = HorizontalAlignment.Center;
+
+            return centeredHint;
+        }
+
+        internal static LocalizedLabel CreateCenteredTitle(string textKey, SpriteFontBase titleFont)
+        {
+            var centeredTitle = new LocalizedLabel(textKey)
+            {
+                Font = titleFont,
+                TextColor = Theme.Ink,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+
+            return centeredTitle;
         }
 
         internal static LocalizedLabel CreateParagraph(string textKey)

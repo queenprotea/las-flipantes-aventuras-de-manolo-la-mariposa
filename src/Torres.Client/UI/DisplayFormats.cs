@@ -38,6 +38,17 @@ namespace Torres.Client.UI
             return bonusText;
         }
 
+        internal static string FormatButterflyPoints(int butterflyPoints)
+        {
+            string butterflyText = DisplaySymbols.MissingValue;
+            if (butterflyPoints > 0)
+            {
+                butterflyText = FormatBonus(butterflyPoints);
+            }
+
+            return butterflyText;
+        }
+
         internal static string FormatActionCost(int actionPointCost)
         {
             string costText = string.Format(CultureInfo.CurrentCulture, ActionCostPattern, actionPointCost);

@@ -21,9 +21,13 @@ namespace Torres.Client.Session
 
         internal string? MatchRoomCode { get; private set; }
 
-        internal DateTime? StepEndsAtUtc { get; private set; }
+        internal DateTime? StepEndsAt { get; private set; }
 
-        internal DateTime? ReconnectionEndsAtUtc { get; private set; }
+        internal DateTime? ReconnectionEndsAt { get; private set; }
+
+        internal TimeSpan StepTimeLeft => FindTimeLeft(StepEndsAt);
+
+        internal TimeSpan ReconnectionTimeLeft => FindTimeLeft(ReconnectionEndsAt);
 
         internal bool HasForfeitedMatch { get; private set; }
 
@@ -89,26 +93,26 @@ namespace Torres.Client.Session
 
             CurrentMatchView = matchChange.MatchView;
             MatchRoomCode = matchChange.MatchView.RoomCode;
-            StepEndsAtUtc = null;
+            StepEndsAt = null;
             if (matchChange.MatchView.StepTimeLeft is TimeSpan stepTimeLeft)
             {
-                StepEndsAtUtc = matchChange.ReceivedAtUtc + stepTimeLeft;
+                StepEndsAt = matchChange.ReceivedAt + stepTimeLeft;
             }
         }
 
-        internal void LoseConnection(DateTime lostAtUtc)
+        internal void LoseConnection(DateTime lostAt)
         {
-            ReconnectionEndsAtUtc = null;
+            ReconnectionEndsAt = null;
             if (CurrentMatchView is MatchView matchView)
             {
                 bool isViewerStep = (matchView.ActiveSeatNumber == matchView.ViewerSeatNumber) || (matchView.Phase == MatchPhase.AwaitingPlayers);
-                ReconnectionEndsAtUtc = isViewerStep ? StepEndsAtUtc : lostAtUtc + matchView.ReconnectionTime;
+                ReconnectionEndsAt = isViewerStep ? StepEndsAt : lostAt + matchView.ReconnectionTime;
             }
         }
 
         internal void RecoverConnection()
         {
-            ReconnectionEndsAtUtc = null;
+            ReconnectionEndsAt = null;
         }
 
         internal void ForfeitMatch()
@@ -121,8 +125,8 @@ namespace Torres.Client.Session
         {
             CurrentMatchView = null;
             MatchRoomCode = null;
-            StepEndsAtUtc = null;
-            ReconnectionEndsAtUtc = null;
+            StepEndsAt = null;
+            ReconnectionEndsAt = null;
         }
 
         internal void LeaveRoom()
@@ -130,8 +134,8 @@ namespace Torres.Client.Session
             CurrentRoom = null;
             CurrentMatchView = null;
             MatchRoomCode = null;
-            StepEndsAtUtc = null;
-            ReconnectionEndsAtUtc = null;
+            StepEndsAt = null;
+            ReconnectionEndsAt = null;
             HasForfeitedMatch = false;
             RoomChat.Clear();
         }
@@ -158,12 +162,23 @@ namespace Torres.Client.Session
             CurrentRoom = null;
             CurrentMatchView = null;
             MatchRoomCode = null;
-            StepEndsAtUtc = null;
-            ReconnectionEndsAtUtc = null;
+            StepEndsAt = null;
+            ReconnectionEndsAt = null;
             HasForfeitedMatch = false;
             RoomChat.Clear();
             MatchHistory.Clear();
             Invitations.Clear();
+        }
+
+        private static TimeSpan FindTimeLeft(DateTime? endsAt)
+        {
+            TimeSpan timeLeft = TimeSpan.Zero;
+            if (endsAt is DateTime foundEndsAt)
+            {
+                timeLeft = foundEndsAt - DateTime.UtcNow;
+            }
+
+            return timeLeft;
         }
     }
 }

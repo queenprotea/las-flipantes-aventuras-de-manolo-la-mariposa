@@ -14,15 +14,11 @@ namespace Game.Services
 
         public SystemParameterReader(ISystemParameterRepository systemParameterRepository)
         {
-            ArgumentNullException.ThrowIfNull(systemParameterRepository);
-
             _systemParameterRepository = systemParameterRepository;
         }
 
         public Task<int> ReadPositiveAsync(string parameterCode)
         {
-            ArgumentNullException.ThrowIfNull(parameterCode);
-
             Task<int> parameterReading = ReadPositiveValueAsync(parameterCode);
 
             return parameterReading;

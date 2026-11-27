@@ -9,14 +9,14 @@ namespace Game.Services
         private readonly byte[] _thumbnail;
         private readonly bool[] _receivedParts;
 
-        internal PendingAvatarUpload(int thumbnailBytes, DateTime startedAtUtc)
+        internal PendingAvatarUpload(int thumbnailBytes, DateTime startedAt)
         {
             _thumbnail = new byte[thumbnailBytes];
             _receivedParts = new bool[CountParts(thumbnailBytes)];
-            LastActivityUtc = startedAtUtc;
+            LastActivityAt = startedAt;
         }
 
-        internal DateTime LastActivityUtc { get; private set; }
+        internal DateTime LastActivityAt { get; private set; }
 
         internal bool IsComplete()
         {
@@ -25,7 +25,7 @@ namespace Game.Services
             return isComplete;
         }
 
-        internal SendAvatarPartResult Write(ReceivedAvatarPart receivedPart, DateTime nowUtc)
+        internal SendAvatarPartResult Write(ReceivedAvatarPart receivedPart, DateTime now)
         {
             if (!FitsInBuffer(_thumbnail.Length, receivedPart.Offset, receivedPart.Bytes.Length))
             {
@@ -38,16 +38,16 @@ namespace Game.Services
             {
                 receivedPart.Bytes.CopyTo(_thumbnail, receivedPart.Offset);
                 _receivedParts[receivedPart.Offset / ProfileLimits.AvatarPartBytes] = true;
-                LastActivityUtc = nowUtc;
+                LastActivityAt = now;
                 writeResult = CheckCompletedThumbnail();
             }
 
             return writeResult;
         }
 
-        internal void Touch(DateTime nowUtc)
+        internal void Touch(DateTime now)
         {
-            LastActivityUtc = nowUtc;
+            LastActivityAt = now;
         }
 
         internal CompletedAvatarUpload ToCompleted()

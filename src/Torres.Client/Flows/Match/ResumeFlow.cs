@@ -35,9 +35,9 @@ namespace Torres.Client.Flows
         {
             TimeSpan resumeTimeLeft = TimeSpan.Zero;
             bool isWaiting = _playerSession.CurrentMatchView?.Phase == MatchPhase.AwaitingPlayers;
-            if (isWaiting && (_playerSession.StepEndsAtUtc is DateTime resumeEndsAt))
+            if (isWaiting)
             {
-                resumeTimeLeft = resumeEndsAt - DateTime.UtcNow;
+                resumeTimeLeft = _playerSession.StepTimeLeft;
             }
 
             return resumeTimeLeft;

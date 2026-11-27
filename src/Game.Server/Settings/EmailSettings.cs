@@ -32,8 +32,6 @@ namespace Game.Server
 
         public static EmailSettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             EmailSettings? settings = configuration.GetSection(SectionName).Get<EmailSettings>();
             if ((settings is null) || !settings.IsComplete())
             {

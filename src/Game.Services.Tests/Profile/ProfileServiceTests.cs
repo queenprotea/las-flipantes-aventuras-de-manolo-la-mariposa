@@ -35,7 +35,8 @@ namespace Game.Services.Tests
             _roomService = new RoomService(_roomRegistry, _callerSessions.Registry, new RecordingRoomRecordRepository(), new RecordingSanctionRepository(), _playerRepository, _fakeTimeProvider);
             var avatarStore = new AvatarStore(Path.Combine(Path.GetTempPath(), AvatarFolderName));
             var avatarUploadRegistry = new AvatarUploadRegistry(_callerSessions.Registry, _fakeTimeProvider, new AvatarUploadTiming(_uploadIdleLimit));
-            _profileService = new ProfileService(_callerSessions.Registry, _playerRepository, avatarStore, avatarUploadRegistry, _roomService);
+            var matchRecordRepository = new RecordingMatchRecordRepository(new RecordingMatchParticipantRepository());
+            _profileService = new ProfileService(_callerSessions.Registry, _playerRepository, avatarStore, avatarUploadRegistry, _roomService, matchRecordRepository);
             _callerSessions.Open(SamplePlayers.Beto);
             _callerSessions.Open(SamplePlayers.Ana);
         }

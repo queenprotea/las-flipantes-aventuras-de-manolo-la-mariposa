@@ -15,12 +15,6 @@ namespace Game.Services
 
         public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, MatchService matchService, AvatarUploadRegistry avatarUploadRegistry)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(sessionTokenIssuer);
-            ArgumentNullException.ThrowIfNull(roomService);
-            ArgumentNullException.ThrowIfNull(matchService);
-            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
-
             _sessionRegistry = sessionRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _roomService = roomService;

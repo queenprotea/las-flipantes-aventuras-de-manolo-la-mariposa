@@ -19,6 +19,8 @@ namespace Game.Persistence
 
         Task<ProfileUpdateOutcome> UpdateProfileAsync(int playerId, string username, string? avatarReference);
 
+        Task<bool> DeleteAsync(int playerId);
+
         Player? FindByUsername(string username);
 
         List<Player> ListByIds(IReadOnlyCollection<int> playerIds);

@@ -16,8 +16,6 @@ namespace Game.Server
 
         public static AvatarSettings Read(IConfiguration configuration)
         {
-            ArgumentNullException.ThrowIfNull(configuration);
-
             AvatarSettings? settings = configuration.GetSection(SectionName).Get<AvatarSettings>();
             if ((settings is null) || string.IsNullOrWhiteSpace(settings.Folder) || (settings.UploadIdleSeconds <= 0))
             {

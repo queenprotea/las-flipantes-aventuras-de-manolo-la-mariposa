@@ -36,15 +36,6 @@ namespace Game.Match
 
         public MatchCoordinator(TimeProvider timeProvider, IMatchListener matchListener, MatchRepositories matchRepositories, IReadOnlyList<MatchCell> startingFlowerCells, Random chanceSource)
         {
-            ArgumentNullException.ThrowIfNull(timeProvider);
-            ArgumentNullException.ThrowIfNull(matchListener);
-            ArgumentNullException.ThrowIfNull(matchRepositories);
-            ArgumentNullException.ThrowIfNull(matchRepositories.MatchRecordRepository, nameof(matchRepositories));
-            ArgumentNullException.ThrowIfNull(matchRepositories.MatchParticipantRepository, nameof(matchRepositories));
-            ArgumentNullException.ThrowIfNull(matchRepositories.MatchStateRepository, nameof(matchRepositories));
-            ArgumentNullException.ThrowIfNull(startingFlowerCells);
-            ArgumentNullException.ThrowIfNull(chanceSource);
-
             _timeProvider = timeProvider;
             _matchListener = matchListener;
             _matchRepositories = matchRepositories;
@@ -61,8 +52,6 @@ namespace Game.Match
 
         public static bool BoardContains(MatchCell examinedCell)
         {
-            ArgumentNullException.ThrowIfNull(examinedCell);
-
             bool isOnBoard = Board.Contains(MatchCellConversion.ToBoardCell(examinedCell));
 
             return isOnBoard;
@@ -70,14 +59,6 @@ namespace Game.Match
 
         public Task<int> StartMatchAsync(MatchOpening matchOpening, MatchTimeLimits timeLimits, MatchRuleSet ruleSet)
         {
-            ArgumentNullException.ThrowIfNull(matchOpening);
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchOpening.RoomId, nameof(matchOpening));
-            ArgumentNullException.ThrowIfNull(matchOpening.RoomCode, nameof(matchOpening));
-            ArgumentNullException.ThrowIfNull(matchOpening.Entrants, nameof(matchOpening));
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeLimits.StepTime, TimeSpan.Zero, nameof(timeLimits));
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeLimits.ReconnectionTime, TimeSpan.Zero, nameof(timeLimits));
-            ArgumentNullException.ThrowIfNull(ruleSet);
-
             Task<int> matchStart = StartRecordedMatchAsync(matchOpening, timeLimits, ruleSet);
 
             return matchStart;
@@ -85,12 +66,6 @@ namespace Game.Match
 
         public async Task<IReadOnlyList<int>> RestoreInterruptedMatchesAsync(MatchResumption resumption)
         {
-            ArgumentNullException.ThrowIfNull(resumption);
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(resumption.TimeLimits.StepTime, TimeSpan.Zero, nameof(resumption));
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(resumption.TimeLimits.ReconnectionTime, TimeSpan.Zero, nameof(resumption));
-            ArgumentNullException.ThrowIfNull(resumption.RuleSetsBySeatCount, nameof(resumption));
-            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(resumption.ResumeTime, TimeSpan.Zero, nameof(resumption));
-
             List<int> inProgressMatchIds = await _matchRepositories.MatchRecordRepository.ListInProgressIdsAsync();
             List<MatchState> savedStates = await _matchRepositories.MatchStateRepository.ListAsync();
             var waitingEntrantIds = new List<int>();
@@ -100,7 +75,7 @@ namespace Game.Match
                 AwaitingMatch? awaitingMatch = savedState is null ? null : RestoreAwaitingMatch(savedState, resumption);
                 if (savedState is null)
                 {
-                    _log.WarnFormat(StateMissingMessage, inProgressMatchId);
+                    _log.WarnFormat(CultureInfo.InvariantCulture, StateMissingMessage, inProgressMatchId);
                 }
 
                 if (awaitingMatch is null)
@@ -137,11 +112,19 @@ namespace Game.Match
             if (awaitingMatch is not null)
             {
                 bool holdsSeat = awaitingMatch.HoldsSeatOf(entrantId);
-                seating = holdsSeat ? new MatchSeating { RoomCode = awaitingMatch.SeatedMatch.RoomCode, IsAwaitingPlayers = true } : null;
+                seating = holdsSeat ? new MatchSeating
+                {
+                    RoomCode = awaitingMatch.SeatedMatch.RoomCode,
+                    IsAwaitingPlayers = true,
+                } : null;
             }
             else if (liveMatch is not null)
             {
-                seating = new MatchSeating { RoomCode = liveMatch.RoomCode, IsAwaitingPlayers = false };
+                seating = new MatchSeating
+                {
+                    RoomCode = liveMatch.RoomCode,
+                    IsAwaitingPlayers = false,
+                };
             }
 
             return seating;
@@ -199,8 +182,6 @@ namespace Game.Match
 
         public MatchActionResult PlacePiece(int entrantId, MatchPiece piece, MatchCell destinationCell)
         {
-            ThrowIfOffBoard(destinationCell);
-
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
             MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.PlacePiece(entrantId, piece, MatchCellConversion.ToBoardCell(destinationCell));
 
@@ -209,10 +190,6 @@ namespace Game.Match
 
         public MatchActionResult MoveCaterpillar(int entrantId, MatchMove move)
         {
-            ArgumentNullException.ThrowIfNull(move);
-            ThrowIfOffBoard(move.Origin);
-            ThrowIfOffBoard(move.Destination);
-
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
             MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.MoveCaterpillar(entrantId, MatchCellConversion.ToCaterpillarMove(move));
 
@@ -221,8 +198,6 @@ namespace Game.Match
 
         public MatchActionResult AddFlowerLevel(int entrantId, MatchCell buildCell)
         {
-            ThrowIfOffBoard(buildCell);
-
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
             MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.AddFlowerLevel(entrantId, MatchCellConversion.ToBoardCell(buildCell));
 
@@ -239,13 +214,6 @@ namespace Game.Match
 
         public MatchActionResult PlayCard(int entrantId, MatchCardPlay cardPlay)
         {
-            ArgumentNullException.ThrowIfNull(cardPlay);
-            ArgumentNullException.ThrowIfNull(cardPlay.AffectedCells);
-            foreach (MatchCell playedCell in cardPlay.AffectedCells)
-            {
-                ThrowIfOffBoard(playedCell);
-            }
-
             LiveMatch? liveMatch = FindMatchOfEntrant(entrantId);
             MatchActionResult actionResult = liveMatch is null ? MatchActionResult.NotInMatch : liveMatch.PlayCard(entrantId, MatchCardConversion.ToCardPlay(cardPlay));
 
@@ -275,14 +243,6 @@ namespace Game.Match
             Task pendingRecording = _matchRecordWriter.FinishWritingAsync();
 
             return pendingRecording;
-        }
-
-        private static void ThrowIfOffBoard(MatchCell examinedCell)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Row, nameof(examinedCell));
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Row, Board.CellsPerSide, nameof(examinedCell));
-            ArgumentOutOfRangeException.ThrowIfNegative(examinedCell.Column, nameof(examinedCell));
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(examinedCell.Column, Board.CellsPerSide, nameof(examinedCell));
         }
 
         private static List<SeatedEntrant> SeatActiveEntrants(IReadOnlyList<MatchEntrant> entrants)

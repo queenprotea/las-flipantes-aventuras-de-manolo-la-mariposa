@@ -8,6 +8,8 @@ namespace Torres.Client
 {
     internal sealed class ClientSettings
     {
+        internal const string LocalFolderName = "Torres";
+
         private const string SettingsFileName = "appsettings.json";
         private const string LocalSettingsFileName = "appsettings.Local.json";
 

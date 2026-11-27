@@ -108,9 +108,9 @@ namespace Torres.Client.Tests
         }
 
         [Fact]
-        public void Test_FindPlacementTimeLeft_WithoutStepEnd_ReturnsZero()
+        public void Test_PlacementTimeLeft_WithoutStepEnd_ReturnsZero()
         {
-            TimeSpan placementTimeLeft = _placementFlow.FindPlacementTimeLeft();
+            TimeSpan placementTimeLeft = _placementFlow.PlacementTimeLeft;
 
             Assert.Equal(TimeSpan.Zero, placementTimeLeft);
         }

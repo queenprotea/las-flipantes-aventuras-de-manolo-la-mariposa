@@ -96,10 +96,10 @@ namespace Torres.Client.Scene
             Vector3 flightPoint = _flightOrigin;
             if (_restingPoint is Vector3 shownRestingPoint)
             {
-                float easedShare = MathHelper.SmoothStep(0f, 1f, FindFlightShare(sceneTime));
+                float easedProgress = MathHelper.SmoothStep(0f, 1f, FindFlightProgress(sceneTime));
                 float arcHeight = FlightArcHeight + (FlightArcHeightPerCell * Vector3.Distance(_flightOrigin, shownRestingPoint));
-                float arcLift = SceneTiming.FindArcLift(arcHeight, easedShare);
-                flightPoint = Vector3.Lerp(_flightOrigin, shownRestingPoint, easedShare) + new Vector3(0f, arcLift, 0f);
+                float arcLift = SceneTiming.FindArcLift(arcHeight, easedProgress);
+                flightPoint = Vector3.Lerp(_flightOrigin, shownRestingPoint, easedProgress) + new Vector3(0f, arcLift, 0f);
             }
 
             return flightPoint;
@@ -107,7 +107,7 @@ namespace Torres.Client.Scene
 
         internal void Draw(BasicEffect sceneEffect, TimeSpan sceneTime)
         {
-            bool isFlying = FindFlightShare(sceneTime) < 1f;
+            bool isFlying = FindFlightProgress(sceneTime) < 1f;
             double flapPeriodSeconds = isFlying ? FlightFlapPeriodSeconds : FlapPeriodSeconds;
             Matrix bodyWorld = BoardGeometry.CreateHeadingRotation(_headingDegrees) * Matrix.CreateTranslation(FindHoverPoint(sceneTime));
             float wingLiftRadians = MathHelper.ToRadians(RestingWingDegrees + (FlapDegrees * SceneTiming.FindCycleWave(sceneTime, flapPeriodSeconds)));
@@ -138,12 +138,12 @@ namespace Torres.Client.Scene
             _shadowMesh.Dispose();
         }
 
-        private float FindFlightShare(TimeSpan sceneTime)
+        private float FindFlightProgress(TimeSpan sceneTime)
         {
             double flightSeconds = (sceneTime - _flightStart).TotalSeconds;
-            float flightShare = (float)Math.Clamp(flightSeconds / FlightSeconds, 0d, 1d);
+            float flightProgress = (float)Math.Clamp(flightSeconds / FlightSeconds, 0d, 1d);
 
-            return flightShare;
+            return flightProgress;
         }
 
         private Vector3 FindHoverPoint(TimeSpan sceneTime)

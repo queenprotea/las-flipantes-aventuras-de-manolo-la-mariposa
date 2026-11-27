@@ -11,9 +11,22 @@ namespace Torres.Client.Widgets
 {
     internal sealed class MatchClockView
     {
-        private readonly LocalizedLabel _roundTurnLabel = new LocalizedLabel(TextKeys.Match.RoundTurnInstruction) { Font = Fonts.Small, TextColor = Theme.Ink };
-        private readonly LocalizedLabel _turnStatusLabel = new LocalizedLabel(TextKeys.Match.YourTurnStatus) { Font = Fonts.Small, TextColor = Theme.MintInk };
-        private readonly Label _clockLabel = new Label { Font = Fonts.Clock, TextColor = Theme.Ink, VerticalAlignment = VerticalAlignment.Center };
+        private readonly LocalizedLabel _roundTurnLabel = new LocalizedLabel(TextKeys.Match.RoundTurnInstruction)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.Ink,
+        };
+        private readonly LocalizedLabel _turnStatusLabel = new LocalizedLabel(TextKeys.Match.YourTurnStatus)
+        {
+            Font = Fonts.Small,
+            TextColor = Theme.MintInk,
+        };
+        private readonly Label _clockLabel = new Label
+        {
+            Font = Fonts.Clock,
+            TextColor = Theme.Ink,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         private readonly FlowerClock _flowerClock;
 
         internal MatchClockView(VolumeTextures volumeTextures)
@@ -44,10 +57,10 @@ namespace Torres.Client.Widgets
             _turnStatusLabel.TextArguments = new string[] { activeSeat.DisplayName };
         }
 
-        internal void ShowClock(TimeSpan stepTimeLeft, float remainingShare)
+        internal void ShowClock(TimeSpan stepTimeLeft, float remainingProgress)
         {
             _clockLabel.Text = DisplayFormats.FormatCountdown(stepTimeLeft);
-            _flowerClock.RemainingShare = remainingShare;
+            _flowerClock.RemainingProgress = remainingProgress;
         }
     }
 }

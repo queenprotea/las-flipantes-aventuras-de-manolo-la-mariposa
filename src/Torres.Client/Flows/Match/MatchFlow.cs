@@ -21,6 +21,8 @@ namespace Torres.Client.Flows
             _playerSession = playerSession;
         }
 
+        internal TimeSpan StepTimeLeft => _playerSession.StepTimeLeft;
+
         internal MatchView? CurrentMatchView => _playerSession.CurrentMatchView;
 
         internal string RoomCode => _playerSession.CurrentRoom?.Code ?? string.Empty;
@@ -53,17 +55,6 @@ namespace Torres.Client.Flows
             ScreenId? redirect = _playerSession.CurrentMatchView is null ? ScreenId.MainMenu : null;
 
             return redirect;
-        }
-
-        internal TimeSpan FindStepTimeLeft()
-        {
-            TimeSpan stepTimeLeft = TimeSpan.Zero;
-            if (_playerSession.StepEndsAtUtc is DateTime stepEndsAt)
-            {
-                stepTimeLeft = stepEndsAt - DateTime.UtcNow;
-            }
-
-            return stepTimeLeft;
         }
 
         internal void PlaceCaterpillar(MatchCell targetCell)

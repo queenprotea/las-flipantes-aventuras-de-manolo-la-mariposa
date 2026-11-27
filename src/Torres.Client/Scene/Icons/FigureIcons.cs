@@ -17,7 +17,6 @@ namespace Torres.Client.Scene
         private const int CaterpillarIconWidth = 128;
         private const int IconHeight = 64;
         private const int SproutIconWidth = 64;
-        private const int MultiSampleCount = 4;
         private const float CaterpillarHeadingDegrees = 0f;
         private const float CaterpillarScale = 1f;
         private const float CaterpillarViewWidth = 1.05f;
@@ -48,7 +47,7 @@ namespace Torres.Client.Scene
         {
             _graphicsDevice = graphicsDevice;
             int atlasWidth = (CaterpillarIconWidth * _seatColors.Length) + SproutIconWidth;
-            _iconAtlas = new RenderTarget2D(graphicsDevice, atlasWidth, IconHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, MultiSampleCount, RenderTargetUsage.PreserveContents);
+            _iconAtlas = new RenderTarget2D(graphicsDevice, atlasWidth, IconHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, SceneValues.MultiSampleCount, RenderTargetUsage.PreserveContents);
             _iconEffect = new BasicEffect(graphicsDevice)
             {
                 VertexColorEnabled = true,
@@ -137,7 +136,7 @@ namespace Torres.Client.Scene
             _graphicsDevice.Viewport = new Viewport(iconBounds);
             _iconEffect.View = Matrix.CreateLookAt(_caterpillarFocus + _caterpillarCameraOffset, _caterpillarFocus, Vector3.Up);
             _iconEffect.Projection = Matrix.CreateOrthographic(CaterpillarViewWidth, CaterpillarViewHeight, NearPlaneDistance, FarPlaneDistance);
-            _caterpillarFigure.DrawStill(_iconEffect, Vector3.Zero, CaterpillarHeadingDegrees, bodyColor, CaterpillarScale);
+            _caterpillarFigure.DrawStill(_iconEffect, new CaterpillarPose(Vector3.Zero, CaterpillarHeadingDegrees, bodyColor, 0f, CaterpillarScale));
         }
 
         private void RenderSprout(Rectangle iconBounds)

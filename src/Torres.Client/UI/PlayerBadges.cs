@@ -6,7 +6,7 @@ using Torres.Client.Scene;
 
 namespace Torres.Client.UI
 {
-    internal static class MatchPieces
+    internal static class PlayerBadges
     {
         internal static Image CreateCaterpillarImage(FigureIcons figureIcons, SeatColor seatColor)
         {

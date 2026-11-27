@@ -72,7 +72,7 @@ namespace Game.Services.Tests
             chatService.Start(new ChatCapacity(MessageMaxLength, MessagesKeptPerRoom));
             var historyService = new HistoryService(callerSessions.Registry, new RecordingMatchRecordRepository(participantRepository), participantRepository, playerRepository, new HistoryPaging(MatchesPerPage));
             var avatarStore = new AvatarStore(Path.Combine(Path.GetTempPath(), AvatarFolderName));
-            var profileService = new ProfileService(callerSessions.Registry, playerRepository, avatarStore, avatarUploadRegistry, roomService);
+            var profileService = new ProfileService(callerSessions.Registry, playerRepository, avatarStore, avatarUploadRegistry, roomService, new RecordingMatchRecordRepository(participantRepository));
             var gameSessionService = new GameSessionService(sessionService, roomService, friendsService, invitationService, chatService, historyService, matchService, profileService);
 
             return gameSessionService;

@@ -31,12 +31,6 @@ namespace Game.Domain
 
         public MatchTable(StartingLayout startingLayout, int seatCount, MatchRules rules, Random chanceSource)
         {
-            ArgumentNullException.ThrowIfNull(startingLayout);
-            ArgumentOutOfRangeException.ThrowIfLessThan(seatCount, MinimumSeatCount);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(seatCount, MaximumSeatCount);
-            ArgumentNullException.ThrowIfNull(rules);
-            ArgumentNullException.ThrowIfNull(chanceSource);
-
             _board = new Board(startingLayout.Flowers);
             _caterpillars = new List<Caterpillar>();
             _rules = rules;
@@ -101,9 +95,6 @@ namespace Game.Domain
 
         public static MatchTable RestoreFromSnapshot(MatchSnapshot snapshot, MatchRules rules, Random chanceSource)
         {
-            ArgumentNullException.ThrowIfNull(snapshot);
-            ArgumentNullException.ThrowIfNull(rules);
-            ArgumentNullException.ThrowIfNull(chanceSource);
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.SeatCount, MinimumSeatCount, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfGreaterThan(snapshot.SeatCount, MaximumSeatCount, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.ActiveSeatNumber, FirstSeatNumber, nameof(snapshot));
@@ -112,6 +103,13 @@ namespace Game.Domain
             ArgumentOutOfRangeException.ThrowIfGreaterThan(snapshot.RoundNumber, MatchRules.RoundCount, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfNegative(snapshot.ActionPointsLeft, nameof(snapshot));
             ArgumentOutOfRangeException.ThrowIfNegative(snapshot.BuildsLeft, nameof(snapshot));
+            ArgumentOutOfRangeException.ThrowIfLessThan(snapshot.TurnRoundNumber, FirstTurnRoundNumber, nameof(snapshot));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(snapshot.TurnRoundNumber, rules.GetTurnCount(snapshot.RoundNumber), nameof(snapshot));
+            foreach (Caterpillar restoredCaterpillar in snapshot.Caterpillars)
+            {
+                Board.ThrowIfOutside(restoredCaterpillar.Cell, nameof(snapshot));
+            }
+
             bool hasStandingPerSeat = (snapshot.Standings.Count == 0) || (snapshot.Standings.Count == snapshot.SeatCount);
             if (!hasStandingPerSeat)
             {
@@ -167,8 +165,6 @@ namespace Game.Domain
 
         public IReadOnlyList<MoveTarget> FindMoveTargets(BoardCell originCell)
         {
-            Board.ThrowIfOutside(originCell, nameof(originCell));
-
             var moveTargets = new List<MoveTarget>();
             if ((Phase == TablePhase.PlayerTurn) && HasCaterpillarOf(ActiveSeatNumber, originCell))
             {
@@ -207,8 +203,6 @@ namespace Game.Domain
 
         public bool IsSeatRetired(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             bool isRetired = _standings[seatNumber - FirstSeatNumber].IsRetired;
 
             return isRetired;
@@ -216,8 +210,6 @@ namespace Game.Domain
 
         public int CountCaterpillarsLeft(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             int placedCount = _caterpillars.Count(caterpillar => caterpillar.SeatNumber == seatNumber);
             int caterpillarsLeft = CaterpillarsPerSeat - placedCount;
 
@@ -226,9 +218,6 @@ namespace Game.Domain
 
         public PlacementOutcome PlaceInitialCaterpillar(int seatNumber, BoardCell destinationCell)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(destinationCell, nameof(destinationCell));
-
             PlacementOutcome placementOutcome = JudgeFlowerPlacement(TablePhase.CaterpillarPlacement, seatNumber, destinationCell);
             if ((placementOutcome == PlacementOutcome.Placed) && !IsFreeOfCaterpillars(destinationCell))
             {
@@ -246,9 +235,6 @@ namespace Game.Domain
 
         public PlacementOutcome PlaceButterfly(int seatNumber, BoardCell destinationCell)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(destinationCell, nameof(destinationCell));
-
             PlacementOutcome placementOutcome = JudgeFlowerPlacement(TablePhase.ButterflyPlacement, seatNumber, destinationCell);
             if (placementOutcome == PlacementOutcome.Placed)
             {
@@ -262,9 +248,6 @@ namespace Game.Domain
 
         public TurnActionOutcome PlaceCaterpillar(int seatNumber, BoardCell destinationCell)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(destinationCell, nameof(destinationCell));
-
             TurnActionOutcome actionOutcome = JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -282,10 +265,6 @@ namespace Game.Domain
 
         public TurnActionOutcome MoveCaterpillar(int seatNumber, CaterpillarMove move)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(move.Origin, nameof(move));
-            Board.ThrowIfOutside(move.Destination, nameof(move));
-
             TurnActionOutcome actionOutcome = JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -303,9 +282,6 @@ namespace Game.Domain
 
         public TurnActionOutcome AddFlowerLevel(int seatNumber, BoardCell buildCell)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-            Board.ThrowIfOutside(buildCell, nameof(buildCell));
-
             TurnActionOutcome actionOutcome = JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -329,8 +305,6 @@ namespace Game.Domain
 
         public TurnActionOutcome EndTurn(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             TurnActionOutcome actionOutcome = JudgeTurnOwner(seatNumber);
             if (actionOutcome == TurnActionOutcome.Applied)
             {
@@ -373,8 +347,6 @@ namespace Game.Domain
 
         public void RetireSeat(int seatNumber)
         {
-            ThrowIfSeatNumberOutOfRange(seatNumber);
-
             bool canRetire = (Phase != TablePhase.Finished) && !IsSeatRetired(seatNumber);
             if (!canRetire)
             {
@@ -429,12 +401,6 @@ namespace Game.Domain
             var freshStanding = new SeatStanding(seatNumber, Array.Empty<SeatRoundScore>(), false, NoCardPoints);
 
             return freshStanding;
-        }
-
-        private void ThrowIfSeatNumberOutOfRange(int seatNumber)
-        {
-            ArgumentOutOfRangeException.ThrowIfLessThan(seatNumber, FirstSeatNumber);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(seatNumber, SeatCount);
         }
 
         private PlacementOutcome JudgeFlowerPlacement(TablePhase expectedPhase, int seatNumber, BoardCell destinationCell)

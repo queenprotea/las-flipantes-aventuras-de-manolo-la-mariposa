@@ -20,7 +20,7 @@ namespace Torres.Client.Scene
         private const float CaterpillarBackShift = 0.12f;
         private const float FirstBudAngleDegrees = 60f;
         private const float LastBudAngleDegrees = -20f;
-        private const float MiddleBudShare = 0.5f;
+        private const float MiddleBudFraction = 0.5f;
         private const int SingleBudCount = 1;
 
         private static readonly Vector2[] _caterpillarSpots = new Vector2[]
@@ -50,7 +50,7 @@ namespace Torres.Client.Scene
         {
             _graphicsDevice = graphicsDevice;
             _stemMesh = SceneMeshes.Build(graphicsDevice, AddStemWithNodes);
-            _caterpillarLeafMesh = SceneMeshes.Build(graphicsDevice, leafBuilder => DewLeafShapes.AddLeaf(leafBuilder, CaterpillarLeafSeed));
+            _caterpillarLeafMesh = SceneMeshes.Build(graphicsDevice, AddCaterpillarLeaf);
             _budMesh = SceneMeshes.Build(graphicsDevice, SproutShapes.AddBud);
             _dewLeafFigure = new DewLeafFigure(graphicsDevice, _pointsLeafWorld);
             _caterpillarFigure = new CaterpillarFigure(graphicsDevice);
@@ -122,8 +122,8 @@ namespace Torres.Client.Scene
 
         private static float FindBudAngleDegrees(int budIndex, int budCount)
         {
-            float budShare = budCount > SingleBudCount ? (float)budIndex / (budCount - 1) : MiddleBudShare;
-            float budAngleDegrees = MathHelper.Lerp(FirstBudAngleDegrees, LastBudAngleDegrees, budShare);
+            float budFraction = budCount > SingleBudCount ? (float)budIndex / (budCount - 1) : MiddleBudFraction;
+            float budAngleDegrees = MathHelper.Lerp(FirstBudAngleDegrees, LastBudAngleDegrees, budFraction);
 
             return budAngleDegrees;
         }
@@ -145,8 +145,13 @@ namespace Torres.Client.Scene
                 Vector2 caterpillarSpot = _caterpillarSpots[caterpillarIndex];
                 Vector3 leafPoint = DewLeafShapes.FindSurfacePoint(caterpillarSpot.X, caterpillarSpot.Y);
                 Vector3 bodyOrigin = Vector3.Transform(leafPoint, _caterpillarLeafWorld) + new Vector3(-CaterpillarBackShift, CaterpillarLift, 0f);
-                _caterpillarFigure.DrawStill(sceneEffect, bodyOrigin, CaterpillarHeadingDegrees, _caterpillarColor, CaterpillarScale);
+                _caterpillarFigure.DrawStill(sceneEffect, new CaterpillarPose(bodyOrigin, CaterpillarHeadingDegrees, _caterpillarColor, 0f, CaterpillarScale));
             }
+        }
+
+        private static void AddCaterpillarLeaf(MeshBuilder leafBuilder)
+        {
+            DewLeafShapes.AddLeaf(leafBuilder, CaterpillarLeafSeed);
         }
     }
 }

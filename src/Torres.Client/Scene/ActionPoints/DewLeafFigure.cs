@@ -9,8 +9,8 @@ namespace Torres.Client.Scene
     internal sealed class DewLeafFigure : IDisposable
     {
         private const int LeafDropSpots = 5;
-        private const float FirstDropShare = 0.24f;
-        private const float DropShareStep = 0.11f;
+        private const float FirstDropParameter = 0.24f;
+        private const float DropParameterStep = 0.11f;
         private const float DropLift = 0.055f;
         private const float DropEmission = 0.35f;
         private const float TrembleHeight = 0.02f;
@@ -18,8 +18,7 @@ namespace Torres.Client.Scene
         private const double RollSeconds = 0.4;
         private const double FallSeconds = 0.35;
         private const double FallStaggerSeconds = 0.18;
-        private const float TipShare = 0.97f;
-        private const float FullScale = 1f;
+        private const float TipParameter = 0.97f;
         private const float FallDepth = -1.1f;
         private const int VariegationSeed = 4;
 
@@ -77,7 +76,7 @@ namespace Torres.Client.Scene
                 DrawDrop(sceneEffect, sceneTime, dropIndex);
             }
 
-            _fallingDrops.RemoveAll(fallingDrop => SceneTiming.FindProgress(sceneTime, fallingDrop.StartTime, RollSeconds + FallSeconds) >= FullScale);
+            _fallingDrops.RemoveAll(fallingDrop => SceneTiming.FindProgress(sceneTime, fallingDrop.StartTime, RollSeconds + FallSeconds) >= SceneValues.FullScale);
             foreach (FallingDrop fallingDrop in _fallingDrops)
             {
                 DrawFallingDrop(sceneEffect, sceneTime, fallingDrop);
@@ -94,11 +93,11 @@ namespace Torres.Client.Scene
             _dropMesh.Dispose();
         }
 
-        private static float FindDropShare(int dropIndex)
+        private static float FindDropParameter(int dropIndex)
         {
-            float dropShare = FirstDropShare + (DropShareStep * dropIndex);
+            float dropParameter = FirstDropParameter + (DropParameterStep * dropIndex);
 
-            return dropShare;
+            return dropParameter;
         }
 
         private void DrawFallingDrop(BasicEffect sceneEffect, TimeSpan sceneTime, FallingDrop fallingDrop)
@@ -106,10 +105,10 @@ namespace Torres.Client.Scene
             float rollProgress = SceneTiming.FindProgress(sceneTime, fallingDrop.StartTime, RollSeconds);
             TimeSpan fallStart = fallingDrop.StartTime + TimeSpan.FromSeconds(RollSeconds);
             float fallProgress = SceneTiming.FindProgress(sceneTime, fallStart, FallSeconds);
-            float ribShare = MathHelper.Lerp(FindDropShare(fallingDrop.DropIndex), TipShare, MathHelper.SmoothStep(0f, FullScale, rollProgress));
-            Vector3 dropCenter = DewLeafShapes.FindRibPoint(ribShare) + new Vector3(0f, DropLift, 0f);
+            float ribParameter = MathHelper.Lerp(FindDropParameter(fallingDrop.DropIndex), TipParameter, MathHelper.SmoothStep(0f, SceneValues.FullScale, rollProgress));
+            Vector3 dropCenter = DewLeafShapes.FindRibPoint(ribParameter) + new Vector3(0f, DropLift, 0f);
             dropCenter.Y = MathHelper.Lerp(dropCenter.Y, FallDepth, fallProgress * fallProgress);
-            float dropScale = FullScale - fallProgress;
+            float dropScale = SceneValues.FullScale - fallProgress;
             Color dropColor = fallingDrop.DropIndex < LeafDropSpots ? GardenPalette.DewDrop : GardenPalette.ExtraDewDrop;
             sceneEffect.World = Matrix.CreateScale(_dropScale * dropScale) * Matrix.CreateTranslation(dropCenter) * _leafWorld;
             sceneEffect.DiffuseColor = dropColor.ToVector3();
@@ -119,7 +118,7 @@ namespace Torres.Client.Scene
 
         private void DrawDrop(BasicEffect sceneEffect, TimeSpan sceneTime, int dropIndex)
         {
-            Vector3 dropCenter = DewLeafShapes.FindRibPoint(FindDropShare(dropIndex)) + new Vector3(0f, DropLift, 0f);
+            Vector3 dropCenter = DewLeafShapes.FindRibPoint(FindDropParameter(dropIndex)) + new Vector3(0f, DropLift, 0f);
             if (dropIndex >= _shownActionPoints - _previewCost)
             {
                 dropCenter.Y += TrembleHeight * SceneTiming.FindSignedCycleWave(sceneTime, TremblePeriodSeconds);

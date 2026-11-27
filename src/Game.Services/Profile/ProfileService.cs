@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,7 +20,6 @@ namespace Game.Services
     public sealed class ProfileService : IProfileService
     {
         private const string ProfileFeatureName = "the profile";
-        private const string SessionNotOpenMessage = "The session has not been opened with a valid session token.";
         private const string ProfileUnavailableMessage = "The profile is not available right now.";
         private const string ProfileReadFailedMessage = "The database could not be read while player {0} opened their profile.";
         private const string ProfileWriteFailedMessage = "The database could not be used while player {0} updated their profile.";
@@ -28,6 +28,9 @@ namespace Game.Services
         private const string AvatarDeleteFailedMessage = "An avatar file of player {0} could not be deleted and stays on the disk.";
         private const string ThumbnailReadFailedMessage = "An avatar thumbnail asked for by session owner {0} could not be read from the disk.";
         private const string ProfileUpdatedMessage = "Player {0} updated their profile.";
+        private const string AccountDeleteFailedMessage = "The database could not be used while player {0} deleted their account.";
+        private const string EmptyMatchesKeptMessage = "The matches left without participants by player {0} could not be deleted and stay in the database.";
+        private const string AccountDeletedMessage = "Player {0} deleted their account.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(ProfileService));
 
@@ -36,20 +39,16 @@ namespace Game.Services
         private readonly AvatarStore _avatarStore;
         private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly RoomService _roomService;
+        private readonly IMatchRecordRepository _matchRecordRepository;
 
-        public ProfileService(SessionRegistry sessionRegistry, IPlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService)
+        public ProfileService(SessionRegistry sessionRegistry, IPlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService, IMatchRecordRepository matchRecordRepository)
         {
-            ArgumentNullException.ThrowIfNull(sessionRegistry);
-            ArgumentNullException.ThrowIfNull(playerRepository);
-            ArgumentNullException.ThrowIfNull(avatarStore);
-            ArgumentNullException.ThrowIfNull(avatarUploadRegistry);
-            ArgumentNullException.ThrowIfNull(roomService);
-
             _sessionRegistry = sessionRegistry;
             _playerRepository = playerRepository;
             _avatarStore = avatarStore;
             _avatarUploadRegistry = avatarUploadRegistry;
             _roomService = roomService;
+            _matchRecordRepository = matchRecordRepository;
         }
 
         /// <inheritdoc/>
@@ -69,7 +68,7 @@ namespace Game.Services
 
             if (player is null)
             {
-                _log.WarnFormat(ProfileMissingMessage, callerPlayerId);
+                _log.WarnFormat(CultureInfo.InvariantCulture, ProfileMissingMessage, callerPlayerId);
                 throw new FaultException(ProfileUnavailableMessage);
             }
 
@@ -154,14 +153,25 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public async Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)
+        public async Task<DeleteAccountResult> DeleteAccountAsync()
         {
-            PlayerSession? callerSession = _sessionRegistry.FindCaller();
-            if (callerSession is null)
+            PlayerSession callerSession = AccountOwnerGuard.RequireAccountSession(_sessionRegistry, _log, ProfileFeatureName);
+            int callerPlayerId = callerSession.Owner.OwnerId;
+            DeleteAccountResult deletionResult = _roomService.HasMatchInProgress(callerPlayerId)
+                ? DeleteAccountResult.MatchInProgress
+                : await DeleteStoredAccountAsync(callerPlayerId);
+            if (deletionResult == DeleteAccountResult.Deleted)
             {
-                throw new FaultException(SessionNotOpenMessage);
+                await LeaveAfterDeletionAsync(callerSession);
             }
 
+            return deletionResult;
+        }
+
+        /// <inheritdoc/>
+        public async Task<AvatarResponse> GetAvatarThumbnailAsync(string avatarReference)
+        {
+            PlayerSession callerSession = AccountOwnerGuard.RequireSession(_sessionRegistry);
             byte[]? thumbnail = string.IsNullOrWhiteSpace(avatarReference) ? null : await ReadThumbnailAsync(avatarReference, callerSession.Owner.OwnerId);
             var avatarResponse = new AvatarResponse
             {
@@ -287,13 +297,13 @@ namespace Game.Services
             UpdateProfileStatus updateStatus = ToUpdateStatus(updateOutcome);
             if (updateOutcome == ProfileUpdateOutcome.PlayerNotFound)
             {
-                _log.WarnFormat(ProfileMissingMessage, playerId);
+                _log.WarnFormat(CultureInfo.InvariantCulture, ProfileMissingMessage, playerId);
             }
             else if (updateStatus == UpdateProfileStatus.Updated)
             {
                 callerSession.ApplyUsername(profileChange.Username);
                 _roomService.ApplyProfile(playerId, profileChange.Username, profileChange.NewReference);
-                _log.InfoFormat(ProfileUpdatedMessage, playerId);
+                _log.InfoFormat(CultureInfo.InvariantCulture, ProfileUpdatedMessage, playerId);
             }
 
             var writeResult = new UpdateProfileResult
@@ -303,6 +313,79 @@ namespace Game.Services
             };
 
             return writeResult;
+        }
+
+        private async Task<DeleteAccountResult> DeleteStoredAccountAsync(int playerId)
+        {
+            DeleteAccountResult deletionResult;
+            try
+            {
+                deletionResult = await _matchRecordRepository.HasInProgressByPlayerAsync(playerId)
+                    ? DeleteAccountResult.MatchInProgress
+                    : await RemoveAccountAsync(playerId);
+            }
+            catch (NpgsqlException exception)
+            {
+                deletionResult = LogDeletionFailure(playerId, exception);
+            }
+            catch (DbUpdateException exception)
+            {
+                deletionResult = LogDeletionFailure(playerId, exception);
+            }
+
+            return deletionResult;
+        }
+
+        private static DeleteAccountResult LogDeletionFailure(int playerId, Exception exception)
+        {
+            _log.Error(string.Format(CultureInfo.InvariantCulture, AccountDeleteFailedMessage, playerId), exception);
+            DeleteAccountResult failedResult = DeleteAccountResult.DatabaseUnavailable;
+
+            return failedResult;
+        }
+
+        private async Task<DeleteAccountResult> RemoveAccountAsync(int playerId)
+        {
+            string? avatarReference = await _playerRepository.FindAvatarReferenceAsync(playerId);
+            List<int> playedMatchIds = await _matchRecordRepository.ListIdsByPlayerAsync(playerId);
+            bool wasRemoved = await _playerRepository.DeleteAsync(playerId);
+            if (!wasRemoved)
+            {
+                _log.WarnFormat(CultureInfo.InvariantCulture, ProfileMissingMessage, playerId);
+                DeleteAccountResult missingResult = DeleteAccountResult.DatabaseUnavailable;
+                return missingResult;
+            }
+
+            if (avatarReference is not null)
+            {
+                DeleteAvatarFiles(avatarReference, playerId);
+            }
+
+            await DeleteEmptyMatchesAsync(playerId, playedMatchIds);
+            _log.InfoFormat(CultureInfo.InvariantCulture, AccountDeletedMessage, playerId);
+            DeleteAccountResult deletedResult = DeleteAccountResult.Deleted;
+
+            return deletedResult;
+        }
+
+        private async Task DeleteEmptyMatchesAsync(int playerId, List<int> playedMatchIds)
+        {
+            try
+            {
+                await _matchRecordRepository.DeleteFinishedWithoutParticipantsAsync(playedMatchIds);
+            }
+            catch (NpgsqlException exception)
+            {
+                _log.Warn(string.Format(CultureInfo.InvariantCulture, EmptyMatchesKeptMessage, playerId), exception);
+            }
+        }
+
+        private async Task LeaveAfterDeletionAsync(PlayerSession callerSession)
+        {
+            int playerId = callerSession.Owner.OwnerId;
+            _avatarUploadRegistry.DiscardForClosedSession(playerId);
+            await _roomService.LeaveForClosedSessionAsync(playerId);
+            _sessionRegistry.Close(callerSession);
         }
 
         private string? StoreAvatar(int playerId, CompletedAvatarUpload completedUpload)

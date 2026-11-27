@@ -42,18 +42,18 @@ namespace Torres.Client.Scene
             var flowerPhase = (FlowerPhase)flowerLevel;
             float headHeight = flowerPhase == FlowerPhase.FullBloom ? FullBloomHeadHeight : HeadHeight;
             float headBase = BoardGeometry.GetFlowerTop(flowerLevel) - headHeight;
-            FlowerParts.AddColumn(meshBuilder, cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), headBase + StemOverlap - BoardGeometry.SoilTop, StemRadius, GardenPalette.Stem);
-            AddLeaves(meshBuilder, cellCenter, flowerLevel, headBase);
+            FlowerParts.AddColumn(meshBuilder, PartPose.CreateUpright(cellCenter + new Vector3(0f, BoardGeometry.SoilTop, 0f), new Vector3(StemRadius, headBase + StemOverlap - BoardGeometry.SoilTop, StemRadius)), GardenPalette.Stem);
             Vector3 headPoint = cellCenter + new Vector3(0f, headBase, 0f);
+            AddLeaves(meshBuilder, headPoint, flowerLevel);
             switch (flowerPhase)
             {
                 case FlowerPhase.Bud:
                     FlowerParts.AddRing(meshBuilder, headPoint, _budBracts);
-                    FlowerParts.AddPart(meshBuilder, headPoint + new Vector3(0f, BudTipLift, 0f), _budTipScale, 0f, 0f, GardenPalette.ProteaBudTip);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headPoint + new Vector3(0f, BudTipLift, 0f), _budTipScale, 0f, 0f), GardenPalette.ProteaBudTip);
                     break;
                 case FlowerPhase.Opening:
                     FlowerParts.AddRing(meshBuilder, headPoint, _openingBracts);
-                    FlowerParts.AddPart(meshBuilder, headPoint + new Vector3(0f, OpeningHeartLift, 0f), _openingHeartScale, 0f, 0f, GardenPalette.ProteaOpeningHeart);
+                    FlowerParts.AddPart(meshBuilder, new PartPose(headPoint + new Vector3(0f, OpeningHeartLift, 0f), _openingHeartScale, 0f, 0f), GardenPalette.ProteaOpeningHeart);
                     break;
                 case FlowerPhase.FullBloom:
                     AddFullBloom(meshBuilder, headPoint);
@@ -63,15 +63,17 @@ namespace Torres.Client.Scene
             }
         }
 
-        private static void AddLeaves(MeshBuilder meshBuilder, Vector3 cellCenter, int flowerLevel, float headBase)
+        private static void AddLeaves(MeshBuilder meshBuilder, Vector3 headPoint, int flowerLevel)
         {
+            var cellCenter = new Vector3(headPoint.X, 0f, headPoint.Z);
+            float headBase = headPoint.Y;
             float leafSpacing = (headBase - BoardGeometry.PlanterTop - LeafSpanMargin) / flowerLevel;
             for (var leafIndex = 0; leafIndex <= flowerLevel; leafIndex++)
             {
                 float headingDegrees = FirstLeafHeadingDegrees + (LeafHeadingStepDegrees * leafIndex);
                 float leafHeight = BoardGeometry.PlanterTop + LowestLeafLift + (leafSpacing * leafIndex);
                 Vector3 leafCenter = cellCenter + (BoardGeometry.GetHeadingDirection(headingDegrees) * LeafDistance) + new Vector3(0f, leafHeight, 0f);
-                FlowerParts.AddPart(meshBuilder, leafCenter, _leafScale, LeafTiltDegrees, headingDegrees, GardenPalette.SilverLeaf);
+                FlowerParts.AddPart(meshBuilder, new PartPose(leafCenter, _leafScale, LeafTiltDegrees, headingDegrees), GardenPalette.SilverLeaf);
             }
         }
 
@@ -79,15 +81,15 @@ namespace Torres.Client.Scene
         {
             FlowerParts.AddRing(meshBuilder, headPoint - new Vector3(0f, OuterBractDrop, 0f), _outerBracts);
             FlowerParts.AddRing(meshBuilder, headPoint, _innerBracts);
-            FlowerParts.AddPart(meshBuilder, headPoint + new Vector3(0f, DomeLift, 0f), _domeScale, 0f, 0f, GardenPalette.ProteaDome);
+            FlowerParts.AddPart(meshBuilder, new PartPose(headPoint + new Vector3(0f, DomeLift, 0f), _domeScale, 0f, 0f), GardenPalette.ProteaDome);
             for (var floretIndex = 0; floretIndex < FloretCount; floretIndex++)
             {
                 bool isOuterFloret = (floretIndex % FloretRowCount) != 0;
                 float floretDistance = isOuterFloret ? InnerFloretDistance + FloretRowSpacing : InnerFloretDistance;
                 float floretLift = isOuterFloret ? FloretLift - FloretRowDrop : FloretLift;
-                float headingDegrees = FlowerParts.GetCircleHeading(floretIndex, FloretCount, 0f);
+                float headingDegrees = FlowerParts.GetCircleHeadingDegrees(floretIndex, FloretCount, 0f);
                 Vector3 floretCenter = headPoint + (BoardGeometry.GetHeadingDirection(headingDegrees) * floretDistance) + new Vector3(0f, floretLift, 0f);
-                FlowerParts.AddBead(meshBuilder, floretCenter, _floretScale, GardenPalette.ProteaFloret);
+                FlowerParts.AddCoarsePart(meshBuilder, PartPose.CreateUpright(floretCenter, _floretScale), GardenPalette.ProteaFloret);
             }
         }
     }

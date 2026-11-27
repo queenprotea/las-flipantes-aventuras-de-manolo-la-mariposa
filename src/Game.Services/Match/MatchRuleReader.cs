@@ -21,10 +21,6 @@ namespace Game.Services
 
         public MatchRuleReader(ITurnLayoutRepository turnLayoutRepository, IBuildAllowanceRepository buildAllowanceRepository, IActionCostRepository actionCostRepository)
         {
-            ArgumentNullException.ThrowIfNull(turnLayoutRepository);
-            ArgumentNullException.ThrowIfNull(buildAllowanceRepository);
-            ArgumentNullException.ThrowIfNull(actionCostRepository);
-
             _turnLayoutRepository = turnLayoutRepository;
             _buildAllowanceRepository = buildAllowanceRepository;
             _actionCostRepository = actionCostRepository;

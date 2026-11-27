@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using Game.Contracts;
@@ -9,8 +8,6 @@ namespace Game.Services
     {
         public StartingBoard(IReadOnlyList<MatchCell> flowerCells)
         {
-            ArgumentNullException.ThrowIfNull(flowerCells);
-
             FlowerCells = flowerCells;
         }
 

@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Myra.Events;
 using Myra.Graphics2D.UI;
 
+using Torres.Client.Contracts;
 using Torres.Client.Flows;
 using Torres.Client.Localization;
 using Torres.Client.UI;

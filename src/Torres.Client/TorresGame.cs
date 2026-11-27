@@ -53,11 +53,12 @@ namespace Torres.Client
         private PasswordRecoveryScreen? _passwordRecoveryScreen;
         private GuestAccessScreen? _guestAccessScreen;
         private ProfileScreen? _profileScreen;
+        private AccountSettingsScreen? _accountSettingsScreen;
         private AvatarCache? _avatarCache;
         private OwnProfileFlow? _ownProfileFlow;
         private ScreenId _openScreen = ScreenId.Startup;
         private bool _isMatchReturnPending;
-        private string _appliedUiCultureName = string.Empty;
+        private string _appliedUICultureName = string.Empty;
         private KeyboardState _previousKeyboardState;
         private Point _windowedClientSize = new Point(Sizes.WindowWidth, Sizes.WindowHeight);
 
@@ -93,7 +94,7 @@ namespace Torres.Client
         protected override void Initialize()
         {
             _languagePreference.StartLoadingSavedPreference();
-            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
+            _appliedUICultureName = _languagePreference.CurrentLanguage.UICultureName;
             MyraEnvironment.Game = this;
             WindowSizeLimit.ApplyMinimum(Window, Sizes.WindowWidth, Sizes.WindowHeight);
 
@@ -141,10 +142,12 @@ namespace Torres.Client
             _screensById.Add(ScreenId.GuestAccess, _guestAccessScreen);
             _profileScreen = new ProfileScreen(new ProfileFlow(_gameSessionConnection, _playerSession, avatarCache), avatarCache);
             _screensById.Add(ScreenId.Profile, _profileScreen);
-            _screensById.Add(ScreenId.AccountSettings, new AccountSettingsScreen());
+            _accountSettingsScreen = new AccountSettingsScreen(new AccountDeletionFlow(_gameSessionConnection));
+            _screensById.Add(ScreenId.AccountSettings, _accountSettingsScreen);
             _screensById.Add(ScreenId.Rooms, new RoomsScreen(new RoomsFlow(_gameSessionConnection, _playerSession)));
             _matchPause = new MatchPause(GraphicsDevice);
-            _matchScreen = new MatchScreen(GraphicsDevice, new MatchFlow(_gameSessionConnection, _playerSession), new ForfeitFlow(_gameSessionConnection, _playerSession), new ChatFlow(_gameSessionConnection, _playerSession));
+            var pauseCards = new PauseCardFactory(_matchPause.VolumeTextures, _matchPause.FigureIcons);
+            _matchScreen = new MatchScreen(GraphicsDevice, new MatchFlow(_gameSessionConnection, _playerSession), new ForfeitFlow(_gameSessionConnection, _playerSession), new ChatFlow(_gameSessionConnection, _playerSession), _matchPause);
             _screensById.Add(ScreenId.Match, _matchScreen);
             _screensById.Add(ScreenId.GlobalRanking, new GlobalRankingScreen(new GlobalRankingFlow(new RankingConnection(_rankingChannelFactory), _playerSession)));
             _screensById.Add(ScreenId.CreateRoom, new CreateRoomScreen(new CreateRoomFlow(_gameSessionConnection, _playerSession)));
@@ -155,16 +158,16 @@ namespace Torres.Client
             _screensById.Add(ScreenId.InvitePlayers, new InvitePlayersScreen(new InvitePlayersFlow(_gameSessionConnection, _playerSession, _clientSettings.InvitationStateRefreshPeriod), avatarCache));
             _screensById.Add(ScreenId.History, new HistoryScreen(new HistoryFlow(_gameSessionConnection, _playerSession)));
             _screensById.Add(ScreenId.MatchDetail, new MatchDetailScreen(new MatchDetailFlow(_gameSessionConnection, _playerSession)));
-            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(new MatchSummaryFlow(_playerSession), _matchPause));
-            _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, new InitialPlacementFlow(_gameSessionConnection, _playerSession), new ForfeitFlow(_gameSessionConnection, _playerSession), new ChatFlow(_gameSessionConnection, _playerSession), _doomLauncher);
+            _screensById.Add(ScreenId.MatchPreparation, new MatchPreparationScreen(new MatchSummaryFlow(_playerSession), _matchPause, pauseCards));
+            _initialPlacementScreen = new InitialPlacementScreen(GraphicsDevice, new InitialPlacementFlow(_gameSessionConnection, _playerSession), new ForfeitFlow(_gameSessionConnection, _playerSession), new ChatFlow(_gameSessionConnection, _playerSession), _doomLauncher, _matchPause);
             _screensById.Add(ScreenId.InitialPlacement, _initialPlacementScreen);
-            _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen(new MatchSummaryFlow(_playerSession), _matchPause));
-            _screensById.Add(ScreenId.Result, new ResultScreen(new MatchSummaryFlow(_playerSession), _matchPause));
-            _disconnectionScreen = new DisconnectionScreen(new DisconnectionFlow(_gameSessionConnection, _playerSession), _matchPause);
+            _screensById.Add(ScreenId.RoundSummary, new RoundSummaryScreen(new MatchSummaryFlow(_playerSession), _matchPause, pauseCards));
+            _screensById.Add(ScreenId.Result, new ResultScreen(new MatchSummaryFlow(_playerSession), _matchPause, pauseCards));
+            _disconnectionScreen = new DisconnectionScreen(new DisconnectionFlow(_gameSessionConnection, _playerSession), _matchPause, pauseCards);
             _screensById.Add(ScreenId.Disconnection, _disconnectionScreen);
-            _resumeScreen = new ResumeScreen(new ResumeFlow(_gameSessionConnection, _playerSession), _matchPause);
+            _resumeScreen = new ResumeScreen(new ResumeFlow(_gameSessionConnection, _playerSession), _matchPause, pauseCards);
             _screensById.Add(ScreenId.Resume, _resumeScreen);
-            _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen(new MatchInProgressFlow(_gameSessionConnection, _playerSession), _matchPause));
+            _screensById.Add(ScreenId.MatchInProgress, new MatchInProgressScreen(new MatchInProgressFlow(_gameSessionConnection, _playerSession), _matchPause, pauseCards));
         }
 
         protected override void Update(GameTime gameTime)
@@ -281,10 +284,15 @@ namespace Torres.Client
 
         private void EndGameSession(string noticeKey)
         {
+            LeaveEndedSession();
+            _loginScreen?.ShowNotice(noticeKey);
+        }
+
+        private void LeaveEndedSession()
+        {
             _gameSessionConnection.AbandonSession();
             _playerSession.End();
             ShowScreen(ScreenId.Login);
-            _loginScreen?.ShowNotice(noticeKey);
         }
 
         private void LogOut()
@@ -434,12 +442,12 @@ namespace Torres.Client
 
         private void FollowLanguageChange()
         {
-            if (_languagePreference.CurrentLanguage.UiCultureName == _appliedUiCultureName)
+            if (_languagePreference.CurrentLanguage.UICultureName == _appliedUICultureName)
             {
                 return;
             }
 
-            _appliedUiCultureName = _languagePreference.CurrentLanguage.UiCultureName;
+            _appliedUICultureName = _languagePreference.CurrentLanguage.UICultureName;
             _mainMenuScreen.FollowLanguage();
             if (_topBarView is not null)
             {
@@ -504,6 +512,12 @@ namespace Torres.Client
             {
                 _profileScreen.ClearRequests();
                 LogOut();
+            }
+
+            if ((_accountSettingsScreen is not null) && _accountSettingsScreen.WasAccountDeleted)
+            {
+                _accountSettingsScreen.ClearRequests();
+                LeaveEndedSession();
             }
 
             FollowDisconnectionRequests();

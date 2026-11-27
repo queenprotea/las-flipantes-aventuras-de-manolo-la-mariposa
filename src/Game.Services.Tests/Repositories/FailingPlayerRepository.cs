@@ -60,5 +60,10 @@ namespace Game.Services.Tests
         {
             throw new NpgsqlException(FailureMessage);
         }
+
+        public Task<bool> DeleteAsync(int playerId)
+        {
+            throw new NpgsqlException(FailureMessage);
+        }
     }
 }

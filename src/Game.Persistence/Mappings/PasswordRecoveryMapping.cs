@@ -1,5 +1,3 @@
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,8 +12,6 @@ namespace Game.Persistence
 
         public void Configure(EntityTypeBuilder<PasswordRecovery> builder)
         {
-            ArgumentNullException.ThrowIfNull(builder);
-
             builder.ToTable(PasswordRecoveryTable);
             builder.HasKey(mappedRecovery => mappedRecovery.PlayerId);
             builder.Property(mappedRecovery => mappedRecovery.PlayerId)

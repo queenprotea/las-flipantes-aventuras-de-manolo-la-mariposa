@@ -38,31 +38,58 @@ namespace Torres.Client.Widgets
             var detailRow = new HorizontalStackPanel { Spacing = MatchLayout.TableLabelSpacing };
             if (isViewer)
             {
-                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag) { Font = Fonts.Label, TextColor = Theme.MutedInk });
+                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.YouTag)
+                {
+                    Font = Fonts.Label,
+                    TextColor = Theme.MutedInk,
+                });
             }
 
             if (seat.IsRetired)
             {
-                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag) { Font = Fonts.Label, TextColor = Theme.BlushInk });
+                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.WithdrewTag)
+                {
+                    Font = Fonts.Label,
+                    TextColor = Theme.BlushInk,
+                });
             }
             else if (seat.IsDisconnected)
             {
-                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.DisconnectedTag) { Font = Fonts.Label, TextColor = Theme.ButterInk });
+                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Common.DisconnectedTag)
+                {
+                    Font = Fonts.Label,
+                    TextColor = Theme.ButterInk,
+                });
             }
 
             if (seat.HandCount > 0)
             {
                 if (detailRow.Widgets.Count > 0)
                 {
-                    detailRow.Widgets.Add(new Label { Text = DisplaySymbols.InlineSeparator, Font = Fonts.Label, TextColor = Theme.MutedInk });
+                    detailRow.Widgets.Add(new Label
+                    {
+                        Text = DisplaySymbols.InlineSeparator,
+                        Font = Fonts.Label,
+                        TextColor = Theme.MutedInk,
+                    });
                 }
 
-                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Match.CardsInHandTag) { Font = Fonts.Label, TextColor = Theme.MutedInk, TextArguments = new string[] { DisplayFormats.FormatInteger(seat.HandCount) } });
+                detailRow.Widgets.Add(new LocalizedLabel(TextKeys.Match.CardsInHandTag)
+                {
+                    Font = Fonts.Label,
+                    TextColor = Theme.MutedInk,
+                    TextArguments = new string[] { DisplayFormats.FormatInteger(seat.HandCount) },
+                });
             }
 
             Color nameColor = isPlaying ? Theme.MintInk : Theme.Ink;
             var playerIdentity = new VerticalStackPanel { VerticalAlignment = VerticalAlignment.Center };
-            playerIdentity.Widgets.Add(new Label { Text = seat.DisplayName, Font = Fonts.Small, TextColor = nameColor });
+            playerIdentity.Widgets.Add(new Label
+            {
+                Text = seat.DisplayName,
+                Font = Fonts.Small,
+                TextColor = nameColor,
+            });
             playerIdentity.Widgets.Add(detailRow);
 
             return playerIdentity;
@@ -78,9 +105,9 @@ namespace Torres.Client.Widgets
                 Width = MatchLayout.PlayerPillWidth,
                 Background = isPlaying ? _volumeTextures.ActivePillBrush : _volumeTextures.PillBrush,
             };
-            playerPill.Widgets.Add(MatchPieces.CreateCaterpillarImage(_figureIcons, seat.Color));
+            playerPill.Widgets.Add(PlayerBadges.CreateCaterpillarImage(_figureIcons, seat.Color));
             playerPill.Widgets.Add(playerIdentity);
-            playerPill.Widgets.Add(MatchPieces.CreateScoreCircle(_volumeTextures, seat.FinalScore));
+            playerPill.Widgets.Add(PlayerBadges.CreateScoreCircle(_volumeTextures, seat.FinalScore));
             StackPanel.SetProportionType(playerIdentity, ProportionType.Fill);
 
             return playerPill;
