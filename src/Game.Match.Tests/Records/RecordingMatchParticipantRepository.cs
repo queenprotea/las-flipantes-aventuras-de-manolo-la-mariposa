@@ -27,6 +27,13 @@ namespace Game.Match.Tests
 
         internal Task<IReadOnlyList<MatchParticipant>> FirstResults => _firstResults.Task;
 
+        public Task<List<MatchParticipant>> ListByMatchesAsync(IReadOnlyCollection<int> matchIds)
+        {
+            Task<List<MatchParticipant>> listing = Task.FromResult(new List<MatchParticipant>());
+
+            return listing;
+        }
+
         public Task AddAsync(int matchId, IReadOnlyList<MatchParticipant> seatedPlayers)
         {
             lock (_participantLock)

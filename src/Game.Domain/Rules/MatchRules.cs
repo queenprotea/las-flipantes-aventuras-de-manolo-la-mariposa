@@ -7,7 +7,7 @@ namespace Game.Domain
     {
         public const int RoundCount = 3;
 
-        private readonly IReadOnlyList<RoundTurnPlan> _roundTurnPlans;
+        private readonly List<RoundTurnPlan> _roundTurnPlans;
 
         public MatchRules(IReadOnlyList<RoundTurnPlan> roundTurnPlans, ActionCosts actionCosts)
         {

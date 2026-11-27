@@ -22,12 +22,12 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RoomStartup));
 
-        private readonly RoomRecordRepository _roomRecordRepository;
+        private readonly IRoomRecordRepository _roomRecordRepository;
         private readonly SanctionLevelRepository _sanctionLevelRepository;
         private readonly SystemParameterReader _systemParameterReader;
         private readonly TimeProvider _timeProvider;
 
-        public RoomStartup(RoomRecordRepository roomRecordRepository, SanctionLevelRepository sanctionLevelRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
+        public RoomStartup(IRoomRecordRepository roomRecordRepository, SanctionLevelRepository sanctionLevelRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
         {
             _roomRecordRepository = roomRecordRepository;
             _sanctionLevelRepository = sanctionLevelRepository;
@@ -76,7 +76,7 @@ namespace Game.Services
             return sanctionPolicy;
         }
 
-        private static void EnsureSanctionLadder(IReadOnlyList<SanctionLevel> sanctionLevels)
+        private static void EnsureSanctionLadder(List<SanctionLevel> sanctionLevels)
         {
             if (sanctionLevels.Count == 0)
             {

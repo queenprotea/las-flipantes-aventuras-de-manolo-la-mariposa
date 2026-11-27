@@ -209,7 +209,7 @@ namespace Torres.Client.Screens
         {
             HideConfirmation();
             _invitationsFlow.ForgetRequests();
-            RequestedScreen = ScreenId.MainMenu;
+            RequestedScreen = InvitationsFlow.FindScreenToGoBack();
         }
     }
 }

@@ -35,13 +35,13 @@ namespace Game.Services
         private static readonly ILog _log = LogManager.GetLogger(typeof(ProfileService));
 
         private readonly SessionRegistry _sessionRegistry;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly AvatarStore _avatarStore;
         private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly RoomService _roomService;
-        private readonly MatchRecordRepository _matchRecordRepository;
+        private readonly IMatchRecordRepository _matchRecordRepository;
 
-        public ProfileService(SessionRegistry sessionRegistry, PlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService, MatchRecordRepository matchRecordRepository)
+        public ProfileService(SessionRegistry sessionRegistry, IPlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService, IMatchRecordRepository matchRecordRepository)
         {
             _sessionRegistry = sessionRegistry;
             _playerRepository = playerRepository;
@@ -83,7 +83,7 @@ namespace Game.Services
         }
 
         /// <inheritdoc/>
-        public BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes)
+        public BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes)
         {
             int callerPlayerId = RequireCallerPlayerId();
             BeginAvatarUploadResult beginResult;
@@ -94,17 +94,17 @@ namespace Game.Services
             }
             else
             {
-                beginResult = _avatarUploadRegistry.Begin(callerPlayerId, originalBytes, thumbnailBytes);
+                beginResult = _avatarUploadRegistry.Begin(callerPlayerId, thumbnailBytes);
             }
 
             return beginResult;
         }
 
         /// <inheritdoc/>
-        public SendAvatarPartResult SendAvatarPart(AvatarFileKind fileKind, int offset, byte[] part)
+        public SendAvatarPartResult SendAvatarPart(int offset, byte[] part)
         {
             int callerPlayerId = RequireCallerPlayerId();
-            bool isWellFormedPart = (part is { Length: > 0 }) && Enum.IsDefined(fileKind);
+            bool isWellFormedPart = part is { Length: > 0 };
             SendAvatarPartResult partResult;
             if (_roomService.HasMatchInProgress(callerPlayerId))
             {
@@ -113,7 +113,7 @@ namespace Game.Services
             }
             else if (isWellFormedPart)
             {
-                partResult = _avatarUploadRegistry.AcceptPart(callerPlayerId, new ReceivedAvatarPart(fileKind, offset, part));
+                partResult = _avatarUploadRegistry.AcceptPart(callerPlayerId, new ReceivedAvatarPart(offset, part));
             }
             else
             {

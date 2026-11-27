@@ -8,7 +8,7 @@ namespace Game.Services
 {
     public sealed class SanctionPolicy
     {
-        private readonly IReadOnlyList<TimeSpan> _temporaryBanDurations;
+        private readonly List<TimeSpan> _temporaryBanDurations;
 
         public SanctionPolicy(int thresholdOccasions, IReadOnlyList<TimeSpan> temporaryBanDurations)
         {

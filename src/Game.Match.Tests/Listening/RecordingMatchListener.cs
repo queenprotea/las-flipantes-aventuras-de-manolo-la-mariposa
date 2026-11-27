@@ -9,6 +9,7 @@ namespace Game.Match.Tests
     {
         private readonly List<RecordedNotice> _recordedNotices = new List<RecordedNotice>();
         private readonly List<int> _releasedEntrantIds = new List<int>();
+        private readonly List<int> _absentEntrantIds = new List<int>();
 
         internal int NoticeCount => _recordedNotices.Count;
 
@@ -17,6 +18,8 @@ namespace Game.Match.Tests
         internal IReadOnlyList<int> ReleasedEntrantIds => _releasedEntrantIds;
 
         internal int FinishCount { get; private set; }
+
+        internal IReadOnlyList<int> AbsentEntrantIds => _absentEntrantIds;
 
         public void ReceiveMatchStarted(IReadOnlyList<MatchRecipientView> recipientViews)
         {
@@ -32,6 +35,11 @@ namespace Game.Match.Tests
         {
             FinishCount++;
             _releasedEntrantIds.AddRange(releasedEntrantIds);
+        }
+
+        public void ReceiveSeatAbsent(int entrantId)
+        {
+            _absentEntrantIds.Add(entrantId);
         }
 
         internal bool HasNotified(int entrantId)

@@ -43,6 +43,8 @@ namespace Torres.Client.Session
                 Insert(message);
             }
 
+            _closedReportMessageIds.UnionWith(history.ClosedReportMessageIds);
+
             MessageMaxLength = history.MessageMaxLength;
             _messagesKeptPerRoom = history.MessagesKeptPerRoom;
             IsLoaded = true;

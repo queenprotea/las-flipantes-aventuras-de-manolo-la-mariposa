@@ -10,9 +10,9 @@ namespace Game.Services
     {
         private const string MissingParameterMessage = "The system parameter {0} is missing or is not a positive whole number.";
 
-        private readonly SystemParameterRepository _systemParameterRepository;
+        private readonly ISystemParameterRepository _systemParameterRepository;
 
-        public SystemParameterReader(SystemParameterRepository systemParameterRepository)
+        public SystemParameterReader(ISystemParameterRepository systemParameterRepository)
         {
             _systemParameterRepository = systemParameterRepository;
         }

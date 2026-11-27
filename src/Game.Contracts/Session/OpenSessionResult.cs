@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Carries the outcome of opening a game session and, when it succeeds, the player's identity, room, seat in a match and connection check period.
+    /// Carries the outcome of opening a game session and, when it succeeds, the player's identity, room and seat in a match.
     /// </summary>
     [DataContract]
     public sealed class OpenSessionResult
@@ -19,8 +19,5 @@ namespace Game.Contracts
 
         [DataMember]
         public MatchSeating? CurrentMatch { get; set; }
-
-        [DataMember]
-        public int ConnectionCheckPeriodSeconds { get; set; }
     }
 }

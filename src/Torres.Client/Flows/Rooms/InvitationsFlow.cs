@@ -12,14 +12,14 @@ namespace Torres.Client.Flows
 {
     internal sealed class InvitationsFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<PendingInvitationsResponse> _invitationsRequest = new PendingRequest<PendingInvitationsResponse>();
         private readonly PendingRequest<RespondInvitationResult> _answerRequest = new PendingRequest<RespondInvitationResult>();
 
         private int _answeredRoomId;
 
-        internal InvitationsFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal InvitationsFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
@@ -28,6 +28,13 @@ namespace Torres.Client.Flows
         internal IReadOnlyList<RoomInvitation> Invitations => _playerSession.Invitations.Invitations;
 
         internal int Revision => _playerSession.Invitations.Revision;
+
+        internal static ScreenId FindScreenToGoBack()
+        {
+            ScreenId nextScreen = ScreenId.MainMenu;
+
+            return nextScreen;
+        }
 
         internal ScreenId? Open()
         {

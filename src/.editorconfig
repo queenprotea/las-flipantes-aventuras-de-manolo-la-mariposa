@@ -5,3 +5,9 @@ dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.CA1502.severity = warning
 dotnet_style_namespace_match_folder = false
 resharper_check_namespace_highlighting = none
+
+# Regla 6.14 del estándar: no se usan expresiones de colección [ ... ].
+dotnet_style_prefer_collection_expression = false
+# Reglas 6.22 y 13.5 del estándar: el brazo de descarte de un switch lanza
+# ArgumentOutOfRangeException con el nombre del valor evaluado, aunque sea un campo.
+dotnet_diagnostic.CA2208.severity = none

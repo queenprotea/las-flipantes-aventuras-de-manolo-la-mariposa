@@ -38,7 +38,7 @@ namespace Torres.Client.Avatars
             if (StartsWith(originalFile, PngEncoder.Signature) || StartsWith(originalFile, _jpgSignature))
             {
                 ImageResult decodedImage = ImageResult.FromMemory(originalFile, ColorComponents.RedGreenBlueAlpha);
-                var preparedAvatar = new PreparedAvatar(originalFile, MakeThumbnail(decodedImage));
+                var preparedAvatar = new PreparedAvatar(MakeThumbnail(decodedImage));
                 preparation = new AvatarPreparation(AvatarPreparationStatus.Prepared, preparedAvatar, originalFile.Length);
             }
 

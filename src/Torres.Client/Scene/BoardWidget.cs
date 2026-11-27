@@ -324,7 +324,7 @@ namespace Torres.Client.Scene
         private Matrix CreateProjectionMatrix()
         {
             float aspectRatio = CreateViewport().AspectRatio;
-            Matrix projectionMatrix = _orbitCamera.CreateProjectionMatrix(aspectRatio);
+            Matrix projectionMatrix = OrbitCamera.CreateProjectionMatrix(aspectRatio);
 
             return projectionMatrix;
         }

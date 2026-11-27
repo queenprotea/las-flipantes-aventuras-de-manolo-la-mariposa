@@ -17,9 +17,15 @@ namespace Game.Services
         private const int OwnerIdField = 1;
         private const int ExpiryField = 2;
         private const int DisplayNameField = 3;
+        private const int SessionOwnerFieldsStart = 0;
+        private const int ReconnectionFieldCount = 6;
+        private const int ReconnectionMatchIdField = 1;
+        private const int ReconnectionOwnerFieldsStart = 2;
         private const string PlayerOwnerKind = "P";
         private const string GuestOwnerKind = "G";
+        private const string ReconnectionKind = "R";
         private const string PayloadFormat = "{0}|{1}|{2}|{3}";
+        private const string ReconnectionPayloadFormat = "{0}|{1}|{2}|{3}|{4}|{5}";
 
         private static readonly TimeSpan _tokenLifetime = TimeSpan.FromMinutes(5);
 
@@ -46,6 +52,20 @@ namespace Game.Services
             string sessionToken = IssueFor(GuestOwnerKind, guestId, guestAlias);
 
             return sessionToken;
+        }
+
+        internal string IssueForMatch(int matchId, SessionOwner owner, TimeSpan lifetime)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchId);
+            ArgumentNullException.ThrowIfNull(owner);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lifetime, TimeSpan.Zero);
+
+            string ownerKind = owner.IsGuest ? GuestOwnerKind : PlayerOwnerKind;
+            long expiresAtSeconds = _timeProvider.GetUtcNow().Add(lifetime).ToUnixTimeSeconds();
+            string payload = string.Format(CultureInfo.InvariantCulture, ReconnectionPayloadFormat, ReconnectionKind, matchId, ownerKind, owner.OwnerId, expiresAtSeconds, owner.DisplayName);
+            string reconnectionToken = Sign(payload);
+
+            return reconnectionToken;
         }
 
         internal SessionTokenReading Read(string sessionToken)
@@ -78,16 +98,23 @@ namespace Game.Services
         {
             long expiresAtSeconds = _timeProvider.GetUtcNow().Add(_tokenLifetime).ToUnixTimeSeconds();
             string payload = string.Format(CultureInfo.InvariantCulture, PayloadFormat, ownerKind, ownerId, expiresAtSeconds, displayName);
-            string encodedPayload = Base64Url.EncodeToString(Encoding.UTF8.GetBytes(payload));
-            string encodedSignature = Base64Url.EncodeToString(Sign(encodedPayload));
-            string sessionToken = encodedPayload + PartSeparator + encodedSignature;
+            string sessionToken = Sign(payload);
 
             return sessionToken;
         }
 
+        private string Sign(string payload)
+        {
+            string encodedPayload = Base64Url.EncodeToString(Encoding.UTF8.GetBytes(payload));
+            string encodedSignature = Base64Url.EncodeToString(ComputeSignature(encodedPayload));
+            string signedToken = encodedPayload + PartSeparator + encodedSignature;
+
+            return signedToken;
+        }
+
         private bool HasValidSignature(string encodedPayload, string encodedSignature)
         {
-            byte[] expectedSignature = Sign(encodedPayload);
+            byte[] expectedSignature = ComputeSignature(encodedPayload);
             bool isValidSignature = Base64Url.IsValid(encodedSignature)
                 && CryptographicOperations.FixedTimeEquals(expectedSignature, Base64Url.DecodeFromChars(encodedSignature));
 
@@ -97,26 +124,51 @@ namespace Game.Services
         private SessionTokenReading ReadPayload(string encodedPayload)
         {
             string payload = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(encodedPayload));
+            bool isReconnection = payload.StartsWith(ReconnectionKind + FieldSeparator, StringComparison.Ordinal);
+            SessionTokenReading tokenReading = isReconnection ? ReadReconnectionPayload(payload) : ReadSessionPayload(payload);
+
+            return tokenReading;
+        }
+
+        private SessionTokenReading ReadSessionPayload(string payload)
+        {
             string[] payloadFields = payload.Split(FieldSeparator, PayloadFieldCount);
             SessionTokenReading tokenReading = _invalidReading;
             if (payloadFields.Length == PayloadFieldCount)
             {
-                tokenReading = ReadFields(payloadFields);
+                tokenReading = ReadFields(payloadFields, SessionOwnerFieldsStart);
             }
 
             return tokenReading;
         }
 
-        private SessionTokenReading ReadFields(string[] payloadFields)
+        private SessionTokenReading ReadReconnectionPayload(string payload)
         {
-            int? ownerId = ReadOwnerId(payloadFields[OwnerKindField], payloadFields[OwnerIdField]);
-            bool hasValidExpiry = long.TryParse(payloadFields[ExpiryField], NumberStyles.None, CultureInfo.InvariantCulture, out long expiresAtSeconds);
-            string displayName = payloadFields[DisplayNameField];
+            string[] payloadFields = payload.Split(FieldSeparator, ReconnectionFieldCount);
+            SessionTokenReading tokenReading = _invalidReading;
+            if ((payloadFields.Length == ReconnectionFieldCount)
+                && int.TryParse(payloadFields[ReconnectionMatchIdField], NumberStyles.None, CultureInfo.InvariantCulture, out int matchId)
+                && (matchId > 0))
+            {
+                SessionTokenReading ownerReading = ReadFields(payloadFields, ReconnectionOwnerFieldsStart);
+                bool isOwnerRead = ownerReading.Status != SessionTokenStatus.Invalid;
+                tokenReading = isOwnerRead ? ownerReading with { MatchId = matchId } : _invalidReading;
+            }
+
+            return tokenReading;
+        }
+
+        private SessionTokenReading ReadFields(string[] payloadFields, int ownerFieldsStart)
+        {
+            string ownerKind = payloadFields[ownerFieldsStart + OwnerKindField];
+            string displayName = payloadFields[ownerFieldsStart + DisplayNameField];
+            int? ownerId = ReadOwnerId(ownerKind, payloadFields[ownerFieldsStart + OwnerIdField]);
+            bool hasValidExpiry = long.TryParse(payloadFields[ownerFieldsStart + ExpiryField], NumberStyles.None, CultureInfo.InvariantCulture, out long expiresAtSeconds);
             bool hasValidFields = (ownerId is not null) && hasValidExpiry && !string.IsNullOrWhiteSpace(displayName);
             SessionTokenReading tokenReading = _invalidReading;
             if (hasValidFields)
             {
-                bool isGuestOwner = string.Equals(payloadFields[OwnerKindField], GuestOwnerKind, StringComparison.Ordinal);
+                bool isGuestOwner = string.Equals(ownerKind, GuestOwnerKind, StringComparison.Ordinal);
                 bool hasExpired = _timeProvider.GetUtcNow().ToUnixTimeSeconds() > expiresAtSeconds;
                 SessionTokenStatus tokenStatus = hasExpired ? SessionTokenStatus.Expired : SessionTokenStatus.Valid;
                 tokenReading = new SessionTokenReading(tokenStatus, ownerId.GetValueOrDefault(), displayName, isGuestOwner);
@@ -125,7 +177,7 @@ namespace Game.Services
             return tokenReading;
         }
 
-        private byte[] Sign(string encodedPayload)
+        private byte[] ComputeSignature(string encodedPayload)
         {
             byte[] signature = HMACSHA256.HashData(_signingKey, Encoding.UTF8.GetBytes(encodedPayload));
 

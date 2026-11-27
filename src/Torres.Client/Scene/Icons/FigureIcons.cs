@@ -39,14 +39,14 @@ namespace Torres.Client.Scene
         private readonly BasicEffect _iconEffect;
         private readonly CaterpillarFigure _caterpillarFigure;
         private readonly StaticMesh _sproutMesh;
-        private readonly IReadOnlyList<SeatColor> _seatColors = Enum.GetValues<SeatColor>();
+        private readonly SeatColor[] _seatColors = Enum.GetValues<SeatColor>();
         private readonly Dictionary<SeatColor, TextureRegion> _caterpillarIcons = new Dictionary<SeatColor, TextureRegion>();
         private bool _isRendered;
 
         internal FigureIcons(GraphicsDevice graphicsDevice)
         {
             _graphicsDevice = graphicsDevice;
-            int atlasWidth = (CaterpillarIconWidth * _seatColors.Count) + SproutIconWidth;
+            int atlasWidth = (CaterpillarIconWidth * _seatColors.Length) + SproutIconWidth;
             _iconAtlas = new RenderTarget2D(graphicsDevice, atlasWidth, IconHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, SceneValues.MultiSampleCount, RenderTargetUsage.PreserveContents);
             _iconEffect = new BasicEffect(graphicsDevice)
             {
@@ -58,7 +58,7 @@ namespace Torres.Client.Scene
             SceneLighting.ApplyTo(_iconEffect);
             _caterpillarFigure = new CaterpillarFigure(graphicsDevice);
             _sproutMesh = BuildSproutMesh(graphicsDevice);
-            for (var colorIndex = 0; colorIndex < _seatColors.Count; colorIndex++)
+            for (var colorIndex = 0; colorIndex < _seatColors.Length; colorIndex++)
             {
                 _caterpillarIcons[_seatColors[colorIndex]] = new TextureRegion(_iconAtlas, FindCaterpillarBounds(colorIndex));
             }
@@ -88,7 +88,7 @@ namespace Torres.Client.Scene
             _graphicsDevice.BlendState = BlendState.Opaque;
             _graphicsDevice.DepthStencilState = DepthStencilState.Default;
             _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            for (var colorIndex = 0; colorIndex < _seatColors.Count; colorIndex++)
+            for (var colorIndex = 0; colorIndex < _seatColors.Length; colorIndex++)
             {
                 RenderCaterpillar(FindCaterpillarBounds(colorIndex), SeatColors.ColorFor(_seatColors[colorIndex]));
             }
@@ -126,7 +126,7 @@ namespace Torres.Client.Scene
 
         private Rectangle FindSproutBounds()
         {
-            var sproutBounds = new Rectangle(CaterpillarIconWidth * _seatColors.Count, 0, SproutIconWidth, IconHeight);
+            var sproutBounds = new Rectangle(CaterpillarIconWidth * _seatColors.Length, 0, SproutIconWidth, IconHeight);
 
             return sproutBounds;
         }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,15 +73,16 @@ namespace Game.Services
         {
             ChatCapacity chatCapacity = RequireCapacity();
             PlayerSession? caller = _sessionRegistry.FindCaller();
-            IReadOnlyList<ChatMessage>? keptMessages = caller is null ? null : ReadHistoryOf(caller.Owner.OwnerId);
+            RoomChatHistory? chatHistory = caller is null ? null : ReadHistoryOf(caller.Owner.OwnerId);
             var history = new ChatHistoryResponse
             {
                 MessageMaxLength = chatCapacity.MessageMaxLength,
                 MessagesKeptPerRoom = chatCapacity.MessagesKeptPerRoom,
             };
-            if (keptMessages is not null)
+            if (chatHistory is not null)
             {
-                history.Messages.AddRange(keptMessages);
+                history.Messages.AddRange(chatHistory.Messages);
+                history.ClosedReportMessageIds.AddRange(chatHistory.ClosedReportMessageIds);
             }
 
             return history;
@@ -232,11 +232,11 @@ namespace Game.Services
             return SendChatMessageResult.Sent;
         }
 
-        private IReadOnlyList<ChatMessage>? ReadHistoryOf(int readerOwnerId)
+        private RoomChatHistory? ReadHistoryOf(int readerOwnerId)
         {
-            IReadOnlyList<ChatMessage>? keptMessages = _roomRegistry.FindRoomOf(readerOwnerId)?.ReadChatHistory(readerOwnerId);
+            RoomChatHistory? chatHistory = _roomRegistry.FindRoomOf(readerOwnerId)?.ReadChatHistory(readerOwnerId);
 
-            return keptMessages;
+            return chatHistory;
         }
 
         private ChatCapacity RequireCapacity()

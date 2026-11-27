@@ -8,7 +8,7 @@ namespace Torres.Client.Scene
 {
     internal static class FlowerShapes
     {
-        private static readonly IReadOnlyList<FlowerSpecies> _speciesByPlanter = new FlowerSpecies[]
+        private static readonly FlowerSpecies[] _speciesByPlanter = new FlowerSpecies[]
         {
             FlowerSpecies.Allium, FlowerSpecies.Lavender, FlowerSpecies.Protea, FlowerSpecies.Coneflower, FlowerSpecies.Narcissus,
         };
@@ -32,7 +32,7 @@ namespace Torres.Client.Scene
 
         private static FlowerSpecies FindSpecies(int planterNumber)
         {
-            int speciesIndex = (planterNumber - BoardLayout.FirstPlanterNumber) % _speciesByPlanter.Count;
+            int speciesIndex = (planterNumber - BoardLayout.FirstPlanterNumber) % _speciesByPlanter.Length;
             FlowerSpecies flowerSpecies = _speciesByPlanter[speciesIndex];
 
             return flowerSpecies;

@@ -8,13 +8,13 @@ namespace Torres.Client.Flows
 {
     internal sealed class OwnProfileFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<ProfileResponse> _profileRequest = new PendingRequest<ProfileResponse>();
 
         private bool _wasProfileRead;
 
-        internal OwnProfileFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal OwnProfileFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

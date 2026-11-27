@@ -1,10 +1,7 @@
 using System;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-
-using CoreWCF;
 
 using Game.Contracts;
 
@@ -18,19 +15,19 @@ namespace Game.Services
         private const string SessionReplacedMessage = "Session of player {0} replaced by a newer one.";
         private const string SessionClosedMessage = "Session of player {0} closed by the player.";
         private const string SessionLostMessage = "Session of player {0} lost.";
+        private const string NoCallerSessionMessage = "A session can only be opened from a call that has a session.";
+        private const string SeatAbsentMessage = "Session of player {0} declared lost: the seat let its match steps run out.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(SessionRegistry));
 
         private readonly Lock _registryLock = new Lock();
         private readonly Dictionary<string, PlayerSession> _sessionsById = new Dictionary<string, PlayerSession>(StringComparer.Ordinal);
         private readonly Dictionary<int, PlayerSession> _sessionsByOwnerId = new Dictionary<int, PlayerSession>();
-        private readonly SessionTimings _sessionTimings;
-        private readonly TimeProvider _timeProvider;
+        private readonly ICallerChannel _callerChannel;
 
-        public SessionRegistry(SessionTimings sessionTimings, TimeProvider timeProvider)
+        public SessionRegistry(ICallerChannel callerChannel)
         {
-            _sessionTimings = sessionTimings;
-            _timeProvider = timeProvider;
+            _callerChannel = callerChannel;
         }
 
         public event EventHandler<SessionOwnerEventArgs>? SessionOpened;
@@ -41,9 +38,9 @@ namespace Game.Services
 
         internal PlayerSession Open(SessionOwner owner)
         {
-            OperationContext callContext = OperationContext.Current;
-            IGameSessionNoticeReceiver noticeReceiver = callContext.GetCallbackChannel<IGameSessionNoticeReceiver>();
-            var openedSession = new PlayerSession(owner, callContext.SessionId, noticeReceiver, this, _timeProvider.GetUtcNow().UtcDateTime);
+            string sessionId = _callerChannel.FindCallerSessionId() ?? throw new InvalidOperationException(NoCallerSessionMessage);
+            IGameSessionNoticeReceiver noticeReceiver = _callerChannel.GetNoticeReceiver();
+            var openedSession = new PlayerSession(owner, sessionId, noticeReceiver, this);
             PlayerSession? replacedSession;
             lock (_registryLock)
             {
@@ -67,7 +64,7 @@ namespace Game.Services
 
         internal PlayerSession? FindCaller()
         {
-            string? callerSessionId = OperationContext.Current?.SessionId;
+            string? callerSessionId = _callerChannel.FindCallerSessionId();
             PlayerSession? callerSession = null;
             lock (_registryLock)
             {
@@ -91,9 +88,17 @@ namespace Game.Services
             return hasOpenSession;
         }
 
-        internal void Touch(PlayerSession session)
+        internal SessionOwner? FindOwner(int ownerId)
         {
-            session.Touch(_timeProvider.GetUtcNow().UtcDateTime);
+            PlayerSession? ownerSession;
+            lock (_registryLock)
+            {
+                _sessionsByOwnerId.TryGetValue(ownerId, out ownerSession);
+            }
+
+            SessionOwner? owner = ownerSession?.Owner;
+
+            return owner;
         }
 
         internal void Close(PlayerSession closedSession)
@@ -119,16 +124,19 @@ namespace Game.Services
             OnSessionLost(new SessionOwnerEventArgs(lostSession.Owner.OwnerId));
         }
 
-        internal IReadOnlyList<PlayerSession> FindSilentSessions()
+        internal void DeclareAbsent(int ownerId)
         {
-            DateTime silenceLimitAt = _timeProvider.GetUtcNow().UtcDateTime - _sessionTimings.SilenceLimit;
-            List<PlayerSession> silentSessions;
+            PlayerSession? absentSession;
             lock (_registryLock)
             {
-                silentSessions = _sessionsById.Values.Where(session => session.IsSilentSince(silenceLimitAt)).ToList();
+                _sessionsByOwnerId.TryGetValue(ownerId, out absentSession);
             }
 
-            return silentSessions;
+            if (absentSession is not null)
+            {
+                _log.InfoFormat(SeatAbsentMessage, ownerId);
+                DeclareLost(absentSession);
+            }
         }
 
         internal void Deliver(int ownerId, Notice notice)

@@ -588,7 +588,7 @@ namespace Torres.Client
             if ((_resumeScreen is not null) && _resumeScreen.WasMatchLost)
             {
                 _resumeScreen.ClearRequests();
-                _playerSession.LeaveRoom();
+                _playerSession.LeaveMatch();
                 ShowRoomWithNotice(TextKeys.Room.MatchEndedWhileAwayNotice);
             }
         }

@@ -146,22 +146,22 @@ namespace Torres.Client.Screens
 
         private void CreateAccountButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Register;
+            RequestedScreen = LoginFlow.FindScreenToCreateAccount();
         }
 
         private void ForgotAccessButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.PasswordRecovery;
+            RequestedScreen = LoginFlow.FindScreenToRecoverAccess();
         }
 
         private void GuestButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.GuestAccess;
+            RequestedScreen = LoginFlow.FindScreenToPlayAsGuest();
         }
 
         private void BackButtonOnClick(object sender, Myra.Events.MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.MainMenu;
+            RequestedScreen = LoginFlow.FindScreenToGoBack();
         }
     }
 }

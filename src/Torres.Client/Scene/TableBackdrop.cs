@@ -57,7 +57,7 @@ namespace Torres.Client.Scene
             }
 
             float aspectRatio = (float)_sceneRenderTarget.Width / _sceneRenderTarget.Height;
-            _gardenScene.BeginFrame(_sceneRenderTarget, _orbitCamera.CreateViewMatrix(), _orbitCamera.CreateProjectionMatrix(aspectRatio));
+            _gardenScene.BeginFrame(_sceneRenderTarget, _orbitCamera.CreateViewMatrix(), OrbitCamera.CreateProjectionMatrix(aspectRatio));
             _gardenScene.DrawSolids(_sceneTime);
             _gardenScene.DrawShadows();
             _graphicsDevice.SetRenderTarget(_blurredRenderTarget);

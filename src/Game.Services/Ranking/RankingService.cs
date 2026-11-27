@@ -21,9 +21,9 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RankingService));
 
-        private readonly RankingRepository _rankingRepository;
+        private readonly IRankingRepository _rankingRepository;
 
-        public RankingService(RankingRepository rankingRepository)
+        public RankingService(IRankingRepository rankingRepository)
         {
             _rankingRepository = rankingRepository;
         }

@@ -10,7 +10,7 @@ namespace Torres.Client.Flows
 {
     internal sealed class DisconnectionFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<OpenSessionResult> _reopenRequest = new PendingRequest<OpenSessionResult>();
 
@@ -18,7 +18,7 @@ namespace Torres.Client.Flows
         private bool _hasResumed;
         private bool _isWaitingForMatchView;
 
-        internal DisconnectionFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal DisconnectionFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
@@ -46,7 +46,7 @@ namespace Torres.Client.Flows
                 _sinceLastAttempt += elapsedTime;
             }
 
-            if (isWaitingToRetry && (_sinceLastAttempt >= _gameSessionConnection.ConnectionCheckPeriod))
+            if (isWaitingToRetry && (_sinceLastAttempt >= _gameSessionConnection.ReconnectionRetryInterval))
             {
                 StartReopening();
             }
@@ -101,7 +101,7 @@ namespace Torres.Client.Flows
 
         private DisconnectionOutcome ResumeSession(OpenSessionResult opening)
         {
-            _gameSessionConnection.BeginConnectionChecks(opening);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.RecoverConnection();
             _hasResumed = true;
             if (opening.CurrentRoom is not null)

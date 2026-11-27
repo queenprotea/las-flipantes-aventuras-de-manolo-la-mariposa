@@ -100,7 +100,7 @@ namespace Torres.Client.Screens
             return cardLayer;
         }
 
-        private void ShowSeats(IReadOnlyList<MatchSeat> seats)
+        private void ShowSeats(List<MatchSeat> seats)
         {
             _summaryLabel.TextArguments = new string[] { DisplayFormats.FormatInteger(seats.Count) };
             _seatsPanel.Widgets.Clear();

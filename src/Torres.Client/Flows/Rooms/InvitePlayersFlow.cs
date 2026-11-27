@@ -14,7 +14,7 @@ namespace Torres.Client.Flows
 {
     internal sealed class InvitePlayersFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly TimeSpan _invitationStateRefreshPeriod;
         private readonly HashSet<int> _invitedPlayerIds = new HashSet<int>();
@@ -29,7 +29,7 @@ namespace Torres.Client.Flows
         private string? _errorKey;
         private ScreenId? _nextScreen;
 
-        internal InvitePlayersFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession, TimeSpan invitationStateRefreshPeriod)
+        internal InvitePlayersFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession, TimeSpan invitationStateRefreshPeriod)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
@@ -42,6 +42,13 @@ namespace Torres.Client.Flows
         internal PlayerSearchResponse? SearchResult => _playerSearch.Result;
 
         internal string? RoomCode => _playerSession.CurrentRoom?.Code;
+
+        internal static ScreenId FindScreenToGoBack()
+        {
+            ScreenId nextScreen = ScreenId.Room;
+
+            return nextScreen;
+        }
 
         internal ScreenId? Open()
         {

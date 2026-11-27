@@ -14,7 +14,7 @@ namespace Torres.Client.Avatars
     {
         private const int MostPartsInFlight = 4;
 
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly Queue<AvatarPart> _pendingParts = new Queue<AvatarPart>();
         private readonly Dictionary<Task<SendAvatarPartResult>, int> _bytesByPartSending = new Dictionary<Task<SendAvatarPartResult>, int>();
         private readonly int _totalBytes;
@@ -22,12 +22,11 @@ namespace Torres.Client.Avatars
         private Task<BeginAvatarUploadResult>? _beginRequest;
         private int _acceptedBytes;
 
-        internal AvatarUpload(GameSessionConnection gameSessionConnection, PreparedAvatar preparedAvatar)
+        internal AvatarUpload(IGameSessionConnection gameSessionConnection, PreparedAvatar preparedAvatar)
         {
             _gameSessionConnection = gameSessionConnection;
-            QueueParts(AvatarFileKind.Thumbnail, preparedAvatar.Thumbnail);
-            QueueParts(AvatarFileKind.Original, preparedAvatar.Original);
-            _totalBytes = preparedAvatar.Thumbnail.Length + preparedAvatar.Original.Length;
+            QueueParts(preparedAvatar.Thumbnail);
+            _totalBytes = preparedAvatar.Thumbnail.Length;
             _beginRequest = gameSessionConnection.BeginAvatarUploadAsync(preparedAvatar);
         }
 
@@ -73,7 +72,6 @@ namespace Torres.Client.Avatars
             AvatarUploadFailure failure = partResult switch
             {
                 SendAvatarPartResult.RoomInMatch => AvatarUploadFailure.RoomInMatch,
-                SendAvatarPartResult.AvatarInvalidFormat => AvatarUploadFailure.InvalidFormat,
                 SendAvatarPartResult.NoUploadInProgress => AvatarUploadFailure.ServerError,
                 SendAvatarPartResult.OutOfRange => AvatarUploadFailure.ServerError,
                 SendAvatarPartResult.ThumbnailInvalid => AvatarUploadFailure.ServerError,
@@ -83,12 +81,12 @@ namespace Torres.Client.Avatars
             return failure;
         }
 
-        private void QueueParts(AvatarFileKind fileKind, byte[] fileBytes)
+        private void QueueParts(byte[] fileBytes)
         {
             for (var partOffset = 0; partOffset < fileBytes.Length; partOffset += ProfileLimits.AvatarPartBytes)
             {
                 int partBytes = Math.Min(ProfileLimits.AvatarPartBytes, fileBytes.Length - partOffset);
-                _pendingParts.Enqueue(new AvatarPart(fileKind, partOffset, fileBytes.AsSpan(partOffset, partBytes).ToArray()));
+                _pendingParts.Enqueue(new AvatarPart(partOffset, fileBytes.AsSpan(partOffset, partBytes).ToArray()));
             }
         }
 

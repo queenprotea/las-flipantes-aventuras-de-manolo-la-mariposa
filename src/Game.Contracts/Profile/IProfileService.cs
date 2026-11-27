@@ -18,25 +18,23 @@ namespace Game.Contracts
         Task<ProfileResponse> GetProfileAsync();
 
         /// <summary>
-        /// Starts receiving a new avatar in parts, and discards any upload the caller had left unfinished.
+        /// Starts receiving a new avatar thumbnail in parts, and discards any upload the caller had left unfinished; the image the player chose never leaves the client.
         /// </summary>
-        /// <param name="originalBytes">Size of the image file the player chose.</param>
-        /// <param name="thumbnailBytes">Size of the square thumbnail made from that image.</param>
+        /// <param name="thumbnailBytes">Size of the square thumbnail the client made from the chosen image.</param>
         /// <returns>Whether the upload started, or why it was rejected.</returns>
         /// <exception cref="FaultException">The caller is a guest.</exception>
         [OperationContract(Name = "BeginAvatarUpload", IsInitiating = false)]
-        BeginAvatarUploadResult BeginAvatarUpload(int originalBytes, int thumbnailBytes);
+        BeginAvatarUploadResult BeginAvatarUpload(int thumbnailBytes);
 
         /// <summary>
-        /// Receives one part of the upload the caller started; parts may arrive in any order.
+        /// Receives one part of the thumbnail the caller started to upload; parts may arrive in any order.
         /// </summary>
-        /// <param name="fileKind">Whether the part belongs to the chosen image or to its thumbnail.</param>
-        /// <param name="offset">Position of the part inside its file, a multiple of the part size.</param>
+        /// <param name="offset">Position of the part inside the thumbnail, a multiple of the part size.</param>
         /// <param name="part">Bytes of the part.</param>
         /// <returns>Whether the part was accepted, or why it was rejected.</returns>
         /// <exception cref="FaultException">The caller is a guest.</exception>
         [OperationContract(Name = "SendAvatarPart", IsInitiating = false)]
-        SendAvatarPartResult SendAvatarPart(AvatarFileKind fileKind, int offset, byte[] part);
+        SendAvatarPartResult SendAvatarPart(int offset, byte[] part);
 
         /// <summary>
         /// Discards the upload the caller started, if any; nothing of it is kept.

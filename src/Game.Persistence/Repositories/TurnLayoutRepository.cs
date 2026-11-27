@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class TurnLayoutRepository
+    public sealed class TurnLayoutRepository : ITurnLayoutRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

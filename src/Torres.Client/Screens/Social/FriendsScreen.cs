@@ -214,7 +214,7 @@ namespace Torres.Client.Screens
             return friendsList;
         }
 
-        private Widget BuildReceivedList()
+        private VerticalStackPanel BuildReceivedList()
         {
             var receivedSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             receivedSection.Widgets.Add(LabelFactory.CreateTitle(TextKeys.Friends.RequestsTitle));
@@ -374,7 +374,7 @@ namespace Torres.Client.Screens
         {
             HideConfirmation();
             _friendsFlow.ForgetRequests();
-            RequestedScreen = ScreenId.MainMenu;
+            RequestedScreen = FriendsFlow.FindScreenToGoBack();
         }
     }
 }

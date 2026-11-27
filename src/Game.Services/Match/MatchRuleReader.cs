@@ -15,11 +15,11 @@ namespace Game.Services
         private const string MissingRulesMessage = "The rule catalogues do not describe {0} rounds for {1} players.";
         private const string TurnCountMismatchMessage = "Round {0} for {1} players has {2} turns but {3} build allowances.";
 
-        private readonly TurnLayoutRepository _turnLayoutRepository;
-        private readonly BuildAllowanceRepository _buildAllowanceRepository;
-        private readonly ActionCostRepository _actionCostRepository;
+        private readonly ITurnLayoutRepository _turnLayoutRepository;
+        private readonly IBuildAllowanceRepository _buildAllowanceRepository;
+        private readonly IActionCostRepository _actionCostRepository;
 
-        public MatchRuleReader(TurnLayoutRepository turnLayoutRepository, BuildAllowanceRepository buildAllowanceRepository, ActionCostRepository actionCostRepository)
+        public MatchRuleReader(ITurnLayoutRepository turnLayoutRepository, IBuildAllowanceRepository buildAllowanceRepository, IActionCostRepository actionCostRepository)
         {
             _turnLayoutRepository = turnLayoutRepository;
             _buildAllowanceRepository = buildAllowanceRepository;

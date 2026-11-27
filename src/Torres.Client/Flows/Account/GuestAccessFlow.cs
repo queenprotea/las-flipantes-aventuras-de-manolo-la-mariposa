@@ -11,8 +11,8 @@ namespace Torres.Client.Flows
 {
     internal sealed class GuestAccessFlow
     {
-        private readonly AccountConnection _accountConnection;
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IAccountConnection _accountConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<GuestAccessResult> _guestAccessRequest = new PendingRequest<GuestAccessResult>();
         private readonly PendingRequest<OpenSessionResult> _sessionOpening = new PendingRequest<OpenSessionResult>();
@@ -20,7 +20,7 @@ namespace Torres.Client.Flows
         private string? _enteringAlias;
         private GuestAccessOutcome? _outcome;
 
-        internal GuestAccessFlow(AccountConnection accountConnection, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal GuestAccessFlow(IAccountConnection accountConnection, IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _accountConnection = accountConnection;
             _gameSessionConnection = gameSessionConnection;
@@ -28,6 +28,13 @@ namespace Torres.Client.Flows
         }
 
         internal bool IsWaiting => _guestAccessRequest.IsWaiting || _sessionOpening.IsWaiting;
+
+        internal static ScreenId FindScreenToCancel()
+        {
+            ScreenId nextScreen = ScreenId.Login;
+
+            return nextScreen;
+        }
 
         internal string? StartGuestAccess(string alias)
         {
@@ -130,7 +137,7 @@ namespace Torres.Client.Flows
 
         private void EnterAs(string guestAlias, OpenSessionResult openingResult)
         {
-            _gameSessionConnection.BeginConnectionChecks(openingResult);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.StartAsGuest(openingResult.Identity?.DisplayName ?? guestAlias);
             ScreenId nextScreen = ScreenId.MainMenu;
             if (openingResult.CurrentRoom is not null)

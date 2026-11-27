@@ -11,17 +11,24 @@ namespace Torres.Client.Flows
 {
     internal sealed class CreateRoomFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<CreateRoomResult> _creationRequest = new PendingRequest<CreateRoomResult>();
 
-        internal CreateRoomFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal CreateRoomFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }
 
         internal bool IsCreating => _creationRequest.IsWaiting;
+
+        internal static ScreenId FindScreenToCancel()
+        {
+            ScreenId nextScreen = ScreenId.Rooms;
+
+            return nextScreen;
+        }
 
         internal ScreenId? FindRedirect()
         {

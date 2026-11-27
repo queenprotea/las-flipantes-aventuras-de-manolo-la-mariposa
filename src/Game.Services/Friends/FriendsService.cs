@@ -34,10 +34,10 @@ namespace Game.Services
         private static readonly ILog _log = LogManager.GetLogger(typeof(FriendsService));
 
         private readonly SessionRegistry _sessionRegistry;
-        private readonly PlayerRepository _playerRepository;
-        private readonly FriendshipRepository _friendshipRepository;
+        private readonly IPlayerRepository _playerRepository;
+        private readonly IFriendshipRepository _friendshipRepository;
 
-        public FriendsService(SessionRegistry sessionRegistry, PlayerRepository playerRepository, FriendshipRepository friendshipRepository)
+        public FriendsService(SessionRegistry sessionRegistry, IPlayerRepository playerRepository, IFriendshipRepository friendshipRepository)
         {
             _sessionRegistry = sessionRegistry;
             _playerRepository = playerRepository;

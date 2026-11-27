@@ -12,9 +12,6 @@ namespace Game.Contracts
         Started,
 
         [EnumMember]
-        AvatarTooLarge,
-
-        [EnumMember]
         ThumbnailInvalid,
 
         [EnumMember]

@@ -12,25 +12,21 @@ namespace Game.Services
         private readonly RoomService _roomService;
         private readonly MatchService _matchService;
         private readonly AvatarUploadRegistry _avatarUploadRegistry;
-        private readonly SessionTimings _sessionTimings;
-        private readonly TimeProvider _timeProvider;
 
-        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, MatchService matchService, AvatarUploadRegistry avatarUploadRegistry, SessionTimings sessionTimings, TimeProvider timeProvider)
+        public SessionService(SessionRegistry sessionRegistry, SessionTokenIssuer sessionTokenIssuer, RoomService roomService, MatchService matchService, AvatarUploadRegistry avatarUploadRegistry)
         {
             _sessionRegistry = sessionRegistry;
             _sessionTokenIssuer = sessionTokenIssuer;
             _roomService = roomService;
             _matchService = matchService;
             _avatarUploadRegistry = avatarUploadRegistry;
-            _sessionTimings = sessionTimings;
-            _timeProvider = timeProvider;
         }
 
         public OpenSessionResult OpenSession(string sessionToken)
         {
             SessionTokenReading tokenReading = string.IsNullOrWhiteSpace(sessionToken)
                 ? new SessionTokenReading(SessionTokenStatus.Invalid, 0, string.Empty, false)
-                : _sessionTokenIssuer.Read(sessionToken);
+                : CheckMatchSeat(_sessionTokenIssuer.Read(sessionToken));
             OpenSessionResult opening = tokenReading.Status switch
             {
                 SessionTokenStatus.Valid => OpenFor(ToOwner(tokenReading)),
@@ -40,25 +36,6 @@ namespace Game.Services
             };
 
             return opening;
-        }
-
-        public ConnectionCheckResponse IsAlive()
-        {
-            PlayerSession? caller = _sessionRegistry.FindCaller();
-            string renewedSessionToken = string.Empty;
-            if (caller is not null)
-            {
-                _sessionRegistry.Touch(caller);
-                renewedSessionToken = IssueTokenFor(caller.Owner);
-            }
-
-            var connectionCheck = new ConnectionCheckResponse
-            {
-                CheckedAt = _timeProvider.GetUtcNow().UtcDateTime,
-                SessionToken = renewedSessionToken,
-            };
-
-            return connectionCheck;
         }
 
         public async Task<CloseSessionResult> CloseSessionAsync()
@@ -83,11 +60,14 @@ namespace Game.Services
             return owner;
         }
 
-        private string IssueTokenFor(SessionOwner owner)
+        private SessionTokenReading CheckMatchSeat(SessionTokenReading tokenReading)
         {
-            string sessionToken = owner.IsGuest ? _sessionTokenIssuer.IssueForGuest(owner.OwnerId, owner.DisplayName) : _sessionTokenIssuer.Issue(owner.OwnerId, owner.DisplayName);
+            bool isSeatGone = (tokenReading.Status == SessionTokenStatus.Valid)
+                && (tokenReading.MatchId is int matchId)
+                && !_matchService.HoldsSeatIn(tokenReading.OwnerId, matchId);
+            SessionTokenReading checkedReading = isSeatGone ? tokenReading with { Status = SessionTokenStatus.Expired } : tokenReading;
 
-            return sessionToken;
+            return checkedReading;
         }
 
         private OpenSessionResult OpenFor(SessionOwner owner)
@@ -104,7 +84,6 @@ namespace Game.Services
                 },
                 CurrentRoom = _roomService.Reattach(owner.OwnerId),
                 CurrentMatch = _matchService.FindSeating(owner.OwnerId),
-                ConnectionCheckPeriodSeconds = (int)_sessionTimings.ConnectionCheckPeriod.TotalSeconds,
             };
 
             return opening;

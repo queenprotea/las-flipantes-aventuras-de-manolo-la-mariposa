@@ -22,14 +22,14 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountService));
 
-        private readonly PlayerRepository _playerRepository;
-        private readonly SanctionRepository _sanctionRepository;
+        private readonly IPlayerRepository _playerRepository;
+        private readonly ISanctionRepository _sanctionRepository;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
         private readonly GuestIdIssuer _guestIdIssuer;
         private readonly AccountRegistration _accountRegistration;
         private readonly AccessRecovery _accessRecovery;
 
-        public AccountService(PlayerRepository playerRepository, SanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer, AccountRegistration accountRegistration, AccessRecovery accessRecovery)
+        public AccountService(IPlayerRepository playerRepository, ISanctionRepository sanctionRepository, SessionTokenIssuer sessionTokenIssuer, GuestIdIssuer guestIdIssuer, AccountRegistration accountRegistration, AccessRecovery accessRecovery)
         {
             _playerRepository = playerRepository;
             _sanctionRepository = sanctionRepository;

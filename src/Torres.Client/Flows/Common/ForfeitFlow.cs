@@ -8,11 +8,11 @@ namespace Torres.Client.Flows
 {
     internal sealed class ForfeitFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<ForfeitResult> _forfeitRequest = new PendingRequest<ForfeitResult>();
 
-        internal ForfeitFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal ForfeitFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

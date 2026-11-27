@@ -11,14 +11,14 @@ namespace Torres.Client.Flows
 {
     internal sealed class PlayerSearch
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<PlayerSearchResponse> _searchRequest = new PendingRequest<PlayerSearchResponse>();
 
         private string _searchedUsername = string.Empty;
         private bool _hasNewResult;
 
-        internal PlayerSearch(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal PlayerSearch(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

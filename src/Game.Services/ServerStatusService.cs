@@ -20,9 +20,9 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(ServerStatusService));
 
-        private readonly PlayerRepository _playerRepository;
+        private readonly IPlayerRepository _playerRepository;
 
-        public ServerStatusService(PlayerRepository playerRepository)
+        public ServerStatusService(IPlayerRepository playerRepository)
         {
             _playerRepository = playerRepository;
         }

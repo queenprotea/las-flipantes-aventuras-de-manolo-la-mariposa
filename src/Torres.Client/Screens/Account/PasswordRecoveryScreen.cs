@@ -245,7 +245,7 @@ namespace Torres.Client.Screens
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Login;
+            RequestedScreen = PasswordRecoveryFlow.FindScreenToCancel();
         }
     }
 }

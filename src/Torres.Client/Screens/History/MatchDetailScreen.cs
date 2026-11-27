@@ -17,7 +17,7 @@ using Torres.Client.Widgets;
 
 namespace Torres.Client.Screens
 {
-    internal sealed class MatchDetailScreen : Screen
+    internal sealed partial class MatchDetailScreen : Screen
     {
         private const int CardWidth = 420;
         private const int RankColumnWidth = 90;
@@ -38,6 +38,7 @@ namespace Torres.Client.Screens
         private const int DividerRowOffset = 1;
 
         private const string LeadingWeekdayPattern = @"^dddd[,\s]*";
+        private const int RegexMatchTimeoutMilliseconds = 250;
 
         private static readonly Thickness _cellPadding = new Thickness(NoSpacing, Metrics.ListSpacing, NoSpacing, Metrics.ListSpacing);
 
@@ -350,14 +351,16 @@ namespace Torres.Client.Screens
         private static string FormatLongDate(DateTime playedAt)
         {
             CultureInfo currentCulture = CultureInfo.CurrentCulture;
-            string datePatternWithoutWeekday = Regex.Replace(
+            string datePatternWithoutWeekday = CreateLeadingWeekdayPattern().Replace(
                 currentCulture.DateTimeFormat.LongDatePattern,
-                LeadingWeekdayPattern,
                 string.Empty);
 
             string longDate = playedAt.ToString(datePatternWithoutWeekday, currentCulture);
 
             return longDate;
         }
+
+        [GeneratedRegex(LeadingWeekdayPattern, RegexOptions.None, RegexMatchTimeoutMilliseconds)]
+        private static partial Regex CreateLeadingWeekdayPattern();
     }
 }

@@ -13,13 +13,13 @@ namespace Torres.Client.Flows
     {
         private const int LoneMemberCount = 1;
 
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<LeaveRoomResult> _leaveRequest = new PendingRequest<LeaveRoomResult>();
         private readonly PendingRequest<KickMemberResult> _kickRequest = new PendingRequest<KickMemberResult>();
         private readonly PendingRequest<StartMatchResult> _startMatchRequest = new PendingRequest<StartMatchResult>();
 
-        internal RoomFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal RoomFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

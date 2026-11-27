@@ -2,16 +2,14 @@ using System.Text.RegularExpressions;
 
 namespace Game.Services
 {
-    internal static class PasswordRules
+    internal static partial class PasswordRules
     {
         private const int PasswordWorkFactor = 11;
-        private const string PasswordFormat = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$";
-
-        private static readonly Regex _passwordPattern = new Regex(PasswordFormat);
+        private const string StrengthFormat = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$";
 
         internal static bool IsValid(string? password)
         {
-            bool isValid = (password is not null) && _passwordPattern.IsMatch(password);
+            bool isValid = (password is not null) && CreateStrengthPattern().IsMatch(password);
 
             return isValid;
         }
@@ -22,5 +20,8 @@ namespace Game.Services
 
             return passwordHash;
         }
+
+        [GeneratedRegex(StrengthFormat, RegexOptions.None, RegexLimits.MatchTimeoutMilliseconds)]
+        private static partial Regex CreateStrengthPattern();
     }
 }

@@ -3,18 +3,13 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 
-using log4net;
-
 namespace Game.Services
 {
     public sealed class AvatarStore
     {
         private const string ReferenceFormat = "avatars/{0}";
-        private const string OriginalFileNameFormat = "{0}-{1:N}.{2}";
+        private const string AvatarFileNameFormat = "{0}-{1:N}.png";
         private const string ThumbnailFileNameFormat = "{0}-mini.png";
-        private const string OrphanOriginalKeptMessage = "The original avatar file {0} could not be deleted after its thumbnail failed to save; the file is left in the folder.";
-
-        private static readonly ILog _log = LogManager.GetLogger(typeof(AvatarStore));
 
         private readonly string _folderPath;
 
@@ -30,33 +25,17 @@ namespace Game.Services
 
         internal string Save(int playerId, CompletedAvatarUpload completedUpload)
         {
-            string originalFileName = string.Format(CultureInfo.InvariantCulture, OriginalFileNameFormat, playerId, Guid.NewGuid(), completedUpload.Extension);
-            string originalPath = Path.Combine(_folderPath, originalFileName);
-            File.WriteAllBytes(originalPath, completedUpload.Original);
-            try
-            {
-                File.WriteAllBytes(ToThumbnailPath(originalFileName), completedUpload.Thumbnail);
-            }
-            catch (IOException)
-            {
-                DeleteOrphanOriginal(originalPath);
-                throw;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                DeleteOrphanOriginal(originalPath);
-                throw;
-            }
-
-            string avatarReference = string.Format(CultureInfo.InvariantCulture, ReferenceFormat, originalFileName);
+            string avatarFileName = string.Format(CultureInfo.InvariantCulture, AvatarFileNameFormat, playerId, Guid.NewGuid());
+            File.WriteAllBytes(ToThumbnailPath(avatarFileName), completedUpload.Thumbnail);
+            string avatarReference = string.Format(CultureInfo.InvariantCulture, ReferenceFormat, avatarFileName);
 
             return avatarReference;
         }
 
         internal async Task<byte[]?> ReadThumbnailAsync(string avatarReference)
         {
-            string? originalFileName = ToFileName(avatarReference);
-            string? thumbnailPath = originalFileName is null ? null : ToThumbnailPath(originalFileName);
+            string? avatarFileName = ToFileName(avatarReference);
+            string? thumbnailPath = avatarFileName is null ? null : ToThumbnailPath(avatarFileName);
             byte[]? thumbnail = null;
             if ((thumbnailPath is not null) && File.Exists(thumbnailPath))
             {
@@ -68,30 +47,14 @@ namespace Game.Services
 
         internal void Delete(string avatarReference)
         {
-            string? originalFileName = ToFileName(avatarReference);
-            if (originalFileName is null)
+            string? avatarFileName = ToFileName(avatarReference);
+            if (avatarFileName is null)
             {
                 return;
             }
 
-            File.Delete(Path.Combine(_folderPath, originalFileName));
-            File.Delete(ToThumbnailPath(originalFileName));
-        }
-
-        private static void DeleteOrphanOriginal(string originalPath)
-        {
-            try
-            {
-                File.Delete(originalPath);
-            }
-            catch (IOException exception)
-            {
-                _log.Warn(string.Format(CultureInfo.InvariantCulture, OrphanOriginalKeptMessage, originalPath), exception);
-            }
-            catch (UnauthorizedAccessException exception)
-            {
-                _log.Warn(string.Format(CultureInfo.InvariantCulture, OrphanOriginalKeptMessage, originalPath), exception);
-            }
+            File.Delete(Path.Combine(_folderPath, avatarFileName));
+            File.Delete(ToThumbnailPath(avatarFileName));
         }
 
         private static string? ToFileName(string avatarReference)
@@ -102,9 +65,9 @@ namespace Game.Services
             return safeFileName;
         }
 
-        private string ToThumbnailPath(string originalFileName)
+        private string ToThumbnailPath(string avatarFileName)
         {
-            string thumbnailFileName = string.Format(CultureInfo.InvariantCulture, ThumbnailFileNameFormat, Path.GetFileNameWithoutExtension(originalFileName));
+            string thumbnailFileName = string.Format(CultureInfo.InvariantCulture, ThumbnailFileNameFormat, Path.GetFileNameWithoutExtension(avatarFileName));
             string thumbnailPath = Path.Combine(_folderPath, thumbnailFileName);
 
             return thumbnailPath;

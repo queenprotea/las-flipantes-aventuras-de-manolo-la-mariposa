@@ -4,11 +4,14 @@ using System.Runtime.Serialization;
 namespace Game.Contracts
 {
     /// <summary>
-    /// Carries the messages a room chat keeps and the limits a client needs to write and keep messages.
+    /// Carries the messages a room chat keeps, the ones the reader can no longer report, and the limits a client needs to write and keep messages.
     /// </summary>
     [DataContract]
     public sealed class ChatHistoryResponse
     {
+        [DataMember]
+        public List<int> ClosedReportMessageIds { get; set; } = new List<int>();
+
         [DataMember]
         public List<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
 

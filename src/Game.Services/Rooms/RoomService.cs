@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Game.Contracts;
+using Game.Match;
 using Game.Persistence;
 
 using log4net;
@@ -31,6 +32,8 @@ namespace Game.Services
         private const string MemberTimedOutMessage = "Player {0} lost their seat in room {1} after being inactive.";
         private const string RoomClosedMessage = "Room {0} closed because nobody was left.";
         private const string CloseFailedMessage = "Room {0} could not be closed in the database; the next start up closes it.";
+        private const string RoomRestoredMessage = "Room {0} was opened again with code {1} for a match left in progress by the previous run.";
+        private const string RoomNotRestoredMessage = "The room with code {0} of a match left in progress could not be opened again; that match has no chat.";
         private const string AvatarLoadFailedMessage = "The avatar of player {0} could not be read after joining room {1}; the room shows the default avatar.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RoomService));
@@ -40,12 +43,12 @@ namespace Game.Services
 
         private readonly RoomRegistry _roomRegistry;
         private readonly SessionRegistry _sessionRegistry;
-        private readonly RoomRecordRepository _roomRecordRepository;
-        private readonly SanctionRepository _sanctionRepository;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IRoomRecordRepository _roomRecordRepository;
+        private readonly ISanctionRepository _sanctionRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly TimeProvider _timeProvider;
 
-        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, RoomRecordRepository roomRecordRepository, SanctionRepository sanctionRepository, PlayerRepository playerRepository, TimeProvider timeProvider)
+        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, IRoomRecordRepository roomRecordRepository, ISanctionRepository sanctionRepository, IPlayerRepository playerRepository, TimeProvider timeProvider)
         {
             _roomRegistry = roomRegistry;
             _sessionRegistry = sessionRegistry;
@@ -150,6 +153,25 @@ namespace Game.Services
             }
 
             return kickResult;
+        }
+
+        internal async Task RestoreRoomsAsync(IReadOnlyList<InterruptedRoom> interruptedRooms)
+        {
+            foreach (InterruptedRoom interruptedRoom in interruptedRooms.Where(interruptedRoom => interruptedRoom.Entrants.Count > 0))
+            {
+                try
+                {
+                    await RestoreRoomAsync(interruptedRoom);
+                }
+                catch (NpgsqlException exception)
+                {
+                    _log.Error(string.Format(CultureInfo.InvariantCulture, RoomNotRestoredMessage, interruptedRoom.RoomCode), exception);
+                }
+                catch (DbUpdateException exception)
+                {
+                    _log.Error(string.Format(CultureInfo.InvariantCulture, RoomNotRestoredMessage, interruptedRoom.RoomCode), exception);
+                }
+            }
         }
 
         internal Room? Reattach(int ownerId)
@@ -399,6 +421,28 @@ namespace Game.Services
             int? roomId = await _roomRecordRepository.CreateAsync(roomCode, ToVisibilityCode(visibility));
 
             return roomId;
+        }
+
+        private async Task RestoreRoomAsync(InterruptedRoom interruptedRoom)
+        {
+            bool isCodeInUse = _roomRegistry.FindByCode(interruptedRoom.RoomCode) is not null;
+            int? roomId = isCodeInUse ? null : await _roomRecordRepository.CreateAsync(interruptedRoom.RoomCode, PrivateVisibilityCode);
+            if (roomId is null)
+            {
+                _log.WarnFormat(CultureInfo.InvariantCulture, RoomNotRestoredMessage, interruptedRoom.RoomCode);
+                return;
+            }
+
+            var room = new LiveRoom(roomId.Value, interruptedRoom.RoomCode, RoomVisibility.Private);
+            IReadOnlyList<SessionOwner> seatedOwners = room.SeatForResumedMatch(interruptedRoom.Entrants, ReadNow());
+            _roomRegistry.AddRoom(room, seatedOwners[0].OwnerId);
+            foreach (SessionOwner seatedOwner in seatedOwners)
+            {
+                _roomRegistry.RecordMembership(seatedOwner.OwnerId, room);
+                StartAvatarLoad(room, seatedOwner);
+            }
+
+            _log.InfoFormat(CultureInfo.InvariantCulture, RoomRestoredMessage, room.RoomId, room.Code);
         }
 
         private CreateRoomResult SeatHost(SessionOwner owner, LiveRoom room)

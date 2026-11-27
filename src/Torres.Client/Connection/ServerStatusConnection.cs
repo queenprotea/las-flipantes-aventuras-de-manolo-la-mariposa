@@ -5,7 +5,7 @@ using Game.Contracts;
 
 namespace Torres.Client.Connection
 {
-    internal sealed class ServerStatusConnection
+    internal sealed class ServerStatusConnection : IServerStatusConnection
     {
         private readonly ChannelFactory<IServerStatusService> _channelFactory;
 
@@ -16,7 +16,7 @@ namespace Torres.Client.Connection
             _channelFactory = channelFactory;
         }
 
-        internal Task<ServerStatus> GetStatusAsync()
+        public Task<ServerStatus> GetStatusAsync()
         {
             ReleaseChannel();
             IServerStatusService statusChannel = _channelFactory.CreateChannel();
@@ -26,7 +26,7 @@ namespace Torres.Client.Connection
             return statusCheck;
         }
 
-        internal void ReleaseChannel()
+        public void ReleaseChannel()
         {
             if (_openChannel is ICommunicationObject usedChannel)
             {

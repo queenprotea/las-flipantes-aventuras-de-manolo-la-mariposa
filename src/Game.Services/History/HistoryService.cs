@@ -32,12 +32,12 @@ namespace Game.Services
         private static readonly ILog _log = LogManager.GetLogger(typeof(HistoryService));
 
         private readonly SessionRegistry _sessionRegistry;
-        private readonly MatchRecordRepository _matchRecordRepository;
-        private readonly MatchParticipantRepository _matchParticipantRepository;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IMatchRecordRepository _matchRecordRepository;
+        private readonly IMatchParticipantRepository _matchParticipantRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly HistoryPaging _historyPaging;
 
-        public HistoryService(SessionRegistry sessionRegistry, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, PlayerRepository playerRepository, HistoryPaging historyPaging)
+        public HistoryService(SessionRegistry sessionRegistry, IMatchRecordRepository matchRecordRepository, IMatchParticipantRepository matchParticipantRepository, IPlayerRepository playerRepository, HistoryPaging historyPaging)
         {
             _sessionRegistry = sessionRegistry;
             _matchRecordRepository = matchRecordRepository;

@@ -58,7 +58,7 @@ namespace Torres.Client.Scene
             return viewMatrix;
         }
 
-        internal Matrix CreateProjectionMatrix(float aspectRatio)
+        internal static Matrix CreateProjectionMatrix(float aspectRatio)
         {
             float fieldOfViewRadians = MathHelper.ToRadians(FieldOfViewDegrees);
             Matrix projectionMatrix = Matrix.CreatePerspectiveFieldOfView(

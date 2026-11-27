@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class PasswordRecoveryRepository
+    public sealed class PasswordRecoveryRepository : IPasswordRecoveryRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

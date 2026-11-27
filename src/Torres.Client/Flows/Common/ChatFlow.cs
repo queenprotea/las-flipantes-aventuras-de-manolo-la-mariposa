@@ -12,7 +12,7 @@ namespace Torres.Client.Flows
 {
     internal sealed class ChatFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<ChatHistoryResponse> _historyRequest = new PendingRequest<ChatHistoryResponse>();
         private readonly PendingRequest<SendChatMessageResult> _sendRequest = new PendingRequest<SendChatMessageResult>();
@@ -25,7 +25,7 @@ namespace Torres.Client.Flows
         private bool _isReported;
         private string? _acceptedText;
 
-        internal ChatFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal ChatFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

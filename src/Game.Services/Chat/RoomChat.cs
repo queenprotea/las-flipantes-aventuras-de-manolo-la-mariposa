@@ -46,6 +46,16 @@ namespace Game.Services
             return keptMessagesCopy;
         }
 
+        internal IReadOnlyList<int> ListClosedReportIds(int readerOwnerId)
+        {
+            List<int> closedReportIds = _keptEntries
+                .Where(keptEntry => (keptEntry.AuthorOwnerId == readerOwnerId) || keptEntry.WasReportedBy(readerOwnerId))
+                .Select(keptEntry => keptEntry.Message.MessageId)
+                .ToList();
+
+            return closedReportIds;
+        }
+
         internal RoomChatEntry? FindEntry(int messageId)
         {
             RoomChatEntry? foundEntry = _keptEntries.FirstOrDefault(keptEntry => keptEntry.Message.MessageId == messageId);

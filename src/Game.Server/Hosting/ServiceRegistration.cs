@@ -13,7 +13,7 @@ namespace Game.Server
         {
             services.AddSingleton(TimeProvider.System);
             services.AddSingleton(Random.Shared);
-            services.AddSingleton(new SessionTimings(TimeSpan.FromSeconds(hostSettings.Session.ConnectionCheckPeriodSeconds), hostSettings.Session.ConnectionCheckMissesToDrop));
+            services.AddSingleton(new MaintenanceTiming(hostSettings.Session.MaintenancePeriod));
             services.AddSingleton(new SessionTokenIssuer(hostSettings.SessionSigningKey, TimeProvider.System));
             services.AddSingleton(new HistoryPaging(hostSettings.History.MatchesPerPage));
             services.AddSingleton(new StartingBoard(hostSettings.StartingFlowerCells));
@@ -25,22 +25,22 @@ namespace Game.Server
         public static void AddRepositories(IServiceCollection services, DatabaseSettings databaseSettings)
         {
             services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
-            services.AddSingleton<PlayerRepository>();
-            services.AddSingleton<PasswordRecoveryRepository>();
-            services.AddSingleton<RankingRepository>();
-            services.AddSingleton<FriendshipRepository>();
-            services.AddSingleton<RoomRecordRepository>();
-            services.AddSingleton<RoomInvitationRepository>();
-            services.AddSingleton<ReportRepository>();
-            services.AddSingleton<SanctionRepository>();
+            services.AddSingleton<IPlayerRepository, PlayerRepository>();
+            services.AddSingleton<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
+            services.AddSingleton<IRankingRepository, RankingRepository>();
+            services.AddSingleton<IFriendshipRepository, FriendshipRepository>();
+            services.AddSingleton<IRoomRecordRepository, RoomRecordRepository>();
+            services.AddSingleton<IRoomInvitationRepository, RoomInvitationRepository>();
+            services.AddSingleton<IReportRepository, ReportRepository>();
+            services.AddSingleton<ISanctionRepository, SanctionRepository>();
             services.AddSingleton<SanctionLevelRepository>();
-            services.AddSingleton<SystemParameterRepository>();
-            services.AddSingleton<TurnLayoutRepository>();
-            services.AddSingleton<BuildAllowanceRepository>();
-            services.AddSingleton<ActionCostRepository>();
-            services.AddSingleton<MatchRecordRepository>();
-            services.AddSingleton<MatchParticipantRepository>();
-            services.AddSingleton<MatchStateRepository>();
+            services.AddSingleton<ISystemParameterRepository, SystemParameterRepository>();
+            services.AddSingleton<ITurnLayoutRepository, TurnLayoutRepository>();
+            services.AddSingleton<IBuildAllowanceRepository, BuildAllowanceRepository>();
+            services.AddSingleton<IActionCostRepository, ActionCostRepository>();
+            services.AddSingleton<IMatchRecordRepository, MatchRecordRepository>();
+            services.AddSingleton<IMatchParticipantRepository, MatchParticipantRepository>();
+            services.AddSingleton<IMatchStateRepository, MatchStateRepository>();
         }
 
         public static void AddGameServices(IServiceCollection services)
@@ -55,6 +55,7 @@ namespace Game.Server
             services.AddSingleton<AccountService>();
 
             services.AddSingleton<GuestIdIssuer>();
+            services.AddSingleton<ICallerChannel, CallerChannel>();
             services.AddSingleton<SessionRegistry>();
             services.AddSingleton<SessionService>();
 
@@ -75,7 +76,7 @@ namespace Game.Server
             services.AddSingleton<MatchService>();
 
             services.AddSingleton<GameSessionService>();
-            services.AddSingleton<ConnectionSupervisor>();
+            services.AddSingleton<MaintenanceSupervisor>();
         }
     }
 }

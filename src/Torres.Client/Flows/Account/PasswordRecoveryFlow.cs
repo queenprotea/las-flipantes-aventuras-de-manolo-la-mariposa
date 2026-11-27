@@ -12,7 +12,7 @@ namespace Torres.Client.Flows
     {
         private const char EmailSeparator = '@';
 
-        private readonly AccountConnection _accountConnection;
+        private readonly IAccountConnection _accountConnection;
         private readonly PendingRequest<RecoveryCodeRequestResult> _codeRequest = new PendingRequest<RecoveryCodeRequestResult>();
         private readonly PendingRequest<RecoveryCodeVerificationResult> _codeVerification = new PendingRequest<RecoveryCodeVerificationResult>();
         private readonly PendingRequest<PasswordResetResult> _passwordReset = new PendingRequest<PasswordResetResult>();
@@ -21,7 +21,7 @@ namespace Torres.Client.Flows
         private string _verifiedCode = string.Empty;
         private PasswordRecoveryOutcome? _outcome;
 
-        internal PasswordRecoveryFlow(AccountConnection accountConnection)
+        internal PasswordRecoveryFlow(IAccountConnection accountConnection)
         {
             _accountConnection = accountConnection;
         }
@@ -31,6 +31,13 @@ namespace Torres.Client.Flows
         internal bool IsVerifying => _codeVerification.IsWaiting;
 
         internal bool IsSaving => _passwordReset.IsWaiting;
+
+        internal static ScreenId FindScreenToCancel()
+        {
+            ScreenId nextScreen = ScreenId.Login;
+
+            return nextScreen;
+        }
 
         internal bool StartCodeRequest(string email)
         {

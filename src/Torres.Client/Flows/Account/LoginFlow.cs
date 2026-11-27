@@ -11,8 +11,8 @@ namespace Torres.Client.Flows
 {
     internal sealed class LoginFlow
     {
-        private readonly AccountConnection _accountConnection;
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IAccountConnection _accountConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<LoginResult> _loginRequest = new PendingRequest<LoginResult>();
         private readonly PendingRequest<OpenSessionResult> _sessionOpening = new PendingRequest<OpenSessionResult>();
@@ -20,7 +20,7 @@ namespace Torres.Client.Flows
         private PlayerIdentity? _loggedInPlayer;
         private LoginOutcome? _outcome;
 
-        internal LoginFlow(AccountConnection accountConnection, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal LoginFlow(IAccountConnection accountConnection, IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _accountConnection = accountConnection;
             _gameSessionConnection = gameSessionConnection;
@@ -30,6 +30,34 @@ namespace Torres.Client.Flows
         internal bool IsWaiting => _loginRequest.IsWaiting || _sessionOpening.IsWaiting;
 
         internal bool CanEnterAsGuest => !_playerSession.IsGuest;
+
+        internal static ScreenId FindScreenToCreateAccount()
+        {
+            ScreenId nextScreen = ScreenId.Register;
+
+            return nextScreen;
+        }
+
+        internal static ScreenId FindScreenToRecoverAccess()
+        {
+            ScreenId nextScreen = ScreenId.PasswordRecovery;
+
+            return nextScreen;
+        }
+
+        internal static ScreenId FindScreenToPlayAsGuest()
+        {
+            ScreenId nextScreen = ScreenId.GuestAccess;
+
+            return nextScreen;
+        }
+
+        internal static ScreenId FindScreenToGoBack()
+        {
+            ScreenId nextScreen = ScreenId.MainMenu;
+
+            return nextScreen;
+        }
 
         internal string? StartLogin(string username, string password)
         {
@@ -164,7 +192,7 @@ namespace Torres.Client.Flows
 
         private void EnterAs(PlayerIdentity player, OpenSessionResult opening)
         {
-            _gameSessionConnection.BeginConnectionChecks(opening);
+            _gameSessionConnection.MarkSessionOpen();
             _playerSession.Start(player);
             if (opening.CurrentRoom is not null)
             {

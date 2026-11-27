@@ -7,12 +7,12 @@ namespace Torres.Client.Flows
 {
     internal sealed class StartupFlow
     {
-        private readonly ServerStatusConnection _statusConnection;
+        private readonly IServerStatusConnection _statusConnection;
         private readonly PendingRequest<ServerStatus> _statusCheck = new PendingRequest<ServerStatus>();
 
         private ServerCheckState _state = ServerCheckState.Checking;
 
-        internal StartupFlow(ServerStatusConnection statusConnection)
+        internal StartupFlow(IServerStatusConnection statusConnection)
         {
             _statusConnection = statusConnection;
         }
