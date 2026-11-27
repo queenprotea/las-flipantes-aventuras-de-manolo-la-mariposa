@@ -11,7 +11,7 @@ using TextCopy;
 namespace Torres.Client.Widgets
 {
     /// <summary>
-    /// Keeps a single-line text within its length limit when the player types or pastes, and turns off undo and redo.
+    /// Keeps a single-line text within its length limit when the player types or pastes, and turns off undo, redo and line duplication.
     /// </summary>
     internal sealed class LimitedTextBox : TextBox
     {
@@ -36,7 +36,7 @@ namespace Torres.Client.Widgets
             {
                 PasteWithinLimit();
             }
-            else if (!isControlDown || ((k != Keys.Z) && (k != Keys.Y)))
+            else if (!isControlDown || !IsBlockedShortcut(k))
             {
                 base.OnKeyDown(k);
             }
@@ -61,6 +61,13 @@ namespace Torres.Client.Widgets
             bool isControlDown = keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl);
 
             return isControlDown;
+        }
+
+        private static bool IsBlockedShortcut(Keys pressedKey)
+        {
+            bool isBlockedShortcut = (pressedKey == Keys.Z) || (pressedKey == Keys.Y) || (pressedKey == Keys.D);
+
+            return isBlockedShortcut;
         }
 
         private static string ReadClipboard()
