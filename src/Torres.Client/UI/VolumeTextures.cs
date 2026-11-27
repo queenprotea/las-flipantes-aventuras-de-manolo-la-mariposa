@@ -86,7 +86,7 @@ namespace Torres.Client.UI
             return blendedColor;
         }
 
-        private IBrush CreatePanel(GraphicsDevice graphicsDevice, PanelLook panelLook)
+        private NinePatchRegion CreatePanel(GraphicsDevice graphicsDevice, PanelLook panelLook)
         {
             int shadowMargin = panelLook.HasShadow ? ShadowMargin : 0;
             int inset = panelLook.CornerRadius + shadowMargin;
@@ -135,7 +135,7 @@ namespace Torres.Client.UI
             return shadedColor;
         }
 
-        private IReadOnlyList<TextureRegion> CreatePetalImages(GraphicsDevice graphicsDevice, float insetShare)
+        private List<TextureRegion> CreatePetalImages(GraphicsDevice graphicsDevice, float insetShare)
         {
             var petalImages = new List<TextureRegion>();
             for (var petalIndex = 0; petalIndex < FlowerClockShapes.PetalCount; petalIndex++)

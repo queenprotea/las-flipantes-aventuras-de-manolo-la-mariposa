@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Globalization;
 using System.Security.Cryptography;
 
@@ -9,6 +10,8 @@ namespace Game.Services
     internal static class RoomCodeAlphabet
     {
         private const string Alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+        private static readonly SearchValues<char> _alphabetCharacters = SearchValues.Create(Alphabet);
 
         internal static string Draw()
         {
@@ -21,7 +24,7 @@ namespace Game.Services
         internal static string? Normalize(string? candidateCode)
         {
             string trimmedCode = (candidateCode ?? string.Empty).Trim().ToUpper(CultureInfo.InvariantCulture);
-            bool isWellFormed = (trimmedCode.Length == AccountLimits.RoomCodeLength) && (trimmedCode.AsSpan().IndexOfAnyExcept(Alphabet) < 0);
+            bool isWellFormed = (trimmedCode.Length == AccountLimits.RoomCodeLength) && (trimmedCode.AsSpan().IndexOfAnyExcept(_alphabetCharacters) < 0);
             string? normalizedCode = isWellFormed ? trimmedCode : null;
 
             return normalizedCode;

@@ -84,7 +84,7 @@ namespace Torres.Client.Scene
             _graphicsDevice.DepthStencilState = DepthStencilState.Default;
             _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             _sceneEffect.View = _orbitCamera.CreateViewMatrix();
-            _sceneEffect.Projection = _orbitCamera.CreateProjectionMatrix(_graphicsDevice.Viewport.AspectRatio);
+            _sceneEffect.Projection = OrbitCamera.CreateProjectionMatrix(_graphicsDevice.Viewport.AspectRatio);
             _sceneEffect.World = Matrix.Identity;
             _sceneEffect.LightingEnabled = true;
             _tableFigures.DrawTable(_sceneEffect);

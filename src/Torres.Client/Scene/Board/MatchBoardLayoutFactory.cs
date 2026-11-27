@@ -6,12 +6,12 @@ using Game.Contracts;
 
 namespace Torres.Client.Scene
 {
-    internal sealed class MatchBoardLayoutFactory
+    internal static class MatchBoardLayoutFactory
     {
         private const float FirstSeatHeadingDegrees = 290f;
         private const float SeatHeadingStepDegrees = 90f;
 
-        internal BoardLayout Create(MatchView matchView)
+        internal static BoardLayout Create(MatchView matchView)
         {
             var planterRows = new List<string>();
             var levelRows = new List<string>();

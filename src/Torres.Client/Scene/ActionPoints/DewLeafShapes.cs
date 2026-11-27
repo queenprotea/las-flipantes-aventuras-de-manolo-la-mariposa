@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Xna.Framework;
 
@@ -35,6 +36,7 @@ namespace Torres.Client.Scene
         private const float StemLift = 0.025f;
         private const float SideSpan = 2f;
         private const float SideStart = -1f;
+        private const string SeededVariegationJustification = "The fixed seed gives every leaf the same variegation on every run; the values are not used for security.";
 
         internal static Vector3 FindRibPoint(float lengthShare)
         {
@@ -55,7 +57,7 @@ namespace Torres.Client.Scene
 
         internal static void AddLeaf(MeshBuilder meshBuilder, int variegationSeed)
         {
-            IReadOnlyList<float> variegationReach = CreateVariegationReach(variegationSeed);
+            float[] variegationReach = CreateVariegationReach(variegationSeed);
             var gridPositions = new List<Vector3>();
             var gridColors = new List<Color>();
             for (var lengthIndex = 0; lengthIndex <= LengthSteps; lengthIndex++)
@@ -97,7 +99,8 @@ namespace Torres.Client.Scene
             return leafColor;
         }
 
-        private static IReadOnlyList<float> CreateVariegationReach(int variegationSeed)
+        [SuppressMessage("Security", "S2245", Justification = SeededVariegationJustification)]
+        private static float[] CreateVariegationReach(int variegationSeed)
         {
             var variegationSource = new Random(variegationSeed);
             var reachFactors = new float[LengthSteps + 1];

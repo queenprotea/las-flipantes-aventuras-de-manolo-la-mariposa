@@ -10,7 +10,7 @@ namespace Game.Domain
 
         private const string RoundCountMessage = "The rules must describe exactly three rounds.";
 
-        private readonly IReadOnlyList<RoundTurnPlan> _roundTurnPlans;
+        private readonly List<RoundTurnPlan> _roundTurnPlans;
 
         public MatchRules(IReadOnlyList<RoundTurnPlan> roundTurnPlans, ActionCosts actionCosts)
         {

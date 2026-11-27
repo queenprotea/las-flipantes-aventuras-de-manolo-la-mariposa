@@ -41,6 +41,7 @@ namespace Game.Match.Tests
         private static readonly TimeSpan _recordWaitLimit = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan _oneTick = TimeSpan.FromTicks(1);
         private static readonly TimeSpan _halfReconnectionTime = SampleMatches.ReconnectionTime / 2;
+        private static readonly bool[] _expectedSeatWithdrawals = new bool[] { true, false, true };
 
         private readonly FakeTimeProvider _fakeTimeProvider = new FakeTimeProvider();
         private readonly RecordingMatchListener _listener = new RecordingMatchListener();
@@ -897,7 +898,7 @@ namespace Game.Match.Tests
             _coordinator.Forfeit(SampleMatches.Ana.EntrantId);
 
             IReadOnlyList<MatchParticipant> playerResults = await _participantRepository.FirstResults.WaitAsync(_recordWaitLimit);
-            Assert.Equal(new bool[] { true, false, true }, playerResults.OrderBy(playerResult => playerResult.SeatNumber).Select(playerResult => playerResult.WasWithdrawn));
+            Assert.Equal(_expectedSeatWithdrawals, playerResults.OrderBy(playerResult => playerResult.SeatNumber).Select(playerResult => playerResult.WasWithdrawn));
         }
 
         [Fact]

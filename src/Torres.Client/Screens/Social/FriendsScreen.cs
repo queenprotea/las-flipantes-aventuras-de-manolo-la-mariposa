@@ -213,7 +213,7 @@ namespace Torres.Client.Screens
             return friendsList;
         }
 
-        private Widget BuildReceivedList()
+        private VerticalStackPanel BuildReceivedList()
         {
             var receivedSection = new VerticalStackPanel { Spacing = Metrics.FieldSpacing };
             receivedSection.Widgets.Add(LabelFactory.CreateTitle(TextKeys.Friends.RequestsTitle));

@@ -235,7 +235,7 @@ namespace Torres.Client.Screens
             }
         }
 
-        private void ShowWinner(IReadOnlyList<MatchSeat> rankedSeats)
+        private void ShowWinner(List<MatchSeat> rankedSeats)
         {
             bool hasWinner = rankedSeats.Count > 0;
             _winnerImage.Visible = hasWinner;

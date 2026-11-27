@@ -11,7 +11,7 @@ namespace Game.Services
         private const string MissingTemporaryBanDurationsMessage = "At least one temporary ban duration is required.";
         private const string NonPositiveTemporaryBanDurationMessage = "Every temporary ban duration must be longer than zero.";
 
-        private readonly IReadOnlyList<TimeSpan> _temporaryBanDurations;
+        private readonly List<TimeSpan> _temporaryBanDurations;
 
         public SanctionPolicy(int thresholdOccasions, IReadOnlyList<TimeSpan> temporaryBanDurations)
         {

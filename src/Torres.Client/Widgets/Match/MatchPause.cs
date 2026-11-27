@@ -18,7 +18,6 @@ namespace Torres.Client.Widgets
 {
     internal sealed class MatchPause : IDisposable
     {
-        private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly TableBackdrop _tableBackdrop;
 
         internal MatchPause(GraphicsDevice graphicsDevice)
@@ -73,7 +72,7 @@ namespace Torres.Client.Widgets
                 butterflyCell = MatchCellConversion.ToBoardCell(matchView.ButterflyCell);
             }
 
-            _tableBackdrop.ShowGarden(_layoutFactory.Create(matchView), butterflyCell);
+            _tableBackdrop.ShowGarden(MatchBoardLayoutFactory.Create(matchView), butterflyCell);
         }
 
         internal void Advance(TimeSpan elapsedTime)

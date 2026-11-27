@@ -22,7 +22,6 @@ namespace Torres.Client.Screens
     {
         private readonly InitialPlacementFlow _initialPlacementFlow;
         private readonly DoomLauncher _doomLauncher;
-        private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly FigureIcons _figureIcons;
         private readonly VolumeTextures _volumeTextures;
@@ -262,7 +261,7 @@ namespace Torres.Client.Screens
             _turnLabel.TextKey = isButterflyPlacement ? TextKeys.InitialPlacement.ButterflyTurnInstruction : TextKeys.InitialPlacement.CurrentTurnInstruction;
             _turnLabel.TextArguments = new string[] { GetPlacingPlayerName(matchView) };
 
-            BoardLayout boardLayout = _layoutFactory.Create(matchView);
+            BoardLayout boardLayout = MatchBoardLayoutFactory.Create(matchView);
             if (isFirstView)
             {
                 _boardWidget.ShowLayoutWithoutMotion(boardLayout);

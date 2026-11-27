@@ -198,7 +198,13 @@ namespace Game.Match
             {
                 if (_matchTable.Phase == TablePhase.Finished)
                 {
-                    int? winnerSeatNumber = _matchTable.FindRanking().FirstOrDefault()?.SeatNumber;
+                    IReadOnlyList<SeatStanding> ranking = _matchTable.FindRanking();
+                    int? winnerSeatNumber = null;
+                    if (ranking.Count > 0)
+                    {
+                        winnerSeatNumber = ranking[0].SeatNumber;
+                    }
+
                     entrantStandings.AddRange(_seatedEntrants.Select(seatedEntrant => ToEntrantStanding(seatedEntrant, winnerSeatNumber)));
                 }
             }

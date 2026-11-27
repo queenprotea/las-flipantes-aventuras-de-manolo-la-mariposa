@@ -25,7 +25,7 @@ namespace Torres.Client.UI
             scrollViewer.VerticalScrollKnob = _knobImage;
         }
 
-        private static IImage CreateFlatImage(Color imageColor)
+        private static ColoredRegion CreateFlatImage(Color imageColor)
         {
             var whiteTexture = new Texture2D(MyraEnvironment.GraphicsDevice, Metrics.ScrollbarWidth, FlatTextureHeight);
             var whitePixels = new Color[Metrics.ScrollbarWidth * FlatTextureHeight];

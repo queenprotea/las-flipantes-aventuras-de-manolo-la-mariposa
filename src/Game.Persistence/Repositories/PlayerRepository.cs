@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace Game.Persistence
     public sealed class PlayerRepository
     {
         private const string UsernameIndex = "ux_player_username_lower";
+        private const string LowerCaseIndexJustification = "EF Core translates ToLower() into lower(), which uses the unique lower(...) index of the table; string.Equals with a StringComparison is not translated into SQL.";
 
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 
@@ -59,6 +61,7 @@ namespace Game.Persistence
             return creationOutcome;
         }
 
+        [SuppressMessage("Performance", "CA1862", Justification = LowerCaseIndexJustification)]
         public async Task<Player?> FindByUsernameAsync(string username)
         {
             ArgumentNullException.ThrowIfNull(username);
@@ -109,6 +112,7 @@ namespace Game.Persistence
             return profileWriting;
         }
 
+        [SuppressMessage("Performance", "CA1862", Justification = LowerCaseIndexJustification)]
         public Player? FindByUsername(string username)
         {
             ArgumentNullException.ThrowIfNull(username);
@@ -158,6 +162,7 @@ namespace Game.Persistence
             return players;
         }
 
+        [SuppressMessage("Performance", "CA1862", Justification = LowerCaseIndexJustification)]
         private async Task<Player?> ReadByEmailAsync(string email)
         {
             await using TorresDbContext databaseContext = await _contextFactory.CreateDbContextAsync();

@@ -21,3 +21,6 @@ Thumbs.db
 
 # Direccion local del servidor en cada equipo
 appsettings.Local.json
+
+# Archivos temporales del análisis de SonarQube
+.sonarqube/

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -24,7 +23,7 @@ namespace Torres.Client.Scene
         private const float MiddleBudShare = 0.5f;
         private const int SingleBudCount = 1;
 
-        private static readonly IReadOnlyList<Vector2> _caterpillarSpots = new Vector2[]
+        private static readonly Vector2[] _caterpillarSpots = new Vector2[]
         {
             new Vector2(0.3f, -0.45f), new Vector2(0.5f, -0.45f), new Vector2(0.7f, -0.45f), new Vector2(0.4f, 0.45f), new Vector2(0.6f, 0.45f),
         };
@@ -75,7 +74,7 @@ namespace Torres.Client.Scene
 
         internal void ShowReserve(int caterpillarsLeft, Color caterpillarColor, int buildsLeft)
         {
-            _caterpillarsLeft = Math.Min(caterpillarsLeft, _caterpillarSpots.Count);
+            _caterpillarsLeft = Math.Min(caterpillarsLeft, _caterpillarSpots.Length);
             _caterpillarColor = caterpillarColor;
             _buildsLeft = buildsLeft;
         }

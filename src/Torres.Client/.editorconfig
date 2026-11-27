@@ -5,3 +5,5 @@ dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.CA1502.severity = warning
 dotnet_style_namespace_match_folder = false
 resharper_check_namespace_highlighting = none
+dotnet_style_prefer_collection_expression = false
+dotnet_diagnostic.CA2208.severity = none

@@ -81,7 +81,7 @@ namespace Game.Services
             return sanctionPolicy;
         }
 
-        private static void EnsureSanctionLadder(IReadOnlyList<SanctionLevel> sanctionLevels)
+        private static void EnsureSanctionLadder(List<SanctionLevel> sanctionLevels)
         {
             if (sanctionLevels.Count == 0)
             {

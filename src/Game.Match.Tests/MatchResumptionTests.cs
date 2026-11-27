@@ -286,7 +286,7 @@ namespace Game.Match.Tests
         private async Task PlayOpeningAsync(IReadOnlyList<MatchEntrant> entrants)
         {
             await _firstRun.StartMatchAsync(new MatchOpening(SampleMatches.RoomId, SampleMatches.RoomCode, entrants), SampleMatches.TimeLimits, SampleMatches.Rules);
-            IReadOnlyList<MatchCell> caterpillarCells = new MatchCell[] { SampleMatches.NorthWestFlower, SampleMatches.NorthEastFlower, SampleMatches.SouthWestFlower };
+            MatchCell[] caterpillarCells = new MatchCell[] { SampleMatches.NorthWestFlower, SampleMatches.NorthEastFlower, SampleMatches.SouthWestFlower };
             for (var seatIndex = 0; seatIndex < entrants.Count; seatIndex++)
             {
                 _firstRun.PlacePiece(entrants[seatIndex].EntrantId, MatchPiece.Caterpillar, caterpillarCells[seatIndex]);

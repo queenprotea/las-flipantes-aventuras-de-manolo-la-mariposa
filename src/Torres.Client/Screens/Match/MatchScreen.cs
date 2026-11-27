@@ -22,7 +22,6 @@ namespace Torres.Client.Screens
     internal sealed class MatchScreen : Screen, IDisposable
     {
         private readonly MatchFlow _matchFlow;
-        private readonly MatchBoardLayoutFactory _layoutFactory = new MatchBoardLayoutFactory();
         private readonly BoardWidget _boardWidget;
         private readonly FigureIcons _figureIcons;
         private readonly VolumeTextures _volumeTextures;
@@ -334,7 +333,7 @@ namespace Torres.Client.Screens
             _boardWidget.ShowReserve(viewerSeat.CaterpillarsLeft, SeatColors.ColorFor(viewerSeat.Color), matchView.BuildsLeft);
             _reserveCaterpillarsCount.Text = DisplayFormats.FormatLabeledCount(viewerSeat.CaterpillarsLeft);
             _reserveBuildsCount.Text = DisplayFormats.FormatLabeledCount(matchView.BuildsLeft);
-            BoardLayout boardLayout = _layoutFactory.Create(matchView);
+            BoardLayout boardLayout = MatchBoardLayoutFactory.Create(matchView);
             if (isFirstView)
             {
                 _boardWidget.ShowLayoutWithoutMotion(boardLayout);
