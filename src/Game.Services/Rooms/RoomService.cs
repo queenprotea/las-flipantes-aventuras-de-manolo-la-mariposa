@@ -428,7 +428,7 @@ namespace Game.Services
             int? roomId = isCodeInUse ? null : await _roomRecordRepository.CreateAsync(interruptedRoom.RoomCode, PrivateVisibilityCode);
             if (roomId is null)
             {
-                _log.WarnFormat(RoomNotRestoredMessage, interruptedRoom.RoomCode);
+                _log.WarnFormat(CultureInfo.InvariantCulture, RoomNotRestoredMessage, interruptedRoom.RoomCode);
                 return;
             }
 
@@ -441,7 +441,7 @@ namespace Game.Services
                 StartAvatarLoad(room, seatedOwner);
             }
 
-            _log.InfoFormat(RoomRestoredMessage, room.RoomId, room.Code);
+            _log.InfoFormat(CultureInfo.InvariantCulture, RoomRestoredMessage, room.RoomId, room.Code);
         }
 
         private CreateRoomResult SeatHost(SessionOwner owner, LiveRoom room)

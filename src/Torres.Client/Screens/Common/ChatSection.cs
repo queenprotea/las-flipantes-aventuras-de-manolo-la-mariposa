@@ -44,7 +44,7 @@ namespace Torres.Client.Screens
             if (_chatFlow.Revision != _shownRevision)
             {
                 _shownRevision = _chatFlow.Revision;
-                _chatView.MessageMaxLength = _chatFlow.MessageMaxLength;
+                _chatView.LimitMessageLength(_chatFlow.MessageMaxLength);
                 _chatView.ShowMessages(_chatFlow.Messages, _chatFlow.FindReportableMessageIds());
             }
         }

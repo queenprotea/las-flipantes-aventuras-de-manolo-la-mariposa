@@ -54,12 +54,6 @@ namespace Torres.Client.Widgets
 
         internal bool HasTypingFocus => _inputBox.IsKeyboardFocused;
 
-        internal int MessageMaxLength
-        {
-            get => _inputBox.LongestText;
-            set => _inputBox.LongestText = value;
-        }
-
         internal void Open()
         {
             HideNotices();
@@ -113,6 +107,11 @@ namespace Torres.Client.Widgets
             }
 
             _isScrollToEndPending = true;
+        }
+
+        internal void LimitMessageLength(int messageMaxLength)
+        {
+            _inputBox.LongestText = messageMaxLength;
         }
 
         internal void ShowNotice(string titleKey)

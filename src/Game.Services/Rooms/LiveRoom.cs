@@ -104,18 +104,18 @@ namespace Game.Services
             var seatedOwners = new List<SessionOwner>();
             lock (_roomLock)
             {
-                foreach (MatchEntrant entrant in entrants.OrderBy(entrant => entrant.MemberId))
+                foreach (MatchEntrant restoredEntrant in entrants.OrderBy(entrant => entrant.MemberId))
                 {
-                    SessionOwner owner = entrant.IsGuest ? SessionOwner.ForGuest(entrant.EntrantId, entrant.DisplayName) : SessionOwner.ForPlayer(entrant.EntrantId, entrant.DisplayName);
-                    var restoredMember = new LiveRoomMember(entrant.MemberId, owner, entrant.SeatColor);
+                    SessionOwner owner = ToSessionOwner(restoredEntrant);
+                    var restoredMember = new LiveRoomMember(restoredEntrant.MemberId, owner, restoredEntrant.SeatColor);
                     restoredMember.MarkInactive(nowUtc);
                     _members.Add(restoredMember);
-                    _lastMemberId = Math.Max(_lastMemberId, entrant.MemberId);
+                    _lastMemberId = Math.Max(_lastMemberId, restoredEntrant.MemberId);
                     seatedOwners.Add(owner);
                 }
 
-                _hostMemberId = _members.Count > 0 ? _members[0].MemberId : 0;
-                _isInMatch = _members.Count > 0;
+                _hostMemberId = _members[0].MemberId;
+                _isInMatch = true;
             }
 
             return seatedOwners;
@@ -450,6 +450,15 @@ namespace Game.Services
             var departure = new RoomDeparture(true, hasHostChanged, isRoomEmpty);
 
             return departure;
+        }
+
+        private static SessionOwner ToSessionOwner(MatchEntrant restoredEntrant)
+        {
+            SessionOwner owner = restoredEntrant.IsGuest
+                ? SessionOwner.ForGuest(restoredEntrant.EntrantId, restoredEntrant.DisplayName)
+                : SessionOwner.ForPlayer(restoredEntrant.EntrantId, restoredEntrant.DisplayName);
+
+            return owner;
         }
 
         private void TakeHostIfUnattended(LiveRoomMember returningMember)

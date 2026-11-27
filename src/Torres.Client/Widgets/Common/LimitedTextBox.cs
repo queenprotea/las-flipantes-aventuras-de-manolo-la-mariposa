@@ -11,14 +11,8 @@ using TextCopy;
 namespace Torres.Client.Widgets
 {
     /// <summary>
-    /// Single-line text box that keeps its text within a length limit, also when the player pastes.
+    /// Keeps a single-line text within its length limit when the player types or pastes, and turns off undo and redo.
     /// </summary>
-    /// <remarks>
-    /// Myra's own paste moves the cursor by the whole pasted length even when a handler of
-    /// <see cref="TextBox.ValueChanging"/> rejects the text, which leaves the cursor past the end and crashes the next draw.
-    /// This box never rejects a change: it cuts what does not fit before inserting it, and it turns off undo and redo,
-    /// whose records go stale once the text is set by code.
-    /// </remarks>
     internal sealed class LimitedTextBox : TextBox
     {
         private const char LineFeed = '\n';
@@ -50,10 +44,10 @@ namespace Torres.Client.Widgets
 
         public override void OnChar(char c)
         {
-            bool isFull = (LongestText > 0) && !char.IsControl(c) && !HasSelection() && (CurrentText().Length >= LongestText);
+            bool isFull = !char.IsControl(c) && !HasSelection() && IsAtLimit();
             if (isFull)
             {
-                OnLimitReached();
+                OnLimitReached(EventArgs.Empty);
             }
             else
             {
@@ -71,21 +65,21 @@ namespace Torres.Client.Widgets
 
         private static string ReadClipboard()
         {
-            string? clipboardText;
+            string clipboardText;
             try
             {
-                clipboardText = Clipboard.GetText();
+                clipboardText = Clipboard.GetText() ?? string.Empty;
             }
             catch (Win32Exception)
             {
-                clipboardText = null;
+                clipboardText = string.Empty;
             }
             catch (NotSupportedException)
             {
-                clipboardText = null;
+                clipboardText = string.Empty;
             }
 
-            return clipboardText ?? string.Empty;
+            return clipboardText;
         }
 
         private static string ToSingleLine(string pastedText)
@@ -103,7 +97,9 @@ namespace Torres.Client.Widgets
                 }
             }
 
-            return singleLineBuilder.ToString();
+            string singleLineText = singleLineBuilder.ToString();
+
+            return singleLineText;
         }
 
         private static string CutToLength(string text, int longestLength)
@@ -114,7 +110,9 @@ namespace Torres.Client.Widgets
                 keptLength--;
             }
 
-            return text.Substring(0, keptLength);
+            string fittingText = text.Substring(0, keptLength);
+
+            return fittingText;
         }
 
         private void PasteWithinLimit()
@@ -145,8 +143,15 @@ namespace Torres.Client.Widgets
 
             if (fittingText.Length < pastedText.Length)
             {
-                OnLimitReached();
+                OnLimitReached(EventArgs.Empty);
             }
+        }
+
+        private bool IsAtLimit()
+        {
+            bool isAtLimit = (LongestText > 0) && (CurrentText().Length >= LongestText);
+
+            return isAtLimit;
         }
 
         private bool HasSelection()
@@ -163,9 +168,9 @@ namespace Torres.Client.Widgets
             return currentText;
         }
 
-        private void OnLimitReached()
+        private void OnLimitReached(EventArgs e)
         {
-            LimitReached?.Invoke(this, EventArgs.Empty);
+            LimitReached?.Invoke(this, e);
         }
     }
 }
