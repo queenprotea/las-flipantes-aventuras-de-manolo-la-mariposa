@@ -49,7 +49,7 @@ namespace Game.Services
         private TimeSpan _resumeTime;
         private IReadOnlyDictionary<int, MatchRuleSet>? _ruleSetsByPlayerCount;
 
-        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, MatchRecordRepository matchRecordRepository, MatchParticipantRepository matchParticipantRepository, MatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, SessionTokenIssuer sessionTokenIssuer, Random chanceSource)
+        public MatchService(RoomRegistry roomRegistry, RoomService roomService, SessionRegistry sessionRegistry, SystemParameterReader systemParameterReader, MatchRuleReader matchRuleReader, IMatchRecordRepository matchRecordRepository, IMatchParticipantRepository matchParticipantRepository, IMatchStateRepository matchStateRepository, TimeProvider timeProvider, StartingBoard startingBoard, GuestIdIssuer guestIdIssuer, SessionTokenIssuer sessionTokenIssuer, Random chanceSource)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(roomService);

@@ -264,7 +264,7 @@ namespace Torres.Client.Screens
         private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
             _invitePlayersFlow.ForgetRequests();
-            RequestedScreen = ScreenId.Room;
+            RequestedScreen = InvitePlayersFlow.FindScreenToGoBack();
         }
     }
 }

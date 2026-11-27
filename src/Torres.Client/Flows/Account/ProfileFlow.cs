@@ -13,9 +13,9 @@ namespace Torres.Client.Flows
 {
     internal sealed class ProfileFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
-        private readonly AvatarCache _avatarCache;
+        private readonly IAvatarCache _avatarCache;
         private readonly Queue<ProfileOutcome> _outcomes = new Queue<ProfileOutcome>();
         private readonly PendingRequest<ProfileResponse> _profileRequest = new PendingRequest<ProfileResponse>();
         private readonly PendingRequest<AvatarPreparation> _preparationRequest = new PendingRequest<AvatarPreparation>();
@@ -28,7 +28,7 @@ namespace Torres.Client.Flows
         private bool _isSaveWaitingForUpload;
         private bool _wasUploadResent;
 
-        internal ProfileFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession, AvatarCache avatarCache)
+        internal ProfileFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession, IAvatarCache avatarCache)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
@@ -52,6 +52,13 @@ namespace Torres.Client.Flows
         internal bool IsSaveRequestWaiting => _saveRequest.IsWaiting;
 
         internal bool IsSaving => _saveRequest.IsWaiting || _isSaveWaitingForUpload;
+
+        internal static ScreenId FindScreenToOpenSettings()
+        {
+            ScreenId nextScreen = ScreenId.AccountSettings;
+
+            return nextScreen;
+        }
 
         internal void Open()
         {

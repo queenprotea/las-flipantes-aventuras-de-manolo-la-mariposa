@@ -49,6 +49,8 @@ namespace Game.Match.Tests
 
         internal static MatchCell NorthOfNorthEast { get; } = new MatchCell { Row = 0, Column = 6 };
 
+        internal static MatchCell EastOfNorthWest { get; } = new MatchCell { Row = 1, Column = 2 };
+
         internal static MatchCell GroundCell { get; } = new MatchCell { Row = 4, Column = 4 };
 
         internal static MatchCell OutsideCell { get; } = new MatchCell { Row = 8, Column = 0 };
@@ -65,17 +67,37 @@ namespace Game.Match.Tests
 
         internal static MatchEntrant InactiveEva { get; } = new MatchEntrant(50, 5, "Eva", false, false, SeatColor.Red);
 
+        internal static MatchEntrant EliGuest { get; } = new MatchEntrant(-2, 6, "Eli", true, true, SeatColor.Yellow);
+
         internal static IReadOnlyList<MatchEntrant> AnaAndBeto { get; } = new MatchEntrant[] { Ana, Beto };
 
         internal static IReadOnlyList<MatchEntrant> AnaBetoAndDani { get; } = new MatchEntrant[] { Ana, Beto, Dani };
 
         internal static IReadOnlyList<MatchEntrant> CaroAndDani { get; } = new MatchEntrant[] { CaroGuest, Dani };
 
+        internal static IReadOnlyList<MatchEntrant> AnaAndCaroGuest { get; } = new MatchEntrant[] { Ana, CaroGuest };
+
+        internal static IReadOnlyList<MatchEntrant> CaroAndEliGuests { get; } = new MatchEntrant[] { CaroGuest, EliGuest };
+
         internal static int FindPlanterNumber(MatchView view, MatchCell flowerCell)
         {
             int planterNumber = view.Flowers.First(flower => (flower.Cell.Row == flowerCell.Row) && (flower.Cell.Column == flowerCell.Column)).PlanterNumber;
 
             return planterNumber;
+        }
+
+        internal static bool HasCaterpillarOn(MatchView view, MatchCell cell)
+        {
+            bool hasCaterpillar = view.Caterpillars.Any(caterpillar => (caterpillar.Cell.Row == cell.Row) && (caterpillar.Cell.Column == cell.Column));
+
+            return hasCaterpillar;
+        }
+
+        internal static int FindFlowerLevel(MatchView view, MatchCell flowerCell)
+        {
+            int flowerLevel = view.Flowers.First(flower => (flower.Cell.Row == flowerCell.Row) && (flower.Cell.Column == flowerCell.Column)).Level;
+
+            return flowerLevel;
         }
     }
 }

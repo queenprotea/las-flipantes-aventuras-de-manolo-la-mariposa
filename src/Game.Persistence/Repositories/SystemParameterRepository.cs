@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class SystemParameterRepository
+    public sealed class SystemParameterRepository : ISystemParameterRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

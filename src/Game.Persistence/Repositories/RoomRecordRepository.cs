@@ -10,7 +10,7 @@ using Npgsql;
 
 namespace Game.Persistence
 {
-    public sealed class RoomRecordRepository
+    public sealed class RoomRecordRepository : IRoomRecordRepository
     {
         private const string OpenCodeIndex = "ux_room_code_open";
         private const string UnexpectedViolationMessage = "The room row broke the unique index {0}.";

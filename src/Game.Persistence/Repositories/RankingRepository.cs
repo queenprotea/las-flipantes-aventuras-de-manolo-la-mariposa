@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class RankingRepository
+    public sealed class RankingRepository : IRankingRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

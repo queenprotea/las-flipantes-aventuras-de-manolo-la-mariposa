@@ -12,18 +12,32 @@ namespace Torres.Client.Flows
 {
     internal sealed class RoomsFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<RoomListResponse> _listRequest = new PendingRequest<RoomListResponse>();
         private readonly PendingRequest<JoinRoomResult> _joinRequest = new PendingRequest<JoinRoomResult>();
 
-        internal RoomsFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal RoomsFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
         }
 
         internal bool IsShowingSearch { get; private set; }
+
+        internal static ScreenId FindScreenToCreateRoom()
+        {
+            ScreenId nextScreen = ScreenId.CreateRoom;
+
+            return nextScreen;
+        }
+
+        internal static ScreenId FindScreenToGoBack()
+        {
+            ScreenId nextScreen = ScreenId.MainMenu;
+
+            return nextScreen;
+        }
 
         internal ScreenId? Open()
         {

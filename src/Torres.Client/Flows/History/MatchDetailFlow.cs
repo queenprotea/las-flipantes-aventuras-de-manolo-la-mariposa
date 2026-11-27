@@ -8,13 +8,13 @@ namespace Torres.Client.Flows
 {
     internal sealed class MatchDetailFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<MatchDetailResponse> _detailRequest = new PendingRequest<MatchDetailResponse>();
 
         private int? _requestedMatchId;
 
-        internal MatchDetailFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal MatchDetailFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

@@ -42,12 +42,12 @@ namespace Game.Services
         private readonly SessionRegistry _sessionRegistry;
         private readonly RoomRegistry _roomRegistry;
         private readonly RoomService _roomService;
-        private readonly RoomInvitationRepository _roomInvitationRepository;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IRoomInvitationRepository _roomInvitationRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly IEmailSender _emailSender;
         private readonly EmailSendingPacer _emailSendingPacer;
 
-        public InvitationService(SessionRegistry sessionRegistry, RoomRegistry roomRegistry, RoomService roomService, RoomInvitationRepository roomInvitationRepository, PlayerRepository playerRepository, IEmailSender emailSender, TimeProvider timeProvider)
+        public InvitationService(SessionRegistry sessionRegistry, RoomRegistry roomRegistry, RoomService roomService, IRoomInvitationRepository roomInvitationRepository, IPlayerRepository playerRepository, IEmailSender emailSender, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(roomRegistry);

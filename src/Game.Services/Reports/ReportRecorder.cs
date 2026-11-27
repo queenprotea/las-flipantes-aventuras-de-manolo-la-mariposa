@@ -22,13 +22,13 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(ReportRecorder));
 
-        private readonly ReportRepository _reportRepository;
-        private readonly SanctionRepository _sanctionRepository;
+        private readonly IReportRepository _reportRepository;
+        private readonly ISanctionRepository _sanctionRepository;
         private readonly TimeProvider _timeProvider;
 
         private SanctionPolicy? _sanctionPolicy;
 
-        public ReportRecorder(ReportRepository reportRepository, SanctionRepository sanctionRepository, TimeProvider timeProvider)
+        public ReportRecorder(IReportRepository reportRepository, ISanctionRepository sanctionRepository, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(reportRepository);
             ArgumentNullException.ThrowIfNull(sanctionRepository);

@@ -24,15 +24,15 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccessRecovery));
 
-        private readonly PlayerRepository _playerRepository;
-        private readonly PasswordRecoveryRepository _passwordRecoveryRepository;
+        private readonly IPlayerRepository _playerRepository;
+        private readonly IPasswordRecoveryRepository _passwordRecoveryRepository;
         private readonly IEmailSender _emailSender;
         private readonly TimeProvider _timeProvider;
         private readonly EmailSendingPacer _emailSendingPacer;
         private readonly CodeAttemptCounter _codeAttemptCounter = new CodeAttemptCounter();
         private int? _codeLifetimeMinutes;
 
-        public AccessRecovery(PlayerRepository playerRepository, PasswordRecoveryRepository passwordRecoveryRepository, IEmailSender emailSender, TimeProvider timeProvider)
+        public AccessRecovery(IPlayerRepository playerRepository, IPasswordRecoveryRepository passwordRecoveryRepository, IEmailSender emailSender, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(passwordRecoveryRepository);

@@ -10,7 +10,7 @@ namespace Torres.Client.Flows
 {
     internal sealed class DisconnectionFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<OpenSessionResult> _reopenRequest = new PendingRequest<OpenSessionResult>();
 
@@ -18,7 +18,7 @@ namespace Torres.Client.Flows
         private bool _hasResumed;
         private bool _isWaitingForMatch;
 
-        internal DisconnectionFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal DisconnectionFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

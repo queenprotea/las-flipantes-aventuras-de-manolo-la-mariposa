@@ -13,7 +13,7 @@ namespace Torres.Client.Flows
 {
     internal sealed class FriendsFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly TimeSpan _friendshipListRefreshPeriod;
         private readonly PendingRequest<FriendshipListResponse> _friendshipListRequest = new PendingRequest<FriendshipListResponse>();
@@ -28,7 +28,7 @@ namespace Torres.Client.Flows
         private bool _hasFailed;
         private bool _showsSentRequests;
 
-        internal FriendsFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession, TimeSpan friendshipListRefreshPeriod)
+        internal FriendsFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession, TimeSpan friendshipListRefreshPeriod)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;
@@ -38,6 +38,13 @@ namespace Torres.Client.Flows
         internal FriendshipListResponse FriendshipList { get; private set; } = CreateEmptyFriendshipList();
 
         internal PlayerSearchResponse? SearchResult { get; private set; }
+
+        internal static ScreenId FindScreenToGoBack()
+        {
+            ScreenId nextScreen = ScreenId.MainMenu;
+
+            return nextScreen;
+        }
 
         internal bool Open()
         {

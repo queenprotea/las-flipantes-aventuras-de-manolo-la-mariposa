@@ -20,6 +20,8 @@ namespace Game.Domain.Tests
         private const int OneScoredPlanter = 1;
         private const int TwoScoredPlanters = 2;
         private const int NoCardPoints = 0;
+        private const int SecondSeatIndex = 1;
+        private const int SecondRoundIndex = 1;
 
         [Fact]
         public void Test_ExpireTurn_ClosingRoundOne_AddsEachSeatPlanterPoints()
@@ -28,7 +30,17 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount);
 
-            Assert.All(table.Standings, standing => Assert.Equal(OnePoint, Assert.Single(standing.RoundScores).TotalPoints));
+            Assert.Equal(new int[] { OnePoint, OnePoint }, table.Standings.Select(standing => standing.RoundScores.Single().TotalPoints));
+        }
+
+        [Fact]
+        public void Test_ExpireTurn_ClosingRoundOneWithATie_OpensTheButterflyPlacement()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            ExpireTurns(table, TwoSeatCount);
+
+            Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
         }
 
         [Fact]
@@ -38,7 +50,6 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount);
 
-            Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
             Assert.Contains(table.ActiveSeatNumber, new int[] { SeatNumberOne, SeatNumberTwo });
         }
 
@@ -54,7 +65,7 @@ namespace Game.Domain.Tests
         }
 
         [Fact]
-        public void Test_ExpirePlacement_OfRoundTwoButterfly_PassesItToTheNextLowestScore()
+        public void Test_ExpirePlacement_OfRoundTwoButterfly_KeepsTheButterflyPlacementOpen()
         {
             MatchTable table = CreatePlayedOpening();
             table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
@@ -63,7 +74,30 @@ namespace Game.Domain.Tests
             table.ExpirePlacement();
 
             Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
+        }
+
+        [Fact]
+        public void Test_ExpirePlacement_OfRoundTwoButterfly_PassesItToTheNextLowestScore()
+        {
+            MatchTable table = CreatePlayedOpening();
+            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            ExpireTurns(table, TwoSeatCount);
+
+            table.ExpirePlacement();
+
             Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
+        }
+
+        [Fact]
+        public void Test_ExpirePlacement_OfEveryRoundTwoPlacer_StartsThePlayerTurn()
+        {
+            MatchTable table = CreatePlayedOpening();
+            ExpireTurns(table, TwoSeatCount);
+            table.ExpirePlacement();
+
+            table.ExpirePlacement();
+
+            Assert.Equal(TablePhase.PlayerTurn, table.Phase);
         }
 
         [Fact]
@@ -71,12 +105,47 @@ namespace Game.Domain.Tests
         {
             MatchTable table = CreatePlayedOpening();
             ExpireTurns(table, TwoSeatCount);
-
-            table.ExpirePlacement();
             table.ExpirePlacement();
 
-            Assert.Equal(TablePhase.PlayerTurn, table.Phase);
+            table.ExpirePlacement();
+
             Assert.Equal(SampleLayouts.SouthEastFlower, table.ButterflyCell);
+        }
+
+        [Fact]
+        public void Test_PlaceButterfly_InRoundTwo_ReturnsPlaced()
+        {
+            MatchTable table = CreatePlayedOpening();
+            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            ExpireTurns(table, TwoSeatCount);
+
+            PlacementOutcome outcome = table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
+
+            Assert.Equal(PlacementOutcome.Placed, outcome);
+        }
+
+        [Fact]
+        public void Test_PlaceButterfly_InRoundTwo_MovesToRoundTwo()
+        {
+            MatchTable table = CreatePlayedOpening();
+            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            ExpireTurns(table, TwoSeatCount);
+
+            table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
+
+            Assert.Equal(RoundNumberTwo, table.RoundNumber);
+        }
+
+        [Fact]
+        public void Test_PlaceButterfly_InRoundTwo_StartsItsFirstTurnRound()
+        {
+            MatchTable table = CreatePlayedOpening();
+            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            ExpireTurns(table, TwoSeatCount);
+
+            table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
+
+            Assert.Equal(MatchTable.FirstTurnRoundNumber, table.TurnRoundNumber);
         }
 
         [Fact]
@@ -86,12 +155,20 @@ namespace Game.Domain.Tests
             table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
             ExpireTurns(table, TwoSeatCount);
 
-            PlacementOutcome outcome = table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
+            table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
 
-            Assert.Equal(PlacementOutcome.Placed, outcome);
-            Assert.Equal(RoundNumberTwo, table.RoundNumber);
-            Assert.Equal(MatchTable.FirstTurnRoundNumber, table.TurnRoundNumber);
             Assert.Equal(SeatNumberOne, table.ActiveSeatNumber);
+        }
+
+        [Fact]
+        public void Test_PlaceButterfly_InRoundTwo_GivesTheWholeActionPoints()
+        {
+            MatchTable table = CreatePlayedOpening();
+            table.PlaceCaterpillar(SeatNumberOne, SampleLayouts.CenterFlower);
+            ExpireTurns(table, TwoSeatCount);
+
+            table.PlaceButterfly(SeatNumberTwo, SampleLayouts.NorthEastFlower);
+
             Assert.Equal(MatchTable.ActionPointsPerTurn, table.ActionPointsLeft);
         }
 
@@ -105,7 +182,18 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount);
 
-            Assert.Equal(new SeatRoundScore(OnePoint, TenPoints, OneScoredPlanter), table.Standings[SeatNumberTwo - MatchTable.FirstSeatNumber].RoundScores[RoundNumberTwo - MatchTable.FirstRoundNumber]);
+            SeatRoundScore secondRoundScore = table.Standings[SecondSeatIndex].RoundScores[SecondRoundIndex];
+            Assert.Equal(new SeatRoundScore(OnePoint, TenPoints, OneScoredPlanter), secondRoundScore);
+        }
+
+        [Fact]
+        public void Test_ExpireTurn_ClosingRoundThree_FinishesTheMatch()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            PlayRoundsWithoutButterfly(table, MatchRules.RoundCount);
+
+            Assert.Equal(TablePhase.Finished, table.Phase);
         }
 
         [Fact]
@@ -115,9 +203,26 @@ namespace Game.Domain.Tests
 
             PlayRoundsWithoutButterfly(table, MatchRules.RoundCount);
 
-            Assert.Equal(TablePhase.Finished, table.Phase);
             Assert.Equal(FinishCause.Completed, table.FinishCause);
-            Assert.All(table.Standings, standing => Assert.Equal(MatchRules.RoundCount, standing.RoundScores.Count));
+        }
+
+        [Fact]
+        public void Test_ExpireTurn_ClosingRoundThree_KeepsTheScoreOfEveryRound()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            PlayRoundsWithoutButterfly(table, MatchRules.RoundCount);
+
+            Assert.Equal(new int[] { MatchRules.RoundCount, MatchRules.RoundCount }, table.Standings.Select(standing => standing.RoundScores.Count));
+        }
+
+        [Fact]
+        public void Test_ExpireTurn_ClosingRoundThree_OffersNoBuildTarget()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            PlayRoundsWithoutButterfly(table, MatchRules.RoundCount);
+
             Assert.Empty(table.FindBuildTargets());
         }
 
@@ -179,7 +284,16 @@ namespace Game.Domain.Tests
             table.RetireSeat(SeatNumberOne);
 
             Assert.Equal(SeatNumberTwo, table.ActiveSeatNumber);
-            Assert.DoesNotContain(table.Caterpillars, caterpillar => caterpillar.SeatNumber == SeatNumberOne);
+        }
+
+        [Fact]
+        public void Test_RetireSeat_OfActiveSeatInATurn_TakesItsCaterpillarsOffTheBoard()
+        {
+            MatchTable table = CreatePlayedThreeSeatOpening();
+
+            table.RetireSeat(SeatNumberOne);
+
+            Assert.DoesNotContain(SeatNumberOne, table.Caterpillars.Select(caterpillar => caterpillar.SeatNumber));
         }
 
         [Fact]
@@ -194,15 +308,43 @@ namespace Game.Domain.Tests
         }
 
         [Fact]
-        public void Test_RetireSeat_LeavingOneSeat_FinishesTheMatchWithTooFewSeats()
+        public void Test_RetireSeat_LeavingOneSeat_FinishesTheMatch()
         {
             MatchTable table = CreatePlayedOpening();
 
             table.RetireSeat(SeatNumberOne);
 
             Assert.Equal(TablePhase.Finished, table.Phase);
+        }
+
+        [Fact]
+        public void Test_RetireSeat_LeavingOneSeat_FinishesTheMatchWithTooFewSeats()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            table.RetireSeat(SeatNumberOne);
+
             Assert.Equal(FinishCause.TooFewSeats, table.FinishCause);
-            Assert.Equal(SeatNumberTwo, Assert.Single(table.FindRanking()).SeatNumber);
+        }
+
+        [Fact]
+        public void Test_RetireSeat_LeavingOneSeat_RanksOnlyTheRemainingSeat()
+        {
+            MatchTable table = CreatePlayedOpening();
+
+            table.RetireSeat(SeatNumberOne);
+
+            Assert.Equal(new int[] { SeatNumberTwo }, table.FindRanking().Select(standing => standing.SeatNumber));
+        }
+
+        [Fact]
+        public void Test_RetireSeat_DuringItsCaterpillarPlacement_KeepsTheCaterpillarPlacementOpen()
+        {
+            var table = new MatchTable(SampleLayouts.FiveSingleCellPlanters, ThreeSeatCount, SampleRules.ThreeSeatRules, SampleRules.CreateChanceSource());
+
+            table.RetireSeat(SeatNumberOne);
+
+            Assert.Equal(TablePhase.CaterpillarPlacement, table.Phase);
         }
 
         [Fact]
@@ -212,8 +354,18 @@ namespace Game.Domain.Tests
 
             table.RetireSeat(SeatNumberOne);
 
-            Assert.Equal(TablePhase.CaterpillarPlacement, table.Phase);
             Assert.Equal(SeatNumberTwo, table.ActiveSeatNumber);
+        }
+
+        [Fact]
+        public void Test_RetireSeat_BeforeRoundOneCloses_OpensTheButterflyPlacement()
+        {
+            MatchTable table = CreatePlayedThreeSeatOpening();
+            table.RetireSeat(SeatNumberThree);
+
+            ExpireTurns(table, TwoSeatCount * SampleRules.ThreeSeatRules.GetTurnCount(MatchTable.FirstRoundNumber));
+
+            Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
         }
 
         [Fact]
@@ -224,7 +376,6 @@ namespace Game.Domain.Tests
 
             ExpireTurns(table, TwoSeatCount * SampleRules.ThreeSeatRules.GetTurnCount(MatchTable.FirstRoundNumber));
 
-            Assert.Equal(TablePhase.ButterflyPlacement, table.Phase);
             Assert.NotEqual(SeatNumberThree, table.ActiveSeatNumber);
         }
 
@@ -237,20 +388,40 @@ namespace Game.Domain.Tests
             table.RetireSeat(SeatNumberTwo);
 
             Assert.True(table.IsSeatRetired(SeatNumberTwo));
+        }
+
+        [Fact]
+        public void Test_RetireSeat_Twice_KeepsTheTurnGoing()
+        {
+            MatchTable table = CreatePlayedThreeSeatOpening();
+            table.RetireSeat(SeatNumberTwo);
+
+            table.RetireSeat(SeatNumberTwo);
+
             Assert.Equal(TablePhase.PlayerTurn, table.Phase);
         }
 
         [Fact]
-        public void Test_TakeSnapshot_AfterRoundOne_KeepsTheStandingsAndPendingPlacers()
+        public void Test_TakeSnapshot_AfterRoundOne_KeepsTheStandings()
         {
             MatchTable table = CreatePlayedOpening();
             ExpireTurns(table, TwoSeatCount);
 
             MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
-            restoredTable.ExpirePlacement();
-            table.ExpirePlacement();
 
             Assert.Equal(table.Standings, restoredTable.Standings, new SeatStandingComparer());
+        }
+
+        [Fact]
+        public void Test_ExpirePlacement_OnTableRestoredAfterRoundOne_PassesItToTheSamePlacer()
+        {
+            MatchTable table = CreatePlayedOpening();
+            ExpireTurns(table, TwoSeatCount);
+            MatchTable restoredTable = MatchTable.RestoreFromSnapshot(table.TakeSnapshot(), SampleRules.OneTurnPerRoundRules, SampleRules.CreateChanceSource());
+            table.ExpirePlacement();
+
+            restoredTable.ExpirePlacement();
+
             Assert.Equal(table.ActiveSeatNumber, restoredTable.ActiveSeatNumber);
         }
 

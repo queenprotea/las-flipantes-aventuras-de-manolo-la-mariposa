@@ -43,12 +43,12 @@ namespace Game.Services
 
         private readonly RoomRegistry _roomRegistry;
         private readonly SessionRegistry _sessionRegistry;
-        private readonly RoomRecordRepository _roomRecordRepository;
-        private readonly SanctionRepository _sanctionRepository;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IRoomRecordRepository _roomRecordRepository;
+        private readonly ISanctionRepository _sanctionRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly TimeProvider _timeProvider;
 
-        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, RoomRecordRepository roomRecordRepository, SanctionRepository sanctionRepository, PlayerRepository playerRepository, TimeProvider timeProvider)
+        public RoomService(RoomRegistry roomRegistry, SessionRegistry sessionRegistry, IRoomRecordRepository roomRecordRepository, ISanctionRepository sanctionRepository, IPlayerRepository playerRepository, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(roomRegistry);
             ArgumentNullException.ThrowIfNull(sessionRegistry);

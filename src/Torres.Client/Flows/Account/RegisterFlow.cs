@@ -12,8 +12,8 @@ namespace Torres.Client.Flows
 {
     internal sealed class RegisterFlow
     {
-        private readonly AccountConnection _accountConnection;
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IAccountConnection _accountConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<RegistrationResult> _codeRequest = new PendingRequest<RegistrationResult>();
         private readonly PendingRequest<RegistrationConfirmationResult> _confirmationRequest = new PendingRequest<RegistrationConfirmationResult>();
@@ -23,7 +23,7 @@ namespace Torres.Client.Flows
         private string _requestedEmail = string.Empty;
         private RegisterOutcome? _outcome;
 
-        internal RegisterFlow(AccountConnection accountConnection, GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal RegisterFlow(IAccountConnection accountConnection, IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _accountConnection = accountConnection;
             _gameSessionConnection = gameSessionConnection;
@@ -33,6 +33,13 @@ namespace Torres.Client.Flows
         internal bool IsRequestingCode => _codeRequest.IsWaiting;
 
         internal bool IsConfirming => _confirmationRequest.IsWaiting || _sessionOpening.IsWaiting;
+
+        internal static ScreenId FindScreenToCancel()
+        {
+            ScreenId nextScreen = ScreenId.Login;
+
+            return nextScreen;
+        }
 
         internal IReadOnlyList<RegisterField> StartCodeRequest(string username, string email, string password)
         {

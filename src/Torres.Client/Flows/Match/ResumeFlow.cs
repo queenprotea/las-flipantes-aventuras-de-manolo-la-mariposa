@@ -10,11 +10,11 @@ namespace Torres.Client.Flows
 {
     internal sealed class ResumeFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<ReturnToMatchResult> _returnRequest = new PendingRequest<ReturnToMatchResult>();
 
-        internal ResumeFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal ResumeFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class BuildAllowanceRepository
+    public sealed class BuildAllowanceRepository : IBuildAllowanceRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

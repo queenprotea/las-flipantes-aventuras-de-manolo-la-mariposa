@@ -19,7 +19,7 @@ using Torres.Client.Threading;
 
 namespace Torres.Client.Avatars
 {
-    internal sealed class AvatarCache : IDisposable
+    internal sealed class AvatarCache : IDisposable, IAvatarCache
     {
         private const string ApplicationFolderName = "Torres";
         private const string AvatarsFolderName = "avatars";
@@ -103,7 +103,7 @@ namespace Torres.Client.Avatars
             StartQueued();
         }
 
-        internal void Put(string avatarReference, byte[] thumbnail)
+        public void Put(string avatarReference, byte[] thumbnail)
         {
             ShowImage(avatarReference, LoadImage(thumbnail));
             QueueCacheWrite(avatarReference, thumbnail);

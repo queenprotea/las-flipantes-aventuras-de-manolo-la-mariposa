@@ -32,12 +32,12 @@ namespace Game.Services
         private static readonly ILog _log = LogManager.GetLogger(typeof(ProfileService));
 
         private readonly SessionRegistry _sessionRegistry;
-        private readonly PlayerRepository _playerRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly AvatarStore _avatarStore;
         private readonly AvatarUploadRegistry _avatarUploadRegistry;
         private readonly RoomService _roomService;
 
-        public ProfileService(SessionRegistry sessionRegistry, PlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService)
+        public ProfileService(SessionRegistry sessionRegistry, IPlayerRepository playerRepository, AvatarStore avatarStore, AvatarUploadRegistry avatarUploadRegistry, RoomService roomService)
         {
             ArgumentNullException.ThrowIfNull(sessionRegistry);
             ArgumentNullException.ThrowIfNull(playerRepository);

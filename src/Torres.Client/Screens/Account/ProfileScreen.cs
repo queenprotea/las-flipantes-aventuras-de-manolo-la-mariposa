@@ -340,7 +340,7 @@ namespace Torres.Client.Screens
 
         private void SettingsButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.AccountSettings;
+            RequestedScreen = ProfileFlow.FindScreenToOpenSettings();
         }
 
         private void BackToMenuButtonOnClick(object sender, MyraEventArgs e)

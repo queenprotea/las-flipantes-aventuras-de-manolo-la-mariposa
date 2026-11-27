@@ -23,7 +23,7 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(AccountRegistration));
 
-        private readonly PlayerRepository _playerRepository;
+        private readonly IPlayerRepository _playerRepository;
         private readonly IEmailSender _emailSender;
         private readonly PendingRegistrationRegistry _pendingRegistrationRegistry;
         private readonly SessionTokenIssuer _sessionTokenIssuer;
@@ -31,7 +31,7 @@ namespace Game.Services
         private readonly EmailSendingPacer _emailSendingPacer;
         private int? _codeLifetimeMinutes;
 
-        public AccountRegistration(PlayerRepository playerRepository, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider)
+        public AccountRegistration(IPlayerRepository playerRepository, IEmailSender emailSender, PendingRegistrationRegistry pendingRegistrationRegistry, SessionTokenIssuer sessionTokenIssuer, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(playerRepository);
             ArgumentNullException.ThrowIfNull(emailSender);

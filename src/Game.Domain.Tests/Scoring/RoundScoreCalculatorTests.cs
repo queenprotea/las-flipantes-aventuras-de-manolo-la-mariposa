@@ -15,6 +15,10 @@ namespace Game.Domain.Tests
         private const int LevelTwo = 2;
         private const int SixPoints = 6;
         private const int ThreePoints = 3;
+        private const int NoPoints = 0;
+        private const int OneScoredPlanter = 1;
+        private const int NoScoredPlanters = 0;
+        private const int RoundAfterTheLast = MatchRules.RoundCount + 1;
 
         private static readonly BoardCell _westCell = new BoardCell(2, 1);
         private static readonly BoardCell _middleCell = new BoardCell(2, 2);
@@ -29,18 +33,36 @@ namespace Game.Domain.Tests
             SeatRoundScore roundScore = calculator.ScoreSeat(SeatNumberOne, RoundNumberOne);
 
             Assert.Equal(SixPoints, roundScore.PlanterPoints);
-            Assert.Equal(1, roundScore.ScoredPlanterCount);
         }
 
         [Fact]
-        public void Test_ScoreSeat_WithTwoOwnCaterpillarsInOnePlanter_ScoresNothing()
+        public void Test_ScoreSeat_WithOneCaterpillarOnLevelTwo_ScoresOnePlanter()
+        {
+            var calculator = new RoundScoreCalculator(_threeCellPlanter, new Caterpillar[] { new Caterpillar(SeatNumberOne, _middleCell) }, null);
+
+            SeatRoundScore roundScore = calculator.ScoreSeat(SeatNumberOne, RoundNumberOne);
+
+            Assert.Equal(OneScoredPlanter, roundScore.ScoredPlanterCount);
+        }
+
+        [Fact]
+        public void Test_ScoreSeat_WithTwoOwnCaterpillarsInOnePlanter_ScoresNoPoints()
         {
             var calculator = new RoundScoreCalculator(_threeCellPlanter, new Caterpillar[] { new Caterpillar(SeatNumberOne, _middleCell), new Caterpillar(SeatNumberOne, _westCell) }, null);
 
             SeatRoundScore roundScore = calculator.ScoreSeat(SeatNumberOne, RoundNumberOne);
 
-            Assert.Equal(0, roundScore.TotalPoints);
-            Assert.Equal(0, roundScore.ScoredPlanterCount);
+            Assert.Equal(NoPoints, roundScore.TotalPoints);
+        }
+
+        [Fact]
+        public void Test_ScoreSeat_WithTwoOwnCaterpillarsInOnePlanter_ScoresNoPlanter()
+        {
+            var calculator = new RoundScoreCalculator(_threeCellPlanter, new Caterpillar[] { new Caterpillar(SeatNumberOne, _middleCell), new Caterpillar(SeatNumberOne, _westCell) }, null);
+
+            SeatRoundScore roundScore = calculator.ScoreSeat(SeatNumberOne, RoundNumberOne);
+
+            Assert.Equal(NoScoredPlanters, roundScore.ScoredPlanterCount);
         }
 
         [Fact]
@@ -70,7 +92,7 @@ namespace Game.Domain.Tests
 
             SeatRoundScore roundScore = calculator.ScoreSeat(SeatNumberOne, RoundNumberTwo);
 
-            Assert.Equal(0, roundScore.ButterflyPoints);
+            Assert.Equal(NoPoints, roundScore.ButterflyPoints);
         }
 
         [Fact]
@@ -78,7 +100,7 @@ namespace Game.Domain.Tests
         {
             var calculator = new RoundScoreCalculator(_threeCellPlanter, Array.Empty<Caterpillar>(), null);
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => calculator.ScoreSeat(SeatNumberOne, MatchRules.RoundCount + 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => calculator.ScoreSeat(SeatNumberOne, RoundAfterTheLast));
         }
     }
 }

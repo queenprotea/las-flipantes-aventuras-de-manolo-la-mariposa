@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence
 {
-    public sealed class SanctionRepository
+    public sealed class SanctionRepository : ISanctionRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

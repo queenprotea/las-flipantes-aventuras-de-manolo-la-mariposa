@@ -12,7 +12,7 @@ using Torres.Client.Threading;
 
 namespace Torres.Client.Connection
 {
-    internal sealed class GameSessionConnection
+    internal sealed class GameSessionConnection : IGameSessionConnection
     {
         private const string ClosedConnectionMessage = "The game session is not open.";
         private const string NoSessionTokenMessage = "There is no session to reopen.";
@@ -47,13 +47,13 @@ namespace Torres.Client.Connection
             ReconnectionRetryInterval = clientSettings.ReconnectionRetryInterval;
         }
 
-        internal bool IsSessionOpen { get; private set; }
+        public bool IsSessionOpen { get; private set; }
 
         internal bool WasConnectionLost { get; private set; }
 
-        internal TimeSpan ReconnectionRetryInterval { get; }
+        public TimeSpan ReconnectionRetryInterval { get; }
 
-        internal Task<OpenSessionResult> OpenAsync(string sessionToken)
+        public Task<OpenSessionResult> OpenAsync(string sessionToken)
         {
             _sessionToken = sessionToken;
             _matchReconnectionToken = null;
@@ -62,7 +62,7 @@ namespace Torres.Client.Connection
             return sessionOpening;
         }
 
-        internal Task<OpenSessionResult> ReopenAsync()
+        public Task<OpenSessionResult> ReopenAsync()
         {
             string reopeningToken = _matchReconnectionToken ?? _sessionToken ?? throw new InvalidOperationException(NoSessionTokenMessage);
             Task<OpenSessionResult> sessionOpening = OpenWithAsync(reopeningToken);
@@ -70,7 +70,7 @@ namespace Torres.Client.Connection
             return sessionOpening;
         }
 
-        internal void MarkSessionOpen()
+        public void MarkSessionOpen()
         {
             IsSessionOpen = true;
             WasConnectionLost = false;
@@ -133,257 +133,257 @@ namespace Torres.Client.Connection
             return roomInvitation;
         }
 
-        internal Task<CreateRoomResult> CreateRoomAsync(RoomVisibility roomVisibility)
+        public Task<CreateRoomResult> CreateRoomAsync(RoomVisibility roomVisibility)
         {
             Task<CreateRoomResult> roomCreation = ObserveAsync(RequireChannel().CreateRoomAsync(roomVisibility));
 
             return roomCreation;
         }
 
-        internal Task<RoomListResponse> GetRoomsAsync()
+        public Task<RoomListResponse> GetRoomsAsync()
         {
             Task<RoomListResponse> roomListing = ObserveAsync(Task.Run(RequireChannel().GetRooms));
 
             return roomListing;
         }
 
-        internal Task<RoomListResponse> FindRoomAsync(string roomCode)
+        public Task<RoomListResponse> FindRoomAsync(string roomCode)
         {
             Task<RoomListResponse> roomSearch = ObserveAsync(new BackgroundCall<string, RoomListResponse>(RequireChannel().FindRoom, roomCode).StartAsync());
 
             return roomSearch;
         }
 
-        internal Task<JoinRoomResult> JoinRoomAsync(int roomId)
+        public Task<JoinRoomResult> JoinRoomAsync(int roomId)
         {
             Task<JoinRoomResult> roomJoining = ObserveAsync(RequireChannel().JoinRoomAsync(roomId));
 
             return roomJoining;
         }
 
-        internal Task<LeaveRoomResult> LeaveRoomAsync()
+        public Task<LeaveRoomResult> LeaveRoomAsync()
         {
             Task<LeaveRoomResult> roomLeaving = ObserveAsync(RequireChannel().LeaveRoomAsync());
 
             return roomLeaving;
         }
 
-        internal Task<KickMemberResult> KickMemberAsync(int targetMemberId)
+        public Task<KickMemberResult> KickMemberAsync(int targetMemberId)
         {
             Task<KickMemberResult> memberKick = ObserveAsync(new BackgroundCall<int, KickMemberResult>(RequireChannel().KickMember, targetMemberId).StartAsync());
 
             return memberKick;
         }
 
-        internal Task<SendChatMessageResult> SendChatMessageAsync(string messageText)
+        public Task<SendChatMessageResult> SendChatMessageAsync(string messageText)
         {
             Task<SendChatMessageResult> messageSending = ObserveAsync(new BackgroundCall<string, SendChatMessageResult>(RequireChannel().SendChatMessage, messageText).StartAsync());
 
             return messageSending;
         }
 
-        internal Task<ChatHistoryResponse> GetChatHistoryAsync()
+        public Task<ChatHistoryResponse> GetChatHistoryAsync()
         {
             Task<ChatHistoryResponse> chatHistoryReading = ObserveAsync(Task.Run(RequireChannel().GetChatHistory));
 
             return chatHistoryReading;
         }
 
-        internal Task<ReportChatMessageResult> ReportChatMessageAsync(ChatMessage reportedMessage)
+        public Task<ReportChatMessageResult> ReportChatMessageAsync(ChatMessage reportedMessage)
         {
             Task<ReportChatMessageResult> messageReporting = ObserveAsync(RequireChannel().ReportChatMessageAsync(reportedMessage.RoomId, reportedMessage.MessageId));
 
             return messageReporting;
         }
 
-        internal Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
+        public Task<MatchHistoryResponse> GetMatchHistoryAsync(int pageNumber)
         {
             Task<MatchHistoryResponse> matchHistoryReading = ObserveAsync(RequireChannel().GetMatchHistoryAsync(pageNumber));
 
             return matchHistoryReading;
         }
 
-        internal Task<MatchDetailResponse> GetMatchDetailAsync(int matchId)
+        public Task<MatchDetailResponse> GetMatchDetailAsync(int matchId)
         {
             Task<MatchDetailResponse> matchDetailReading = ObserveAsync(RequireChannel().GetMatchDetailAsync(matchId));
 
             return matchDetailReading;
         }
 
-        internal Task<FriendshipListResponse> GetFriendshipListAsync()
+        public Task<FriendshipListResponse> GetFriendshipListAsync()
         {
             Task<FriendshipListResponse> friendshipListReading = ObserveAsync(Task.Run(RequireChannel().GetFriendshipList));
 
             return friendshipListReading;
         }
 
-        internal Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username)
+        public Task<PlayerSearchResponse> FindPlayerByUsernameAsync(string username)
         {
             Task<PlayerSearchResponse> playerSearch = ObserveAsync(new BackgroundCall<string, PlayerSearchResponse>(RequireChannel().FindPlayerByUsername, username).StartAsync());
 
             return playerSearch;
         }
 
-        internal Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId)
+        public Task<FriendRequestResult> SendFriendRequestAsync(int targetPlayerId)
         {
             Task<FriendRequestResult> friendRequestSending = ObserveAsync(new BackgroundCall<int, FriendRequestResult>(RequireChannel().SendFriendRequest, targetPlayerId).StartAsync());
 
             return friendRequestSending;
         }
 
-        internal Task<FriendRequestResponseResult> AcceptFriendRequestAsync(int requesterPlayerId)
+        public Task<FriendRequestResponseResult> AcceptFriendRequestAsync(int requesterPlayerId)
         {
             Task<FriendRequestResponseResult> friendRequestAcceptance = ObserveAsync(new BackgroundCall<int, FriendRequestResponseResult>(AcceptFriendRequest, requesterPlayerId).StartAsync());
 
             return friendRequestAcceptance;
         }
 
-        internal Task<FriendRequestResponseResult> RejectFriendRequestAsync(int requesterPlayerId)
+        public Task<FriendRequestResponseResult> RejectFriendRequestAsync(int requesterPlayerId)
         {
             Task<FriendRequestResponseResult> friendRequestRejection = ObserveAsync(new BackgroundCall<int, FriendRequestResponseResult>(RejectFriendRequest, requesterPlayerId).StartAsync());
 
             return friendRequestRejection;
         }
 
-        internal Task<FriendRemovalResult> RemoveFriendAsync(int friendPlayerId)
+        public Task<FriendRemovalResult> RemoveFriendAsync(int friendPlayerId)
         {
             Task<FriendRemovalResult> friendRemoval = ObserveAsync(new BackgroundCall<int, FriendRemovalResult>(RequireChannel().RemoveFriend, friendPlayerId).StartAsync());
 
             return friendRemoval;
         }
 
-        internal Task<PendingInvitationsResponse> GetPendingInvitationsAsync()
+        public Task<PendingInvitationsResponse> GetPendingInvitationsAsync()
         {
             Task<PendingInvitationsResponse> invitationsReading = ObserveAsync(RequireChannel().GetPendingInvitationsAsync());
 
             return invitationsReading;
         }
 
-        internal Task<RoomInviteesResponse> GetRoomInviteesAsync()
+        public Task<RoomInviteesResponse> GetRoomInviteesAsync()
         {
             Task<RoomInviteesResponse> inviteesReading = ObserveAsync(RequireChannel().GetRoomInviteesAsync());
 
             return inviteesReading;
         }
 
-        internal Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
+        public Task<SendInvitationResult> SendInvitationAsync(int targetPlayerId)
         {
             Task<SendInvitationResult> invitationSending = ObserveAsync(RequireChannel().SendInvitationAsync(targetPlayerId));
 
             return invitationSending;
         }
 
-        internal Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
+        public Task<SendInvitationResult> SendInvitationByEmailAsync(int targetPlayerId)
         {
             Task<SendInvitationResult> invitationSending = ObserveAsync(RequireChannel().SendInvitationByEmailAsync(targetPlayerId));
 
             return invitationSending;
         }
 
-        internal Task<RespondInvitationResult> AcceptInvitationAsync(int roomId)
+        public Task<RespondInvitationResult> AcceptInvitationAsync(int roomId)
         {
             Task<RespondInvitationResult> invitationAcceptance = ObserveAsync(RequireChannel().RespondInvitationAsync(roomId, true));
 
             return invitationAcceptance;
         }
 
-        internal Task<RespondInvitationResult> RejectInvitationAsync(int roomId)
+        public Task<RespondInvitationResult> RejectInvitationAsync(int roomId)
         {
             Task<RespondInvitationResult> invitationRejection = ObserveAsync(RequireChannel().RespondInvitationAsync(roomId, false));
 
             return invitationRejection;
         }
 
-        internal Task<StartMatchResult> StartMatchAsync()
+        public Task<StartMatchResult> StartMatchAsync()
         {
             Task<StartMatchResult> matchStart = ObserveAsync(RequireChannel().StartMatchAsync());
 
             return matchStart;
         }
 
-        internal Task<ForfeitResult> ForfeitAsync()
+        public Task<ForfeitResult> ForfeitAsync()
         {
             Task<ForfeitResult> forfeitRequest = ObserveAsync(Task.Run(RequireChannel().Forfeit));
 
             return forfeitRequest;
         }
 
-        internal Task<ReturnToMatchResult> ReturnToMatchAsync()
+        public Task<ReturnToMatchResult> ReturnToMatchAsync()
         {
             Task<ReturnToMatchResult> returnRequest = ObserveAsync(Task.Run(RequireChannel().ReturnToMatch));
 
             return returnRequest;
         }
 
-        internal Task<MatchActionResult> PlacePieceAsync(PiecePlacement piecePlacement)
+        public Task<MatchActionResult> PlacePieceAsync(PiecePlacement piecePlacement)
         {
             Task<MatchActionResult> pieceRequest = ObserveAsync(new BackgroundCall<PiecePlacement, MatchActionResult>(PlacePiece, piecePlacement).StartAsync());
 
             return pieceRequest;
         }
 
-        internal Task<MatchActionResult> MoveCaterpillarAsync(MatchMove move)
+        public Task<MatchActionResult> MoveCaterpillarAsync(MatchMove move)
         {
             Task<MatchActionResult> moveRequest = ObserveAsync(new BackgroundCall<MatchMove, MatchActionResult>(MoveCaterpillar, move).StartAsync());
 
             return moveRequest;
         }
 
-        internal Task<MatchActionResult> AddFlowerLevelAsync(MatchCell buildCell)
+        public Task<MatchActionResult> AddFlowerLevelAsync(MatchCell buildCell)
         {
             Task<MatchActionResult> buildRequest = ObserveAsync(new BackgroundCall<MatchCell, MatchActionResult>(AddFlowerLevel, buildCell).StartAsync());
 
             return buildRequest;
         }
 
-        internal Task<MatchActionResult> DrawCardAsync()
+        public Task<MatchActionResult> DrawCardAsync()
         {
             Task<MatchActionResult> drawRequest = ObserveAsync(Task.Run(RequireChannel().DrawCard));
 
             return drawRequest;
         }
 
-        internal Task<MatchActionResult> PlayCardAsync(MatchCardPlay cardPlay)
+        public Task<MatchActionResult> PlayCardAsync(MatchCardPlay cardPlay)
         {
             Task<MatchActionResult> playRequest = ObserveAsync(new BackgroundCall<MatchCardPlay, MatchActionResult>(PlayCard, cardPlay).StartAsync());
 
             return playRequest;
         }
 
-        internal Task<MatchActionResult> EndTurnAsync()
+        public Task<MatchActionResult> EndTurnAsync()
         {
             Task<MatchActionResult> endTurnRequest = ObserveAsync(Task.Run(RequireChannel().EndTurn));
 
             return endTurnRequest;
         }
 
-        internal Task<ProfileResponse> GetProfileAsync()
+        public Task<ProfileResponse> GetProfileAsync()
         {
             Task<ProfileResponse> profileReading = ObserveAsync(RequireChannel().GetProfileAsync());
 
             return profileReading;
         }
 
-        internal Task<BeginAvatarUploadResult> BeginAvatarUploadAsync(PreparedAvatar preparedAvatar)
+        public Task<BeginAvatarUploadResult> BeginAvatarUploadAsync(PreparedAvatar preparedAvatar)
         {
             Task<BeginAvatarUploadResult> uploadBeginning = ObserveAsync(new BackgroundCall<PreparedAvatar, BeginAvatarUploadResult>(BeginAvatarUpload, preparedAvatar).StartAsync());
 
             return uploadBeginning;
         }
 
-        internal Task<SendAvatarPartResult> SendAvatarPartAsync(AvatarPart avatarPart)
+        public Task<SendAvatarPartResult> SendAvatarPartAsync(AvatarPart avatarPart)
         {
             Task<SendAvatarPartResult> partSending = ObserveAsync(new BackgroundCall<AvatarPart, SendAvatarPartResult>(SendAvatarPart, avatarPart).StartAsync());
 
             return partSending;
         }
 
-        internal void RequestAvatarUploadCancellation()
+        public void RequestAvatarUploadCancellation()
         {
             _pendingUploadCancellation = Task.Run(CancelAvatarUpload);
         }
 
-        internal Task<UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar)
+        public Task<UpdateProfileResult> UpdateProfileAsync(string username, bool includesNewAvatar)
         {
             Task<UpdateProfileResult> profileUpdate = ObserveAsync(RequireChannel().UpdateProfileAsync(username, includesNewAvatar));
 
@@ -397,7 +397,7 @@ namespace Torres.Client.Connection
             return thumbnailReading;
         }
 
-        internal void CloseSession()
+        public void CloseSession()
         {
             if (IsSessionOpen && (_sessionChannel is not null))
             {
@@ -411,7 +411,7 @@ namespace Torres.Client.Connection
             AbandonSession();
         }
 
-        internal void AbandonSession()
+        public void AbandonSession()
         {
             AbortSessionChannel();
             _sessionToken = null;
@@ -431,7 +431,7 @@ namespace Torres.Client.Connection
             _channelFactory.Abort();
         }
 
-        internal void AbortSessionChannel()
+        public void AbortSessionChannel()
         {
             if (_sessionChannel is ICommunicationObject abandonedChannel)
             {

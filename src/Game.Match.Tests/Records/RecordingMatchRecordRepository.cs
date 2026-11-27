@@ -9,6 +9,8 @@ namespace Game.Match.Tests
 {
     internal sealed class RecordingMatchRecordRepository : IMatchRecordRepository
     {
+        private const int NoFinishedMatches = 0;
+
         private readonly Lock _recordLock = new Lock();
         private readonly TaskCompletionSource<RecordedFinish> _firstFinish = new TaskCompletionSource<RecordedFinish>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -52,6 +54,27 @@ namespace Game.Match.Tests
         internal Task<RecordedFinish> FirstFinish => _firstFinish.Task;
 
         internal List<int> InProgressMatchIds { get; } = new List<int>();
+
+        public Task<int> CountFinishedByPlayerAsync(int playerId)
+        {
+            Task<int> counting = Task.FromResult(NoFinishedMatches);
+
+            return counting;
+        }
+
+        public Task<List<MatchRecord>> ListFinishedPageByPlayerAsync(int playerId, int skippedCount, int pageSize)
+        {
+            Task<List<MatchRecord>> listing = Task.FromResult(new List<MatchRecord>());
+
+            return listing;
+        }
+
+        public Task<MatchRecord?> FindFinishedAsync(int matchId)
+        {
+            Task<MatchRecord?> finding = Task.FromResult<MatchRecord?>(null);
+
+            return finding;
+        }
 
         public Task<int> CreateAsync(int roomId, int playerCount)
         {

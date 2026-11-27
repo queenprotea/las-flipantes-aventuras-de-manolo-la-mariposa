@@ -11,11 +11,11 @@ namespace Torres.Client.Flows
 {
     internal sealed class InitialPlacementFlow
     {
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<MatchActionResult> _placementRequest = new PendingRequest<MatchActionResult>();
 
-        internal InitialPlacementFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal InitialPlacementFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

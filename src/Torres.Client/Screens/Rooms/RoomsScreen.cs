@@ -255,12 +255,12 @@ namespace Torres.Client.Screens
 
         private void CreateRoomButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.CreateRoom;
+            RequestedScreen = RoomsFlow.FindScreenToCreateRoom();
         }
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.MainMenu;
+            RequestedScreen = RoomsFlow.FindScreenToGoBack();
         }
     }
 }

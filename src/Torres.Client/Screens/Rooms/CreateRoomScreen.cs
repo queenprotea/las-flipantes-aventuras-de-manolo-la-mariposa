@@ -157,7 +157,7 @@ namespace Torres.Client.Screens
 
         private void BackButtonOnClick(object sender, MyraEventArgs e)
         {
-            RequestedScreen = ScreenId.Rooms;
+            RequestedScreen = CreateRoomFlow.FindScreenToCancel();
         }
     }
 }

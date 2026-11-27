@@ -11,13 +11,13 @@ namespace Torres.Client.Flows
 {
     internal sealed class GlobalRankingFlow
     {
-        private readonly RankingConnection _rankingConnection;
+        private readonly IRankingConnection _rankingConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<GlobalRankingResponse> _rankingRequest = new PendingRequest<GlobalRankingResponse>();
 
         private bool _isRequested;
 
-        internal GlobalRankingFlow(RankingConnection rankingConnection, PlayerSession playerSession)
+        internal GlobalRankingFlow(IRankingConnection rankingConnection, PlayerSession playerSession)
         {
             _rankingConnection = rankingConnection;
             _playerSession = playerSession;

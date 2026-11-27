@@ -10,7 +10,7 @@ using Npgsql;
 
 namespace Game.Persistence
 {
-    public sealed class PlayerRepository
+    public sealed class PlayerRepository : IPlayerRepository
     {
         private const string UsernameIndex = "ux_player_username_lower";
         private const string LowerCaseIndexJustification = "EF Core translates ToLower() into lower(), which uses the unique lower(...) index of the table; string.Equals with a StringComparison is not translated into SQL.";

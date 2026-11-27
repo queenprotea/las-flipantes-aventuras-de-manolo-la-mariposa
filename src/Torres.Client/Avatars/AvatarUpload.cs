@@ -13,7 +13,7 @@ namespace Torres.Client.Avatars
     {
         private const int MostPartsInFlight = 4;
 
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly Queue<AvatarPart> _pendingParts = new Queue<AvatarPart>();
         private readonly Dictionary<Task<SendAvatarPartResult>, int> _bytesByPartSending = new Dictionary<Task<SendAvatarPartResult>, int>();
         private readonly int _totalBytes;
@@ -21,7 +21,7 @@ namespace Torres.Client.Avatars
         private Task<BeginAvatarUploadResult>? _beginRequest;
         private int _acceptedBytes;
 
-        internal AvatarUpload(GameSessionConnection gameSessionConnection, PreparedAvatar preparedAvatar)
+        internal AvatarUpload(IGameSessionConnection gameSessionConnection, PreparedAvatar preparedAvatar)
         {
             _gameSessionConnection = gameSessionConnection;
             QueueParts(preparedAvatar.Thumbnail);

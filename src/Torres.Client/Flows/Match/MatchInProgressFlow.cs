@@ -8,7 +8,7 @@ namespace Torres.Client.Flows
         private readonly PlayerSession _playerSession;
         private readonly ForfeitFlow _forfeitFlow;
 
-        internal MatchInProgressFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal MatchInProgressFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _playerSession = playerSession;
             _forfeitFlow = new ForfeitFlow(gameSessionConnection, playerSession);

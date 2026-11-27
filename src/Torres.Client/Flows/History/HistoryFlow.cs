@@ -11,13 +11,13 @@ namespace Torres.Client.Flows
         private const int SinglePage = 1;
         private const int PageStep = 1;
 
-        private readonly GameSessionConnection _gameSessionConnection;
+        private readonly IGameSessionConnection _gameSessionConnection;
         private readonly PlayerSession _playerSession;
         private readonly PendingRequest<MatchHistoryResponse> _historyRequest = new PendingRequest<MatchHistoryResponse>();
 
         private int _requestedPageNumber = MatchHistorySelection.FirstPageNumber;
 
-        internal HistoryFlow(GameSessionConnection gameSessionConnection, PlayerSession playerSession)
+        internal HistoryFlow(IGameSessionConnection gameSessionConnection, PlayerSession playerSession)
         {
             _gameSessionConnection = gameSessionConnection;
             _playerSession = playerSession;

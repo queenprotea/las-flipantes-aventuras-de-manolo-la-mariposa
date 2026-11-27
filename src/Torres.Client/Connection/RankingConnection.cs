@@ -5,7 +5,7 @@ using Game.Contracts;
 
 namespace Torres.Client.Connection
 {
-    internal sealed class RankingConnection
+    internal sealed class RankingConnection : IRankingConnection
     {
         private readonly ChannelFactory<IRankingService> _channelFactory;
 
@@ -16,7 +16,7 @@ namespace Torres.Client.Connection
             _channelFactory = channelFactory;
         }
 
-        internal Task<GlobalRankingResponse> GetGlobalRankingAsync()
+        public Task<GlobalRankingResponse> GetGlobalRankingAsync()
         {
             ReleaseChannel();
             IRankingService rankingChannel = _channelFactory.CreateChannel();
@@ -26,7 +26,7 @@ namespace Torres.Client.Connection
             return rankingRequest;
         }
 
-        internal void ReleaseChannel()
+        public void ReleaseChannel()
         {
             if (_openChannel is ICommunicationObject usedChannel)
             {

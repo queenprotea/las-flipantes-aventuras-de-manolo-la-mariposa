@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Game.Services.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Game.Match\Game.Match.csproj" />
     <ProjectReference Include="..\Game.Persistence\Game.Persistence.csproj" />
     <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />

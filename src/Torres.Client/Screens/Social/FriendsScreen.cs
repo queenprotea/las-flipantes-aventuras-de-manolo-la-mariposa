@@ -373,7 +373,7 @@ namespace Torres.Client.Screens
         {
             HideConfirmation();
             _friendsFlow.ForgetRequests();
-            RequestedScreen = ScreenId.MainMenu;
+            RequestedScreen = FriendsFlow.FindScreenToGoBack();
         }
     }
 }

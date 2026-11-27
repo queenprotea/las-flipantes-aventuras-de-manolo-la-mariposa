@@ -48,6 +48,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Torres.Client.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

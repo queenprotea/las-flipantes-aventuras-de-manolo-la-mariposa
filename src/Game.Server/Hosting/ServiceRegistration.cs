@@ -31,22 +31,22 @@ namespace Game.Server
             ArgumentNullException.ThrowIfNull(databaseSettings);
 
             services.AddDbContextFactory<TorresDbContext>(databaseSettings.ConfigureContext);
-            services.AddSingleton<PlayerRepository>();
-            services.AddSingleton<PasswordRecoveryRepository>();
-            services.AddSingleton<RankingRepository>();
-            services.AddSingleton<FriendshipRepository>();
-            services.AddSingleton<RoomRecordRepository>();
-            services.AddSingleton<RoomInvitationRepository>();
-            services.AddSingleton<ReportRepository>();
-            services.AddSingleton<SanctionRepository>();
+            services.AddSingleton<IPlayerRepository, PlayerRepository>();
+            services.AddSingleton<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
+            services.AddSingleton<IRankingRepository, RankingRepository>();
+            services.AddSingleton<IFriendshipRepository, FriendshipRepository>();
+            services.AddSingleton<IRoomRecordRepository, RoomRecordRepository>();
+            services.AddSingleton<IRoomInvitationRepository, RoomInvitationRepository>();
+            services.AddSingleton<IReportRepository, ReportRepository>();
+            services.AddSingleton<ISanctionRepository, SanctionRepository>();
             services.AddSingleton<SanctionLevelRepository>();
-            services.AddSingleton<SystemParameterRepository>();
-            services.AddSingleton<TurnLayoutRepository>();
-            services.AddSingleton<BuildAllowanceRepository>();
-            services.AddSingleton<ActionCostRepository>();
-            services.AddSingleton<MatchRecordRepository>();
-            services.AddSingleton<MatchParticipantRepository>();
-            services.AddSingleton<MatchStateRepository>();
+            services.AddSingleton<ISystemParameterRepository, SystemParameterRepository>();
+            services.AddSingleton<ITurnLayoutRepository, TurnLayoutRepository>();
+            services.AddSingleton<IBuildAllowanceRepository, BuildAllowanceRepository>();
+            services.AddSingleton<IActionCostRepository, ActionCostRepository>();
+            services.AddSingleton<IMatchRecordRepository, MatchRecordRepository>();
+            services.AddSingleton<IMatchParticipantRepository, MatchParticipantRepository>();
+            services.AddSingleton<IMatchStateRepository, MatchStateRepository>();
         }
 
         public static void AddGameServices(IServiceCollection services)
@@ -62,6 +62,7 @@ namespace Game.Server
             services.AddSingleton<AccountService>();
 
             services.AddSingleton<GuestIdIssuer>();
+            services.AddSingleton<ICallerChannel, CallerChannel>();
             services.AddSingleton<SessionRegistry>();
             services.AddSingleton<SessionService>();
 

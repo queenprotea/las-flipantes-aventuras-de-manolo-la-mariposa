@@ -22,12 +22,12 @@ namespace Game.Services
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(RoomStartup));
 
-        private readonly RoomRecordRepository _roomRecordRepository;
+        private readonly IRoomRecordRepository _roomRecordRepository;
         private readonly SanctionLevelRepository _sanctionLevelRepository;
         private readonly SystemParameterReader _systemParameterReader;
         private readonly TimeProvider _timeProvider;
 
-        public RoomStartup(RoomRecordRepository roomRecordRepository, SanctionLevelRepository sanctionLevelRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
+        public RoomStartup(IRoomRecordRepository roomRecordRepository, SanctionLevelRepository sanctionLevelRepository, SystemParameterReader systemParameterReader, TimeProvider timeProvider)
         {
             ArgumentNullException.ThrowIfNull(roomRecordRepository);
             ArgumentNullException.ThrowIfNull(sanctionLevelRepository);

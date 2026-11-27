@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-using CoreWCF;
-
 using Game.Contracts;
 
 using log4net;
@@ -16,6 +14,7 @@ namespace Game.Services
         private const string SessionReplacedMessage = "Session of player {0} replaced by a newer one.";
         private const string SessionClosedMessage = "Session of player {0} closed by the player.";
         private const string SessionLostMessage = "Session of player {0} lost.";
+        private const string NoCallerSessionMessage = "A session can only be opened from a call that has a session.";
         private const string SeatAbsentMessage = "Session of player {0} declared lost: the seat let its match steps run out.";
 
         private static readonly ILog _log = LogManager.GetLogger(typeof(SessionRegistry));
@@ -23,6 +22,14 @@ namespace Game.Services
         private readonly Lock _registryLock = new Lock();
         private readonly Dictionary<string, PlayerSession> _sessionsById = new Dictionary<string, PlayerSession>(StringComparer.Ordinal);
         private readonly Dictionary<int, PlayerSession> _sessionsByOwnerId = new Dictionary<int, PlayerSession>();
+        private readonly ICallerChannel _callerChannel;
+
+        public SessionRegistry(ICallerChannel callerChannel)
+        {
+            ArgumentNullException.ThrowIfNull(callerChannel);
+
+            _callerChannel = callerChannel;
+        }
 
         public event EventHandler<SessionOwnerEventArgs>? SessionOpened;
 
@@ -32,9 +39,9 @@ namespace Game.Services
 
         internal PlayerSession Open(SessionOwner owner)
         {
-            OperationContext callContext = OperationContext.Current;
-            IGameSessionNoticeReceiver noticeReceiver = callContext.GetCallbackChannel<IGameSessionNoticeReceiver>();
-            var openedSession = new PlayerSession(owner, callContext.SessionId, noticeReceiver, this);
+            string sessionId = _callerChannel.FindCallerSessionId() ?? throw new InvalidOperationException(NoCallerSessionMessage);
+            IGameSessionNoticeReceiver noticeReceiver = _callerChannel.GetNoticeReceiver();
+            var openedSession = new PlayerSession(owner, sessionId, noticeReceiver, this);
             PlayerSession? replacedSession;
             lock (_registryLock)
             {
@@ -58,7 +65,7 @@ namespace Game.Services
 
         internal PlayerSession? FindCaller()
         {
-            string? callerSessionId = OperationContext.Current?.SessionId;
+            string? callerSessionId = _callerChannel.FindCallerSessionId();
             PlayerSession? callerSession = null;
             lock (_registryLock)
             {

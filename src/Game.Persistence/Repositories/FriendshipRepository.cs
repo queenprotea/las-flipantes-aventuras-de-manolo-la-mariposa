@@ -8,7 +8,7 @@ using Npgsql;
 
 namespace Game.Persistence
 {
-    public sealed class FriendshipRepository
+    public sealed class FriendshipRepository : IFriendshipRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 

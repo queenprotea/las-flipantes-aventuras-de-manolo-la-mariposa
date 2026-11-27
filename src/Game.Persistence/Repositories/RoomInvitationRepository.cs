@@ -9,7 +9,7 @@ using Npgsql;
 
 namespace Game.Persistence
 {
-    public sealed class RoomInvitationRepository
+    public sealed class RoomInvitationRepository : IRoomInvitationRepository
     {
         private readonly IDbContextFactory<TorresDbContext> _contextFactory;
 
