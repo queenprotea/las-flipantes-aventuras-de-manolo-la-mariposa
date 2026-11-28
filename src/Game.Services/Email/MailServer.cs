@@ -2,11 +2,12 @@ namespace Game.Services
 {
     public sealed class MailServer
     {
-        public MailServer(string host, int port, bool usesStartTls, MailCredentials? credentials)
+        public MailServer(string host, int port, bool usesStartTls, bool checksCertificateRevocation, MailCredentials? credentials)
         {
             Host = host;
             Port = port;
             UsesStartTls = usesStartTls;
+            ChecksCertificateRevocation = checksCertificateRevocation;
             Credentials = credentials;
         }
 
@@ -15,6 +16,8 @@ namespace Game.Services
         public int Port { get; }
 
         public bool UsesStartTls { get; }
+
+        public bool ChecksCertificateRevocation { get; }
 
         public MailCredentials? Credentials { get; }
     }

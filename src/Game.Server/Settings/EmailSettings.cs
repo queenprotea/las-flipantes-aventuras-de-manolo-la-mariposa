@@ -45,7 +45,7 @@ namespace Game.Server
         {
             MailCredentials? credentials = UsesRealServer ? ReadCredentials() : null;
             EmailServerSetting chosenServer = FindChosenServer();
-            var mailServer = new MailServer(chosenServer.Host, chosenServer.Port, chosenServer.UsesStartTls, credentials);
+            var mailServer = new MailServer(chosenServer.Host, chosenServer.Port, chosenServer.UsesStartTls, chosenServer.ChecksCertificateRevocation, credentials);
             var mailSender = new MailSender(SenderAddress, SenderName);
             var emailSender = new EmailSender(mailServer, mailSender, TimeSpan.FromSeconds(SendTimeoutSeconds));
 

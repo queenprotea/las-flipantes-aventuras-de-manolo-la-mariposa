@@ -63,17 +63,21 @@ nadie y los muestra en `http://localhost:8025`.
    mailpit
    ```
 
-Para que los correos lleguen a buzones de verdad, poner `"UsesRealServer": true` en la sección `Email`
-de `src/Game.Server/appsettings.json` (sin hacer commit de ese cambio) y añadir al `.env`:
+Para que los correos lleguen a buzones de verdad por Gmail, añadir al `.env` (no hace falta tocar
+`appsettings.json`):
 
 ```
+Email__UsesRealServer=true
+Email__SenderAddress=cuenta-del-proyecto@gmail.com
 TORRES_SMTP_USER=cuenta-del-proyecto@gmail.com
 TORRES_SMTP_PASSWORD=contrasenadeaplicacion
 ```
 
-La contraseña es una **contraseña de aplicación** de Google (requiere la verificación en dos pasos),
-escrita sin espacios. Nunca va en el repositorio. Con `Real` y sin esas variables, el servidor no
-arranca. Detalles en `docs/STACK.md` y `docs/CAMBIOS-CORREO.md`.
+`Email__SenderAddress` y `TORRES_SMTP_USER` son la misma cuenta: si el remitente es otro, Gmail lo
+reescribe o marca el correo como sospechoso. La contraseña es una **contraseña de aplicación** de
+Google (requiere la verificación en dos pasos), escrita sin espacios. Nunca va en el repositorio.
+Con `Email__UsesRealServer=true` y sin esas variables, el servidor no arranca. Para volver a Mailpit,
+`Email__UsesRealServer=false`. Detalles en `docs/STACK.md` y `docs/CAMBIOS-CORREO.md`.
 
 ## Ejecutar el cliente
 

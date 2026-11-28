@@ -7,5 +7,7 @@ namespace Game.Server
         public int Port { get; set; }
 
         public bool UsesStartTls { get; set; }
+
+        public bool ChecksCertificateRevocation { get; set; }
     }
 }

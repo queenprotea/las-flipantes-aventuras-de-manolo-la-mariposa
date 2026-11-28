@@ -89,7 +89,7 @@ namespace Game.Services
         {
             using MimeMessage mimeMessage = ComposeMimeMessage(message);
             using var deliveryDeadline = new CancellationTokenSource(_sendTimeout);
-            using var smtpClient = new SmtpClient();
+            using var smtpClient = new SmtpClient { CheckCertificateRevocation = _mailServer.ChecksCertificateRevocation };
             SecureSocketOptions socketOptions = _mailServer.UsesStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
             await smtpClient.ConnectAsync(_mailServer.Host, _mailServer.Port, socketOptions, deliveryDeadline.Token);
             if (_mailServer.Credentials is not null)
